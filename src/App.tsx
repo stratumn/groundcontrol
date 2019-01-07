@@ -1,26 +1,49 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
+import {QueryRenderer} from 'react-relay';
+/// <reference path="declarations.d.ts"/>
+import graphql from 'babel-plugin-relay/macro';
+import {Github} from './relay';
 import './App.css';
 
 class App extends Component {
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.tsx</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
+      <QueryRenderer
+        environment={Github}
+        query={graphql`
+          query AppQuery($login:String!, $first:Int!) {
+            organization(login:$login) {
+              login
+              repositories(first:$first) {
+                nodes {
+                  name
+                }
+              }
+            }  
+          }
+        `}
+        variables={{
+          login: 'stratumn',
+          first: 10,
+        }}
+        render={({error, props}) => {
+          if (error) {
+            return <div>Error!</div>;
+          }
+          if (!props) {
+            return <div>Loading...</div>;
+          }
+          console.log(props);
+          return <div>
+            <h1>{props.organization.login}</h1>
+            <ul>
+               {props.organization.repositories.nodes.map((repo: any) =>
+                 <li key={repo.name}>{repo.name}</li>
+               )}
+            </ul>
+          </div>
+        }}
+      />
     );
   }
 }

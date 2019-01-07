@@ -3,17 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@types/jest": "23.3.11",
-    "@types/node": "10.12.18",
-    "@types/react": "16.7.18",
-    "@types/react-dom": "16.0.11",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
+    "react-relay": "^1.7.0",
     "react-scripts": "2.1.2",
+    "relay-runtime": "^1.7.0",
     "typescript": "3.2.2"
   },
   "scripts": {
     "start": "react-scripts start",
+    "relay": "yarn relay:github",
+    "relay:github": "relay-compiler --src ./src --schema github.graphql --language typescript",
+    "dev": "concurrently \"yarn relay --watch\" \"yarn start\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -26,5 +27,18 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "devDependencies": {
+    "@types/jest": "23.3.11",
+    "@types/node": "10.12.18",
+    "@types/react": "16.7.18",
+    "@types/react-dom": "16.0.11",
+    "@types/react-relay": "^1.3.9",
+    "@types/relay-runtime": "^1.3.7",
+    "babel-plugin-relay": "^1.7.0",
+    "concurrently": "^4.1.0",
+    "graphql": "^14.0.2",
+    "relay-compiler": "^1.7.0",
+    "relay-compiler-language-typescript": "^1.1.1"
+  }
 }
