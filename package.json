@@ -8,6 +8,7 @@
     "react-relay": "^1.7.0",
     "react-scripts": "2.1.2",
     "relay-runtime": "^1.7.0",
+    "semantic-ui-react": "^0.84.0",
     "typescript": "3.2.2"
   },
   "scripts": {

@@ -3,6 +3,7 @@ import {QueryRenderer} from 'react-relay';
 /// <reference path="declarations.d.ts"/>
 import graphql from 'babel-plugin-relay/macro';
 import {Github} from './relay';
+import { Container, Card, Placeholder, List } from 'semantic-ui-react';
 import './App.css';
 
 class App extends Component {
@@ -28,20 +29,40 @@ class App extends Component {
         }}
         render={({error, props}) => {
           if (error) {
-            return <div>Error!</div>;
+            return <Container><Card>Error!</Card></Container>;
           }
           if (!props) {
-            return <div>Loading...</div>;
+            return <Container>
+              <Card>
+                <Card.Content>
+                  <Card.Header>Repos</Card.Header>
+                </Card.Content>
+                <Card.Content>
+                  <Placeholder>
+                    <Placeholder.Line />
+                    <Placeholder.Line />
+                    <Placeholder.Line />
+                    <Placeholder.Line />
+                    <Placeholder.Line />
+                  </Placeholder>
+                </Card.Content>
+              </Card>
+            </Container>;
           }
-          console.log(props);
-          return <div>
-            <h1>{props.organization.login}</h1>
-            <ul>
-               {props.organization.repositories.nodes.map((repo: any) =>
-                 <li key={repo.name}>{repo.name}</li>
-               )}
-            </ul>
-          </div>
+          return <Container>
+            <Card>
+              <Card.Content>
+                <Card.Header>Repos</Card.Header>
+              </Card.Content>
+              <Card.Content>
+                <List>
+                    {props.organization.repositories.nodes.map((repo: any) =>
+                      <List.Item key={repo.name}>{repo.name}</List.Item>
+                    )}
+                </List>
+              </Card.Content>
+            </Card>
+          </Container>;
         }}
       />
     );
