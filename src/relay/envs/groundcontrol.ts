@@ -11,11 +11,10 @@ const fetchQuery = async (
 	operation: RequestNode,
 	variables: Variables,
 ) => {
-  return fetch('https://api.github.com/graphql', {
+  return fetch('http://localhost:4000/graphql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `bearer ${process.env.REACT_APP_GITHUB_TOKEN}`
     },
     body: JSON.stringify({
       query: operation.text,
@@ -26,7 +25,7 @@ const fetchQuery = async (
   });
 }
 
-export const Github = new Environment({
+export default new Environment({
   network: Network.create(fetchQuery),
   store: new Store(new RecordSource()),  
 });

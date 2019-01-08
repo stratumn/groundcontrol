@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {QueryRenderer} from 'react-relay';
 /// <reference path="declarations.d.ts"/>
 import graphql from 'babel-plugin-relay/macro';
-import {Github} from './relay';
+import {GroundControl} from './relay/envs';
 import { Container, Card, Placeholder, List } from 'semantic-ui-react';
 import './App.css';
 
@@ -10,23 +10,16 @@ class App extends Component {
   render() {
     return (
       <QueryRenderer
-        environment={Github}
+        environment={GroundControl}
         query={graphql`
-          query AppQuery($login:String!, $first:Int!) {
-            organization(login:$login) {
-              login
-              repositories(first:$first) {
-                nodes {
-                  name
-                }
-              }
+          query AppQuery {
+            workspaces {
+              name
+              slug
             }  
           }
         `}
-        variables={{
-          login: 'stratumn',
-          first: 10,
-        }}
+        variables={{}}
         render={({error, props}) => {
           if (error) {
             return <Container><Card>Error!</Card></Container>;
@@ -35,7 +28,7 @@ class App extends Component {
             return <Container>
               <Card>
                 <Card.Content>
-                  <Card.Header>Repos</Card.Header>
+                  <Card.Header>Workspaces</Card.Header>
                 </Card.Content>
                 <Card.Content>
                   <Placeholder>
@@ -52,12 +45,12 @@ class App extends Component {
           return <Container>
             <Card>
               <Card.Content>
-                <Card.Header>Repos</Card.Header>
+                <Card.Header>Workspaces</Card.Header>
               </Card.Content>
               <Card.Content>
                 <List>
-                    {props.organization.repositories.nodes.map((repo: any) =>
-                      <List.Item key={repo.name}>{repo.name}</List.Item>
+                    {props.workspaces.map((workspace: any) =>
+                      <List.Item key={workspace.slug}>{workspace.name}</List.Item>
                     )}
                 </List>
               </Card.Content>

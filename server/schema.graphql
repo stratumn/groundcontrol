@@ -1,0 +1,17 @@
+type Query {
+  workspaces: [Workspace!]
+}
+
+type Workspace {
+  id: ID!
+  name: String!
+  slug: String!
+  projects: [Project!] 
+}
+
+type Project {
+  id: ID!
+  name: String!
+  repo: String!
+  branch: String!
+}

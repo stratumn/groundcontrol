@@ -3,19 +3,26 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "class-transformer": "^0.2.0",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "express-graphql": "^0.7.1",
+    "js-yaml": "^3.12.1",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
     "react-relay": "^1.7.0",
     "react-scripts": "2.1.2",
+    "reflect-metadata": "^0.1.12",
     "relay-runtime": "^1.7.0",
     "semantic-ui-react": "^0.84.0",
+    "type-graphql": "^0.16.0",
     "typescript": "3.2.2"
   },
   "scripts": {
     "start": "react-scripts start",
-    "relay": "yarn relay:github",
-    "relay:github": "relay-compiler --src ./src --schema github.graphql --language typescript",
-    "dev": "concurrently \"yarn relay --watch\" \"yarn start\"",
+    "server": "ts-node --project server/tsconfig.json server/src/index.ts",
+    "relay": "relay-compiler --src ./src --schema server/schema.graphql --language typescript",
+    "dev": "concurrently \"yarn relay --watch\" \"yarn start\" \"yarn server\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -30,7 +37,12 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "@types/cors": "^2.8.4",
+    "@types/express": "^4.16.0",
+    "@types/express-graphql": "^0.6.2",
+    "@types/graphql": "^14.0.4",
     "@types/jest": "23.3.11",
+    "@types/js-yaml": "^3.11.4",
     "@types/node": "10.12.18",
     "@types/react": "16.7.18",
     "@types/react-dom": "16.0.11",
@@ -40,6 +52,7 @@
     "concurrently": "^4.1.0",
     "graphql": "^14.0.2",
     "relay-compiler": "^1.7.0",
-    "relay-compiler-language-typescript": "^1.1.1"
+    "relay-compiler-language-typescript": "^1.1.1",
+    "ts-node": "^7.0.1"
   }
 }

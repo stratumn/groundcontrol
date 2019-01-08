@@ -1,0 +1,16 @@
+workspaces:
+- name: Trace Dev
+  slug: trace-dev
+  projects:
+  - name: Trace API
+    repo: github.com/stratumn/trace-api
+    branch: master
+  - name: Trace UI
+    repo: github.com/stratumn/trace-ui
+    branch: master
+- name: Go Core Dev
+  slug: go-core-dev
+  projects:
+  - name: Go Core
+    repo: githuib.com/stratumn/go-core
+    branch: master
