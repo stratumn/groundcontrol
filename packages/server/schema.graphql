@@ -2,6 +2,9 @@ type Query {
   workspaces: [Workspace!]
 }
 
+scalar DateTime
+scalar Sha
+
 type Workspace {
   id: ID!
   name: String!
@@ -14,4 +17,13 @@ type Project {
   name: String!
   repo: String!
   branch: String!
+  commits(first: Int, last: Int): [Commit!]
+}
+
+type Commit {
+  id: ID!
+  sha: Sha!
+  author: String!
+  date: DateTime!
+  message: String
 }

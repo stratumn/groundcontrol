@@ -1,0 +1,30 @@
+{
+  "name": "server",
+  "private": true,
+  "dependencies": {
+    "class-transformer": "^0.2.0",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "express-graphql": "^0.7.1",
+    "graphql-request": "^1.8.2",
+    "js-yaml": "^3.12.1",
+    "reflect-metadata": "^0.1.12",
+    "type-graphql": "^0.16.0"
+  },
+  "scripts": {
+    "start": "ts-node --project tsconfig.json src/index.ts",
+    "fetch:github": "apollo service:download github.json --endpoint https://api.github.com/graphql --header \"Authorization: bearer ${GITHUB_TOKEN}\"",
+    "gen:github": "apollo codegen:generate __generated__ --localSchemaFile github.json --includes \"src/**/*.ts\" --globalTypesFile src/__generated__/globalTypes.ts --target typescript",
+    "dev": "concurrently \"yarn gen:github --watch\" \"yarn start\""
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.4",
+    "@types/express": "^4.16.0",
+    "@types/express-graphql": "^0.6.2",
+    "@types/graphql": "^14.0.4",
+    "@types/js-yaml": "^3.11.4",
+    "@types/node": "10.12.18",
+    "apollo": "^2.1.9",
+    "ts-node": "^7.0.1"
+  }
+}

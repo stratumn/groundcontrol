@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
-import {QueryRenderer} from 'react-relay';
-/// <reference path="declarations.d.ts"/>
+import { QueryRenderer } from 'react-relay';
 import graphql from 'babel-plugin-relay/macro';
-import {GroundControl} from './relay/envs';
+import GroundControl from './groundcontrol.env.relay';
 import { Container, Card, Placeholder, List } from 'semantic-ui-react';
 import './App.css';
 
