@@ -4,6 +4,7 @@ In the project directory, run:
 
 ```
 lerna bootstrap
+yarn
 ```
 
 ## Environment variables
