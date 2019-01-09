@@ -4,7 +4,7 @@ import Workspace from './Workspace';
 let workspaces: Workspace[];
 
 function reload(): Workspace[] {
-  const workspaces = Workspace.load(join(__dirname, '../../../groundcontrol.yml'));
+  workspaces = Workspace.load(join(__dirname, '../../../groundcontrol.yml'));
 
   return workspaces;
 }
