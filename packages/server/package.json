@@ -15,7 +15,8 @@
     "start": "ts-node --project tsconfig.json src/index.ts",
     "fetch:github": "apollo service:download github.json --endpoint https://api.github.com/graphql --header \"Authorization: bearer ${GITHUB_TOKEN}\"",
     "gen:github": "apollo codegen:generate __generated__ --localSchemaFile github.json --includes \"src/**/*.ts\" --globalTypesFile src/__generated__/globalTypes.ts --target typescript",
-    "dev": "concurrently \"yarn gen:github --watch\" \"yarn start\""
+    "dev": "concurrently \"yarn gen:github --watch\" \"yarn start\"",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'"
   },
   "devDependencies": {
     "@types/cors": "^2.8.4",
@@ -25,6 +26,8 @@
     "@types/js-yaml": "^3.11.4",
     "@types/node": "10.12.18",
     "apollo": "^2.1.9",
-    "ts-node": "^7.0.1"
+    "ts-node": "^7.0.1",
+    "tslint": "^5.12.0",
+    "typescript": "^3.2.2"
   }
 }

@@ -1,5 +1,5 @@
-import fs from 'fs';
-import { join } from 'path';
-import { buildSchema } from 'graphql';
+import fs from "fs";
+import { buildSchema } from "graphql";
+import { join } from "path";
 
-export default buildSchema(fs.readFileSync(join(__dirname, '../schema.graphql'), 'utf8'));
+export default buildSchema(fs.readFileSync(join(__dirname, "../schema.graphql"), "utf8"));

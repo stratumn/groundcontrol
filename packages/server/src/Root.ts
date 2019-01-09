@@ -1,10 +1,10 @@
-import Workspace from './Workspace';
-import { getWorkspaces } from './workspaces';
+import Workspace from "./Workspace";
+import { getWorkspaces } from "./workspaces";
 
 class Root {
-  workspaces():Workspace[] {
+  public workspaces(): Workspace[] {
     return getWorkspaces();
   }
-};
+}
 
 export default Root;

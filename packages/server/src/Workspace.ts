@@ -1,21 +1,26 @@
-import fs from 'fs';
-import yaml from 'js-yaml';
-import { Type, plainToClass } from "class-transformer";
-import Project from './Project';
+import { plainToClass, Type } from "class-transformer";
+import fs from "fs";
+import yaml from "js-yaml";
+import Project from "./Project";
 
 class Workspace {
-  name: string;
-  slug: string;
-
-  @Type(() => Project)
-  projects: Project[];
-
-  id(): string {
-    return this.name
+  public static load(file: string): Workspace[] {
+    return plainToClass(Workspace, yaml.safeLoad(fs.readFileSync(file, "utf8")).workspaces);
   }
 
-  static load(file: string): Workspace[] {
-    return plainToClass(Workspace, yaml.safeLoad(fs.readFileSync(file, 'utf8')).workspaces);
+  @Type(() => Project)
+  public projects: Project[];
+
+  constructor(
+    public name: string,
+    public slug: string,
+    projects: Project[],
+  ) {
+    this.projects = projects;
+  }
+
+  public id(): string {
+    return this.name;
   }
 }
 

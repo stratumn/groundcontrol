@@ -1,12 +1,11 @@
-import Commit from './Commit';
-import { request } from 'graphql-request';
-import { Type } from 'class-transformer';
-import Github from './github';
-import gql from './gql';
+import { Type } from "class-transformer";
 import {
   ProjectCommitsQuery,
-  ProjectCommitsQuery_repository_ref_target_Commit
-} from './__generated__/ProjectCommitsQuery';
+  ProjectCommitsQuery_repository_ref_target_Commit,
+} from "./__generated__/ProjectCommitsQuery";
+import Commit from "./Commit";
+import Github from "./github";
+import gql from "./gql";
 
 const commitsQuery = gql`
   query ProjectCommitsQuery(
@@ -36,40 +35,61 @@ const commitsQuery = gql`
           }
         }
       }
-    }  
+    }
   }
 `;
 
 class Project {
-  name: string;
-  repo: string;
-  branch: string;
+  constructor(
+    public name: string,
+    public repo: string,
+    public branch: string,
+  ) {
+  }
 
-  id(): string {
-    return this.repo
+  public id(): string {
+    return this.repo;
   }
 
   @Type(() => Commit)
-  async commits({first, last}: {first?: number, last?: number}): Promise<Commit[]> {
-    const parts = this.repo.split('/');
+  public async commits({first, last}: {first?: number, last?: number}): Promise<Commit[]> {
+    const parts = this.repo.split("/");
 
     const data = await Github.request<ProjectCommitsQuery>(commitsQuery, {
+      branch: this.branch,
+      first,
+      last,
       owner: parts[1],
       repo: parts[2],
-      branch: this.branch,
-      first: first,
-      last: last
     });
 
-    const target = data.repository.ref.target as ProjectCommitsQuery_repository_ref_target_Commit
+    if (!data || !data.repository || !data.repository.ref) {
+      throw new Error(`repo ${this.repo}@${this.branch} is not a valid repo`);
+    }
 
-    return target.history.edges.map(edge => new Commit(
-      edge.node.oid,
-      edge.node.messageHeadline,
-      edge.node.message,
-      edge.node.author.name,
-      new Date(edge.node.pushedDate)
-    ));
+    const target = data.repository.ref.target as ProjectCommitsQuery_repository_ref_target_Commit;
+
+    if (!target.history.edges) {
+      return [];
+    }
+
+    const commits: Commit[] = [];
+
+    target.history.edges.forEach((edge) => {
+      if (!edge || !edge.node) {
+        return;
+      }
+
+      commits.push(new Commit(
+        edge.node.oid,
+        edge.node.messageHeadline,
+        edge.node.message,
+        edge.node.author && edge.node.author.name ? edge.node.author.name : "Unknown",
+        new Date(edge.node.pushedDate),
+      ));
+    });
+
+    return commits;
   }
 }
 
