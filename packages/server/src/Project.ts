@@ -1,10 +1,11 @@
-import { Type } from "class-transformer";
+/*import { Type } from "class-transformer";
+import { ProjectCommitsQuery } from "./__generated__/github";
 import {
-  ProjectCommitsQuery,
-  ProjectCommitsQuery_repository_ref_target_Commit,
-} from "./__generated__/ProjectCommitsQuery";
+  CommitConnection,
+  ProjectResolvers,
+ } from "./__generated__/groundcontrol";
 import Commit from "./Commit";
-import Github from "./github";
+import Github from "./schemas/github";
 import gql from "./gql";
 
 const commitsQuery = gql`
@@ -39,23 +40,17 @@ const commitsQuery = gql`
   }
 `;
 
-class Project {
-  constructor(
-    public name: string,
-    public repo: string,
-    public branch: string,
-  ) {
-  }
+const resolvers: ProjectResolvers.Resolvers = {
+  id: (obj) =>
+    new Buffer(`project:${obj.repo}`).toString("base64"),
 
-  public id(): string {
-    return this.repo;
-  }
+  name: (obj) => obj.name,
 
-  @Type(() => Commit)
-  public async commits({first, last}: {first?: number, last?: number}): Promise<Commit[]> {
+  commits: (parent, { first, last }) => {
+    return null;
     const parts = this.repo.split("/");
 
-    const data = await Github.request<ProjectCommitsQuery>(commitsQuery, {
+    const data = await Github.request<ProjectCommitsQuery.Query>(commitsQuery, {
       branch: this.branch,
       first,
       last,
@@ -67,15 +62,13 @@ class Project {
       throw new Error(`repo ${this.repo}@${this.branch} is not a valid repo`);
     }
 
-    const target = data.repository.ref.target as ProjectCommitsQuery_repository_ref_target_Commit;
-
-    if (!target.history.edges) {
+    if (!data.repository.ref.target.history.edges) {
       return [];
     }
 
     const commits: Commit[] = [];
 
-    target.history.edges.forEach((edge) => {
+    data.repository.ref.target.history.edges.forEach((edge) => {
       if (!edge || !edge.node) {
         return;
       }
@@ -90,7 +83,7 @@ class Project {
     });
 
     return commits;
-  }
-}
+  },
+};
 
-export default Project;
+export default resolvers;/*

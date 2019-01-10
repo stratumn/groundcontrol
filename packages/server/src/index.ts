@@ -1,20 +1,25 @@
 // Needs to be imported once somewhere.
 import "reflect-metadata";
 
+import { ApolloServer } from "apollo-server-express";
 import cors from "cors";
 import express from "express";
-import graphqlHTTP from "express-graphql";
-import Root from "./Root";
-import schema from "./schema";
-import Workspace from "./Workspace";
+import { makeExecutableSchema, mergeSchemas } from "graphql-tools";
 
-const app = express();
+import log from "./log";
 
-app.use(cors());
-app.use("/graphql", graphqlHTTP({
-  graphiql: true,
-  rootValue: new Root(),
-  schema,
-}));
+import schema from "./schemas/link";
 
-app.listen(4000);
+(async () => {
+  const server = new ApolloServer({ schema: await schema() });
+
+  const app = express();
+  app.use(cors());
+  server.applyMiddleware({ app });
+
+  const port = 4000;
+
+  app.listen({ port }, () =>
+    log.info(`🚀 Server ready at http://localhost:${port}${server.graphqlPath}`),
+  );
+})();

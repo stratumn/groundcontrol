@@ -10,6 +10,7 @@
     "@types/node": "10.12.18",
     "concurrently": "^4.1.0",
     "graphql": "^14.0.2",
+    "graphql-code-generator": "^0.15.2",
     "lerna": "^3.4.3",
     "typescript": "3.2.2"
   }

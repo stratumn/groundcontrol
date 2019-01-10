@@ -1,0 +1,7 @@
+interface Node {
+  id: ID!
+}
+
+extend type Project {
+  githubRepo: Repository!
+}

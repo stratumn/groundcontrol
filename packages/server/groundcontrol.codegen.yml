@@ -1,0 +1,12 @@
+overwrite: true
+schema: ./groundcontrol.graphql
+generates:
+  src/__generated__/groundcontrol.ts:
+    plugins:
+      - typescript-common
+      - typescript-server
+      - typescript-resolvers
+    config:
+      scalars:
+        DateTime: Date
+        Sha: string
