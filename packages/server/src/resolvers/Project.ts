@@ -1,7 +1,5 @@
 import gql from "graphql-tag";
 
-import log from "../log";
-
 import { ProjectCommitsQuery } from "../__generated__/github";
 
 import {
@@ -54,7 +52,7 @@ const commitsQuery = gql`
 const resolvers: ProjectResolvers.Resolvers = {
   id: (obj) =>
     // TODO: this isn't globally unique.
-    new Buffer(`project:${obj.name}`).toString("base64"),
+    Buffer.from(`project:${obj.name}`).toString("base64"),
 
   commits: async (obj, { first, last }) => {
     const segments = obj.repo.split("/");

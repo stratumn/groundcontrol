@@ -1,7 +1,4 @@
-import {
-  QueryResolvers,
-  Workspace,
-} from "../__generated__/groundcontrol";
+import { QueryResolvers } from "../__generated__/groundcontrol";
 
 import { all } from "../data/workspaces";
 

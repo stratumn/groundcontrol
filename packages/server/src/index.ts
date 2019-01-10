@@ -1,7 +1,6 @@
 import { ApolloServer } from "apollo-server-express";
 import cors from "cors";
 import express from "express";
-import { makeExecutableSchema, mergeSchemas } from "graphql-tools";
 
 import log from "./log";
 
