@@ -1,6 +1,3 @@
-// Needs to be imported once somewhere.
-import "reflect-metadata";
-
 import { ApolloServer } from "apollo-server-express";
 import cors from "cors";
 import express from "express";
@@ -8,7 +5,7 @@ import { makeExecutableSchema, mergeSchemas } from "graphql-tools";
 
 import log from "./log";
 
-import schema from "./schemas/link";
+import schema from "./schema";
 
 (async () => {
   const server = new ApolloServer({ schema: await schema() });

@@ -1,5 +1,5 @@
 overwrite: true
-schema: ./groundcontrol.graphql
+schema: ./schema.graphql
 generates:
   src/__generated__/groundcontrol.ts:
     plugins:

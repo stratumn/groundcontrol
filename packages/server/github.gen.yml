@@ -1,0 +1,11 @@
+overwrite: true
+schema: ./github.graphql
+documents: src/**/*.ts
+generates:
+  src/__generated__/github.ts:
+    plugins:
+      - typescript-common
+      - typescript-client
+    config:
+      scalars:
+        DateTime: Date
