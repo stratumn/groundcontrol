@@ -20,10 +20,9 @@ export default class WorkspacesView extends Component<IProps> {
   public render() {
     if (!this.props) {
       return <div>Loading...</div>;
+    } else if (!this.props.workspace) {
+      return <div>Not found.</div>;
     }
-
-    // TODO: handle null.
-
     const workspace = this.props.workspace!;
 
     const cards = workspace.projects!.map((project) => {
