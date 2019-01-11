@@ -1,3 +1,4 @@
+import { Link } from "found";
 import React, { Component } from "react";
 import {
   Button,
@@ -6,216 +7,75 @@ import {
   Header,
   Icon,
   Label,
+  List,
  } from "semantic-ui-react";
 
-export default class WorkspacesView extends Component {
+import { RouterWorkspacesViewQueryResponse } from "../__generated__/RouterWorkspacesViewQuery.graphql";
+
+type IProps = RouterWorkspacesViewQueryResponse;
+
+export default class WorkspacesView extends Component<IProps> {
 
   public render() {
+    if (!this.props) {
+      return <div>Loading...</div>;
+    }
+
+    // TODO: handle null.
+
+    const workspace = this.props.workspace!;
+
+    const cards = workspace.projects!.map((project) => {
+      const events = project.commits.edges!.map((commit) => (
+        <Feed.Event key={commit!.node.id}>
+          <Feed.Content>
+            <Feed.Summary>
+              {commit.node.headline}
+            </Feed.Summary>
+            <Feed.Meta>
+              Pushed by {commit!.node.author} {commit!.node.date}
+            </Feed.Meta>
+          </Feed.Content>
+        </Feed.Event>
+      ));
+
+      return (
+        <Card key={project.repo}>
+          <Card.Content>
+            <Card.Header>{project.repo.replace("github.com/", "")}</Card.Header>
+              <Label style={{ marginTop: ".8em" }}>{project.branch}</Label>
+              <Card.Description style={{ marginTop: "1em" }}>
+              <p>Project description extracted from github.</p>
+              <Feed>
+                {events}
+              </Feed>
+            </Card.Description>
+          </Card.Content>
+          <Card.Content extra={true}>
+            <div className="ui three buttons">
+              <Button color="teal">
+                Pull
+              </Button>
+            </div>
+          </Card.Content>
+        </Card>
+      );
+    });
+
     return (
       <div>
         <Header as="h1" style={{ marginBottom: "1.2em" }} >
           <Icon name="cube" />
           <Header.Content>
-            Workspace name
+            {workspace.name}
             <Header.Subheader>
-              Workspace description.
+              {workspace.description}
             </Header.Subheader>
           </Header.Content>
         </Header>
         <p style={{ marginBottom: "2em" }}>Workspace notes for example installation notes.</p>
         <Card.Group>
-          <Card>
-            <Card.Content>
-              <Card.Header>stratumn/repo</Card.Header>
-                <Label style={{ marginTop: ".8em" }}>branch</Label>
-                <Card.Description style={{ marginTop: "1em" }}>
-                <p>Project description extracted from github.</p>
-                <Feed>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                </Feed>
-              </Card.Description>
-            </Card.Content>
-            <Card.Content extra={true}>
-              <div className="ui three buttons">
-                <Button color="teal">
-                  Pull
-                </Button>
-              </div>
-            </Card.Content>
-          </Card>
-          <Card>
-            <Card.Content>
-              <Card.Header>stratumn/repo</Card.Header>
-                <Label style={{ marginTop: ".8em" }}>branch</Label>
-                <Card.Description style={{ marginTop: "1em" }}>
-                <p>Project description extracted from github.</p>
-                <Feed>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                </Feed>
-              </Card.Description>
-            </Card.Content>
-            <Card.Content extra={true}>
-              <div className="ui three buttons">
-                <Button color="teal">
-                  Pull
-                </Button>
-              </div>
-            </Card.Content>
-          </Card>
-          <Card>
-            <Card.Content>
-              <Card.Header>stratumn/repo</Card.Header>
-                <Label style={{ marginTop: ".8em" }}>branch</Label>
-                <Card.Description style={{ marginTop: "1em" }}>
-                <p>Project description extracted from github.</p>
-                <Feed>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                </Feed>
-              </Card.Description>
-            </Card.Content>
-            <Card.Content extra={true}>
-              <div className="ui three buttons">
-                <Button color="teal">
-                  Pull
-                </Button>
-              </div>
-            </Card.Content>
-          </Card>
-          <Card>
-            <Card.Content>
-              <Card.Header>stratumn/repo</Card.Header>
-                <Label style={{ marginTop: ".8em" }}>branch</Label>
-                <Card.Description style={{ marginTop: "1em" }}>
-                <p>Project description extracted from github.</p>
-                <Feed>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                  <Feed.Event>
-                    <Feed.Content>
-                      <Feed.Summary>
-                        Git commit message headline
-                      </Feed.Summary>
-                      <Feed.Meta>
-                        Pushed by Author 1h ago
-                      </Feed.Meta>
-                    </Feed.Content>
-                  </Feed.Event>
-                </Feed>
-              </Card.Description>
-            </Card.Content>
-            <Card.Content extra={true}>
-              <div className="ui three buttons">
-                <Button color="teal">
-                  Pull
-                </Button>
-              </div>
-            </Card.Content>
-          </Card>
+          {cards}
         </Card.Group>
       </div>
     );

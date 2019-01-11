@@ -27,6 +27,30 @@ const workspacesListQuery = graphql`
   }
 `;
 
+const workspacesViewQuery = graphql`
+  query RouterWorkspacesViewQuery($slug: String!) {
+    workspace(slug: $slug) {
+      name
+      slug
+      description
+      projects {
+        repo
+        branch
+        commits(first: 3) {
+          edges {
+            node {
+              id
+              headline
+              date
+              author
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export default createFarceRouter({
   historyMiddlewares: [queryMiddleware],
   historyProtocol: new BrowserProtocol(),
@@ -44,6 +68,7 @@ export default createFarceRouter({
         <Route
           path=":slug"
           Component={WorkspacesView}
+          query={workspacesViewQuery}
         />
       </Route>
     </Route>,

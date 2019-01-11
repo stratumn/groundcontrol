@@ -61,7 +61,7 @@ export default class WorkspacesList extends Component<IProps, IState> {
         ));
       }
 
-      cards = workspaces!.map((workspace) => {
+      cards = workspaces.map((workspace) => {
         const items = workspace.projects!.map((project) => (
           <List.Item key={project.repo}>
             <List.Content floated="right">

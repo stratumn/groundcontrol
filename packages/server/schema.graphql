@@ -24,7 +24,7 @@ type Commit {
 }
 
 type CommitConnection {
-  edges: [CommitEdge]
+  edges: [CommitEdge!]
   pageInfo: PageInfo!
 }
 
