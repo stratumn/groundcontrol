@@ -78,7 +78,7 @@ export default class WorkspacesList extends Component<Props, State> {
         onSearchChange={this.handleSearchChange}
       />
       <Card.Group>
-        {workspaces!.map((workspace: any) =>
+        {workspaces!.map((workspace) =>
           <Card key={workspace.slug}>
             <Card.Content>
               <Link
@@ -92,7 +92,7 @@ export default class WorkspacesList extends Component<Props, State> {
               </Card.Meta>
               <Card.Description style={{ marginTop: "1em" }}>
                 <List>
-                  {workspace.projects.map((project: any) =>
+                  {workspace.projects!.map((project) =>
                     <List.Item key={project.repo}>
                       <List.Content floated="right">
                         <Label
