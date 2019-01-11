@@ -52,7 +52,7 @@ export default class WorkspacesView extends Component<IProps> {
             <Card.Header>{project.repo.replace("github.com/", "")}</Card.Header>
               <Label style={{ marginTop: ".8em" }}>{project.branch}</Label>
               <Card.Description style={{ marginTop: "1em" }}>
-              <p>Project description extracted from github.</p>
+              <p>{project.description || "No description."}</p>
               <Feed>
                 {events}
               </Feed>
@@ -80,7 +80,9 @@ export default class WorkspacesView extends Component<IProps> {
             </Header.Subheader>
           </Header.Content>
         </Header>
-        <p style={{ marginBottom: "2em" }}>Workspace notes for example installation notes.</p>
+        <p style={{ marginBottom: "2em" }}>
+          {workspace.notes || "No notes."}
+        </p>
         <Card.Group>
           {cards}
         </Card.Group>

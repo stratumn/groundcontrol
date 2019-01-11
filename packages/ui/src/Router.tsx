@@ -33,9 +33,11 @@ const workspacesViewQuery = graphql`
       name
       slug
       description
+      notes
       projects {
         repo
         branch
+        description
         commits(first: 3) {
           edges {
             node {
