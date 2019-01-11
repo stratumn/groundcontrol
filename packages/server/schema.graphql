@@ -5,11 +5,11 @@ type Workspace {
   name: String!
   slug: String!
   projects: [Project!]
+  description: String!
 }
 
 type Project {
   id: ID!
-  name: String!
   repo: String!
   branch: String!
   commits(first: Int, last: Int): CommitConnection!

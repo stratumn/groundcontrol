@@ -1,16 +1,65 @@
 workspaces:
 - name: Trace Dev
   slug: trace-dev
+  description: A workspace containing all the master branches of the Trace projects.
   projects:
-  - name: Trace API
-    repo: github.com/stratumn/trace-api
+  - repo: github.com/stratumn/trace-api
     branch: master
-  - name: Trace UI
-    repo: github.com/stratumn/trace-ui
+  - repo: github.com/stratumn/trace-ui
+    branch: master
+  - repo: github.com/stratumn/account-api
+    branch: master
+  - repo: github.com/stratumn/account-ui
     branch: master
 - name: Go Core Dev
   slug: go-core-dev
+  description: A workspace containing all the master branches of the Go Core projects.
   projects:
   - name: Go Core
-    repo: githuib.com/stratumn/go-core
+    repo: github.com/stratumn/go-core
+    branch: master
+- name: Trace Dev
+  slug: trace-dev-2
+  description: A workspace containing all the master branches of the Trace projects.
+  projects:
+  - repo: github.com/stratumn/trace-api
+    branch: master
+  - repo: github.com/stratumn/trace-ui
+    branch: master
+- name: Go Core Dev
+  slug: go-core-dev-2
+  description: A workspace containing all the master branches of the Go Core projects.
+  projects:
+  - name: Go Core
+    repo: github.com/stratumn/go-core
+    branch: master
+- name: Trace Dev
+  slug: trace-dev-3
+  description: A workspace containing all the master branches of the Trace projects.
+  projects:
+  - repo: github.com/stratumn/trace-api
+    branch: master
+  - repo: github.com/stratumn/trace-ui
+    branch: master
+- name: Go Core Dev
+  slug: go-core-dev-3
+  description: A workspace containing all the master branches of the Go Core projects.
+  projects:
+  - name: Go Core
+    repo: github.com/stratumn/go-core
+    branch: master
+- name: Trace Dev
+  slug: trace-dev-4
+  description: A workspace containing all the master branches of the Trace projects.
+  projects:
+  - repo: github.com/stratumn/trace-api
+    branch: master
+  - repo: github.com/stratumn/trace-ui
+    branch: master
+- name: Go Core Dev
+  slug: go-core-dev-4
+  description: A workspace containing all the master branches of the Go Core projects.
+  projects:
+  - name: Go Core
+    repo: github.com/stratumn/go-core
     branch: master

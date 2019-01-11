@@ -50,9 +50,9 @@ const commitsQuery = gql`
 `;
 
 const resolvers: ProjectResolvers.Resolvers = {
-  id: (obj) =>
+  id: (obj, args, context, info) =>
     // TODO: this isn't globally unique.
-    Buffer.from(`project:${obj.name}`).toString("base64"),
+    Buffer.from(`project:${obj.repo}`).toString("base64"),
 
   commits: async (obj, { first, last }) => {
     const segments = obj.repo.split("/");

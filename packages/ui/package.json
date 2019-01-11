@@ -2,6 +2,10 @@
   "name": "ui",
   "private": true,
   "dependencies": {
+    "debounce": "^1.2.0",
+    "farce": "^0.2.6",
+    "found": "^0.3.17",
+    "found-relay": "^0.3.1",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
     "react-relay": "^1.7.0",
@@ -27,6 +31,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "@types/debounce": "^1.2.0",
     "@types/graphql": "^14.0.4",
     "@types/jest": "23.3.11",
     "@types/node": "10.12.18",

@@ -5,16 +5,16 @@ import {
   RequestNode,
   Store,
   Variables
-} from 'relay-runtime';
+} from "relay-runtime";
 
 const fetchQuery = async (
 	operation: RequestNode,
 	variables: Variables,
 ) => {
-  return fetch('http://localhost:4000/graphql', {
-    method: 'POST',
+  return fetch("http://localhost:4000/graphql", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       query: operation.text,
