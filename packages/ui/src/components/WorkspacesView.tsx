@@ -1,5 +1,6 @@
 import { Link } from "found";
 import React, { Component } from "react";
+import Moment from "react-moment";
 import {
   Button,
   Card,
@@ -33,7 +34,13 @@ export default class WorkspacesView extends Component<IProps> {
               {commit.node.headline}
             </Feed.Summary>
             <Feed.Meta>
-              Pushed by {commit!.node.author} {commit!.node.date}
+              Pushed by <strong>{commit!.node.author}</strong>
+              <Moment
+                fromNow={true}
+                style={{marginLeft: 0}}
+              >
+                {commit!.node.date}
+              </Moment>
             </Feed.Meta>
           </Feed.Content>
         </Feed.Event>
