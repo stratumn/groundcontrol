@@ -30,16 +30,17 @@ type CommitConnection {
 
 type CommitEdge {
   cursor: String!
-  node: Commit
+  node: Commit!
 }
 
 type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
-  startCursor: String
-  endCursor: String
+  startCursor: String!
+  endCursor: String!
 }
 
 type Query {
   workspaces: [Workspace!]
+  workspace(slug: String!): Workspace
 }

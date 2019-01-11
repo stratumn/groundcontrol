@@ -12,3 +12,9 @@ export async function all(): Promise<Workspace[]> {
 
     return yaml.safeLoad(data).workspaces;
 }
+
+export async function get(slug: string) {
+    const items = await all();
+
+    return items.find((item) => item.slug === slug) || null;
+}
