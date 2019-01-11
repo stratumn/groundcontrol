@@ -2,6 +2,7 @@ workspaces:
 - name: Trace Dev
   slug: trace-dev
   description: A workspace containing all the master branches of the Trace projects.
+  notes: This should probably contains installation instructions.
   projects:
   - repo: github.com/stratumn/trace-api
     branch: master
@@ -14,6 +15,7 @@ workspaces:
 - name: Go Core Dev
   slug: go-core-dev
   description: A workspace containing all the master branches of the Go Core projects.
+  notes: This should probably contains installation instructions.
   projects:
   - name: Go Core
     repo: github.com/stratumn/go-core
@@ -21,6 +23,7 @@ workspaces:
 - name: Trace Dev
   slug: trace-dev-2
   description: A workspace containing all the master branches of the Trace projects.
+  notes: This should probably contains installation instructions.
   projects:
   - repo: github.com/stratumn/trace-api
     branch: master
@@ -29,6 +32,7 @@ workspaces:
 - name: Go Core Dev
   slug: go-core-dev-2
   description: A workspace containing all the master branches of the Go Core projects.
+  notes: This should probably contains installation instructions.
   projects:
   - name: Go Core
     repo: github.com/stratumn/go-core
@@ -36,6 +40,7 @@ workspaces:
 - name: Trace Dev
   slug: trace-dev-3
   description: A workspace containing all the master branches of the Trace projects.
+  notes: This should probably contains installation instructions.
   projects:
   - repo: github.com/stratumn/trace-api
     branch: master
@@ -44,6 +49,7 @@ workspaces:
 - name: Go Core Dev
   slug: go-core-dev-3
   description: A workspace containing all the master branches of the Go Core projects.
+  notes: This should probably contains installation instructions.
   projects:
   - name: Go Core
     repo: github.com/stratumn/go-core
@@ -51,6 +57,7 @@ workspaces:
 - name: Trace Dev
   slug: trace-dev-4
   description: A workspace containing all the master branches of the Trace projects.
+  notes: This should probably contains installation instructions.
   projects:
   - repo: github.com/stratumn/trace-api
     branch: master
@@ -59,6 +66,7 @@ workspaces:
 - name: Go Core Dev
   slug: go-core-dev-4
   description: A workspace containing all the master branches of the Go Core projects.
+  notes: This should probably contains installation instructions.
   projects:
   - name: Go Core
     repo: github.com/stratumn/go-core

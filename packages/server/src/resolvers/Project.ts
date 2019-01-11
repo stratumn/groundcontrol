@@ -1,6 +1,9 @@
 import gql from "graphql-tag";
 
-import { ProjectCommitsQuery } from "../__generated__/github";
+import {
+  ProjectCommitsQuery,
+  ProjectDescriptionQuery,
+} from "../__generated__/github";
 
 import {
   CommitConnection,
@@ -8,6 +11,18 @@ import {
 } from "../__generated__/groundcontrol";
 
 import github from "../clients/github";
+
+// Queries the description of a repo.
+const descriptionQuery = gql`
+  query ProjectDescriptionQuery(
+    $owner: String!,
+    $repo: String!,
+  ) {
+    repository(owner: $owner, name: $repo) {
+      description
+    }
+  }
+`;
 
 // Queries the commits of a repo.
 const commitsQuery = gql`
@@ -53,6 +68,20 @@ const resolvers: ProjectResolvers.Resolvers = {
   id: (obj, args, context, info) =>
     // TODO: this isn't globally unique.
     Buffer.from(`project:${obj.repo}`).toString("base64"),
+
+  description: async (obj) => {
+    const segments = obj.repo.split("/");
+
+    const res = await github.query<ProjectDescriptionQuery.Query, ProjectDescriptionQuery.Variables>({
+      query: descriptionQuery,
+      variables: {
+        owner: segments[1],
+        repo: segments[2],
+      },
+    });
+
+    return res.data.repository!.description;
+  },
 
   commits: async (obj, { first, last }) => {
     const segments = obj.repo.split("/");

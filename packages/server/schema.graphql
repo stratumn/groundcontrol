@@ -6,6 +6,7 @@ type Workspace {
   slug: String!
   projects: [Project!]
   description: String!
+  notes: String
 }
 
 type Project {
@@ -13,6 +14,7 @@ type Project {
   repo: String!
   branch: String!
   commits(first: Int, last: Int): CommitConnection!
+  description: String
 }
 
 type Commit {
@@ -36,8 +38,8 @@ type CommitEdge {
 type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
-  startCursor: String!
-  endCursor: String!
+  startCursor: String
+  endCursor: String
 }
 
 type Query {
