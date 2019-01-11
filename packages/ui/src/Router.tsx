@@ -1,3 +1,4 @@
+import graphql from "babel-plugin-relay/macro";
 import { BrowserProtocol, queryMiddleware } from "farce";
 import {
     createFarceRouter,
@@ -6,16 +7,29 @@ import {
     Redirect,
     Route,
   } from "found";
-import graphql from "babel-plugin-relay/macro";
 import React from "react";
 
 import App from "./components/App";
 import WorkspacesList from "./components/WorkspacesList";
 import WorkspacesView from "./components/WorkspacesView";
 
+const workspacesListQuery = graphql`
+  query RouterWorkspacesListQuery {
+    workspaces {
+      name
+      slug
+      description
+      projects {
+        repo
+        branch
+      }
+    }
+  }
+`;
+
 export default createFarceRouter({
-  historyProtocol: new BrowserProtocol(),
   historyMiddlewares: [queryMiddleware],
+  historyProtocol: new BrowserProtocol(),
   routeConfig: makeRouteConfig(
     <Route
       path="/"
@@ -25,19 +39,7 @@ export default createFarceRouter({
       <Route path="workspaces">
         <Route
           Component={WorkspacesList}
-          query={graphql`
-            query RouterWorkspacesListQuery {
-              workspaces {
-                name
-                slug
-                description
-                projects {
-                  repo
-                  branch
-                }
-              }  
-            }
-          `}
+          query={workspacesListQuery}
         />
         <Route
           path=":slug"

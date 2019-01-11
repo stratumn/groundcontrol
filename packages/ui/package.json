@@ -19,6 +19,7 @@
     "dev": "concurrently \"yarn gen:relay --watch\" \"yarn start\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "lint": "tslint -c tslint.json 'src/**/*.ts' 'src/**/*.tsx'",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -42,6 +43,8 @@
     "babel-plugin-relay": "^1.7.0",
     "concurrently": "^4.1.0",
     "relay-compiler": "^1.7.0",
-    "relay-compiler-language-typescript": "^1.1.1"
+    "relay-compiler-language-typescript": "^1.1.1",
+    "tslint": "^5.12.1",
+    "tslint-react": "^3.6.0"
   }
 }

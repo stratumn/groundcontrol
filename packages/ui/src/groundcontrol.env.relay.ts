@@ -4,28 +4,28 @@ import {
   RecordSource,
   RequestNode,
   Store,
-  Variables
+  Variables,
 } from "relay-runtime";
 
 const fetchQuery = async (
-	operation: RequestNode,
-	variables: Variables,
+  operation: RequestNode,
+  variables: Variables,
 ) => {
   return fetch("http://localhost:4000/graphql", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({
       query: operation.text,
       variables,
     }),
-  }).then(response => {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  }).then((response) => {
     return response.json();
   });
-}
+};
 
 export default new Environment({
   network: Network.create(fetchQuery),
-  store: new Store(new RecordSource()),  
+  store: new Store(new RecordSource()),
 });
