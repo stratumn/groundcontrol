@@ -7,7 +7,10 @@ import log from "./log";
 import schema from "./schema";
 
 (async () => {
-  const server = new ApolloServer({ schema: await schema() });
+  const server = new ApolloServer({
+    schema: await schema(),
+    // tracing: true,
+  });
 
   const app = express();
   app.use(cors());

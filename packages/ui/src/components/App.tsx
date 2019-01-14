@@ -7,7 +7,7 @@ export default class App extends Component {
   public render() {
     return (
       <div>
-        <Menu fixed="top">
+        <Menu fixed="top" inverted={true} color="grey">
           <Container>
             <Link
               to="/workspaces"

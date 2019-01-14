@@ -4,13 +4,14 @@ import React, { Component } from "react";
 import {
   Button,
   Card,
+  Divider,
   Header,
   Icon,
+  Input,
+  InputOnChangeData,
   Label,
   List,
   Placeholder,
-  Search,
-  SearchProps,
  } from "semantic-ui-react";
 
 import { RouterWorkspacesListQueryResponse } from "../__generated__/RouterWorkspacesListQuery.graphql";
@@ -23,7 +24,7 @@ interface IState {
 
 export default class WorkspacesList extends Component<IProps, IState> {
 
-  private handleSearchChange = debounce((e: React.MouseEvent<HTMLElement>, { value }: SearchProps) => {
+  private handleSearchChange = debounce((e: React.ChangeEvent<HTMLInputElement>, { value }: InputOnChangeData) => {
     this.setState({ searchQuery: value as string });
   }, 100);
 
@@ -90,6 +91,9 @@ export default class WorkspacesList extends Component<IProps, IState> {
               <Card.Meta>
                 {workspace.description}
               </Card.Meta>
+              <Divider horizontal={true}>
+                <Header as="h6">Repositories</Header>
+              </Divider>
               <Card.Description style={{ marginTop: "1em" }}>
                 <List>
                   {items}
@@ -121,17 +125,18 @@ export default class WorkspacesList extends Component<IProps, IState> {
           <Header.Content>
             Workspaces
             <Header.Subheader>
-              A workspace is a collection of related projects. Each project is linked to a Github repo and branch.
+              A workspace is a collection of related projects. Each project is linked to a Github repository and branch.
             </Header.Subheader>
           </Header.Content>
         </Header>
-        <Search
-          style={{ marginBottom: "2em" }}
-          open={false}
-          size="large"
-          onSearchChange={this.handleSearchChange}
-        />
-        <Card.Group>
+        <Input
+          size="huge"
+          icon="search"
+          placeholder="Search..."
+          style={{marginBottom: "2em"}}
+          onChange={this.handleSearchChange}
+         />
+        <Card.Group itemsPerRow={3}>
           {cards}
         </Card.Group>
       </div>

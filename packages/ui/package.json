@@ -9,6 +9,7 @@
     "moment": "^2.23.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
+    "react-markdown": "^4.0.6",
     "react-moment": "^0.8.4",
     "react-relay": "^1.7.0",
     "react-scripts": "2.1.2",
