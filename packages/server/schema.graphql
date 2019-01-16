@@ -1,6 +1,10 @@
 scalar DateTime
 
-type Workspace {
+interface Node {
+  id: ID!
+}
+
+type Workspace implements Node {
   id: ID!
   name: String!
   slug: String!
@@ -9,12 +13,18 @@ type Workspace {
   notes: String
 }
 
-type Project {
+type Project implements Node {
   id: ID!
   repo: String!
   branch: String!
-  commits(first: Int, last: Int): CommitConnection!
+  commits(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): CommitConnection!
   description: String
+  workspace: Workspace!
 }
 
 type Commit {
@@ -26,7 +36,7 @@ type Commit {
 }
 
 type CommitConnection {
-  edges: [CommitEdge!]
+  edges: [CommitEdge]
   pageInfo: PageInfo!
 }
 
@@ -35,14 +45,57 @@ type CommitEdge {
   node: Commit!
 }
 
+type Job implements Node {
+  id: ID!
+  name: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  status: JobStatus!
+  project: Project!
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+type JobConnection {
+  edges: [JobEdge]
+  pageInfo: PageInfo!
+}
+
+type JobEdge {
+  cursor: String!
+  node: Job!
+}
+
 type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
+  hasNextPage: Boolean
+  hasPreviousPage: Boolean
   startCursor: String
   endCursor: String
 }
 
 type Query {
-  workspaces: [Workspace!]
+  node(id: ID!): Node
+  workspaces: [Workspace]
   workspace(slug: String!): Workspace
+  jobs(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    status: [JobStatus!]
+  ): JobConnection!
+}
+
+type Mutation {
+  cloneProject(id: String!): Job!
+  cloneWorkspace(id: String!): [Job]
+}
+
+type Subscription {
+  jobUpdated: Job!
 }

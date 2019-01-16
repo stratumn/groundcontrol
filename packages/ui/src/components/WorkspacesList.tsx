@@ -16,6 +16,8 @@ import {
 
 import { RouterWorkspacesListQueryResponse } from "../__generated__/RouterWorkspacesListQuery.graphql";
 
+import RepoShortName from "./RepoShortName";
+
 type IProps = RouterWorkspacesListQueryResponse;
 
 interface IState {
@@ -58,12 +60,12 @@ export default class WorkspacesList extends Component<IProps, IState> {
 
       if (this.state.searchQuery.length > 0) {
         workspaces = workspaces.filter((elem) => (
-          elem.name.toLowerCase().indexOf(this.state.searchQuery.toLowerCase()) >= 0
+          elem!.name.toLowerCase().indexOf(this.state.searchQuery.toLowerCase()) >= 0
         ));
       }
 
       cards = workspaces.map((workspace) => {
-        const items = workspace.projects!.map((project) => (
+        const items = workspace!.projects!.map((project) => (
           <List.Item key={project.repo}>
             <List.Content floated="right">
               <Label
@@ -74,22 +76,22 @@ export default class WorkspacesList extends Component<IProps, IState> {
               </Label>
             </List.Content>
             <List.Content>
-              {project.repo.replace("github.com/", "")}
+              <RepoShortName repo={project.repo} />
             </List.Content>
           </List.Item>
         ));
 
         return (
-          <Card key={workspace.slug}>
+          <Card key={workspace!.slug}>
             <Card.Content>
               <Link
-                to={`/workspaces/${workspace.slug}`}
+                to={`/workspaces/${workspace!.slug}`}
                 Component={Card.Header}
               >
-                {workspace.name}
+                {workspace!.name}
               </Link>
               <Card.Meta>
-                {workspace.description}
+                {workspace!.description}
               </Card.Meta>
               <Divider horizontal={true}>
                 <Header as="h6">Repositories</Header>
@@ -103,7 +105,7 @@ export default class WorkspacesList extends Component<IProps, IState> {
             <Card.Content extra={true}>
               <div className="ui three buttons">
                 <Link
-                  to={`/workspaces/${workspace.slug}`}
+                  to={`/workspaces/${workspace!.slug}`}
                   className="ui grey button"
                 >
                   Details

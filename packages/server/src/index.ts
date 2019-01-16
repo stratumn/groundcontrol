@@ -4,12 +4,16 @@ import express from "express";
 
 import log from "./log";
 
+import workspaces from "./models/workspace";
 import schema from "./schema";
 
 (async () => {
+  // Force an initial load.
+  await workspaces.all();
+
   const server = new ApolloServer({
     schema: await schema(),
-    // tracing: true,
+    tracing: process.env.APOLLO_TRACING === "1",
   });
 
   const app = express();

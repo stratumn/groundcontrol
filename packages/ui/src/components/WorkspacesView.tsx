@@ -15,6 +15,7 @@ import {
  } from "semantic-ui-react";
 
 import { RouterWorkspacesViewQueryResponse } from "../__generated__/RouterWorkspacesViewQuery.graphql";
+import RepoShortName from "./RepoShortName";
 
 type IProps = RouterWorkspacesViewQueryResponse;
 
@@ -33,7 +34,7 @@ export default class WorkspacesView extends Component<IProps> {
         <Feed.Event key={commit!.node.id}>
           <Feed.Content>
             <Feed.Summary>
-              {commit.node.headline}
+              {commit!.node.headline}
             </Feed.Summary>
             <Feed.Meta>
               Pushed by <strong>{commit!.node.author}</strong>
@@ -51,17 +52,19 @@ export default class WorkspacesView extends Component<IProps> {
       return (
         <Card key={project.repo}>
           <Card.Content>
-            <Card.Header>{project.repo.replace("github.com/", "")}</Card.Header>
-              <Label style={{ marginTop: ".8em" }}>{project.branch}</Label>
-              <Card.Description style={{ marginTop: "1em" }}>
-                {project.description || "No description."}
-              </Card.Description>
-              <Divider horizontal={true}>
-                <Header as="h6">Latest Commits</Header>
-              </Divider>
-              <Feed>
-                {events}
-              </Feed>
+            <Card.Header>
+              <RepoShortName repo={project.repo} />
+            </Card.Header>
+            <Label style={{ marginTop: ".8em" }}>{project.branch}</Label>
+            <Card.Description style={{ marginTop: "1em" }}>
+              {project.description || "No description."}
+            </Card.Description>
+            <Divider horizontal={true}>
+              <Header as="h6">Latest Commits</Header>
+            </Divider>
+            <Feed>
+              {events}
+            </Feed>
           </Card.Content>
           <Card.Content extra={true}>
             <div className="ui three buttons">

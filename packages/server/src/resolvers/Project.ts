@@ -11,14 +11,15 @@ import {
 } from "../__generated__/groundcontrol";
 
 import github from "../clients/github";
+import { ownerAndName } from "../util/repo";
 
 // Queries the description of a repo.
 const descriptionQuery = gql`
   query ProjectDescriptionQuery(
-    $owner: String!,
-    $repo: String!,
+    $owner: String!
+    $name: String!
   ) {
-    repository(owner: $owner, name: $repo) {
+    repository(owner: $owner, name: $name) {
       description
     }
   }
@@ -27,17 +28,19 @@ const descriptionQuery = gql`
 // Queries the commits of a repo.
 const commitsQuery = gql`
   query ProjectCommitsQuery(
-    $owner: String!,
-    $repo: String!,
-    $branch: String!,
-    $first: Int,
+    $owner: String!
+    $name: String!
+    $branch: String!
+    $before: String
+    $after: String
+    $first: Int
     $last: Int
   ) {
-    repository(owner: $owner, name: $repo) {
+    repository(owner: $owner, name: $name) {
       ref(qualifiedName: $branch) {
         target {
           ... on Commit {
-            history(first: $first, last: $last) {
+            history(before: $before, after: $after, first: $first, last: $last) {
               pageInfo {
                 hasNextPage
                 hasPreviousPage
@@ -65,35 +68,33 @@ const commitsQuery = gql`
 `;
 
 const resolvers: ProjectResolvers.Resolvers = {
-  id: (obj, args, context, info) =>
-    // TODO: this isn't globally unique.
-    Buffer.from(`project:${obj.repo}`).toString("base64"),
-
-  description: async (obj) => {
-    const segments = obj.repo.split("/");
+  description: async ({ repo }) => {
+    const [owner, name] = ownerAndName(repo);
 
     const res = await github.query<ProjectDescriptionQuery.Query, ProjectDescriptionQuery.Variables>({
       query: descriptionQuery,
       variables: {
-        owner: segments[1],
-        repo: segments[2],
+        name,
+        owner,
       },
     });
 
     return res.data.repository!.description;
   },
 
-  commits: async (obj, { first, last }) => {
-    const segments = obj.repo.split("/");
+  commits: async ({ branch, repo }, { before, after, first, last }) => {
+    const [owner, name] = ownerAndName(repo);
 
     const res = await github.query<ProjectCommitsQuery.Query, ProjectCommitsQuery.Variables>({
       query: commitsQuery,
       variables: {
-        branch: obj.branch,
+        after,
+        before,
+        branch,
         first,
         last,
-        owner: segments[1],
-        repo: segments[2],
+        name,
+        owner,
       },
     });
 
