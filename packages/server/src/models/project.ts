@@ -9,8 +9,6 @@ import jobs from "./job";
 import node from "./node";
 import { workspacesRoot } from "./workspace";
 
-const git = simpleGit();
-
 export function get(gid: string) {
   return node.get(gid) as Project;
 }
@@ -22,6 +20,7 @@ export function clone(gid: string) {
     `Clone "${project.repo}@${project.branch}" into workspace "${project.workspace.name}"`,
     project,
     async () => {
+      const git = simpleGit();
       const [ owner, name ] = ownerAndName(project.repo);
       const localParentPath = join(workspacesRoot, project.workspace.slug, owner);
       const localPath = join(localParentPath, name);
