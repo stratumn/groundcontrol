@@ -1,4 +1,3 @@
-import { Link } from "found";
 import React, { Component } from "react";
 import ReactMarkdown from "react-markdown";
 import Moment from "react-moment";
@@ -50,7 +49,7 @@ export default class WorkspacesView extends Component<IProps> {
       ));
 
       return (
-        <Card key={project.repo}>
+        <Card key={project.id}>
           <Card.Content>
             <Card.Header>
               <RepoShortName repo={project.repo} />

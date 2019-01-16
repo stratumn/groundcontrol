@@ -46,7 +46,8 @@ export function add(name: string, project: Project, worker: () => Promise<any>):
 }
 
 export function find(opts: IFindOpts) {
-  let jobs = allJobs;
+  let jobs = allJobs.sort((a, b) =>
+    b.updatedAt.getTime() - a.updatedAt.getTime());
 
   if (opts.status) {
     jobs = jobs.filter((job) => opts.status!.indexOf(job.status) >= 0);

@@ -66,7 +66,7 @@ export default class WorkspacesList extends Component<IProps, IState> {
 
       cards = workspaces.map((workspace) => {
         const items = workspace!.projects!.map((project) => (
-          <List.Item key={project.repo}>
+          <List.Item key={project.id}>
             <List.Content floated="right">
               <Label
                 style={{ position: "relative", top: "-.3em" }}
@@ -82,7 +82,7 @@ export default class WorkspacesList extends Component<IProps, IState> {
         ));
 
         return (
-          <Card key={workspace!.slug}>
+          <Card key={workspace!.id}>
             <Card.Content>
               <Link
                 to={`/workspaces/${workspace!.slug}`}
