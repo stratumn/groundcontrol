@@ -71,7 +71,7 @@ export default class JobsList extends Component<IProps> {
         label={status}
         checked={!statuses || statuses!.indexOf(status) >= 0}
         style={{marginRight: "2em"}}
-        onClick={this.toggleStatus.bind(this, status)}
+        onClick={this.handleToggleStatus.bind(this, status)}
       />
     ));
 
@@ -106,7 +106,7 @@ export default class JobsList extends Component<IProps> {
     );
   }
 
-  private toggleStatus(status: string) {
+  private handleToggleStatus(status: string) {
     const statuses = this.props.params.status ?
       this.props.params.status.split(",") :
       ["QUEUED", "RUNNING", "DONE", "FAILED"];

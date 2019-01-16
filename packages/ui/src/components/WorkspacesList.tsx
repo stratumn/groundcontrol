@@ -1,6 +1,8 @@
+import graphql from "babel-plugin-relay/macro";
 import debounce from "debounce";
 import { Link } from "found";
 import React, { Component } from "react";
+import { commitMutation, createFragmentContainer, RelayProp } from "react-relay";
 import {
   Button,
   Card,
@@ -18,13 +20,23 @@ import { RouterWorkspacesListQueryResponse } from "../__generated__/RouterWorksp
 
 import RepoShortName from "./RepoShortName";
 
-type IProps = RouterWorkspacesListQueryResponse;
+interface IProps extends RouterWorkspacesListQueryResponse {
+  relay: RelayProp;
+}
 
 interface IState {
   searchQuery: string;
 }
 
-export default class WorkspacesList extends Component<IProps, IState> {
+const cloneWorkspaceMutation = graphql`
+  mutation WorkspacesListCloneWorkspaceMutation($id: String!) {
+    cloneWorkspace(id: $id) {
+      id
+    }
+  }
+`;
+
+export class WorkspacesList extends Component<IProps, IState> {
 
   private handleSearchChange = debounce((e: React.ChangeEvent<HTMLInputElement>, { value }: InputOnChangeData) => {
     this.setState({ searchQuery: value as string });
@@ -36,6 +48,7 @@ export default class WorkspacesList extends Component<IProps, IState> {
   }
 
   public render() {
+    console.log(this.props);
     let cards: JSX.Element[];
 
     if (!this.props) {
@@ -110,7 +123,10 @@ export default class WorkspacesList extends Component<IProps, IState> {
                 >
                   Details
                 </Link>
-                <Button color="teal">
+                <Button
+                  color="teal"
+                  onClick={this.handleCloneWorkspace.bind(this, workspace!.id)}
+                >
                   Clone
                 </Button>
               </div>
@@ -144,4 +160,15 @@ export default class WorkspacesList extends Component<IProps, IState> {
       </div>
     );
   }
+
+  private handleCloneWorkspace(id: string) {
+    commitMutation(this.props.relay.environment, {
+      mutation: cloneWorkspaceMutation,
+      variables: {
+        id,
+      },
+    });
+  }
 }
+
+export default createFragmentContainer(WorkspacesList, {});
