@@ -1,18 +1,24 @@
 import { ApolloServer } from "apollo-server-express";
 import cors from "cors";
 import express from "express";
+import { createServer } from "http";
+import { SubscriptionServer } from "subscriptions-transport-ws";
 
 import log from "./log";
 
 import workspaces from "./models/workspace";
 import schema from "./schema";
 
+const port = 4000;
+
 (async () => {
+  const skema = await schema();
+
   // Force an initial load.
   await workspaces.all();
 
   const server = new ApolloServer({
-    schema: await schema(),
+    schema: skema,
     tracing: process.env.APOLLO_TRACING === "1",
   });
 
@@ -20,9 +26,10 @@ import schema from "./schema";
   app.use(cors());
   server.applyMiddleware({ app });
 
-  const port = 4000;
+  const httpServer = createServer(app);
+  server.installSubscriptionHandlers(httpServer);
 
-  app.listen({ port }, () =>
-    log.info(`🚀 Server ready at http://localhost:${port}${server.graphqlPath}`),
-  );
+  httpServer.listen(port, () => {
+    log.info(`🚀 Server ready at http://localhost:${port}${server.graphqlPath}`);
+  });
 })();
