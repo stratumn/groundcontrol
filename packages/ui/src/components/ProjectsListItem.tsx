@@ -13,7 +13,7 @@ import {
 
 import { ProjectsListItem_item } from "./__generated__/ProjectsListItem_item.graphql";
 
-import RepoShortName from "./RepoShortName";
+import RepositoryShortName from "./RepositoryShortName";
 
 interface IProps {
   item: ProjectsListItem_item;
@@ -48,7 +48,7 @@ export class ProjectsListItem extends Component<IProps> {
       <Card>
         <Card.Content>
           <Card.Header>
-            <RepoShortName repo={item.repo} />
+            <RepositoryShortName repository={item.repository} />
           </Card.Header>
           <Label style={{ marginTop: ".8em" }}>{item.branch}</Label>
           <Card.Description style={{ marginTop: "1em" }}>
@@ -77,7 +77,7 @@ export class ProjectsListItem extends Component<IProps> {
 export default createFragmentContainer(ProjectsListItem, graphql`
   fragment ProjectsListItem_item on Project {
     id
-    repo
+    repository
     branch
     description
     commits(first: 3) {

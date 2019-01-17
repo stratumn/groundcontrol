@@ -27,7 +27,7 @@ export class JobsList extends Component<IProps> {
             <Table.HeaderCell>Created At</Table.HeaderCell>
             <Table.HeaderCell>Updated At</Table.HeaderCell>
             <Table.HeaderCell>Workspace</Table.HeaderCell>
-            <Table.HeaderCell>Repo</Table.HeaderCell>
+            <Table.HeaderCell>Repository</Table.HeaderCell>
             <Table.HeaderCell>Status</Table.HeaderCell>
           </Table.Row>
         </Table.Header>

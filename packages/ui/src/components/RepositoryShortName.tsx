@@ -1,13 +1,13 @@
 import React, { Component } from "react";
 
 interface IProps {
-  repo: string;
+  repository: string;
 }
 
-export default class RepoShortName extends Component<IProps> {
+export default class RepositoryShortName extends Component<IProps> {
 
   public render() {
-    const shortName = this.props.repo
+    const shortName = this.props.repository
       .replace(/^git@github\.com:/, "")
       .replace(/\.git$/, "");
 

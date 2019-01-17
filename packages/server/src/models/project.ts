@@ -4,7 +4,7 @@ import simpleGit from "simple-git/promise";
 
 import { Project } from "../__generated__/groundcontrol";
 
-import { ownerAndName } from "../util/repo";
+import { ownerAndName } from "../util/repository";
 import jobs from "./job";
 import node from "./node";
 import { workspacesRoot } from "./workspace";
@@ -17,16 +17,16 @@ export function clone(gid: string) {
   const project = get(gid);
 
   return jobs.add(
-    `Clone "${project.repo}@${project.branch}" into workspace "${project.workspace.name}"`,
+    `Clone "${project.repository}@${project.branch}" into workspace "${project.workspace.name}"`,
     project,
     async () => {
       const git = simpleGit();
-      const [ owner, name ] = ownerAndName(project.repo);
+      const [ owner, name ] = ownerAndName(project.repository);
       const localParentPath = join(workspacesRoot, project.workspace.slug, owner);
       const localPath = join(localParentPath, name);
 
       await ensureDir(localParentPath);
-      await git.clone(project.repo, localPath);
+      await git.clone(project.repository, localPath);
       await git.checkout(project.branch);
     },
   );

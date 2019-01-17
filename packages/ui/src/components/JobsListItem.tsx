@@ -9,7 +9,7 @@ import { createFragmentContainer } from "react-relay";
 import { JobsListItem_item } from "./__generated__/JobsListItem_item.graphql";
 
 import Moment from "react-moment";
-import RepoShortName from "./RepoShortName";
+import RepositoryShortName from "./RepositoryShortName";
 
 interface IProps {
   item: JobsListItem_item;
@@ -28,7 +28,9 @@ export class JobsListItem extends Component<IProps> {
         <Table.Cell>
           <Link to={`/workspaces/${item.project.workspace.slug}`}>{item.project.workspace.name}</Link>
         </Table.Cell>
-        <Table.Cell><RepoShortName repo={item.project.repo} /></Table.Cell>
+        <Table.Cell>
+          <RepositoryShortName repository={item.project.repository} />
+         </Table.Cell>
         <Table.Cell
           positive={item.status === "DONE"}
           warning={item.status === "RUNNING"}
@@ -50,7 +52,7 @@ export default createFragmentContainer(JobsListItem, graphql`
     createdAt
     updatedAt
     project {
-      repo
+      repository
       branch
       workspace {
         slug

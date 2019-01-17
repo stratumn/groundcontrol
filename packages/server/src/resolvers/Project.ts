@@ -11,7 +11,7 @@ import {
 } from "../__generated__/groundcontrol";
 
 import github from "../clients/github";
-import { ownerAndName } from "../util/repo";
+import { ownerAndName } from "../util/repository";
 
 // Queries the description of a repo.
 const descriptionQuery = gql`
@@ -68,8 +68,8 @@ const commitsQuery = gql`
 `;
 
 const resolvers: ProjectResolvers.Resolvers = {
-  description: async ({ repo }) => {
-    const [owner, name] = ownerAndName(repo);
+  description: async ({ repository }) => {
+    const [owner, name] = ownerAndName(repository);
 
     const res = await github.query<ProjectDescriptionQuery.Query, ProjectDescriptionQuery.Variables>({
       query: descriptionQuery,
@@ -82,8 +82,8 @@ const resolvers: ProjectResolvers.Resolvers = {
     return res.data.repository!.description;
   },
 
-  commits: async ({ branch, repo }, { before, after, first, last }) => {
-    const [owner, name] = ownerAndName(repo);
+  commits: async ({ branch, repository }, { before, after, first, last }) => {
+    const [owner, name] = ownerAndName(repository);
 
     const res = await github.query<ProjectCommitsQuery.Query, ProjectCommitsQuery.Variables>({
       query: commitsQuery,

@@ -26,7 +26,7 @@ export async function all(): Promise<Workspace[]> {
     node.set(workspace.id, workspace);
 
     for (const prj of workspace.projects!) {
-      prj.id = toGlobalId(Type.PROJECT, workspace.slug, prj.repo, prj.branch);
+      prj.id = toGlobalId(Type.PROJECT, workspace.slug, prj.repository, prj.branch);
       prj.workspace = workspace;
 
       node.set(prj.id, prj);

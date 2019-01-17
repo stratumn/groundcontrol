@@ -13,7 +13,7 @@ import {
 
 import { WorkspacesListItem_item } from "./__generated__/WorkspacesListItem_item.graphql";
 
-import RepoShortName from "./RepoShortName";
+import RepositoryShortName from "./RepositoryShortName";
 
 interface IProps {
   item: WorkspacesListItem_item;
@@ -37,7 +37,7 @@ export class WorkspacesListItem extends Component<IProps> {
           </Label>
         </List.Content>
         <List.Content>
-          <RepoShortName repo={project.repo} />
+          <RepositoryShortName repository={project.repository} />
         </List.Content>
       </List.Item>
     ));
@@ -92,7 +92,7 @@ export default createFragmentContainer(WorkspacesListItem, graphql`
     description
     projects {
       id
-      repo
+      repository
       branch
     }
   }`,

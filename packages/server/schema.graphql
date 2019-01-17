@@ -28,7 +28,7 @@ type Workspace implements Node {
 
 type Project implements Node {
   id: ID!
-  repo: String!
+  repository: String!
   branch: String!
   commits(
     after: String

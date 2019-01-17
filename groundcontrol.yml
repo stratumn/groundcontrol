@@ -7,15 +7,15 @@ workspaces:
 
     It can even use **Markdown!** How *unsafe.*
   projects:
-  - repo: git@github.com:stratumn/trace-api.git
+  - repository: git@github.com:stratumn/trace-api.git
     branch: master
-  - repo: git@github.com:stratumn/trace-ui.git
+  - repository: git@github.com:stratumn/trace-ui.git
     branch: master
-  - repo: git@github.com:stratumn/trace-sdk-js.git
+  - repository: git@github.com:stratumn/trace-sdk-js.git
     branch: master
-  - repo: git@github.com:stratumn/account-api.git
+  - repository: git@github.com:stratumn/account-api.git
     branch: master
-  - repo: git@github.com:stratumn/account-ui.git
+  - repository: git@github.com:stratumn/account-ui.git
     branch: master
 - name: Go Core Dev
   slug: go-core-dev
@@ -23,5 +23,5 @@ workspaces:
   notes: This should probably contain installation instructions.
   projects:
   - name: Go Core
-    repo: git@github.com:stratumn/go-core.git
+    repository: git@github.com:stratumn/go-core.git
     branch: master
