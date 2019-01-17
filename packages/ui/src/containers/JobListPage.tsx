@@ -2,10 +2,6 @@ import graphql from "babel-plugin-relay/macro";
 import { Router } from "found";
 import React, { Component } from "react";
 import { Disposable } from "relay-runtime";
-import {
-  Header,
-  Icon,
- } from "semantic-ui-react";
 
 import { createFragmentContainer } from "react-relay";
 
@@ -13,6 +9,7 @@ import { JobListPage_viewer } from "./__generated__/JobListPage_viewer.graphql";
 
 import JobFilter from "../components/JobFilter";
 import JobList from "../components/JobList";
+import Page from "../components/Page";
 
 import { subscribe } from "../subscriptions/jobUpserted";
 
@@ -34,22 +31,17 @@ export class JobListPage extends Component<IProps> {
       this.props.params.filters.split(",");
 
     return (
-      <div>
-        <Header as="h1" style={{marginBottom: "2em"}}>
-          <Icon name="tasks" />
-          <Header.Content>
-            Jobs
-            <Header.Subheader>
-              Jobs are short lived tasks such as cloning a repository.
-            </Header.Subheader>
-          </Header.Content>
-        </Header>
+      <Page
+        header="Jobs"
+        subheader="Jobs are short lived tasks such as cloning a repository."
+        icon="tasks"
+      >
         <JobFilter
           filters={filters}
           onChange={this.handleFiltersChange}
         />
         <JobList items={items} />
-      </div>
+      </Page>
     );
   }
 

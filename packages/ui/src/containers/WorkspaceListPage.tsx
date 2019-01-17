@@ -8,6 +8,7 @@ import {
 
 import { WorkspaceListPage_viewer } from "./__generated__/WorkspaceListPage_viewer.graphql";
 
+import Page from "../components/Page";
 import WorkspacesCardGroup from "../components/WorkspaceCardGroup";
 import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
@@ -40,16 +41,11 @@ export class WorkspaceListPage extends Component<IProps, IState> {
     }
 
     return (
-      <div>
-        <Header as="h1" style={{ marginBottom: "1.2em" }} >
-          <Icon name="cubes" />
-          <Header.Content>
-            Workspaces
-            <Header.Subheader>
-              A workspace is a collection of related projects. Each project is linked to a Github repository and branch.
-            </Header.Subheader>
-          </Header.Content>
-        </Header>
+      <Page
+        header="Workspaces"
+        subheader="A workspace is a collection of related Github repositories and branches."
+        icon="cubes"
+      >
         <WorkspaceSearch
           onChange={this.handleSearchChange}
         />
@@ -57,7 +53,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
           items={items}
           onClone={this.handleClone}
         />
-      </div>
+      </Page>
     );
   }
 

@@ -12,6 +12,7 @@ import {
 
 import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_viewer.graphql";
 
+import Page from "../components/Page";
 import ProjectCardGroup from "../components/ProjectCardGroup";
 
 interface IProps {
@@ -27,16 +28,11 @@ export class WorkspaceViewPage extends Component<IProps> {
 
     // TODO: move to own components.
     return (
-      <div>
-        <Header as="h1">
-          <Icon name="cube" />
-          <Header.Content>
-            {workspace.name}
-            <Header.Subheader>
-              {workspace.description}
-            </Header.Subheader>
-          </Header.Content>
-        </Header>
+      <Page
+        header={workspace.name}
+        subheader={workspace.description}
+        icon="cube"
+      >
         <Label size="large">not cloned</Label>
         <div style={{ margin: "2em 0" }}>
           <ReactMarkdown source={notes} />
@@ -66,7 +62,7 @@ export class WorkspaceViewPage extends Component<IProps> {
         <ProjectCardGroup
           items={items}
         />
-      </div>
+      </Page>
     );
   }
 
