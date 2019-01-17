@@ -17,12 +17,12 @@ interface IProps extends WorkspacesPage {
   viewer: WorkspacesPage_viewer;
 }
 
-interface IState {
-  query: string;
-}
-
 interface IProps {
   viewer: WorkspacesPage_viewer;
+}
+
+interface IState {
+  query: string;
 }
 
 export class WorkspacesPage extends Component<IProps, IState> {

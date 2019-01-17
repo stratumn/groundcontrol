@@ -9,44 +9,23 @@ import {
   } from "found";
 import React from "react";
 
-import WorkspacesView from "./components/WorkspacesView";
 import App from "./containers/App";
 import JobsPage from "./containers/JobsPage";
+import WorkspacePage from "./containers/WorkspacePage";
 import WorkspacesPage from "./containers/WorkspacesPage";
 
-const workspacesListQuery = graphql`
-  query RouterWorkspacesListQuery {
+const workspacesQuery = graphql`
+  query RouterWorkspacesQuery {
     viewer {
       ...WorkspacesPage_viewer
     }
   }
 `;
 
-const workspacesViewQuery = graphql`
-  query RouterWorkspacesViewQuery($slug: String!) {
+const workspaceQuery = graphql`
+  query RouterWorkspaceQuery($slug: String!) {
     viewer {
-      workspace(slug: $slug) {
-        name
-        slug
-        description
-        notes
-        projects {
-          id
-          repo
-          branch
-          description
-          commits(first: 3) {
-            edges {
-              node {
-                id
-                headline
-                date
-                author
-              }
-            }
-          }
-        }
-      }
+      ...WorkspacePage_viewer @arguments(slug: $slug)
     }
   }
 `;
@@ -75,12 +54,12 @@ export default createFarceRouter({
       <Route path="workspaces">
         <Route
           Component={WorkspacesPage}
-          query={workspacesListQuery}
+          query={workspacesQuery}
         />
         <Route
           path=":slug"
-          Component={WorkspacesView}
-          query={workspacesViewQuery}
+          Component={WorkspacePage}
+          query={workspaceQuery}
         />
       </Route>
       <Route path="jobs">
@@ -90,9 +69,8 @@ export default createFarceRouter({
         />
         <Route
           path="filter/:filters"
-          Component={JobsPage}
-          query={jobsQuery}
-          prepareVariables={prepareJobsVariables}
+          Component={WorkspacePage}
+          query={workspaceQuery}
         />
       </Route>
     </Route>,

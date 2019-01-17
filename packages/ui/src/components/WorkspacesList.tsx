@@ -1,12 +1,11 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
-import { commitMutation, createFragmentContainer, RelayProp } from "react-relay";
+import { createFragmentContainer } from "react-relay";
 import { Card } from "semantic-ui-react";
 
 import { WorkspacesList_items } from "./__generated__/WorkspacesList_items.graphql";
 
 import WorkspacesListItem from "./WorkspacesListItem";
-
 
 interface IProps {
   items: WorkspacesList_items;
