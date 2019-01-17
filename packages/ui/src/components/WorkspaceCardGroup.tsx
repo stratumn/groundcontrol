@@ -3,21 +3,21 @@ import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
 import { Card } from "semantic-ui-react";
 
-import { WorkspacesList_items } from "./__generated__/WorkspacesList_items.graphql";
+import { WorkspaceCardGroup_items } from "./__generated__/WorkspaceCardGroup_items.graphql";
 
-import WorkspacesListItem from "./WorkspacesListItem";
+import WorkspaceCard from "./WorkspaceCard";
 
 interface IProps {
-  items: WorkspacesList_items;
+  items: WorkspaceCardGroup_items;
   onClone: (id: string) => any;
 }
 
-export class WorkspacesList extends Component<IProps> {
+export class WorkspaceCardGroup extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
     const cards = items.map((item) => (
-      <WorkspacesListItem
+      <WorkspaceCard
         key={item.id}
         item={item}
         onClone={this.handleClone.bind(this, item.id)}
@@ -36,10 +36,10 @@ export class WorkspacesList extends Component<IProps> {
   }
 }
 
-export default createFragmentContainer(WorkspacesList, graphql`
-  fragment WorkspacesList_items on Workspace
+export default createFragmentContainer(WorkspaceCardGroup, graphql`
+  fragment WorkspaceCardGroup_items on Workspace
     @relay(plural: true) {
-    ...WorkspacesListItem_item
+    ...WorkspaceCard_item
     id
   }`,
 );

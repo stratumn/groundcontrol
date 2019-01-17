@@ -10,35 +10,35 @@ import {
 import React from "react";
 
 import App from "./containers/App";
-import JobsPage from "./containers/JobsPage";
-import WorkspacePage from "./containers/WorkspacePage";
-import WorkspacesPage from "./containers/WorkspacesPage";
+import JobListPage from "./containers/JobListPage";
+import WorkspaceListPage from "./containers/WorkspaceListPage";
+import WorkspaceViewPage from "./containers/WorkspaceViewPage";
 
-const workspacesQuery = graphql`
+const workspaceListQuery = graphql`
   query RouterWorkspacesQuery {
     viewer {
-      ...WorkspacesPage_viewer
+      ...WorkspaceListPage_viewer
     }
   }
 `;
 
-const workspaceQuery = graphql`
+const workspaceViewQuery = graphql`
   query RouterWorkspaceQuery($slug: String!) {
     viewer {
-      ...WorkspacePage_viewer @arguments(slug: $slug)
+      ...WorkspaceViewPage_viewer @arguments(slug: $slug)
     }
   }
 `;
 
-const jobsQuery = graphql`
+const jobListQuery = graphql`
   query RouterJobsQuery($status: [JobStatus!]) {
     viewer {
-      ...JobsPage_viewer @arguments(status: $status)
+      ...JobListPage_viewer @arguments(status: $status)
     }
   }
 `;
 
-function prepareJobsVariables({ filters }: { filters: string }) {
+function prepareJobListVariables({ filters }: { filters: string }) {
   return { status: filters ? filters.split(",") : null };
 }
 
@@ -53,24 +53,25 @@ export default createFarceRouter({
       <Redirect from="/" to="/workspaces" />
       <Route path="workspaces">
         <Route
-          Component={WorkspacesPage}
-          query={workspacesQuery}
+          Component={WorkspaceListPage}
+          query={workspaceListQuery}
         />
         <Route
           path=":slug"
-          Component={WorkspacePage}
-          query={workspaceQuery}
+          Component={WorkspaceViewPage}
+          query={workspaceViewQuery}
         />
       </Route>
       <Route path="jobs">
         <Route
-          Component={JobsPage}
-          query={jobsQuery}
+          Component={JobListPage}
+          query={jobListQuery}
         />
         <Route
-          path="filter/:filters"
-          Component={WorkspacePage}
-          query={workspaceQuery}
+          path=":filters"
+          Component={JobListPage}
+          query={jobListQuery}
+          prepareVariables={prepareJobListVariables}
         />
       </Route>
     </Route>,

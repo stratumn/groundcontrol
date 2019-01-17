@@ -1,6 +1,5 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
-import Moment from "react-moment";
 import { createFragmentContainer } from "react-relay";
 import {
   Button,
@@ -10,16 +9,16 @@ import {
   Label,
  } from "semantic-ui-react";
 
-import { ProjectsListItem_item } from "./__generated__/ProjectsListItem_item.graphql";
+import { ProjectCard_item } from "./__generated__/ProjectCard_item.graphql";
 
-import CommitsList from "./CommitsList";
+import CommitList from "./CommitList";
 import RepositoryShortName from "./RepositoryShortName";
 
 interface IProps {
-  item: ProjectsListItem_item;
+  item: ProjectCard_item;
 }
 
-export class ProjectsListItem extends Component<IProps> {
+export class ProjectCard extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
@@ -39,7 +38,7 @@ export class ProjectsListItem extends Component<IProps> {
           <Divider horizontal={true}>
             <Header as="h6">Latest Commits</Header>
           </Divider>
-          <CommitsList items={commits} />
+          <CommitList items={commits} />
         </Card.Content>
         <Card.Content extra={true}>
           <div className="ui three buttons">
@@ -54,19 +53,18 @@ export class ProjectsListItem extends Component<IProps> {
 
 }
 
-export default createFragmentContainer(ProjectsListItem, graphql`
-  fragment ProjectsListItem_item on Project
+export default createFragmentContainer(ProjectCard, graphql`
+  fragment ProjectCard_item on Project
     @argumentDefinitions(
       commitsLimit: { type: "Int", defaultValue: 3 },
     ) {
-    id
     repository
     branch
     description
     commits(first: $commitsLimit) {
       edges {
         node {
-          ...CommitsList_items
+          ...CommitList_items
         }
       }
     }

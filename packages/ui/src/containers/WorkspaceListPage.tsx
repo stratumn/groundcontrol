@@ -6,26 +6,26 @@ import {
   Icon,
  } from "semantic-ui-react";
 
-import { WorkspacesPage_viewer } from "./__generated__/WorkspacesPage_viewer.graphql";
+import { WorkspaceListPage_viewer } from "./__generated__/WorkspaceListPage_viewer.graphql";
 
-import WorkspacesList from "../components/WorkspacesList";
-import WorkspacesListSearch from "../components/WorkspacesListSearch";
+import WorkspacesCardGroup from "../components/WorkspaceCardGroup";
+import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
 
-interface IProps extends WorkspacesPage {
+interface IProps extends WorkspaceListPage {
   relay: RelayProp;
-  viewer: WorkspacesPage_viewer;
+  viewer: WorkspaceListPage_viewer;
 }
 
 interface IProps {
-  viewer: WorkspacesPage_viewer;
+  viewer: WorkspaceListPage_viewer;
 }
 
 interface IState {
   query: string;
 }
 
-export class WorkspacesPage extends Component<IProps, IState> {
+export class WorkspaceListPage extends Component<IProps, IState> {
 
   public state: IState = {
     query: "",
@@ -50,10 +50,10 @@ export class WorkspacesPage extends Component<IProps, IState> {
             </Header.Subheader>
           </Header.Content>
         </Header>
-        <WorkspacesListSearch
+        <WorkspaceSearch
           onChange={this.handleSearchChange}
         />
-        <WorkspacesList
+        <WorkspacesCardGroup
           items={items}
           onClone={this.handleClone}
         />
@@ -70,10 +70,10 @@ export class WorkspacesPage extends Component<IProps, IState> {
   }
 }
 
-export default createFragmentContainer(WorkspacesPage, graphql`
-  fragment WorkspacesPage_viewer on User {
+export default createFragmentContainer(WorkspaceListPage, graphql`
+  fragment WorkspaceListPage_viewer on User {
     workspaces {
-      ...WorkspacesList_items
+      ...WorkspaceCardGroup_items
       name
     }
   }`,

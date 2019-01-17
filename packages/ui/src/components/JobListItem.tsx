@@ -6,16 +6,16 @@ import {
  } from "semantic-ui-react";
 
 import { createFragmentContainer } from "react-relay";
-import { JobsListItem_item } from "./__generated__/JobsListItem_item.graphql";
+import { JobListItem_item } from "./__generated__/JobListItem_item.graphql";
 
 import Moment from "react-moment";
 import RepositoryShortName from "./RepositoryShortName";
 
 interface IProps {
-  item: JobsListItem_item;
+  item: JobListItem_item;
 }
 
-export class JobsListItem extends Component<IProps> {
+export class JobListItem extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
@@ -44,9 +44,8 @@ export class JobsListItem extends Component<IProps> {
 
 }
 
-export default createFragmentContainer(JobsListItem, graphql`
-  fragment JobsListItem_item on Job {
-    id
+export default createFragmentContainer(JobListItem, graphql`
+  fragment JobListItem_item on Job {
     name
     status
     createdAt

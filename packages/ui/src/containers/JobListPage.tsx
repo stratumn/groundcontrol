@@ -9,22 +9,22 @@ import {
 
 import { createFragmentContainer } from "react-relay";
 
-import { JobsPage_viewer } from "./__generated__/JobsPage_viewer.graphql";
+import { JobListPage_viewer } from "./__generated__/JobListPage_viewer.graphql";
 
-import JobsList from "../components/JobsList";
-import JobsListFilter from "../components/JobsListFilter";
+import JobFilter from "../components/JobFilter";
+import JobList from "../components/JobList";
 
 import { subscribe } from "../subscriptions/jobUpserted";
 
 interface IProps {
-  viewer: JobsPage_viewer;
+  viewer: JobListPage_viewer;
   params: {
     filters: string | undefined;
   };
   router: Router;
 }
 
-export class JobsPage extends Component<IProps> {
+export class JobListPage extends Component<IProps> {
 
   private disposables: Disposable[] = [];
 
@@ -44,11 +44,11 @@ export class JobsPage extends Component<IProps> {
             </Header.Subheader>
           </Header.Content>
         </Header>
-        <JobsListFilter
+        <JobFilter
           filters={filters}
           onChange={this.handleFiltersChange}
         />
-        <JobsList items={items} />
+        <JobList items={items} />
       </div>
     );
   }
@@ -70,24 +70,24 @@ export class JobsPage extends Component<IProps> {
       return this.props.router.replace("/jobs");
     }
 
-    this.props.router.replace(`/jobs/filter/${filters.join(",")}`);
+    this.props.router.replace(`/jobs/${filters.join(",")}`);
   }
 
 }
 
-export default createFragmentContainer(JobsPage, graphql`
-  fragment JobsPage_viewer on User
+export default createFragmentContainer(JobListPage, graphql`
+  fragment JobListPage_viewer on User
     @argumentDefinitions(
       status: { type: "[JobStatus!]", defaultValue: null },
     ) {
     jobs(first: 100, status: $status)
       @connection(
-        key: "JobsPage_jobs",
+        key: "JobListPage_jobs",
         filters: ["status"],
       ) {
       edges {
         node {
-          ...JobsList_items
+          ...JobList_items
           id
         }
       }

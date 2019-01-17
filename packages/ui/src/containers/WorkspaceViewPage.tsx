@@ -10,15 +10,15 @@ import {
   Menu,
  } from "semantic-ui-react";
 
-import { WorkspacePage_viewer } from "./__generated__/WorkspacePage_viewer.graphql";
+import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_viewer.graphql";
 
-import ProjectsList from "../components/ProjectsList";
+import ProjectCardGroup from "../components/ProjectCardGroup";
 
 interface IProps {
-  viewer: WorkspacePage_viewer;
+  viewer: WorkspaceViewPage_viewer;
 }
 
-export class WorkspacePage extends Component<IProps> {
+export class WorkspaceViewPage extends Component<IProps> {
 
   public render() {
     const workspace = this.props.viewer.workspace!;
@@ -63,7 +63,7 @@ export class WorkspacePage extends Component<IProps> {
             </Dropdown>
           </Menu.Item>
         </Menu>
-        <ProjectsList
+        <ProjectCardGroup
           items={items}
         />
       </div>
@@ -72,15 +72,15 @@ export class WorkspacePage extends Component<IProps> {
 
 }
 
-export default createFragmentContainer(WorkspacePage, graphql`
-  fragment WorkspacePage_viewer on User
+export default createFragmentContainer(WorkspaceViewPage, graphql`
+  fragment WorkspaceViewPage_viewer on User
     @argumentDefinitions(
       slug: { type: "String!" },
       commitsLimit: { type: "Int", defaultValue: 3 },
     ) {
     workspace(slug: $slug) {
       projects {
-        ...ProjectsList_items @arguments(commitsLimit: $commitsLimit)
+        ...ProjectCardGroup_items @arguments(commitsLimit: $commitsLimit)
       }
       name
       description

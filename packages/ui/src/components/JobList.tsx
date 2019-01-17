@@ -5,19 +5,24 @@ import {
   Table,
  } from "semantic-ui-react";
 
-import { JobsList_items } from "./__generated__/JobsList_items.graphql";
+import { JobList_items } from "./__generated__/JobList_items.graphql";
 
-import JobsListItem from "./JobsListItem";
+import JobListItem from "./JobListItem";
 
 interface IProps {
-  items: JobsList_items;
+  items: JobList_items;
 }
 
-export class JobsList extends Component<IProps> {
+export class JobList extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
-    const rows = items.map((item) => <JobsListItem key={item.id} item={item} />);
+    const rows = items.map((item) => (
+      <JobListItem
+        key={item.id}
+        item={item}
+      />
+    ));
 
     return (
       <Table celled={true}>
@@ -40,10 +45,10 @@ export class JobsList extends Component<IProps> {
 
 }
 
-export default createFragmentContainer(JobsList, graphql`
-  fragment JobsList_items on Job
+export default createFragmentContainer(JobList, graphql`
+  fragment JobList_items on Job
     @relay(plural: true) {
-    ...JobsListItem_item
+    ...JobListItem_item
     id
   }`,
 );

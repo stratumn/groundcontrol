@@ -10,7 +10,7 @@ interface IProps {
   onChange: (id: string) => any;
 }
 
-export default class WorkspacesListSearch extends Component<IProps> {
+export default class WorkspaceSearch extends Component<IProps> {
 
   private handleSearchChange = debounce((_: React.ChangeEvent<HTMLInputElement>, { value }: InputOnChangeData) => {
     this.props.onChange(value);

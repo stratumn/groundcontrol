@@ -3,20 +3,20 @@ import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
 import { Card } from "semantic-ui-react";
 
-import { ProjectsList_items } from "./__generated__/ProjectsList_items.graphql";
+import { ProjectCardGroup_items } from "./__generated__/ProjectCardGroup_items.graphql";
 
-import ProjectsListItem from "./ProjectsListItem";
+import ProjectCard from "./ProjectCard";
 
 interface IProps {
-  items: ProjectsList_items;
+  items: ProjectCardGroup_items;
 }
 
-export class ProjectsList extends Component<IProps> {
+export class ProjectCardGroup extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
     const cards = items.map((item) => (
-      <ProjectsListItem
+      <ProjectCard
         key={item.id}
         item={item}
       />
@@ -30,13 +30,13 @@ export class ProjectsList extends Component<IProps> {
   }
 }
 
-export default createFragmentContainer(ProjectsList, graphql`
-  fragment ProjectsList_items on Project
+export default createFragmentContainer(ProjectCardGroup, graphql`
+  fragment ProjectCardGroup_items on Project
     @argumentDefinitions(
       commitsLimit: { type: "Int", defaultValue: 3 },
     )
     @relay(plural: true) {
-    ...ProjectsListItem_item @arguments(commitsLimit: $commitsLimit)
+    ...ProjectCard_item @arguments(commitsLimit: $commitsLimit)
     id
   }`,
 );

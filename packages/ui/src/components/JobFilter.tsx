@@ -9,7 +9,7 @@ interface IProps {
 const allFilters = ["QUEUED", "RUNNING", "DONE", "FAILED"];
 
 // Note: we consider undefined filter to be the same as all status.
-export default class JobsListFilter extends Component<IProps> {
+export default class JobFilter extends Component<IProps> {
 
   public render() {
     const filters = this.props.filters;

@@ -11,21 +11,20 @@ import {
   List,
  } from "semantic-ui-react";
 
-import { WorkspacesListItem_item } from "./__generated__/WorkspacesListItem_item.graphql";
+import { WorkspaceCard_item } from "./__generated__/WorkspaceCard_item.graphql";
 
 import RepositoryShortName from "./RepositoryShortName";
 
 interface IProps {
-  item: WorkspacesListItem_item;
+  item: WorkspaceCard_item;
   onClone: () => any;
 }
 
-export class WorkspacesListItem extends Component<IProps> {
+export class WorkspaceCard extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
 
-    // TODO: move to own components.
     const projects = item.projects.map((project) => (
       <List.Item key={project.id}>
         <List.Content floated="right">
@@ -85,8 +84,8 @@ export class WorkspacesListItem extends Component<IProps> {
 
 }
 
-export default createFragmentContainer(WorkspacesListItem, graphql`
-  fragment WorkspacesListItem_item on Workspace {
+export default createFragmentContainer(WorkspaceCard, graphql`
+  fragment WorkspaceCard_item on Workspace {
     slug
     name
     description

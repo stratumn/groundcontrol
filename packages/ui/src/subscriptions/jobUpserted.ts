@@ -8,7 +8,7 @@ import groundcontrol from "../groundcontrol.env.relay";
 const subscription = graphql`
   subscription jobUpsertedSubscription {
     jobUpserted {
-      ...JobsList_items
+      ...JobList_items
     }
   }
 `;
@@ -51,7 +51,7 @@ export function subscribe() {
         for (const combination of notStatusCombinations[status]) {
           const connection = ConnectionHandler.getConnection(
             viewer,
-            "JobsPage_jobs",
+            "JobListPage_jobs",
             { status: combination },
           );
 
@@ -64,7 +64,7 @@ export function subscribe() {
         for (const combination of [undefined, ...statusCombinations[status]]) {
           const connection = ConnectionHandler.getConnection(
             viewer,
-            "JobsPage_jobs",
+            "JobListPage_jobs",
             { status: combination },
           );
 
