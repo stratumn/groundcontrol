@@ -18,9 +18,7 @@ export class CommitListItem extends Component<IProps> {
     return (
       <Feed.Event>
         <Feed.Content>
-          <Feed.Summary>
-            {item.headline}
-          </Feed.Summary>
+          <Feed.Summary>{item.headline}</Feed.Summary>
           <Feed.Meta>
             Pushed by <strong>{item.author}</strong>
             <Moment

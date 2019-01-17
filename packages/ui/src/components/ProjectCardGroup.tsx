@@ -22,11 +22,7 @@ export class ProjectCardGroup extends Component<IProps> {
       />
      ));
 
-    return (
-      <Card.Group itemsPerRow={3}>
-        {cards}
-      </Card.Group>
-    );
+    return <Card.Group itemsPerRow={3}>{cards}</Card.Group>;
   }
 }
 

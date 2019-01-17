@@ -36,9 +36,7 @@ export class JobList extends Component<IProps> {
             <Table.HeaderCell>Status</Table.HeaderCell>
           </Table.Row>
         </Table.Header>
-        <Table.Body>
-          {rows}
-        </Table.Body>
+        <Table.Body>{rows}</Table.Body>
       </Table>
     );
   }

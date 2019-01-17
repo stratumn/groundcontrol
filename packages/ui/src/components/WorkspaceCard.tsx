@@ -32,9 +32,7 @@ export class WorkspaceCard extends Component<IProps> {
           >
             {item.name}
           </Link>
-          <Card.Meta>
-            {item.description}
-          </Card.Meta>
+          <Card.Meta>{item.description}</Card.Meta>
           <Divider horizontal={true}>
             <Header as="h6">Repositories</Header>
           </Divider>

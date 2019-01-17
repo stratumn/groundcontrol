@@ -46,9 +46,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
         subheader="A workspace is a collection of related Github repositories and branches."
         icon="cubes"
       >
-        <WorkspaceSearch
-          onChange={this.handleSearchChange}
-        />
+        <WorkspaceSearch onChange={this.handleSearchChange} />
         <WorkspacesCardGroup
           items={items}
           onClone={this.handleClone}

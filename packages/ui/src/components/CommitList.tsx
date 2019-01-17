@@ -23,11 +23,7 @@ export class CommitList extends Component<IProps> {
       />
     ));
 
-    return (
-      <Feed>
-        {rows}
-      </Feed>
-    );
+    return <Feed>{rows}</Feed>;
   }
 
 }

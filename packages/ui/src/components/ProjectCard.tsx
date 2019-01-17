@@ -42,7 +42,10 @@ export class ProjectCard extends Component<IProps> {
         </Card.Content>
         <Card.Content extra={true}>
           <div className="ui three buttons">
-            <Button color="teal" disabled={true}>
+            <Button
+              color="teal"
+              disabled={true}
+            >
               Pull
             </Button>
           </div>

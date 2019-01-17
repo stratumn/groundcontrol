@@ -22,11 +22,7 @@ export class ProjectList extends Component<IProps> {
       />
      ));
 
-    return (
-      <List>
-        {rows}
-      </List>
-    );
+    return <List>{rows}</List>;
   }
 
 }
