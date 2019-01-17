@@ -1,33 +1,21 @@
 import graphql from "babel-plugin-relay/macro";
 import { requestSubscription } from "react-relay";
+import { ConnectionHandler } from "relay-runtime";
 
 import groundcontrol from "../groundcontrol.env.relay";
 
 const subscription = graphql`
-  subscription jobUpsertedSubscription {
-    jobUpserted {
-      id
-      name
-      status
-      createdAt
-      updatedAt
-      project {
-        repo
-        branch
-        workspace {
-          slug
-          name
-        }
-      }
+  subscription jobUpdatedSubscription {
+    jobUpdated {
+      ...JobsList_items
     }
   }
 `;
 
 export default function() {
-  requestSubscription(
+  return requestSubscription(
     groundcontrol,
     {
-      onCompleted: () => {/* server closed the subscription */},
       onError: (error) => console.error(error),
       subscription,
       variables: {},

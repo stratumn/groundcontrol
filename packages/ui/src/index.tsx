@@ -6,8 +6,6 @@ import groundcontrol from "./groundcontrol.env.relay";
 import Router from "./Router";
 import * as serviceWorker from "./serviceWorker";
 
-import jobUpserted from "./subscriptions/jobUpserted";
-
 import "./index.css";
 
 ReactDOM.render(
@@ -19,5 +17,3 @@ ReactDOM.render(
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: http://bit.ly/CRA-PWA
 serviceWorker.unregister();
-
-jobUpserted();

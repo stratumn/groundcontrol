@@ -10,21 +10,23 @@ import {
 import React from "react";
 
 import App from "./components/App";
-import JobsList from "./components/JobsList";
 import WorkspacesList from "./components/WorkspacesList";
 import WorkspacesView from "./components/WorkspacesView";
+import JobsPage from "./containers/JobsPage";
 
 const workspacesListQuery = graphql`
   query RouterWorkspacesListQuery {
-    workspaces {
-      id
-      name
-      slug
-      description
-      projects {
+    viewer {
+      workspaces {
         id
-        repo
-        branch
+        name
+        slug
+        description
+        projects {
+          id
+          repo
+          branch
+        }
       }
     }
   }
@@ -32,47 +34,25 @@ const workspacesListQuery = graphql`
 
 const workspacesViewQuery = graphql`
   query RouterWorkspacesViewQuery($slug: String!) {
-    workspace(slug: $slug) {
-      name
-      slug
-      description
-      notes
-      projects {
-        id
-        repo
-        branch
+    viewer {
+      workspace(slug: $slug) {
+        name
+        slug
         description
-        commits(first: 3) {
-          edges {
-            node {
-              id
-              headline
-              date
-              author
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const jobsListQuery = graphql`
-  query RouterJobsListQuery($status: [JobStatus!]) {
-    jobs(status: $status) {
-      edges {
-        node {
+        notes
+        projects {
           id
-          name
-          status
-          createdAt
-          updatedAt
-          project {
-            repo
-            branch
-            workspace {
-              slug
-              name
+          repo
+          branch
+          description
+          commits(first: 3) {
+            edges {
+              node {
+                id
+                headline
+                date
+                author
+              }
             }
           }
         }
@@ -81,8 +61,16 @@ const jobsListQuery = graphql`
   }
 `;
 
-function prepareJobsListStatusVariables({ status }: { status: string }) {
-  return { status: status ? status.split(",") : [] };
+const jobsQuery = graphql`
+  query RouterJobsQuery($status: [JobStatus!]) {
+    viewer {
+      ...JobsPage_viewer @arguments(status: $status)
+    }
+  }
+`;
+
+function prepareJobsVariables({ filters }: { filters: string }) {
+  return { status: filters ? filters.split(",") : null };
 }
 
 export default createFarceRouter({
@@ -107,14 +95,14 @@ export default createFarceRouter({
       </Route>
       <Route path="jobs">
         <Route
-          Component={JobsList}
-          query={jobsListQuery}
+          Component={JobsPage}
+          query={jobsQuery}
         />
         <Route
-          path="filter/:status?"
-          Component={JobsList}
-          query={jobsListQuery}
-          prepareVariables={prepareJobsListStatusVariables}
+          path="filter/:filters"
+          Component={JobsPage}
+          query={jobsQuery}
+          prepareVariables={prepareJobsVariables}
         />
       </Route>
     </Route>,

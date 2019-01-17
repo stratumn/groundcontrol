@@ -2,7 +2,6 @@ import { ApolloServer } from "apollo-server-express";
 import cors from "cors";
 import express from "express";
 import { createServer } from "http";
-import { SubscriptionServer } from "subscriptions-transport-ws";
 
 import log from "./log";
 

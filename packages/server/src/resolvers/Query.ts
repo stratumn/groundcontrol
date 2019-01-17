@@ -1,21 +1,15 @@
 import { QueryResolvers } from "../__generated__/groundcontrol";
 
 import { toGlobalId } from "../models/globalid";
-import jobs from "../models/job";
 import node from "../models/node";
-import Type from "../models/type";
-import workspaces from "../models/workspace";
+import type from "../models/type";
 
 const resolvers: QueryResolvers.Resolvers = {
-  node: (obj, { id }) => node.get(id),
+  node: (_, { id }) => node.get(id),
 
-  workspaces: workspaces.all,
-
-  workspace: (obj, { slug }) => workspaces.get(toGlobalId(Type.WORKSPACE, slug)),
-
-  jobs: (obj, args) => {
-    return jobs.find(args);
-  },
+  viewer: () => ({
+    id: toGlobalId(type.USER, "0"),
+  }),
 };
 
 export default resolvers;

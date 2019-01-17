@@ -32,9 +32,9 @@ const setupSubscription: SubscribeFunction = (config, variables, _, observer) =>
   const { unsubscribe } = client
     .request({ query, variables })
     .subscribe({
-      complete: onCompleted!.bind(observer),
-      error: onError!.bind(observer),
-      next: onNext!.bind(observer),
+      complete: onCompleted,
+      error: onError,
+      next: onNext,
     });
 
   return { dispose: unsubscribe };

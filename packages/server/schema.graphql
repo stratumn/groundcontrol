@@ -4,11 +4,24 @@ interface Node {
   id: ID!
 }
 
+type User {
+  id: ID!
+  workspaces: [Workspace!]
+  workspace(slug: String!): Workspace
+  jobs(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    status: [JobStatus!]
+  ): JobConnection
+}
+
 type Workspace implements Node {
   id: ID!
   name: String!
   slug: String!
-  projects: [Project!]
+  projects: [Project!]!
   description: String!
   notes: String
 }
@@ -36,7 +49,7 @@ type Commit {
 }
 
 type CommitConnection {
-  edges: [CommitEdge]
+  edges: [CommitEdge!]!
   pageInfo: PageInfo!
 }
 
@@ -62,7 +75,7 @@ enum JobStatus {
 }
 
 type JobConnection {
-  edges: [JobEdge]
+  edges: [JobEdge!]!
   pageInfo: PageInfo!
 }
 
@@ -80,22 +93,15 @@ type PageInfo {
 
 type Query {
   node(id: ID!): Node
-  workspaces: [Workspace]
-  workspace(slug: String!): Workspace
-  jobs(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    status: [JobStatus!]
-  ): JobConnection!
+  viewer: User!
 }
 
 type Mutation {
   cloneProject(id: String!): Job!
-  cloneWorkspace(id: String!): [Job]
+  cloneWorkspace(id: String!): [Job!]!
 }
 
 type Subscription {
-  jobUpserted: Job!
+  jobAdded: Job!
+  jobUpdated: Job!
 }

@@ -48,7 +48,6 @@ export class WorkspacesList extends Component<IProps, IState> {
   }
 
   public render() {
-    console.log(this.props);
     let cards: JSX.Element[];
 
     if (!this.props) {
@@ -69,7 +68,7 @@ export class WorkspacesList extends Component<IProps, IState> {
         </Card>
       ));
     } else {
-      let workspaces = this.props.workspaces!;
+      let workspaces = this.props.viewer.workspaces!;
 
       if (this.state.searchQuery.length > 0) {
         workspaces = workspaces.filter((elem) => (

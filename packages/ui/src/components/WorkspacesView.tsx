@@ -23,10 +23,10 @@ export default class WorkspacesView extends Component<IProps> {
   public render() {
     if (!this.props) {
       return <div>Loading...</div>;
-    } else if (!this.props.workspace) {
+    } else if (!this.props.viewer.workspace) {
       return <div>Not found.</div>;
     }
-    const workspace = this.props.workspace!;
+    const workspace = this.props.viewer.workspace!;
 
     const cards = workspace.projects!.map((project) => {
       const events = project.commits.edges!.map((commit) => (

@@ -21,8 +21,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "gen:relay": "relay-compiler --src ./src --schema ../server/schema.graphql --language typescript",
-    "dev": "concurrently \"yarn gen:relay --watch\" \"yarn start\"",
+    "gen": "relay-compiler --src ./src --schema ../server/schema.graphql --language typescript",
+    "dev": "concurrently \"yarn gen --watch\" \"yarn start\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "lint": "tslint -c tslint.json 'src/**/*.ts' 'src/**/*.tsx'",
