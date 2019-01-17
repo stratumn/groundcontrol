@@ -7,13 +7,11 @@ import {
   Card,
   Divider,
   Header,
-  Label,
-  List,
  } from "semantic-ui-react";
 
 import { WorkspaceCard_item } from "./__generated__/WorkspaceCard_item.graphql";
 
-import RepositoryShortName from "./RepositoryShortName";
+import ProjectList from "./ProjectList";
 
 interface IProps {
   item: WorkspaceCard_item;
@@ -24,22 +22,6 @@ export class WorkspaceCard extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
-
-    const projects = item.projects.map((project) => (
-      <List.Item key={project.id}>
-        <List.Content floated="right">
-          <Label
-            style={{ position: "relative", top: "-.3em" }}
-            size="small"
-          >
-            {project.branch}
-          </Label>
-        </List.Content>
-        <List.Content>
-          <RepositoryShortName repository={project.repository} />
-        </List.Content>
-      </List.Item>
-    ));
 
     return (
       <Card>
@@ -57,9 +39,7 @@ export class WorkspaceCard extends Component<IProps> {
             <Header as="h6">Repositories</Header>
           </Divider>
           <Card.Description style={{ marginTop: "1em" }}>
-            <List>
-              {projects}
-            </List>
+            <ProjectList items={item.projects} />
           </Card.Description>
         </Card.Content>
         <Card.Content extra={true}>
@@ -90,9 +70,7 @@ export default createFragmentContainer(WorkspaceCard, graphql`
     name
     description
     projects {
-      id
-      repository
-      branch
+      ...ProjectList_items
     }
   }`,
 );

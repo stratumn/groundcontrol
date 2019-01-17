@@ -6,6 +6,7 @@ import {
  } from "semantic-ui-react";
 
 import { createFragmentContainer } from "react-relay";
+
 import { JobListItem_item } from "./__generated__/JobListItem_item.graphql";
 
 import Moment from "react-moment";
@@ -23,10 +24,16 @@ export class JobListItem extends Component<IProps> {
     return (
       <Table.Row>
         <Table.Cell>{item.name}</Table.Cell>
-        <Table.Cell><Moment>{item.createdAt}</Moment></Table.Cell>
-        <Table.Cell><Moment>{item.updatedAt}</Moment></Table.Cell>
         <Table.Cell>
-          <Link to={`/workspaces/${item.project.workspace.slug}`}>{item.project.workspace.name}</Link>
+          <Moment>{item.createdAt}</Moment>
+        </Table.Cell>
+        <Table.Cell>
+          <Moment>{item.updatedAt}</Moment>
+         </Table.Cell>
+        <Table.Cell>
+          <Link to={`/workspaces/${item.project.workspace.slug}`}>
+            {item.project.workspace.name}
+          </Link>
         </Table.Cell>
         <Table.Cell>
           <RepositoryShortName repository={item.project.repository} />
