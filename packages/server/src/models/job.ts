@@ -2,7 +2,7 @@ import PQueue from "p-queue";
 
 import { Job, JobStatus, JobsUserArgs, Project } from "../__generated__/groundcontrol";
 
-import pubsub, { JOB_ADDED, JOB_UPDATED } from "../pubsub";
+import pubsub, { JOB_UPSERTED } from "../pubsub";
 import { connectionFromArray } from "../util/connection";
 import { toGlobalId } from "./globalid";
 import node from "./node";
@@ -31,21 +31,21 @@ export function add(name: string, project: Project, worker: () => Promise<any>):
   allJobs.unshift(job);
   node.set(id, job);
 
-  pubsub.publish(JOB_ADDED, { jobAdded: job });
+  pubsub.publish(JOB_UPSERTED, { jobUpserted: job });
 
   queue.add(() => {
     job.updatedAt = new Date();
     job.status = JobStatus.Running;
-    pubsub.publish(JOB_UPDATED, { jobUpdated: job });
+    pubsub.publish(JOB_UPSERTED, { jobUpserted: job });
     return worker();
   }).then(() => {
     job.updatedAt = new Date();
     job.status = JobStatus.Done;
-    pubsub.publish(JOB_UPDATED, { jobUpdated: job });
+    pubsub.publish(JOB_UPSERTED, { jobUpserted: job });
   }).catch(() => {
     job.updatedAt = new Date();
     job.status = JobStatus.Failed;
-    pubsub.publish(JOB_UPDATED, { jobUpdated: job });
+    pubsub.publish(JOB_UPSERTED, { jobUpserted: job });
   });
 
   return job;

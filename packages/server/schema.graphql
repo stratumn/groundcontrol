@@ -102,6 +102,5 @@ type Mutation {
 }
 
 type Subscription {
-  jobAdded: Job!
-  jobUpdated: Job!
+  jobUpserted: Job!
 }

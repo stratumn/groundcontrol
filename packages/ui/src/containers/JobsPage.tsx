@@ -14,8 +14,7 @@ import { JobsPage_viewer } from "./__generated__/JobsPage_viewer.graphql";
 import JobsList from "../components/JobsList";
 import JobsListFilter from "../components/JobsListFilter";
 
-import jobAdded from "../subscriptions/jobAdded";
-import jobUpdated from "../subscriptions/jobUpdated";
+import { subscribe } from "../subscriptions/jobUpserted";
 
 interface IProps {
   viewer: JobsPage_viewer;
@@ -30,11 +29,9 @@ export class JobsPage extends Component<IProps> {
   private disposables: Disposable[] = [];
 
   public render() {
-    if (!this.props.viewer) {
-      return null;
-    }
-    const filters = this.props.params.filters ? this.props.params.filters.split(",") : [];
     const items = this.props.viewer.jobs!.edges.map((edge) => edge.node);
+    const filters = this.props.params.filters === undefined ? undefined :
+      this.props.params.filters.split(",");
 
     return (
       <div>
@@ -57,10 +54,7 @@ export class JobsPage extends Component<IProps> {
   }
 
   public componentDidMount() {
-    this.disposables.push(
-      jobAdded(),
-      jobUpdated(),
-    );
+    this.disposables.push(subscribe());
   }
 
   public componentWillUnmount() {
@@ -72,7 +66,7 @@ export class JobsPage extends Component<IProps> {
   }
 
   private handleFiltersChange = (filters: string[]) => {
-    if (filters.length < 1) {
+    if (filters.length < 1 || filters.length > 3) {
       return this.props.router.replace("/jobs");
     }
 

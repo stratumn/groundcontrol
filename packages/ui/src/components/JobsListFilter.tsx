@@ -2,13 +2,13 @@ import React, { Component } from "react";
 import { Radio } from "semantic-ui-react";
 
 interface IProps {
-  filters: string[];
+  filters: string[] | undefined;
   onChange: (status: string[]) => any;
 }
 
 const allFilters = ["QUEUED", "RUNNING", "DONE", "FAILED"];
 
-// Note: we consider no status to be the same as all status.
+// Note: we consider undefined filter to be the same as all status.
 export default class JobsListFilter extends Component<IProps> {
 
   public render() {
@@ -18,7 +18,7 @@ export default class JobsListFilter extends Component<IProps> {
       <Radio
         key={i}
         label={filter}
-        checked={filters.length < 1 || filters.indexOf(filter) >= 0}
+        checked={!filters || filters.indexOf(filter) >= 0}
         style={{marginRight: "2em"}}
         onClick={this.handleToggleFilter.bind(this, filter)}
       />
@@ -26,7 +26,7 @@ export default class JobsListFilter extends Component<IProps> {
   }
 
   private handleToggleFilter(filter: string) {
-    const filters = this.props.filters.length ?
+    const filters = this.props.filters ?
       this.props.filters.slice() : allFilters.slice();
     const index = filters.indexOf(filter);
 
