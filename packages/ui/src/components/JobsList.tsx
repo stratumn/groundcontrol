@@ -1,11 +1,9 @@
 import graphql from "babel-plugin-relay/macro";
-import { Router } from "found";
 import React, { Component } from "react";
+import { createFragmentContainer } from "react-relay";
 import {
   Table,
  } from "semantic-ui-react";
-
-import { createFragmentContainer } from "react-relay";
 
 import { JobsList_items } from "./__generated__/JobsList_items.graphql";
 
