@@ -76,10 +76,11 @@ export default createFragmentContainer(WorkspacePage, graphql`
   fragment WorkspacePage_viewer on User
     @argumentDefinitions(
       slug: { type: "String!" },
+      commitsLimit: { type: "Int", defaultValue: 3 },
     ) {
     workspace(slug: $slug) {
       projects {
-        ...ProjectsList_items
+        ...ProjectsList_items @arguments(commitsLimit: $commitsLimit)
       }
       name
       description

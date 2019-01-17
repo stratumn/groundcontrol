@@ -29,7 +29,7 @@ export class JobsPage extends Component<IProps> {
   private disposables: Disposable[] = [];
 
   public render() {
-    const items = this.props.viewer.jobs!.edges.map((edge) => edge.node);
+    const items = this.props.viewer.jobs!.edges.map(({ node }) => node);
     const filters = this.props.params.filters === undefined ? undefined :
       this.props.params.filters.split(",");
 

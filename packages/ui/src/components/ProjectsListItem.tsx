@@ -6,13 +6,13 @@ import {
   Button,
   Card,
   Divider,
-  Feed,
   Header,
   Label,
  } from "semantic-ui-react";
 
 import { ProjectsListItem_item } from "./__generated__/ProjectsListItem_item.graphql";
 
+import CommitsList from "./CommitsList";
 import RepositoryShortName from "./RepositoryShortName";
 
 interface IProps {
@@ -24,25 +24,7 @@ export class ProjectsListItem extends Component<IProps> {
   public render() {
     const item = this.props.item;
 
-    // TODO: move to own components.
-    const commits = item.commits.edges.map((edge) => (
-      <Feed.Event key={edge.node.id}>
-        <Feed.Content>
-          <Feed.Summary>
-            {edge.node.headline}
-          </Feed.Summary>
-          <Feed.Meta>
-            Pushed by <strong>{edge.node.author}</strong>
-            <Moment
-              fromNow={true}
-              style={{marginLeft: 0}}
-            >
-              {edge.node.date}
-            </Moment>
-          </Feed.Meta>
-        </Feed.Content>
-      </Feed.Event>
-    ));
+    const commits = item.commits.edges.map(({ node }) => node);
 
     return (
       <Card>
@@ -57,9 +39,7 @@ export class ProjectsListItem extends Component<IProps> {
           <Divider horizontal={true}>
             <Header as="h6">Latest Commits</Header>
           </Divider>
-          <Feed>
-            {commits}
-          </Feed>
+          <CommitsList items={commits} />
         </Card.Content>
         <Card.Content extra={true}>
           <div className="ui three buttons">
@@ -75,18 +55,18 @@ export class ProjectsListItem extends Component<IProps> {
 }
 
 export default createFragmentContainer(ProjectsListItem, graphql`
-  fragment ProjectsListItem_item on Project {
+  fragment ProjectsListItem_item on Project
+    @argumentDefinitions(
+      commitsLimit: { type: "Int", defaultValue: 3 },
+    ) {
     id
     repository
     branch
     description
-    commits(first: 3) {
+    commits(first: $commitsLimit) {
       edges {
         node {
-          id
-          headline
-          date
-          author
+          ...CommitsList_items
         }
       }
     }

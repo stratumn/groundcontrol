@@ -32,8 +32,11 @@ export class ProjectsList extends Component<IProps> {
 
 export default createFragmentContainer(ProjectsList, graphql`
   fragment ProjectsList_items on Project
+    @argumentDefinitions(
+      commitsLimit: { type: "Int", defaultValue: 3 },
+    )
     @relay(plural: true) {
-    ...ProjectsListItem_item
+    ...ProjectsListItem_item @arguments(commitsLimit: $commitsLimit)
     id
   }`,
 );
