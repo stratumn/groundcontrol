@@ -21,7 +21,7 @@ export class JobsListItem extends Component<IProps> {
     const item = this.props.item;
 
     return (
-      <Table.Row key={item.id}>
+      <Table.Row>
         <Table.Cell>{item.name}</Table.Cell>
         <Table.Cell><Moment>{item.createdAt}</Moment></Table.Cell>
         <Table.Cell><Moment>{item.updatedAt}</Moment></Table.Cell>

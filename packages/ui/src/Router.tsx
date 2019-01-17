@@ -9,25 +9,15 @@ import {
   } from "found";
 import React from "react";
 
-import App from "./components/App";
-import WorkspacesList from "./components/WorkspacesList";
 import WorkspacesView from "./components/WorkspacesView";
+import App from "./containers/App";
 import JobsPage from "./containers/JobsPage";
+import WorkspacesPage from "./containers/WorkspacesPage";
 
 const workspacesListQuery = graphql`
   query RouterWorkspacesListQuery {
     viewer {
-      workspaces {
-        id
-        name
-        slug
-        description
-        projects {
-          id
-          repo
-          branch
-        }
-      }
+      ...WorkspacesPage_viewer
     }
   }
 `;
@@ -84,7 +74,7 @@ export default createFarceRouter({
       <Redirect from="/" to="/workspaces" />
       <Route path="workspaces">
         <Route
-          Component={WorkspacesList}
+          Component={WorkspacesPage}
           query={workspacesListQuery}
         />
         <Route

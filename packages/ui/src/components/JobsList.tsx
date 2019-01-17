@@ -19,8 +19,7 @@ export class JobsList extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
-    const rows = items.map((item) =>
-      <JobsListItem key={item.id} item={item} />);
+    const rows = items.map((item) => <JobsListItem key={item.id} item={item} />);
 
     return (
       <Table celled={true}>
