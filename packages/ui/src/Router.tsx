@@ -1,12 +1,12 @@
 import graphql from "babel-plugin-relay/macro";
 import { BrowserProtocol, queryMiddleware } from "farce";
 import {
-    createFarceRouter,
-    createRender,
-    makeRouteConfig,
-    Redirect,
-    Route,
-  } from "found";
+  createFarceRouter,
+  createRender,
+  makeRouteConfig,
+  Redirect,
+  Route,
+} from "found";
 import React from "react";
 
 import App from "./containers/App";
