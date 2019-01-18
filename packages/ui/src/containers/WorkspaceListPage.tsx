@@ -11,7 +11,7 @@ import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
 import { subscribe } from "../subscriptions/workspaceUpdated";
 
-interface IProps extends WorkspaceListPage {
+interface IProps {
   relay: RelayProp;
   viewer: WorkspaceListPage_viewer;
 }

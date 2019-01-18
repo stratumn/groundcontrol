@@ -6,10 +6,13 @@ import {
   makeRouteConfig,
   Redirect,
   Route,
+  RouteRenderArgs,
 } from "found";
 import React from "react";
 
+import Loading from "./components/Loading";
 import App from "./containers/App";
+import ErrorPage from "./containers/ErrorPage";
 import JobListPage from "./containers/JobListPage";
 import WorkspaceListPage from "./containers/WorkspaceListPage";
 import WorkspaceViewPage from "./containers/WorkspaceViewPage";
@@ -42,6 +45,18 @@ function prepareJobListVariables({ filters }: { filters: string }) {
   return { status: filters ? filters.split(",") : null };
 }
 
+function render({ Component, props }: RouteRenderArgs, error?: Error) {
+  if (error) {
+    return <ErrorPage error={error} />;
+  }
+
+  if (Component && props) {
+    return <Component {...props} />;
+  }
+
+  return <Loading />;
+}
+
 export default createFarceRouter({
   historyMiddlewares: [queryMiddleware],
   historyProtocol: new BrowserProtocol(),
@@ -55,23 +70,28 @@ export default createFarceRouter({
         <Route
           Component={WorkspaceListPage}
           query={workspaceListQuery}
+          render={render}
+          dataFrom="STORE_THEN_NETWORK"
         />
         <Route
           path=":slug"
           Component={WorkspaceViewPage}
           query={workspaceViewQuery}
+          render={render}
         />
       </Route>
       <Route path="jobs">
         <Route
           Component={JobListPage}
           query={jobListQuery}
+          render={render}
         />
         <Route
           path=":filters"
           Component={JobListPage}
           query={jobListQuery}
           prepareVariables={prepareJobListVariables}
+          render={render}
         />
       </Route>
     </Route>,
