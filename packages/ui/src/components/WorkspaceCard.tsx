@@ -13,6 +13,8 @@ import { WorkspaceCard_item } from "./__generated__/WorkspaceCard_item.graphql";
 
 import ProjectList from "./ProjectList";
 
+import "./WorkspaceCard.css";
+
 interface IProps {
   item: WorkspaceCard_item;
   onClone: () => any;
@@ -38,7 +40,7 @@ export class WorkspaceCard extends Component<IProps> {
     }
 
     return (
-      <Card>
+      <Card className="WorkspaceCard">
         <Card.Content>
           <Link
             to={`/workspaces/${item.slug}`}
@@ -50,7 +52,7 @@ export class WorkspaceCard extends Component<IProps> {
           <Divider horizontal={true}>
             <Header as="h6">Repositories</Header>
           </Divider>
-          <Card.Description style={{ marginTop: "1em" }}>
+          <Card.Description>
             <ProjectList items={item.projects} />
           </Card.Description>
         </Card.Content>

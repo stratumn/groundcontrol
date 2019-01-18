@@ -11,6 +11,8 @@ import { ProjectListItem_item } from "./__generated__/ProjectListItem_item.graph
 
 import RepositoryShortName from "./RepositoryShortName";
 
+import "./ProjectListItem.css";
+
 interface IProps {
   item: ProjectListItem_item;
 }
@@ -21,14 +23,9 @@ export class ProjectListItem extends Component<IProps> {
     const item = this.props.item;
 
     return (
-      <List.Item>
+      <List.Item className="ProjectListItem">
         <List.Content floated="right">
-          <Label
-            style={{ position: "relative", top: "-.3em" }}
-            size="small"
-          >
-            {item.branch}
-          </Label>
+          <Label size="small">{item.branch}</Label>
         </List.Content>
         <List.Content>
           <RepositoryShortName repository={item.repository} />

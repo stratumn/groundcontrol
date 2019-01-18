@@ -6,6 +6,8 @@ import { Feed } from "semantic-ui-react";
 
 import { CommitListItem_item } from "./__generated__/CommitListItem_item.graphql";
 
+import "./CommitListItem.css";
+
 interface IProps {
   item: CommitListItem_item;
 }
@@ -16,15 +18,12 @@ export class CommitListItem extends Component<IProps> {
     const item = this.props.item;
 
     return (
-      <Feed.Event>
+      <Feed.Event className="CommitListItem">
         <Feed.Content>
           <Feed.Summary>{item.headline}</Feed.Summary>
           <Feed.Meta>
             Pushed by <strong>{item.author}</strong>
-            <Moment
-              fromNow={true}
-              style={{marginLeft: 0}}
-            >
+            <Moment fromNow={true}>
               {item.date}
             </Moment>
           </Feed.Meta>

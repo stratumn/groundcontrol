@@ -8,9 +8,9 @@ import "./App.css";
 export default class App extends Component {
   public render() {
     return (
-      <div>
+      <div className="App">
         <Menu />
-        <Container style={{ marginTop: "7em" }}>
+        <Container>
           {this.props.children}
         </Container>
       </div>

@@ -2,8 +2,9 @@ import graphql from "babel-plugin-relay/macro";
 import { Router } from "found";
 import React, { Component } from "react";
 import { Disposable } from "relay-runtime";
+import { Button } from "semantic-ui-react";
 
-import { createFragmentContainer, RelayProp } from "react-relay";
+import { createPaginationContainer, RelayPaginationProp } from "react-relay";
 
 import { JobListPage_viewer } from "./__generated__/JobListPage_viewer.graphql";
 
@@ -14,7 +15,7 @@ import Page from "../components/Page";
 import { subscribe } from "../subscriptions/jobUpserted";
 
 interface IProps {
-  relay: RelayProp;
+  relay: RelayPaginationProp;
   router: Router;
   viewer: JobListPage_viewer;
   params: {
@@ -42,6 +43,14 @@ export class JobListPage extends Component<IProps> {
           onChange={this.handleFiltersChange}
         />
         <JobList items={items} />
+        <Button
+          disabled={!this.props.relay.hasMore() || this.props.relay.isLoading()}
+          loading={this.props.relay.isLoading()}
+          color="grey"
+          onClick={this.handleLoadMore}
+        >
+          Load More
+        </Button>
       </Page>
     );
   }
@@ -66,24 +75,70 @@ export class JobListPage extends Component<IProps> {
     this.props.router.replace(`/jobs/${filters.join(",")}`);
   }
 
+  private handleLoadMore = () => {
+    this.props.relay.loadMore(
+      10,
+      (err) => {
+        if (err) {
+          console.log(err);
+        }
+
+        // Make sure load more button updates.
+        this.forceUpdate();
+      },
+    );
+  }
+
 }
 
-export default createFragmentContainer(JobListPage, graphql`
-  fragment JobListPage_viewer on User
-    @argumentDefinitions(
-      status: { type: "[JobStatus!]", defaultValue: null },
-    ) {
-    jobs(first: 100, status: $status)
-      @connection(
-        key: "JobListPage_jobs",
-        filters: ["status"],
+export default createPaginationContainer(
+  JobListPage,
+  graphql`
+    fragment JobListPage_viewer on User
+      @argumentDefinitions(
+        count: {type: "Int", defaultValue: 10},
+        cursor: {type: "String"},
+        status: { type: "[JobStatus!]", defaultValue: null },
       ) {
-      edges {
-        node {
-          ...JobList_items
-          id
+      jobs(
+       first: $count,
+       after: $cursor,
+       status: $status,
+      )
+        @connection(
+          key: "JobListPage_jobs",
+          filters: ["status"],
+        ) {
+        edges {
+          node {
+            ...JobList_items
+            id
+          }
         }
       }
-    }
-  }`,
+    }`,
+  {
+    direction: "forward",
+    getConnectionFromProps: (props) => props.viewer && props.viewer.jobs,
+    getVariables: (_, {count, cursor}, fragmentVariables) => ({
+      count,
+      cursor,
+      status: fragmentVariables.status,
+    }),
+    query: graphql`
+      query JobListPagePaginationQuery(
+        $count: Int!,
+        $cursor: String,
+        $status: [JobStatus!],
+      ) {
+        viewer {
+          ...JobListPage_viewer @arguments(
+            count: $count,
+            cursor: $cursor,
+            status: $status,
+          )
+        }
+      }
+    `,
+  },
 );

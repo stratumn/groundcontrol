@@ -23,7 +23,6 @@ export class WorkspaceMenu extends Component<IProps> {
       <Menu secondary={true}>
         <Menu.Item
           disabled={isCloning || isCloned}
-          loading={isCloning}
           onClick={this.props.onClone}
         >
           <Icon name="clone" />

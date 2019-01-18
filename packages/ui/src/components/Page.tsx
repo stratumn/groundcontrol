@@ -6,7 +6,10 @@ import {
   SemanticICONS,
 } from "semantic-ui-react";
 
+import "./Page.css";
+
 interface IProps {
+  className?: string;
   icon: SemanticICONS;
   header: string;
   subheader: string;
@@ -15,11 +18,11 @@ interface IProps {
 export default class Page extends Component<IProps> {
 
   public render() {
-    const { children, icon, header, subheader } = this.props;
+    const { children, className, icon, header, subheader } = this.props;
 
     return (
-      <div>
-        <Header as="h1" style={{marginBottom: "1em"}}>
+      <div className={`Page ${className || ""}`}>
+        <Header as="h1">
           <Icon name={icon} />
           <Header.Content>
             {header}

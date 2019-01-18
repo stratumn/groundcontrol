@@ -6,6 +6,8 @@ import {
   InputOnChangeData,
 } from "semantic-ui-react";
 
+import "./WorkspaceSearch.css";
+
 interface IProps {
   onChange: (id: string) => any;
 }
@@ -19,10 +21,10 @@ export default class WorkspaceSearch extends Component<IProps> {
   public render() {
     return (
       <Input
+        className="WorkspaceSearch"
         size="huge"
         icon="search"
         placeholder="Search..."
-        style={{marginBottom: "2em"}}
         onChange={this.handleSearchChange}
       />
     );

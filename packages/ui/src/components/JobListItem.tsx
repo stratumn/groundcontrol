@@ -12,6 +12,8 @@ import { JobListItem_item } from "./__generated__/JobListItem_item.graphql";
 import Moment from "react-moment";
 import RepositoryShortName from "./RepositoryShortName";
 
+const dateFormat = "L LTS";
+
 interface IProps {
   item: JobListItem_item;
 }
@@ -25,19 +27,20 @@ export class JobListItem extends Component<IProps> {
       <Table.Row>
         <Table.Cell>{item.name}</Table.Cell>
         <Table.Cell>
-          <Moment>{item.createdAt}</Moment>
-        </Table.Cell>
-        <Table.Cell>
-          <Moment>{item.updatedAt}</Moment>
-         </Table.Cell>
-        <Table.Cell>
           <Link to={`/workspaces/${item.project.workspace.slug}`}>
             {item.project.workspace.name}
           </Link>
         </Table.Cell>
         <Table.Cell>
           <RepositoryShortName repository={item.project.repository} />
-         </Table.Cell>
+        </Table.Cell>
+        <Table.Cell>{item.project.branch}</Table.Cell>
+        <Table.Cell>
+          <Moment format={dateFormat}>{item.createdAt}</Moment>
+        </Table.Cell>
+        <Table.Cell>
+          <Moment format={dateFormat}>{item.updatedAt}</Moment>
+        </Table.Cell>
         <Table.Cell
           positive={item.status === "DONE"}
           warning={item.status === "RUNNING"}

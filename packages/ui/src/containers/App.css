@@ -1,3 +1,7 @@
 body {
   background-color: #f3f3f3;
 }
+
+.App {
+  padding: 7em 0 3em;
+}

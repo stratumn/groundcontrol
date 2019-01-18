@@ -1,0 +1,7 @@
+.WorkspaceSearch.ui.input {
+  margin-bottom: 2em;
+}
+
+.WorkspaceSearch.ui.input > input {
+  border-radius: 2em;
+}

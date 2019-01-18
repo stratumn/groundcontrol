@@ -12,6 +12,8 @@ import jobs from "./job";
 import node from "./node";
 import { workspacesRoot } from "./workspace";
 
+const cloneJobName = "git clone";
+
 export function get(gid: string) {
   return node.get(gid) as Project;
 }
@@ -27,7 +29,7 @@ export function clone(gid: string) {
   publishProjectUpdated(project);
 
   return jobs.add(
-    `Clone "${project.repository}@${project.branch}" into workspace "${project.workspace.name}"`,
+    cloneJobName,
     project,
     async () => {
       let err: Error | undefined;

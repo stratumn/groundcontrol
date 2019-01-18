@@ -14,6 +14,8 @@ import { commit as cloneProject } from "../mutations/cloneProject";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
 import { subscribe } from "../subscriptions/workspaceUpdated";
 
+import "./WorkspaceViewPage.css";
+
 interface IProps {
   relay: RelayProp;
   viewer: WorkspaceViewPage_viewer;
@@ -30,14 +32,16 @@ export class WorkspaceViewPage extends Component<IProps> {
 
     return (
       <Page
+        className="WorkspaceViewPage"
         header={workspace.name}
         subheader={workspace.description}
         icon="cube"
       >
         <Label size="large">not cloned</Label>
-        <div style={{ margin: "2em 0" }}>
-          <ReactMarkdown source={notes} />
-        </div>
+        <ReactMarkdown
+          className="description"
+          source={notes}
+        />
         <WorkspaceMenu
           workspace={workspace}
           onClone={this.handleCloneWorkspace}

@@ -14,6 +14,8 @@ import { ProjectCard_item } from "./__generated__/ProjectCard_item.graphql";
 import CommitList from "./CommitList";
 import RepositoryShortName from "./RepositoryShortName";
 
+import "./ProjectCard.css";
+
 interface IProps {
   item: ProjectCard_item;
   onClone: () => any;
@@ -40,13 +42,13 @@ export class ProjectCard extends Component<IProps> {
     }
 
     return (
-      <Card>
+      <Card className="ProjectCard">
         <Card.Content>
           <Card.Header>
             <RepositoryShortName repository={item.repository} />
           </Card.Header>
-          <Label style={{ marginTop: ".8em" }}>{item.branch}</Label>
-          <Card.Description style={{ marginTop: "1em" }}>
+          <Label>{item.branch}</Label>
+          <Card.Description>
             {item.description || "No description."}
           </Card.Description>
           <Divider horizontal={true}>
