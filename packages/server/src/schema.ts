@@ -9,6 +9,7 @@ import Project from "./resolvers/Project";
 import Query from "./resolvers/Query";
 import Subscription from "./resolvers/Subscription";
 import User from "./resolvers/User";
+import Workspace from "./resolvers/Workspace";
 
 export default async () => {
   const filename = join(__dirname, "../schema.graphql");
@@ -21,6 +22,7 @@ export default async () => {
     Query: Query as IResolvers,
     Subscription: Subscription as IResolvers,
     User: User as IResolvers,
+    Workspace: Workspace as IResolvers,
   };
 
   const schema = makeExecutableSchema({

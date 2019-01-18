@@ -1,9 +1,7 @@
 import graphql from "babel-plugin-relay/macro";
 import { permutationCombination } from "js-combinatorics";
 import { requestSubscription } from "react-relay";
-import { ConnectionHandler } from "relay-runtime";
-
-import groundcontrol from "../groundcontrol.env.relay";
+import { ConnectionHandler, Environment } from "relay-runtime";
 
 const subscription = graphql`
   subscription jobUpsertedSubscription {
@@ -35,9 +33,9 @@ const notStatusCombinations: { [s: string]: string[][] } = {
   RUNNING: allStatusCombinations.filter((perm: string[]) => perm.indexOf("RUNNING") < 0),
 };
 
-export function subscribe() {
+export function subscribe(environment: Environment) {
   return requestSubscription(
-    groundcontrol,
+    environment,
     {
       onError: (error) => console.error(error),
       subscription,

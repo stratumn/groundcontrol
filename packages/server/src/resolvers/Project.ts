@@ -11,6 +11,7 @@ import {
 } from "../__generated__/groundcontrol";
 
 import github from "../clients/github";
+import { isCloned } from "../models/project";
 import { ownerAndName } from "../util/repository";
 
 // Queries the description of a repo.
@@ -119,6 +120,8 @@ const resolvers: ProjectResolvers.Resolvers = {
 
     return conn;
   },
+
+  isCloned,
 };
 
 export default resolvers;

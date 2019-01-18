@@ -28,6 +28,7 @@ export async function all(): Promise<Workspace[]> {
     for (const prj of workspace.projects!) {
       prj.id = toGlobalId(Type.PROJECT, workspace.slug, prj.repository, prj.branch);
       prj.workspace = workspace;
+      prj.isCloning = false;
 
       node.set(prj.id, prj);
     }
@@ -40,10 +41,12 @@ export function get(gid: string) {
   return node.get(gid) as Workspace;
 }
 
-export function clone(gid: string) {
+export async function clone(gid: string) {
   const workspace = get(gid);
 
-  return workspace!.projects!.map(({ id }) => project.clone(id));
+  return workspace!.projects!
+    .filter(async (prj) => !prj.isCloning && !(await project.isCloned(prj)))
+    .map(({ id }) => project.clone(id));
 }
 
 export default {

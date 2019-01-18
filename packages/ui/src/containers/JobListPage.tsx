@@ -3,7 +3,7 @@ import { Router } from "found";
 import React, { Component } from "react";
 import { Disposable } from "relay-runtime";
 
-import { createFragmentContainer } from "react-relay";
+import { createFragmentContainer, RelayProp } from "react-relay";
 
 import { JobListPage_viewer } from "./__generated__/JobListPage_viewer.graphql";
 
@@ -14,11 +14,12 @@ import Page from "../components/Page";
 import { subscribe } from "../subscriptions/jobUpserted";
 
 interface IProps {
+  relay: RelayProp;
+  router: Router;
   viewer: JobListPage_viewer;
   params: {
     filters: string | undefined;
   };
-  router: Router;
 }
 
 export class JobListPage extends Component<IProps> {
@@ -46,7 +47,7 @@ export class JobListPage extends Component<IProps> {
   }
 
   public componentDidMount() {
-    this.disposables.push(subscribe());
+    this.disposables.push(subscribe(this.props.relay.environment));
   }
 
   public componentWillUnmount() {

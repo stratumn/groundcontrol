@@ -24,6 +24,8 @@ type Workspace implements Node {
   projects: [Project!]!
   description: String!
   notes: String
+  isCloning: Boolean!
+  isCloned: Boolean!
 }
 
 type Project implements Node {
@@ -38,6 +40,8 @@ type Project implements Node {
   ): CommitConnection!
   description: String
   workspace: Workspace!
+  isCloning: Boolean!
+  isCloned: Boolean!
 }
 
 type Commit {
@@ -102,5 +106,7 @@ type Mutation {
 }
 
 type Subscription {
+  workspaceUpdated(id: ID): Workspace!
+  projectUpdated(id: ID): Project!
   jobUpserted: Job!
 }

@@ -1,16 +1,31 @@
+import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
+import { createFragmentContainer } from "react-relay";
 import {
   Dropdown,
   Icon,
   Menu,
 } from "semantic-ui-react";
 
-export default class WorkspaceMenu extends Component {
+import { WorkspaceMenu_workspace } from "./__generated__/WorkspaceMenu_workspace.graphql";
+
+interface IProps {
+  workspace: WorkspaceMenu_workspace;
+  onClone: () => any;
+}
+
+export class WorkspaceMenu extends Component<IProps> {
 
   public render() {
+    const { isCloning, isCloned } = this.props.workspace;
+
     return (
       <Menu secondary={true}>
-        <Menu.Item>
+        <Menu.Item
+          disabled={isCloning || isCloned}
+          loading={isCloning}
+          onClick={this.props.onClone}
+        >
           <Icon name="clone" />
           Clone All
         </Menu.Item>
@@ -35,3 +50,10 @@ export default class WorkspaceMenu extends Component {
   }
 
 }
+
+export default createFragmentContainer(WorkspaceMenu, graphql`
+  fragment WorkspaceMenu_workspace on Workspace {
+    isCloning
+    isCloned
+  }`,
+);

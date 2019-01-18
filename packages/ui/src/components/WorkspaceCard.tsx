@@ -22,6 +22,20 @@ export class WorkspaceCard extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
+    const buttons: JSX.Element[] = [];
+
+    if (!item.isCloned) {
+      buttons.push((
+        <Button
+          key="clone"
+          content="Clone"
+          color="teal"
+          disabled={item.isCloning}
+          loading={item.isCloning}
+          onClick={this.props.onClone}
+        />
+      ));
+    }
 
     return (
       <Card>
@@ -48,12 +62,7 @@ export class WorkspaceCard extends Component<IProps> {
             >
               Details
             </Link>
-            <Button
-              color="teal"
-              onClick={this.props.onClone}
-            >
-              Clone
-            </Button>
+            {buttons}
           </div>
         </Card.Content>
       </Card>
@@ -64,9 +73,12 @@ export class WorkspaceCard extends Component<IProps> {
 
 export default createFragmentContainer(WorkspaceCard, graphql`
   fragment WorkspaceCard_item on Workspace {
+    id
     slug
     name
     description
+    isCloned
+    isCloning
     projects {
       ...ProjectList_items
     }

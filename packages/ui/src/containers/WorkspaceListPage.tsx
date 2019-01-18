@@ -1,10 +1,7 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer, RelayProp } from "react-relay";
-import {
-  Header,
-  Icon,
- } from "semantic-ui-react";
+import { Disposable } from "relay-runtime";
 
 import { WorkspaceListPage_viewer } from "./__generated__/WorkspaceListPage_viewer.graphql";
 
@@ -12,6 +9,7 @@ import Page from "../components/Page";
 import WorkspacesCardGroup from "../components/WorkspaceCardGroup";
 import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
+import { subscribe } from "../subscriptions/workspaceUpdated";
 
 interface IProps extends WorkspaceListPage {
   relay: RelayProp;
@@ -31,6 +29,8 @@ export class WorkspaceListPage extends Component<IProps, IState> {
   public state: IState = {
     query: "",
   };
+
+  private disposables: Disposable[] = [];
 
   public render() {
     const query = this.state.query;
@@ -53,6 +53,18 @@ export class WorkspaceListPage extends Component<IProps, IState> {
         />
       </Page>
     );
+  }
+
+  public componentDidMount() {
+    this.disposables.push(subscribe(this.props.relay.environment));
+  }
+
+  public componentWillUnmount() {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+
+    this.disposables = [];
   }
 
   private handleSearchChange = (query: string) => {

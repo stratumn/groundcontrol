@@ -1,7 +1,8 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import ReactMarkdown from "react-markdown";
-import { createFragmentContainer } from "react-relay";
+import { createFragmentContainer, RelayProp } from "react-relay";
+import { Disposable } from "relay-runtime";
 import { Label } from "semantic-ui-react";
 
 import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_viewer.graphql";
@@ -9,12 +10,18 @@ import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_view
 import Page from "../components/Page";
 import ProjectCardGroup from "../components/ProjectCardGroup";
 import WorkspaceMenu from "../components/WorkspaceMenu";
+import { commit as cloneProject } from "../mutations/cloneProject";
+import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
+import { subscribe } from "../subscriptions/workspaceUpdated";
 
 interface IProps {
+  relay: RelayProp;
   viewer: WorkspaceViewPage_viewer;
 }
 
 export class WorkspaceViewPage extends Component<IProps> {
+
+  private disposables: Disposable[] = [];
 
   public render() {
     const workspace = this.props.viewer.workspace!;
@@ -31,12 +38,37 @@ export class WorkspaceViewPage extends Component<IProps> {
         <div style={{ margin: "2em 0" }}>
           <ReactMarkdown source={notes} />
         </div>
-        <WorkspaceMenu />
-        <ProjectCardGroup items={items} />
+        <WorkspaceMenu
+          workspace={workspace}
+          onClone={this.handleCloneWorkspace}
+        />
+        <ProjectCardGroup
+          items={items}
+          onClone={this.handleCloneProject}
+        />
       </Page>
     );
   }
 
+  public componentDidMount() {
+    this.disposables.push(subscribe(this.props.relay.environment, this.props.viewer.workspace!.id));
+  }
+
+  public componentWillUnmount() {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+
+    this.disposables = [];
+  }
+
+  private handleCloneWorkspace = () => {
+    cloneWorkspace(this.props.relay.environment, this.props.viewer.workspace!.id);
+  }
+
+  private handleCloneProject = (id: string) => {
+    cloneProject(this.props.relay.environment, id);
+  }
 }
 
 export default createFragmentContainer(WorkspaceViewPage, graphql`
@@ -46,12 +78,14 @@ export default createFragmentContainer(WorkspaceViewPage, graphql`
       commitsLimit: { type: "Int", defaultValue: 3 },
     ) {
     workspace(slug: $slug) {
-      projects {
-        ...ProjectCardGroup_items @arguments(commitsLimit: $commitsLimit)
-      }
+      id
       name
       description
       notes
+      ...WorkspaceMenu_workspace
+      projects {
+        ...ProjectCardGroup_items @arguments(commitsLimit: $commitsLimit)
+      }
     }
   }`,
 );

@@ -9,6 +9,7 @@ import ProjectCard from "./ProjectCard";
 
 interface IProps {
   items: ProjectCardGroup_items;
+  onClone: (id: string) => any;
 }
 
 export class ProjectCardGroup extends Component<IProps> {
@@ -19,10 +20,15 @@ export class ProjectCardGroup extends Component<IProps> {
       <ProjectCard
         key={item.id}
         item={item}
+        onClone={this.handleClone.bind(this, item.id)}
       />
      ));
 
     return <Card.Group itemsPerRow={3}>{cards}</Card.Group>;
+  }
+
+  private handleClone(id: string) {
+    this.props.onClone(id);
   }
 }
 
