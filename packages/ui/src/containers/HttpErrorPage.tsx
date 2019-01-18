@@ -4,7 +4,7 @@ import React, { Component } from "react";
 import Page from "../components/Page";
 
 interface IProps {
-  error: Error;
+  error: HttpError;
 }
 
 export default class ErrorPage extends Component<IProps> {
@@ -18,7 +18,8 @@ export default class ErrorPage extends Component<IProps> {
         subheader="Looks like something's wrong."
         icon="warning"
       >
-        <pre>{error.stack}</pre>
+        <h4>Error {error.status}</h4>
+        <pre>{error.data}</pre>
       </Page>
     );
   }

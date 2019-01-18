@@ -13,6 +13,7 @@ import React from "react";
 import Loading from "./components/Loading";
 import App from "./containers/App";
 import ErrorPage from "./containers/ErrorPage";
+import HttpErrorPage from "./containers/HttpErrorPage";
 import JobListPage from "./containers/JobListPage";
 import WorkspaceListPage from "./containers/WorkspaceListPage";
 import WorkspaceViewPage from "./containers/WorkspaceViewPage";
@@ -45,13 +46,15 @@ function prepareJobListVariables({ filters }: { filters: string }) {
   return { status: filters ? filters.split(",") : null };
 }
 
-function render({ Component, props }: RouteRenderArgs, error?: Error) {
+function render(args: RouteRenderArgs) {
+  // Only way I could find to get relay errors :(
+  const error = ((args as any).error);
   if (error) {
     return <ErrorPage error={error} />;
   }
 
-  if (Component && props) {
-    return <Component {...props} />;
+  if (args.Component && args.props) {
+    return <args.Component {...args.props} />;
   }
 
   return <Loading />;
@@ -96,5 +99,12 @@ export default createFarceRouter({
     </Route>,
   ),
 
-  render: createRender({}),
+  render: createRender({
+    renderError: ({ error }) => (
+      <App>
+        <HttpErrorPage error={error} />
+      </App>
+    ),
+  }),
+
 });
