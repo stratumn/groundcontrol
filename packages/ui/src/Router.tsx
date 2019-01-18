@@ -71,7 +71,6 @@ export default createFarceRouter({
           Component={WorkspaceListPage}
           query={workspaceListQuery}
           render={render}
-          dataFrom="STORE_THEN_NETWORK"
         />
         <Route
           path=":slug"

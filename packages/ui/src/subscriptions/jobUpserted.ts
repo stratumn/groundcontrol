@@ -6,7 +6,7 @@ import { ConnectionHandler, Environment } from "relay-runtime";
 const subscription = graphql`
   subscription jobUpsertedSubscription {
     jobUpserted {
-      ...JobList_items
+      ...JobTable_items
     }
   }
 `;

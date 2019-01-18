@@ -5,20 +5,20 @@ import {
   Table,
  } from "semantic-ui-react";
 
-import { JobList_items } from "./__generated__/JobList_items.graphql";
+import { JobTable_items } from "./__generated__/JobTable_items.graphql";
 
-import JobListItem from "./JobListItem";
+import JobTableRow from "./JobTableRow";
 
 interface IProps {
-  items: JobList_items;
+  items: JobTable_items;
 }
 
-export class JobList extends Component<IProps> {
+export class JobTable extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
     const rows = items.map((item) => (
-      <JobListItem
+      <JobTableRow
         key={item.id}
         item={item}
       />
@@ -44,10 +44,10 @@ export class JobList extends Component<IProps> {
 
 }
 
-export default createFragmentContainer(JobList, graphql`
-  fragment JobList_items on Job
+export default createFragmentContainer(JobTable, graphql`
+  fragment JobTable_items on Job
     @relay(plural: true) {
-    ...JobListItem_item
+    ...JobTableRow_item
     id
   }`,
 );

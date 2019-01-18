@@ -7,7 +7,7 @@ import {
 
 import { createFragmentContainer } from "react-relay";
 
-import { JobListItem_item } from "./__generated__/JobListItem_item.graphql";
+import { JobTableRow_item } from "./__generated__/JobTableRow_item.graphql";
 
 import Moment from "react-moment";
 import RepositoryShortName from "./RepositoryShortName";
@@ -15,10 +15,10 @@ import RepositoryShortName from "./RepositoryShortName";
 const dateFormat = "L LTS";
 
 interface IProps {
-  item: JobListItem_item;
+  item: JobTableRow_item;
 }
 
-export class JobListItem extends Component<IProps> {
+export class JobTableRow extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
@@ -54,8 +54,8 @@ export class JobListItem extends Component<IProps> {
 
 }
 
-export default createFragmentContainer(JobListItem, graphql`
-  fragment JobListItem_item on Job {
+export default createFragmentContainer(JobTableRow, graphql`
+  fragment JobTableRow_item on Job {
     name
     status
     createdAt

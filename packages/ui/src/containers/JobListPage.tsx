@@ -9,7 +9,7 @@ import { createPaginationContainer, RelayPaginationProp } from "react-relay";
 import { JobListPage_viewer } from "./__generated__/JobListPage_viewer.graphql";
 
 import JobFilter from "../components/JobFilter";
-import JobList from "../components/JobList";
+import JobTable from "../components/JobTable";
 import Page from "../components/Page";
 
 import { subscribe } from "../subscriptions/jobUpserted";
@@ -42,7 +42,7 @@ export class JobListPage extends Component<IProps> {
           filters={filters}
           onChange={this.handleFiltersChange}
         />
-        <JobList items={items} />
+        <JobTable items={items} />
         <Button
           disabled={!this.props.relay.hasMore() || this.props.relay.isLoading()}
           loading={this.props.relay.isLoading()}
@@ -111,7 +111,7 @@ export default createPaginationContainer(
         ) {
         edges {
           node {
-            ...JobList_items
+            ...JobTable_items
             id
           }
         }
