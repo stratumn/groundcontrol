@@ -9,19 +9,23 @@ workspaces:
   projects:
   - repository: git@github.com:stratumn/trace-api.git
     branch: master
+    description: The API for Trace.
   - repository: git@github.com:stratumn/trace-ui.git
     branch: master
+    description: The UI for Trace.
   - repository: git@github.com:stratumn/trace-sdk-js.git
     branch: master
+    description: The SDK for Trace.
   - repository: git@github.com:stratumn/account-api.git
     branch: master
+    description: The API for Account.
   - repository: git@github.com:stratumn/account-ui.git
     branch: master
+    description: The UI for Account.
 - name: Go Core Dev
   slug: go-core-dev
   description: A workspace containing all the master branches of the Go Core projects.
   notes: This should probably contain installation instructions.
   projects:
-  - name: Go Core
-    repository: git@github.com:stratumn/go-core.git
+  - repository: git@github.com:stratumn/go-core.git
     branch: master

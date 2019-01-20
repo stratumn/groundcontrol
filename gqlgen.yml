@@ -1,0 +1,20 @@
+schema:
+- schema.graphql
+exec:
+  filename: generated.go
+model:
+  filename: models_gen.go
+resolver:
+  filename: resolver.go
+  type: Resolver
+models:
+  User:
+    model: github.com/stratumn/groundcontrol.User
+  Workspace:
+    model: github.com/stratumn/groundcontrol.Workspace
+  Project:
+    model: github.com/stratumn/groundcontrol.Project
+  Job:
+    model: github.com/stratumn/groundcontrol.Job
+  JobEdge:
+    model: github.com/stratumn/groundcontrol.JobEdge
