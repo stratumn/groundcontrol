@@ -53,12 +53,6 @@ export default class Menu extends Component {
             Logs
             <Label color="red">2</Label>
           </Link>
-          <SemanticMenu.Item
-            as="a"
-            href="http://localhost:4000/graphql"
-          >
-            GraphQL
-          </SemanticMenu.Item>
         </Container>
       </SemanticMenu>
     );

@@ -77,8 +77,13 @@ func main() {
 
 	if ui != nil {
 		fileServer := http.FileServer(ui)
-		router.Handle("/", fileServer)
-		router.NotFound(fileServer.ServeHTTP)
+		router.NotFound(func(w http.ResponseWriter, req *http.Request) {
+			if _, err := ui.Open(req.URL.Path); err != nil {
+				// Rewrite other URLs to index for pushstate.
+				req.URL.Path = ""
+			}
+			fileServer.ServeHTTP(w, req)
+		})
 	} else {
 		router.Handle("/", handler.Playground("GraphQL playground", "/query"))
 	}
