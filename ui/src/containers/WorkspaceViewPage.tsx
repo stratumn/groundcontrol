@@ -17,7 +17,6 @@ import React, { Component } from "react";
 import ReactMarkdown from "react-markdown";
 import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
-import { Label } from "semantic-ui-react";
 
 import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_viewer.graphql";
 
@@ -51,7 +50,6 @@ export class WorkspaceViewPage extends Component<IProps> {
         subheader={workspace.description || "No description."}
         icon="cube"
       >
-        <Label size="large">not cloned</Label>
         <ReactMarkdown
           className="description"
           source={notes}

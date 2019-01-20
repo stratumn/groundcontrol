@@ -70,7 +70,7 @@ export class ProjectCard extends Component<IProps> {
           <Card.Header>
             <RepositoryShortName repository={item.repository} />
           </Card.Header>
-          <Label>{item.branch}</Label>
+          <Label color="blue">{item.branch}</Label>
           <Card.Description>
             {item.description || "No description."}
           </Card.Description>

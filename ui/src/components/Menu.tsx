@@ -19,7 +19,7 @@ import { Container, Label, Menu as SemanticMenu } from "semantic-ui-react";
 export default class Menu extends Component {
   public render() {
     return (
-      <SemanticMenu fixed="top" inverted={true} color="grey">
+      <SemanticMenu fixed="top" color="teal" inverted={true}>
         <Container>
           <Link
             to="/workspaces"
@@ -27,7 +27,7 @@ export default class Menu extends Component {
             activePropName="active"
           >
             Workspaces
-            <Label color="orange">1</Label>
+            <Label color="purple">1</Label>
           </Link>
           <Link
             to="/jobs"
@@ -35,7 +35,7 @@ export default class Menu extends Component {
             activePropName="active"
           >
             Jobs
-            <Label color="teal">3</Label>
+            <Label color="blue">3</Label>
           </Link>
           <Link
             to="/processes"
@@ -43,7 +43,7 @@ export default class Menu extends Component {
             activePropName="active"
           >
             Processes
-            <Label color="teal">1</Label>
+            <Label color="blue">1</Label>
           </Link>
           <Link
             to="/errors"
@@ -51,7 +51,7 @@ export default class Menu extends Component {
             activePropName="active"
           >
             Logs
-            <Label color="red">2</Label>
+            <Label color="pink">2</Label>
           </Link>
         </Container>
       </SemanticMenu>

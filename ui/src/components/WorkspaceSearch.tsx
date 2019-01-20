@@ -36,7 +36,7 @@ export default class WorkspaceSearch extends Component<IProps> {
     return (
       <Input
         className="WorkspaceSearch"
-        size="huge"
+        size="big"
         icon="search"
         placeholder="Search..."
         onChange={this.handleSearchChange}
