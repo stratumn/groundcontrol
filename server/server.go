@@ -16,6 +16,8 @@ import (
 
 const defaultPort = "8080"
 
+var ui http.FileSystem
+
 func checkError(err error) {
 	if err != nil {
 		fmt.Println(err)
@@ -59,7 +61,14 @@ func main() {
 	router := chi.NewRouter()
 	router.Use(c.Handler)
 
-	router.Handle("/", handler.Playground("GraphQL playground", "/query"))
+	if ui != nil {
+		fileServer := http.FileServer(ui)
+		router.Handle("/", fileServer)
+		router.NotFound(fileServer.ServeHTTP)
+	} else {
+		router.Handle("/", handler.Playground("GraphQL playground", "/query"))
+	}
+
 	router.Handle("/query", handler.GraphQL(
 		groundcontrol.NewExecutableSchema(config),
 		handler.WebsocketUpgrader(websocket.Upgrader{
@@ -67,6 +76,11 @@ func main() {
 		}),
 	))
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	if ui != nil {
+		log.Printf("connect to http://localhost:%s/ for web interface", port)
+	} else {
+		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	}
+
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
