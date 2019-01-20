@@ -34,7 +34,7 @@ export class WorkspaceViewPage extends Component<IProps> {
       <Page
         className="WorkspaceViewPage"
         header={workspace.name}
-        subheader={workspace.description}
+        subheader={workspace.description || "No description."}
         icon="cube"
       >
         <Label size="large">not cloned</Label>

@@ -10,7 +10,7 @@ import {
 import { SubscriptionClient } from "subscriptions-transport-ws";
 
 async function fetchQuery(operation: RequestNode, variables: Variables) {
-  return fetch("http://localhost:4000/graphql", {
+  return fetch("http://localhost:8080/query", {
     body: JSON.stringify({
       query: operation.text,
       variables,
@@ -27,7 +27,7 @@ async function fetchQuery(operation: RequestNode, variables: Variables) {
 const setupSubscription: SubscribeFunction = (config, variables, _, observer) => {
   const query = config.text;
   const { onNext, onError, onCompleted } = observer;
-  const client = new SubscriptionClient("ws://localhost:4000/graphql", { reconnect: true });
+  const client = new SubscriptionClient("ws://localhost:8080/query", { reconnect: true });
 
   const { unsubscribe } = client
     .request({ query, variables })

@@ -22,7 +22,7 @@ type Workspace implements Node {
   name: String!
   slug: String!
   projects: [Project!]!
-  description: String!
+  description: String
   notes: String
   isCloning: Boolean!
   isCloned: Boolean!
@@ -55,6 +55,7 @@ type Commit {
 type CommitConnection {
   edges: [CommitEdge!]!
   pageInfo: PageInfo!
+  isLoading: Boolean!
 }
 
 type CommitEdge {
@@ -91,8 +92,8 @@ type JobEdge {
 type PageInfo {
   hasNextPage: Boolean
   hasPreviousPage: Boolean
-  startCursor: String
   endCursor: String
+  startCursor: String
 }
 
 type Query {

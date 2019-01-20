@@ -4,9 +4,11 @@ import { createFragmentContainer } from "react-relay";
 import {
   Button,
   Card,
+  Dimmer,
   Divider,
   Header,
   Label,
+  Loader,
  } from "semantic-ui-react";
 
 import { ProjectCard_item } from "./__generated__/ProjectCard_item.graphql";
@@ -25,6 +27,7 @@ export class ProjectCard extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
+    const isLoading = item.commits.isLoading;
     const commits = item.commits.edges.map(({ node }) => node);
     const buttons: JSX.Element[] = [];
 
@@ -43,6 +46,12 @@ export class ProjectCard extends Component<IProps> {
 
     return (
       <Card className="ProjectCard">
+        <Dimmer
+          active={isLoading}
+          inverted={true}
+        >
+          <Loader />
+        </Dimmer>
         <Card.Content>
           <Card.Header>
             <RepositoryShortName repository={item.repository} />
@@ -84,6 +93,7 @@ export default createFragmentContainer(ProjectCard, graphql`
           ...CommitList_items
         }
       }
+      isLoading
     }
   }`,
 );
