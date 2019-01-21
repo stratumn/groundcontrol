@@ -45,7 +45,7 @@ func (u *User) Workspace(slug string) *Workspace {
 
 // LoadUserYAML loads the content of a YAML file into a User model.
 func LoadUserYAML(file string, user *User, nodes *NodeManager) error {
-	user.ID = relay.EncodeID("User", file)
+	user.ID = relay.EncodeID(UserType, file)
 	nodes.Store(user.ID, user)
 
 	bytes, err := ioutil.ReadFile(file)
@@ -58,12 +58,12 @@ func LoadUserYAML(file string, user *User, nodes *NodeManager) error {
 	}
 
 	for _, workspace := range user.Workspaces {
-		workspace.ID = relay.EncodeID("Workspace", workspace.Slug)
+		workspace.ID = relay.EncodeID(WorkspaceType, workspace.Slug)
 		nodes.Store(workspace.ID, workspace)
 
 		for _, project := range workspace.Projects {
 			project.ID = relay.EncodeID(
-				"Project",
+				ProjectType,
 				workspace.Slug,
 				project.Repository,
 				project.Branch,

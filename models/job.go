@@ -92,7 +92,7 @@ func (j *JobManager) Add(
 	id := atomic.AddUint64(&nextJobID, 1)
 	now := date.NowFormatted()
 	job := Job{
-		ID:        relay.EncodeID("Job", fmt.Sprint(id)),
+		ID:        relay.EncodeID(JobType, fmt.Sprint(id)),
 		Name:      name,
 		Status:    JobStatusQueued,
 		CreatedAt: now,
