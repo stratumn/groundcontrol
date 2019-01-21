@@ -212,10 +212,6 @@ func (p *Project) CloneJob(
 func (p *Project) clone(getProjectPath ProjectPathGetter) error {
 	directory := getProjectPath(p.Workspace.Slug, p.Repository, p.Branch)
 
-	if p.IsCloning() {
-		return ErrCloning
-	}
-
 	if p.isCloned(directory) {
 		return ErrCloned
 	}
