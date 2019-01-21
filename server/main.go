@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// The server application entry point for Ground Control.
 package main
 
 import (
@@ -60,7 +61,7 @@ func main() {
 	}
 
 	resolver := groundcontrol.Resolver{}
-	err = groundcontrol.LoadYAML(filename, &groundcontrol.Viewer)
+	err = groundcontrol.LoadUserYAML(filename, &resolver.Viewer)
 	checkError(err)
 
 	config := groundcontrol.Config{

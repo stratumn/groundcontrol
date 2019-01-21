@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build release
+package groundcontrol
 
-package main
+import (
+	"context"
+)
 
-import "github.com/stratumn/groundcontrol"
+type queryResolver struct{ *Resolver }
 
-func init() {
-	// When build for release, embed the UI.
-	ui = groundcontrol.UI
+func (r *queryResolver) Node(ctx context.Context, id string) (Node, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) Viewer(ctx context.Context) (User, error) {
+	return r.Resolver.Viewer, nil
 }

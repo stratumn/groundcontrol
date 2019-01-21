@@ -14,15 +14,20 @@
 
 package groundcontrol
 
-import "container/list"
+import (
+	"container/list"
+	"io/ioutil"
 
-var Viewer = User{}
+	yaml "gopkg.in/yaml.v2"
+)
 
+// User contains all the data of the person using the app.
 type User struct {
 	ID         string      `json:"id"`
 	Workspaces []Workspace `json:"workspaces"`
 }
 
+// Workspace returns the workspace with the given slug.
 func (u *User) Workspace(slug string) *Workspace {
 	for _, v := range u.Workspaces {
 		if v.Slug == slug {
@@ -33,6 +38,7 @@ func (u *User) Workspace(slug string) *Workspace {
 	return nil
 }
 
+// Jobs returns paginated jobs and supports filtering by status.
 func (u *User) Jobs(
 	after *string,
 	before *string,
@@ -79,4 +85,37 @@ func (u *User) Jobs(
 		Edges:    edges,
 		PageInfo: connection.PageInfo,
 	}, nil
+}
+
+// LoadUserYAML loads the content of a YAML file into a User model.
+func LoadUserYAML(file string, user *User) error {
+	user.ID = EncodeID("User", file)
+
+	bytes, err := ioutil.ReadFile(file)
+	if err != nil {
+		return err
+	}
+
+	if err := yaml.UnmarshalStrict(bytes, &user); err != nil {
+		return err
+	}
+
+	for i := range user.Workspaces {
+		workspace := &user.Workspaces[i]
+		workspace.ID = EncodeID("Workspace", workspace.Slug)
+
+		for j := range workspace.Projects {
+			project := &workspace.Projects[j]
+			project.ID = EncodeID(
+				"Project",
+				workspace.Slug,
+				project.Repository,
+				project.Branch,
+			)
+			project.Workspace = &user.Workspaces[i]
+			project.commitList = list.New()
+		}
+	}
+
+	return nil
 }

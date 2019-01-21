@@ -12,24 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+//+build release
 
-// Resolver is the root GraphQL resolver.
-type Resolver struct {
-	Viewer User
-}
+package main
 
-// Query returns the resolver for queries.
-func (r *Resolver) Query() QueryResolver {
-	return &queryResolver{r}
-}
+import "github.com/stratumn/groundcontrol"
 
-// Mutation returns the resolver for mutations.
-func (r *Resolver) Mutation() MutationResolver {
-	return &mutationResolver{r}
-}
-
-// Subscription returns the resolver for subscriptions.
-func (r *Resolver) Subscription() SubscriptionResolver {
-	return &subscriptionResolver{r}
+func init() {
+	// When building with the release tag, embed the UI.
+	ui = groundcontrol.UI
 }

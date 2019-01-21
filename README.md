@@ -25,7 +25,7 @@ Clone to `$GOPATH/src/github.com/stratumn/groundcontrol` (no Go module support y
 ```
 dep ensure
 ssh-add # <---- to use your SSH key for accessing private repos
-go run server/server.go [groundcontrol.yml]
+go run server/main.go [groundcontrol.yml]
 ```
 
 Server runs on `http://localhost:8080` and serves GraphiQL during development.

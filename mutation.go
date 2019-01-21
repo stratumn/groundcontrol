@@ -14,22 +14,15 @@
 
 package groundcontrol
 
-// Resolver is the root GraphQL resolver.
-type Resolver struct {
-	Viewer User
-}
+import (
+	"context"
+)
 
-// Query returns the resolver for queries.
-func (r *Resolver) Query() QueryResolver {
-	return &queryResolver{r}
-}
+type mutationResolver struct{ *Resolver }
 
-// Mutation returns the resolver for mutations.
-func (r *Resolver) Mutation() MutationResolver {
-	return &mutationResolver{r}
+func (r *mutationResolver) CloneProject(ctx context.Context, id string) (Job, error) {
+	panic("not implemented")
 }
-
-// Subscription returns the resolver for subscriptions.
-func (r *Resolver) Subscription() SubscriptionResolver {
-	return &subscriptionResolver{r}
+func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]Job, error) {
+	panic("not implemented")
 }

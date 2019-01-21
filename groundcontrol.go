@@ -12,24 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate go run ./scripts/gqlgen.go
+
+// Package groundcontrol contains types used by the Ground Control server.
 package groundcontrol
-
-// Resolver is the root GraphQL resolver.
-type Resolver struct {
-	Viewer User
-}
-
-// Query returns the resolver for queries.
-func (r *Resolver) Query() QueryResolver {
-	return &queryResolver{r}
-}
-
-// Mutation returns the resolver for mutations.
-func (r *Resolver) Mutation() MutationResolver {
-	return &mutationResolver{r}
-}
-
-// Subscription returns the resolver for subscriptions.
-func (r *Resolver) Subscription() SubscriptionResolver {
-	return &subscriptionResolver{r}
-}
