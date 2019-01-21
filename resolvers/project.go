@@ -20,7 +20,9 @@ import (
 	"github.com/stratumn/groundcontrol/models"
 )
 
-type projectResolver struct{ *Resolver }
+type projectResolver struct {
+	*Resolver
+}
 
 func (r *projectResolver) Commits(
 	ctx context.Context,

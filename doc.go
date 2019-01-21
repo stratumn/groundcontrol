@@ -12,26 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resolvers
-
-import (
-	"context"
-
-	"github.com/stratumn/groundcontrol/models"
-)
-
-type userResolver struct {
-	*Resolver
-}
-
-func (r *userResolver) Jobs(
-	ctx context.Context,
-	obj *models.User,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-	status []models.JobStatus,
-) (models.JobConnection, error) {
-	return r.JobManager.Jobs(after, before, first, last, status)
-}
+// The entry point for the Ground Control application.
+package main

@@ -19,10 +19,12 @@ import (
 	"strings"
 )
 
+// EncodeID encodes a gobal ID.
 func EncodeID(identifiers ...string) string {
 	return base64.StdEncoding.EncodeToString([]byte(strings.Join(identifiers, ":")))
 }
 
+// DecodeID decodes a global ID.
 func DecodeID(id string) ([]string, error) {
 	bytes, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {

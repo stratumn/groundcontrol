@@ -20,7 +20,9 @@ import (
 	"github.com/stratumn/groundcontrol/models"
 )
 
-type mutationResolver struct{ *Resolver }
+type mutationResolver struct {
+	*Resolver
+}
 
 func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.Job, error) {
 	panic("not implemented")

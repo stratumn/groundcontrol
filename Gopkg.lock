@@ -372,12 +372,16 @@
   analyzer-version = 1
   input-imports = [
     "github.com/99designs/gqlgen/cmd",
+    "github.com/99designs/gqlgen/graphql",
+    "github.com/99designs/gqlgen/graphql/introspection",
     "github.com/99designs/gqlgen/handler",
     "github.com/go-chi/chi",
     "github.com/gorilla/websocket",
     "github.com/rs/cors",
     "github.com/shurcooL/vfsgen",
     "github.com/stretchr/testify/assert",
+    "github.com/vektah/gqlparser",
+    "github.com/vektah/gqlparser/ast",
     "gopkg.in/src-d/go-git.v4",
     "gopkg.in/src-d/go-git.v4/plumbing",
     "gopkg.in/src-d/go-git.v4/plumbing/object",

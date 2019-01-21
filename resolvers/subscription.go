@@ -20,7 +20,9 @@ import (
 	"github.com/stratumn/groundcontrol/models"
 )
 
-type subscriptionResolver struct{ *Resolver }
+type subscriptionResolver struct {
+	*Resolver
+}
 
 func (r *subscriptionResolver) WorkspaceUpdated(
 	ctx context.Context,

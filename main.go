@@ -14,7 +14,6 @@
 
 //go:generate go run scripts/gqlgen.go
 
-// The entry point for the Ground Control application.
 package main
 
 import (

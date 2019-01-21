@@ -20,7 +20,9 @@ import (
 	"github.com/stratumn/groundcontrol/models"
 )
 
-type queryResolver struct{ *Resolver }
+type queryResolver struct {
+	*Resolver
+}
 
 func (r *queryResolver) Node(ctx context.Context, id string) (models.Node, error) {
 	panic("not implemented")
