@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"sync/atomic"
 
 	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/pubsub"
@@ -33,14 +32,11 @@ const (
 	JobUpserted = "JOB_UPSERTED" // Go type *Job
 )
 
-var (
-	nextJobID    = uint64(0)
-	jobPaginator = relay.Paginator{
-		GetID: func(node interface{}) string {
-			return node.(*Job).ID
-		},
-	}
-)
+var jobPaginator = relay.Paginator{
+	GetID: func(node interface{}) string {
+		return node.(*Job).ID
+	},
+}
 
 // Job represents a job in the app.
 type Job struct {
@@ -61,8 +57,9 @@ type JobManager struct {
 	pubsub *pubsub.PubSub
 	queue  *queue.Queue
 
-	list   *list.List
-	listMu sync.Mutex
+	mu        sync.Mutex
+	list      *list.List
+	nextJobID uint64
 }
 
 // NewJobManager creates a JobManager with given concurrency.
@@ -86,10 +83,10 @@ func (j *JobManager) Add(
 	project *Project,
 	fn func() error,
 ) *Job {
-	j.listMu.Lock()
-	defer j.listMu.Unlock()
+	j.mu.Lock()
+	defer j.mu.Unlock()
 
-	id := atomic.AddUint64(&nextJobID, 1)
+	id := j.nextJobID
 	now := date.NowFormatted()
 	job := Job{
 		ID:        relay.EncodeID(JobType, fmt.Sprint(id)),
@@ -100,6 +97,7 @@ func (j *JobManager) Add(
 		Project:   project,
 	}
 
+	j.nextJobID++
 	j.nodes.Store(job.ID, &job)
 	j.list.PushFront(&job)
 	j.pubsub.Publish(JobUpserted, &job)
