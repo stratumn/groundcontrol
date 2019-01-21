@@ -17,7 +17,7 @@ package models
 import (
 	"container/list"
 	"strings"
-	"sync"
+	"sync/atomic"
 
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -57,11 +57,7 @@ type Project struct {
 
 	commitList *list.List
 
-	commitsMu        sync.Mutex
-	isLoadingCommits bool
-
-	cloneMu   sync.Mutex
-	isCloning bool
+	isLoadingCommits uint32
 }
 
 // IsNode is used by gqlgen.
@@ -102,31 +98,26 @@ func (p *Project) Commits(
 	return CommitConnection{
 		Edges:     edges,
 		PageInfo:  connection.PageInfo,
-		IsLoading: p.isLoadingCommits,
+		IsLoading: atomic.LoadUint32(&p.isLoadingCommits) == 1,
 	}, nil
 }
 
 func (p *Project) loadCommitsJob(jobManager *JobManager, pubsub *pubsub.PubSub) {
-	p.commitsMu.Lock()
-	defer p.commitsMu.Unlock()
-
-	if !p.isLoadingCommits {
-		p.isLoadingCommits = true
-
-		jobManager.Add(
-			LoadCommitsJob,
-			p,
-			func() error {
-				err := p.loadCommits()
-				p.commitsMu.Lock()
-				p.isLoadingCommits = false
-				p.commitsMu.Unlock()
-				pubsub.Publish(ProjectUpdated, p)
-				pubsub.Publish(WorkspaceUpdated, p.Workspace)
-				return err
-			},
-		)
+	if !atomic.CompareAndSwapUint32(&p.isLoadingCommits, 0, 1) {
+		return
 	}
+
+	jobManager.Add(
+		LoadCommitsJob,
+		p,
+		func() error {
+			err := p.loadCommits()
+			atomic.StoreUint32(&p.isLoadingCommits, 0)
+			pubsub.Publish(ProjectUpdated, p)
+			pubsub.Publish(WorkspaceUpdated, p.Workspace)
+			return err
+		},
+	)
 }
 
 func (p *Project) loadCommits() error {

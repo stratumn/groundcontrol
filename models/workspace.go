@@ -19,6 +19,7 @@ const (
 	WorkspaceUpdated = "WORKSPACE_UPDATED" // Go type *Workspace
 )
 
+// Workspace represents a workspace in the app.
 type Workspace struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -28,8 +29,10 @@ type Workspace struct {
 	Notes       *string   `json:"notes"`
 }
 
+// IsNode is used by gqlgen.
 func (Workspace) IsNode() {}
 
+// IsCloning returns true if any of the projects is cloning.
 func (w Workspace) IsCloning() bool {
 	for _, v := range w.Projects {
 		if v.IsCloning {
@@ -40,6 +43,7 @@ func (w Workspace) IsCloning() bool {
 	return false
 }
 
+// IsCloned returns true if all the projects are cloned.
 func (w Workspace) IsCloned() bool {
 	for _, v := range w.Projects {
 		if !v.IsCloned {
