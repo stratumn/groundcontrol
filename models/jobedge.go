@@ -12,18 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package models
 
-import (
-	"context"
-)
-
-type queryResolver struct{ *Resolver }
-
-func (r *queryResolver) Node(ctx context.Context, id string) (Node, error) {
-	panic("not implemented")
-}
-
-func (r *queryResolver) Viewer(ctx context.Context) (User, error) {
-	return r.Resolver.Viewer, nil
+type JobEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Job   `json:"node"`
 }

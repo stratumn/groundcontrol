@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The server application entry point for Ground Control.
+//go:generate go run scripts/gqlgen.go
+
+// The entry point for the Ground Control application.
 package main
 
 import (
@@ -26,7 +28,9 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
-	"github.com/stratumn/groundcontrol"
+	"github.com/stratumn/groundcontrol/gql"
+	"github.com/stratumn/groundcontrol/models"
+	"github.com/stratumn/groundcontrol/resolvers"
 )
 
 const defaultPort = "8080"
@@ -60,11 +64,11 @@ func main() {
 		checkError(err)
 	}
 
-	resolver := groundcontrol.Resolver{}
-	err = groundcontrol.LoadUserYAML(filename, &resolver.Viewer)
+	resolver := resolvers.Resolver{}
+	err = models.LoadUserYAML(filename, &resolver.Viewer)
 	checkError(err)
 
-	config := groundcontrol.Config{
+	config := gql.Config{
 		Resolvers: &resolver,
 	}
 
@@ -90,7 +94,7 @@ func main() {
 	}
 
 	router.Handle("/query", handler.GraphQL(
-		groundcontrol.NewExecutableSchema(config),
+		gql.NewExecutableSchema(config),
 		handler.WebsocketUpgrader(websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		}),

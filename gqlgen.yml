@@ -1,20 +1,28 @@
 schema:
 - schema.graphql
 exec:
-  filename: generated.go
+  filename: gql/generated.go
+  package: gql
 model:
-  filename: models_gen.go
+  filename: models/generated.go
+  package: models
 resolver:
-  filename: resolver.go
+  filename: resolvers/resolver.go
+  package: resolvers
   type: Resolver
 models:
-  User:
-    model: github.com/stratumn/groundcontrol.User
-  Workspace:
-    model: github.com/stratumn/groundcontrol.Workspace
-  Project:
-    model: github.com/stratumn/groundcontrol.Project
   Job:
-    model: github.com/stratumn/groundcontrol.Job
+    model: github.com/stratumn/groundcontrol/models.Job
   JobEdge:
-    model: github.com/stratumn/groundcontrol.JobEdge
+    model: github.com/stratumn/groundcontrol/models.JobEdge
+  PageInfo:
+    model: github.com/stratumn/groundcontrol/relay.PageInfo
+  Project:
+    model: github.com/stratumn/groundcontrol/models.Project
+    fields:
+#      commits:
+#        resolver: true
+  User:
+    model: github.com/stratumn/groundcontrol/models.User
+  Workspace:
+    model: github.com/stratumn/groundcontrol/models.Workspace

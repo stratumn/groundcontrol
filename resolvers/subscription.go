@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package resolvers
 
 import (
 	"context"
+
+	"github.com/stratumn/groundcontrol/models"
 )
 
 type subscriptionResolver struct{ *Resolver }
 
-func (r *subscriptionResolver) WorkspaceUpdated(ctx context.Context, id *string) (<-chan Workspace, error) {
-	ch := make(chan Workspace)
+func (r *subscriptionResolver) WorkspaceUpdated(ctx context.Context, id *string) (<-chan models.Workspace, error) {
+	ch := make(chan models.Workspace)
 
-	unsubscribe := SubscribeWorkspaceUpdated(func(workspace *Workspace) {
+	unsubscribe := models.SubscribeWorkspaceUpdated(func(workspace *models.Workspace) {
 		if id != nil && *id != workspace.ID {
 			return
 		}
@@ -41,10 +43,10 @@ func (r *subscriptionResolver) WorkspaceUpdated(ctx context.Context, id *string)
 
 	return ch, nil
 }
-func (r *subscriptionResolver) ProjectUpdated(ctx context.Context, id *string) (<-chan Project, error) {
-	ch := make(chan Project)
+func (r *subscriptionResolver) ProjectUpdated(ctx context.Context, id *string) (<-chan models.Project, error) {
+	ch := make(chan models.Project)
 
-	unsubscribe := SubscribeProjectUpdated(func(project *Project) {
+	unsubscribe := models.SubscribeProjectUpdated(func(project *models.Project) {
 		if id != nil && *id != project.ID {
 			return
 		}
@@ -62,10 +64,10 @@ func (r *subscriptionResolver) ProjectUpdated(ctx context.Context, id *string) (
 
 	return ch, nil
 }
-func (r *subscriptionResolver) JobUpserted(ctx context.Context) (<-chan Job, error) {
-	ch := make(chan Job)
+func (r *subscriptionResolver) JobUpserted(ctx context.Context) (<-chan models.Job, error) {
+	ch := make(chan models.Job)
 
-	unsubscribe := SubscribeJobUpserted(func(job *Job) {
+	unsubscribe := models.SubscribeJobUpserted(func(job *models.Job) {
 		ch <- *job
 	})
 

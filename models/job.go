@@ -12,15 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package models
 
 import (
 	"container/list"
+	"context"
 	"fmt"
 	"log"
 	"sync"
 	"sync/atomic"
+
+	"github.com/stratumn/groundcontrol/date"
+	"github.com/stratumn/groundcontrol/queue"
+	"github.com/stratumn/groundcontrol/relay"
 )
+
+// TODO: remove
+var GlobalQueue = queue.New(2)
+
+func init() {
+	go GlobalQueue.Work(context.Background())
+}
 
 var (
 	jobMu     = sync.Mutex{}
@@ -28,7 +40,7 @@ var (
 	nextJobID = uint64(0)
 )
 
-var jobPaginator = Paginator{
+var jobPaginator = relay.Paginator{
 	GetID: func(node interface{}) string {
 		return node.(*Job).ID
 	},
@@ -49,10 +61,10 @@ func CreateJob(name string, project *Project, fn func() error) {
 	jobMu.Lock()
 	defer jobMu.Unlock()
 
-	now := NowFormatted()
+	now := date.NowFormatted()
 
 	job := Job{
-		ID:        EncodeID("Job", fmt.Sprint(nextJobID)),
+		ID:        relay.EncodeID("Job", fmt.Sprint(nextJobID)),
 		Name:      name,
 		Status:    JobStatusQueued,
 		CreatedAt: now,
@@ -66,7 +78,7 @@ func CreateJob(name string, project *Project, fn func() error) {
 
 	go GlobalQueue.Do(func() {
 		job.Status = JobStatusRunning
-		job.UpdatedAt = NowFormatted()
+		job.UpdatedAt = date.NowFormatted()
 		PublishJobUpserted(&job)
 
 		if err := fn(); err != nil {
@@ -76,7 +88,7 @@ func CreateJob(name string, project *Project, fn func() error) {
 			job.Status = JobStatusDone
 		}
 
-		job.UpdatedAt = NowFormatted()
+		job.UpdatedAt = date.NowFormatted()
 		PublishJobUpserted(&job)
 	})
 }

@@ -1,4 +1,18 @@
-all:
-	cd ui && yarn gen && yarn build
+all: deps generate build
+
+deps:
+	dep ensure
+	cd ui && yarn install
+
+generate:
+	cd ui && yarn gen
 	go generate -tags "release" ./...
-	go build -tags "release" -o ./build/groundcontrol ./server
+
+build:
+	cd ui && yarn build
+	go build -tags "release"
+
+install:
+	cp groundcontrol $$GOPATH/bin
+
+.PHONY: deps generate build

@@ -18,16 +18,18 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/shurcooL/vfsgen"
-	"github.com/stratumn/groundcontrol"
 )
 
 func main() {
-	err := vfsgen.Generate(groundcontrol.UI, vfsgen.Options{
-		PackageName:  "groundcontrol",
+	var fs http.FileSystem = http.Dir("ui/build")
+
+	err := vfsgen.Generate(fs, vfsgen.Options{
+		PackageName:  "main",
 		BuildTags:    "release",
-		VariableName: "UI",
+		VariableName: "embeddedUI",
 	})
 	if err != nil {
 		log.Fatalln(err)

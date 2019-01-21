@@ -1,3 +1,5 @@
 vendor
-build
-ui_vfsdata.go
+groundcontrol
+gql/generated.go
+models/generated.go
+embeddedui_vfsdata.go

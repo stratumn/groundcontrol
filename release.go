@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run ./scripts/gqlgen.go
+//+build release
 
-// Package groundcontrol contains types used by the Ground Control server.
-package groundcontrol
+//go:generate go run -tags=ui scripts/uigen.go
+
+package main
+
+func init() {
+	// When building with the release tag, embed the UI.
+	ui = embeddedUI
+}

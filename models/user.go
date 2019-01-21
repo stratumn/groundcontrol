@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package models
 
 import (
 	"container/list"
 	"io/ioutil"
+
+	"github.com/stratumn/groundcontrol/relay"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -89,7 +91,7 @@ func (u *User) Jobs(
 
 // LoadUserYAML loads the content of a YAML file into a User model.
 func LoadUserYAML(file string, user *User) error {
-	user.ID = EncodeID("User", file)
+	user.ID = relay.EncodeID("User", file)
 
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -102,11 +104,11 @@ func LoadUserYAML(file string, user *User) error {
 
 	for i := range user.Workspaces {
 		workspace := &user.Workspaces[i]
-		workspace.ID = EncodeID("Workspace", workspace.Slug)
+		workspace.ID = relay.EncodeID("Workspace", workspace.Slug)
 
 		for j := range workspace.Projects {
 			project := &workspace.Projects[j]
-			project.ID = EncodeID(
+			project.ID = relay.EncodeID(
 				"Project",
 				workspace.Slug,
 				project.Repository,

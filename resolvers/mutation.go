@@ -12,13 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build release
+package resolvers
 
-package main
+import (
+	"context"
 
-import "github.com/stratumn/groundcontrol"
+	"github.com/stratumn/groundcontrol/models"
+)
 
-func init() {
-	// When building with the release tag, embed the UI.
-	ui = groundcontrol.UI
+type mutationResolver struct{ *Resolver }
+
+func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.Job, error) {
+	panic("not implemented")
+}
+func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]models.Job, error) {
+	panic("not implemented")
 }

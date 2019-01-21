@@ -12,18 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package queue
 
 import (
 	"context"
 	"sync"
 )
-
-var GlobalQueue = NewQueue(2)
-
-func init() {
-	go GlobalQueue.Work(context.Background())
-}
 
 // Queue is a simple queue with concurency support.
 type Queue struct {
@@ -31,8 +25,8 @@ type Queue struct {
 	concurrency int
 }
 
-// NewQueue creates a queue with given concurrency.
-func NewQueue(concurrency int) *Queue {
+// New creates a queue with given concurrency.
+func New(concurrency int) *Queue {
 	return &Queue{
 		ch:          make(chan func()),
 		concurrency: concurrency,

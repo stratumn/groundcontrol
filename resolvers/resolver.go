@@ -12,17 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package resolvers
 
 import (
-	"context"
+	"github.com/stratumn/groundcontrol/gql"
+	"github.com/stratumn/groundcontrol/models"
 )
 
-type mutationResolver struct{ *Resolver }
-
-func (r *mutationResolver) CloneProject(ctx context.Context, id string) (Job, error) {
-	panic("not implemented")
+// Resolver is the root GraphQL resolver.
+type Resolver struct {
+	Viewer models.User
 }
-func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]Job, error) {
-	panic("not implemented")
+
+// Query returns the resolver for queries.
+func (r *Resolver) Query() gql.QueryResolver {
+	return &queryResolver{r}
+}
+
+// Mutation returns the resolver for mutations.
+func (r *Resolver) Mutation() gql.MutationResolver {
+	return &mutationResolver{r}
+}
+
+// Subscription returns the resolver for subscriptions.
+func (r *Resolver) Subscription() gql.SubscriptionResolver {
+	return &subscriptionResolver{r}
 }

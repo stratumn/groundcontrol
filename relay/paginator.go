@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package relay
 
 import (
 	"container/list"
@@ -43,6 +43,14 @@ type PaginationConnection struct {
 type PaginationEdge struct {
 	Cursor string
 	Node   interface{}
+}
+
+// PageInfo contains fields related to pagination.
+type PageInfo struct {
+	HasNextPage     *bool   `json:"hasNextPage"`
+	HasPreviousPage *bool   `json:"hasPreviousPage"`
+	EndCursor       *string `json:"endCursor"`
+	StartCursor     *string `json:"startCursor"`
 }
 
 // Paginate paginates a list given query parameters.

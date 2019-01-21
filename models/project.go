@@ -12,13 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package models
 
 import (
 	"container/list"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/stratumn/groundcontrol/date"
+
+	"github.com/stratumn/groundcontrol/relay"
 
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -46,7 +50,7 @@ type Project struct {
 
 func (*Project) IsNode() {}
 
-var commitPaginator = Paginator{
+var commitPaginator = relay.Paginator{
 	GetID: func(node interface{}) string {
 		return node.(Commit).ID
 	},
@@ -126,7 +130,7 @@ func (p *Project) loadCommits() error {
 			Headline: strings.Split(c.Message, "\n")[0],
 			Message:  c.Message,
 			Author:   c.Author.Name,
-			Date:     c.Author.When.Format(DateFormat),
+			Date:     c.Author.When.Format(date.DateFormat),
 		})
 
 		return nil

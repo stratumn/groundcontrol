@@ -12,10 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build ui
-
-package groundcontrol
-
-import "net/http"
-
-var UI http.FileSystem = http.Dir("ui/build")
+// Package gql contains generated types for GraphQL.
+package gql

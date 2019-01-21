@@ -12,22 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package groundcontrol
+package resolvers
 
 import (
-	"encoding/base64"
-	"strings"
+	"context"
+
+	"github.com/stratumn/groundcontrol/models"
 )
 
-func EncodeID(identifiers ...string) string {
-	return base64.StdEncoding.EncodeToString([]byte(strings.Join(identifiers, ":")))
+type queryResolver struct{ *Resolver }
+
+func (r *queryResolver) Node(ctx context.Context, id string) (models.Node, error) {
+	panic("not implemented")
 }
 
-func DecodeID(id string) ([]string, error) {
-	bytes, err := base64.StdEncoding.DecodeString(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return strings.Split(string(bytes), ":"), nil
+func (r *queryResolver) Viewer(ctx context.Context) (models.User, error) {
+	return r.Resolver.Viewer, nil
 }
