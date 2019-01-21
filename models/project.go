@@ -51,7 +51,7 @@ var commitPaginator = relay.Paginator{
 // Errors.
 var (
 	ErrCloning = errors.New("project is being cloned")
-	ErrCloned  = errors.New("project is  cloned")
+	ErrCloned  = errors.New("project is cloned")
 )
 
 // ProjectPathGetter is a function that returns the path to a project.
@@ -81,7 +81,7 @@ func (p *Project) IsCloned(getProjectPath ProjectPathGetter) bool {
 
 func (p *Project) isCloned(directory string) bool {
 	_, err := os.Stat(directory)
-	return !os.IsNotExist(err)
+	return !os.IsNotExist(err) && !p.IsCloning()
 }
 
 // IsCloning returns whether the project is beining cloned.

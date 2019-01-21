@@ -25,8 +25,8 @@ import (
 
 // User contains all the data of the person using the app.
 type User struct {
-	ID         string      `json:"id"`
-	Workspaces []Workspace `json:"workspaces"`
+	ID         string       `json:"id"`
+	Workspaces []*Workspace `json:"workspaces"`
 }
 
 // IsNode is used by gqlgen.
@@ -36,7 +36,7 @@ func (*User) IsNode() {}
 func (u *User) Workspace(slug string) *Workspace {
 	for _, v := range u.Workspaces {
 		if v.Slug == slug {
-			return &v
+			return v
 		}
 	}
 
@@ -57,13 +57,11 @@ func LoadUserYAML(file string, user *User, nodes *NodeManager) error {
 		return err
 	}
 
-	for i := range user.Workspaces {
-		workspace := &user.Workspaces[i]
+	for _, workspace := range user.Workspaces {
 		workspace.ID = relay.EncodeID("Workspace", workspace.Slug)
 		nodes.Store(workspace.ID, workspace)
 
-		for j := range workspace.Projects {
-			project := &workspace.Projects[j]
+		for _, project := range workspace.Projects {
 			project.ID = relay.EncodeID(
 				"Project",
 				workspace.Slug,
@@ -71,7 +69,7 @@ func LoadUserYAML(file string, user *User, nodes *NodeManager) error {
 				project.Branch,
 			)
 			nodes.Store(project.ID, project)
-			project.Workspace = &user.Workspaces[i]
+			project.Workspace = workspace
 			project.commitList = list.New()
 		}
 	}

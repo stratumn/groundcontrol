@@ -21,12 +21,12 @@ const (
 
 // Workspace represents a workspace in the app.
 type Workspace struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Slug        string    `json:"slug"`
-	Projects    []Project `json:"projects"`
-	Description string    `json:"description"`
-	Notes       *string   `json:"notes"`
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Slug        string     `json:"slug"`
+	Projects    []*Project `json:"projects"`
+	Description string     `json:"description"`
+	Notes       *string    `json:"notes"`
 }
 
 // IsNode is used by gqlgen.
