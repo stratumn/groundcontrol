@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package gql contains generated types for GraphQL.
+// Package gql contains auto generated types for GraphQL.
 package gql

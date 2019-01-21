@@ -12,14 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package date
+package resolvers
 
-import "time"
+import (
+	"context"
 
-// DateFormat is the date format used throughout the app.
-const DateFormat = "2006-01-02T15:04:05-0700"
+	"github.com/stratumn/groundcontrol/models"
+)
 
-// NowFormatted returns the current date and time formatted with DateFormat.
-func NowFormatted() string {
-	return time.Now().Format(DateFormat)
+type projectResolver struct{ *Resolver }
+
+func (r *projectResolver) Commits(
+	ctx context.Context,
+	obj *models.Project,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (models.CommitConnection, error) {
+	return obj.Commits(r.JobManager, after, before, first, last)
 }

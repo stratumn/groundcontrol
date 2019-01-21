@@ -6,7 +6,7 @@ interface Node {
 
 type User {
   id: ID!
-  workspaces: [Workspace!]
+  workspaces: [Workspace!]!
   workspace(slug: String!): Workspace
   jobs(
     after: String
@@ -14,7 +14,7 @@ type User {
     first: Int
     last: Int
     status: [JobStatus!]
-  ): JobConnection
+  ): JobConnection!
 }
 
 type Workspace implements Node {

@@ -27,25 +27,16 @@ import (
 	"github.com/stratumn/groundcontrol/relay"
 )
 
-// TODO: remove
-var GlobalQueue = queue.New(2)
-
-func init() {
-	go GlobalQueue.Work(context.Background())
-}
-
 var (
-	jobMu     = sync.Mutex{}
-	jobList   = list.New()
-	nextJobID = uint64(0)
+	nextJobID    = uint64(0)
+	jobPaginator = relay.Paginator{
+		GetID: func(node interface{}) string {
+			return node.(*Job).ID
+		},
+	}
 )
 
-var jobPaginator = relay.Paginator{
-	GetID: func(node interface{}) string {
-		return node.(*Job).ID
-	},
-}
-
+// Job represents a job in the app.
 type Job struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
@@ -55,16 +46,46 @@ type Job struct {
 	Project   *Project  `json:"project"`
 }
 
+// IsNode is used by gqlgen.
 func (Job) IsNode() {}
 
-func CreateJob(name string, project *Project, fn func() error) {
-	jobMu.Lock()
-	defer jobMu.Unlock()
+// JobManager manages creating and running jobs.
+type JobManager struct {
+	queue *queue.Queue
 
+	list   *list.List
+	listMu sync.Mutex
+
+	subs      sync.Map
+	nextSubID uint64
+}
+
+// NewJobManager creates a JobManager with given concurrency.
+func NewJobManager(concurrency int) *JobManager {
+	return &JobManager{
+		queue: queue.New(concurrency),
+		list:  list.New(),
+	}
+}
+
+// Work starts running jobs and blocks until the context is done.
+func (j *JobManager) Work(ctx context.Context) error {
+	return j.queue.Work(ctx)
+}
+
+// Add adds a job to the queue.
+func (j *JobManager) Add(
+	name string,
+	project *Project,
+	fn func() error,
+) {
+	j.listMu.Lock()
+	defer j.listMu.Unlock()
+
+	id := atomic.AddUint64(&nextJobID, 1)
 	now := date.NowFormatted()
-
 	job := Job{
-		ID:        relay.EncodeID("Job", fmt.Sprint(nextJobID)),
+		ID:        relay.EncodeID("Job", fmt.Sprint(id)),
 		Name:      name,
 		Status:    JobStatusQueued,
 		CreatedAt: now,
@@ -72,14 +93,13 @@ func CreateJob(name string, project *Project, fn func() error) {
 		Project:   project,
 	}
 
-	jobList.PushFront(&job)
-	PublishJobUpserted(&job)
-	nextJobID++
+	j.list.PushFront(&job)
+	j.publish(&job)
 
-	go GlobalQueue.Do(func() {
+	go j.queue.Do(func() {
 		job.Status = JobStatusRunning
 		job.UpdatedAt = date.NowFormatted()
-		PublishJobUpserted(&job)
+		j.publish(&job)
 
 		if err := fn(); err != nil {
 			log.Println(err)
@@ -89,30 +109,72 @@ func CreateJob(name string, project *Project, fn func() error) {
 		}
 
 		job.UpdatedAt = date.NowFormatted()
-		PublishJobUpserted(&job)
+		j.publish(&job)
 	})
 }
 
-func GetJobList() *list.List {
-	return jobList
+// Jobs returns paginated jobs and supports filtering by status.
+func (j *JobManager) Jobs(
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+	status []JobStatus,
+) (JobConnection, error) {
+	jobList := list.New()
+	element := j.list.Front()
+
+	for element != nil {
+		job := element.Value.(*Job)
+		match := len(status) == 0
+
+		for _, v := range status {
+			if job.Status == v {
+				match = true
+				break
+			}
+		}
+
+		if match {
+			jobList.PushBack(job)
+		}
+
+		element = element.Next()
+	}
+
+	connection, err := jobPaginator.Paginate(jobList, after, before, first, last)
+	if err != nil {
+		return JobConnection{}, err
+	}
+
+	edges := make([]JobEdge, len(connection.Edges))
+
+	for i, v := range connection.Edges {
+		edges[i] = JobEdge{
+			Node:   v.Node.(*Job),
+			Cursor: v.Cursor,
+		}
+	}
+
+	return JobConnection{
+		Edges:    edges,
+		PageInfo: connection.PageInfo,
+	}, nil
 }
 
-var (
-	nextJobSubscriptionID    = uint64(0)
-	jobUpsertedSubscriptions = sync.Map{}
-)
-
-func SubscribeJobUpserted(fn func(*Job)) func() {
-	id := atomic.AddUint64(&nextJobSubscriptionID, 1)
-	jobUpsertedSubscriptions.Store(id, fn)
+// Subscribe registers a function that will receive new and updated jobs.
+// It returns a function to unsubscribe.
+func (j *JobManager) Subscribe(fn func(*Job)) func() {
+	id := atomic.AddUint64(&j.nextSubID, 1)
+	j.subs.Store(id, fn)
 
 	return func() {
-		jobUpsertedSubscriptions.Delete(id)
+		j.subs.Delete(id)
 	}
 }
 
-func PublishJobUpserted(job *Job) {
-	jobUpsertedSubscriptions.Range(func(_, v interface{}) bool {
+func (j *JobManager) publish(job *Job) {
+	j.subs.Range(func(_, v interface{}) bool {
 		fn := v.(func(*Job))
 		fn(job)
 		return true

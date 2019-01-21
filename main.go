@@ -18,6 +18,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -65,8 +66,12 @@ func main() {
 	}
 
 	resolver := resolvers.Resolver{}
+
 	err = models.LoadUserYAML(filename, &resolver.Viewer)
 	checkError(err)
+
+	resolver.JobManager = models.NewJobManager(2)
+	go resolver.JobManager.Work(context.Background())
 
 	config := gql.Config{
 		Resolvers: &resolver,

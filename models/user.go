@@ -18,9 +18,9 @@ import (
 	"container/list"
 	"io/ioutil"
 
-	"github.com/stratumn/groundcontrol/relay"
-
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/stratumn/groundcontrol/relay"
 )
 
 // User contains all the data of the person using the app.
@@ -38,55 +38,6 @@ func (u *User) Workspace(slug string) *Workspace {
 	}
 
 	return nil
-}
-
-// Jobs returns paginated jobs and supports filtering by status.
-func (u *User) Jobs(
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-	status []JobStatus,
-) (*JobConnection, error) {
-	jobList := list.New()
-	element := GetJobList().Front()
-
-	for element != nil {
-		job := element.Value.(*Job)
-		match := len(status) == 0
-
-		for _, v := range status {
-			if job.Status == v {
-				match = true
-				break
-			}
-		}
-
-		if match {
-			jobList.PushBack(job)
-		}
-
-		element = element.Next()
-	}
-
-	connection, err := jobPaginator.Paginate(jobList, after, before, first, last)
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]JobEdge, len(connection.Edges))
-
-	for i, v := range connection.Edges {
-		edges[i] = JobEdge{
-			Node:   v.Node.(*Job),
-			Cursor: v.Cursor,
-		}
-	}
-
-	return &JobConnection{
-		Edges:    edges,
-		PageInfo: connection.PageInfo,
-	}, nil
 }
 
 // LoadUserYAML loads the content of a YAML file into a User model.

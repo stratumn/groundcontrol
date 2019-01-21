@@ -48,7 +48,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 
   public render() {
     const query = this.state.query;
-    let items = this.props.viewer.workspaces!;
+    let items = this.props.viewer.workspaces;
 
     if (query) {
       items = items.filter((item) => item.name.toLowerCase().indexOf(query) >= 0);

@@ -20,14 +20,13 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/stratumn/groundcontrol/date"
-
-	"github.com/stratumn/groundcontrol/relay"
-
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
+
+	"github.com/stratumn/groundcontrol/date"
+	"github.com/stratumn/groundcontrol/relay"
 )
 
 type Project struct {
@@ -56,7 +55,13 @@ var commitPaginator = relay.Paginator{
 	},
 }
 
-func (p *Project) Commits(after, before *string, first, last *int) (*CommitConnection, error) {
+func (p *Project) Commits(
+	jobManager *JobManager,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (CommitConnection, error) {
 	if p.commitList.Len() == 0 {
 		p.commitsMu.Lock()
 		defer p.commitsMu.Unlock()
@@ -64,7 +69,7 @@ func (p *Project) Commits(after, before *string, first, last *int) (*CommitConne
 		if !p.isLoadingCommits {
 			p.isLoadingCommits = true
 
-			CreateJob(
+			jobManager.Add(
 				"Load Commits",
 				p,
 				func() error {
@@ -79,14 +84,14 @@ func (p *Project) Commits(after, before *string, first, last *int) (*CommitConne
 			)
 		}
 
-		return &CommitConnection{
+		return CommitConnection{
 			IsLoading: true,
 		}, nil
 	}
 
 	connection, err := commitPaginator.Paginate(p.commitList, after, before, first, last)
 	if err != nil {
-		return nil, err
+		return CommitConnection{}, err
 	}
 
 	edges := make([]CommitEdge, len(connection.Edges))
@@ -98,7 +103,7 @@ func (p *Project) Commits(after, before *string, first, last *int) (*CommitConne
 		}
 	}
 
-	return &CommitConnection{
+	return CommitConnection{
 		Edges:     edges,
 		PageInfo:  connection.PageInfo,
 		IsLoading: p.isLoadingCommits,
@@ -135,19 +140,6 @@ func (p *Project) loadCommits() error {
 
 		return nil
 	})
-}
-
-func (p *Project) findCommitElement(id string) *list.Element {
-	element := p.commitList.Front()
-
-	for element != nil {
-		if element.Value.(Commit).ID == id {
-			return element
-		}
-		element = element.Next()
-	}
-
-	return nil
 }
 
 var (

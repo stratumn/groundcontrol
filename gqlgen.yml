@@ -20,8 +20,8 @@ models:
   Project:
     model: github.com/stratumn/groundcontrol/models.Project
     fields:
-#      commits:
-#        resolver: true
+      commits:
+        resolver: true
   User:
     model: github.com/stratumn/groundcontrol/models.User
   Workspace:

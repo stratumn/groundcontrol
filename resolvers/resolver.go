@@ -21,7 +21,8 @@ import (
 
 // Resolver is the root GraphQL resolver.
 type Resolver struct {
-	Viewer models.User
+	Viewer     models.User
+	JobManager *models.JobManager
 }
 
 // Query returns the resolver for queries.
@@ -37,4 +38,14 @@ func (r *Resolver) Mutation() gql.MutationResolver {
 // Subscription returns the resolver for subscriptions.
 func (r *Resolver) Subscription() gql.SubscriptionResolver {
 	return &subscriptionResolver{r}
+}
+
+// User returns the resolver for a user.
+func (r *Resolver) User() gql.UserResolver {
+	return &userResolver{r}
+}
+
+// Project returns the resolver for a project.
+func (r *Resolver) Project() gql.ProjectResolver {
+	return &projectResolver{r}
 }

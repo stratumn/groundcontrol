@@ -15,4 +15,4 @@ build:
 install:
 	cp groundcontrol $$GOPATH/bin
 
-.PHONY: deps generate build
+.PHONY: deps generate build install clean

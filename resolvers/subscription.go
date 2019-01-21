@@ -67,7 +67,7 @@ func (r *subscriptionResolver) ProjectUpdated(ctx context.Context, id *string) (
 func (r *subscriptionResolver) JobUpserted(ctx context.Context) (<-chan models.Job, error) {
 	ch := make(chan models.Job)
 
-	unsubscribe := models.SubscribeJobUpserted(func(job *models.Job) {
+	unsubscribe := r.JobManager.Subscribe(func(job *models.Job) {
 		ch <- *job
 	})
 

@@ -16,7 +16,7 @@ The Ground Control user interface allows you to perform operations across the pr
 - Define workspace wide tasks
 - Create scripts to launch multi-repository applications
 
-## Installing
+## Installation
 
 You need:
 

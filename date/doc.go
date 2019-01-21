@@ -12,14 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package date contains types to deal with dates.
 package date
-
-import "time"
-
-// DateFormat is the date format used throughout the app.
-const DateFormat = "2006-01-02T15:04:05-0700"
-
-// NowFormatted returns the current date and time formatted with DateFormat.
-func NowFormatted() string {
-	return time.Now().Format(DateFormat)
-}
