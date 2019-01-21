@@ -14,44 +14,38 @@
 
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
-import Moment from "react-moment";
 import { createFragmentContainer } from "react-relay";
 import { Feed } from "semantic-ui-react";
 
-import { CommitListItem_item } from "./__generated__/CommitListItem_item.graphql";
+import { CommitFeed_items } from "./__generated__/CommitFeed_items.graphql";
 
-import "./CommitListItem.css";
+import CommitFeedEvent from "./CommitFeedEvent";
 
 interface IProps {
-  item: CommitListItem_item;
+  items: CommitFeed_items;
 }
 
-export class CommitListItem extends Component<IProps> {
+export class CommitFeed extends Component<IProps> {
 
   public render() {
-    const item = this.props.item;
+    const items = this.props.items;
 
-    return (
-      <Feed.Event className="CommitListItem">
-        <Feed.Content>
-          <Feed.Summary>{item.headline}</Feed.Summary>
-          <Feed.Meta>
-            Pushed by <strong>{item.author}</strong>
-            <Moment fromNow={true}>
-              {item.date}
-            </Moment>
-          </Feed.Meta>
-        </Feed.Content>
-      </Feed.Event>
-    );
+    const rows = items.map((item) => (
+      <CommitFeedEvent
+        key={item.id}
+        item={item}
+      />
+    ));
+
+    return <Feed>{rows}</Feed>;
   }
 
 }
 
-export default createFragmentContainer(CommitListItem, graphql`
-  fragment CommitListItem_item on Commit {
-    headline
-    date
-    author
+export default createFragmentContainer(CommitFeed, graphql`
+  fragment CommitFeed_items on Commit
+    @relay(plural: true) {
+    ...CommitFeedEvent_item
+    id
   }`,
 );

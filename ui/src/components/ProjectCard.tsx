@@ -27,7 +27,7 @@ import {
 
 import { ProjectCard_item } from "./__generated__/ProjectCard_item.graphql";
 
-import CommitList from "./CommitList";
+import CommitFeed from "./CommitFeed";
 import RepositoryShortName from "./RepositoryShortName";
 
 import "./ProjectCard.css";
@@ -77,7 +77,7 @@ export class ProjectCard extends Component<IProps> {
           <Divider horizontal={true}>
             <Header as="h6">Latest Commits</Header>
           </Divider>
-          <CommitList items={commits} />
+          <CommitFeed items={commits} />
         </Card.Content>
         <Card.Content extra={true}>
           <div className="ui three buttons">
@@ -104,7 +104,7 @@ export default createFragmentContainer(ProjectCard, graphql`
     commits(first: $commitsLimit) {
       edges {
         node {
-          ...CommitList_items
+          ...CommitFeed_items
         }
       }
       isLoading
