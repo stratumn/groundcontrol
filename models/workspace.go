@@ -35,7 +35,7 @@ func (Workspace) IsNode() {}
 // IsCloning returns true if any of the projects is cloning.
 func (w Workspace) IsCloning() bool {
 	for _, v := range w.Projects {
-		if v.IsCloning {
+		if v.IsCloning() {
 			return true
 		}
 	}

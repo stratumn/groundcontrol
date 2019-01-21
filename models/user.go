@@ -29,6 +29,9 @@ type User struct {
 	Workspaces []Workspace `json:"workspaces"`
 }
 
+// IsNode is used by gqlgen.
+func (*User) IsNode() {}
+
 // Workspace returns the workspace with the given slug.
 func (u *User) Workspace(slug string) *Workspace {
 	for _, v := range u.Workspaces {
@@ -41,8 +44,9 @@ func (u *User) Workspace(slug string) *Workspace {
 }
 
 // LoadUserYAML loads the content of a YAML file into a User model.
-func LoadUserYAML(file string, user *User) error {
+func LoadUserYAML(file string, user *User, nodes *NodeManager) error {
 	user.ID = relay.EncodeID("User", file)
+	nodes.Store(user.ID, user)
 
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -56,6 +60,7 @@ func LoadUserYAML(file string, user *User) error {
 	for i := range user.Workspaces {
 		workspace := &user.Workspaces[i]
 		workspace.ID = relay.EncodeID("Workspace", workspace.Slug)
+		nodes.Store(workspace.ID, workspace)
 
 		for j := range workspace.Projects {
 			project := &workspace.Projects[j]
@@ -65,6 +70,7 @@ func LoadUserYAML(file string, user *User) error {
 				project.Repository,
 				project.Branch,
 			)
+			nodes.Store(project.ID, project)
 			project.Workspace = &user.Workspaces[i]
 			project.commitList = list.New()
 		}

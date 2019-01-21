@@ -25,8 +25,37 @@ type mutationResolver struct {
 }
 
 func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.Job, error) {
-	panic("not implemented")
+	project, err := r.NodeManager.LoadProject(id)
+	if err != nil {
+		return models.Job{}, err
+	}
+
+	job, err := project.CloneJob(r.JobManager, r.PubSub, r.GetProjectPath)
+	if err != nil {
+		return models.Job{}, err
+	}
+
+	return *job, nil
 }
+
 func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]models.Job, error) {
-	panic("not implemented")
+	workspace, err := r.NodeManager.LoadWorkspace(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var jobs []models.Job
+
+	for _, project := range workspace.Projects {
+		job, err := project.CloneJob(r.JobManager, r.PubSub, r.GetProjectPath)
+		if err == nil {
+			jobs = append(jobs, *job)
+			continue
+		} else if err == models.ErrCloning || err == models.ErrCloned {
+			continue
+		}
+		return jobs, err
+	}
+
+	return jobs, nil
 }

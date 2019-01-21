@@ -66,16 +66,22 @@ func main() {
 		checkError(err)
 	}
 
-	pubsub := pubsub.New()
+	nodes := &models.NodeManager{}
+	ps := pubsub.New()
+	jobs := models.NewJobManager(nodes, ps, 2)
 	resolver := resolvers.Resolver{
-		JobManager: models.NewJobManager(pubsub, 2),
-		PubSub:     pubsub,
+		NodeManager: nodes,
+		JobManager:  jobs,
+		PubSub:      ps,
 		GetProjectPath: func(workspaceSlug, repo, branch string) string {
-			return filepath.Join("workspaces", workspaceSlug, path.Base(repo))
+			name := path.Base(repo)
+			ext := path.Ext(name)
+			name = name[:len(name)-len(ext)]
+			return filepath.Join("workspaces", workspaceSlug, name)
 		},
 	}
 
-	err = models.LoadUserYAML(filename, &resolver.Viewer)
+	err = models.LoadUserYAML(filename, &resolver.Viewer, nodes)
 	checkError(err)
 
 	go resolver.JobManager.Work(context.Background())

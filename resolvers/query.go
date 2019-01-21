@@ -25,7 +25,9 @@ type queryResolver struct {
 }
 
 func (r *queryResolver) Node(ctx context.Context, id string) (models.Node, error) {
-	panic("not implemented")
+	node, _ := r.NodeManager.Load(id)
+
+	return node, nil
 }
 
 func (r *queryResolver) Viewer(ctx context.Context) (models.User, error) {

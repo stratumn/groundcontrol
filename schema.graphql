@@ -4,7 +4,7 @@ interface Node {
   id: ID!
 }
 
-type User {
+type User implements Node {
   id: ID!
   workspaces: [Workspace!]!
   workspace(slug: String!): Workspace
@@ -44,7 +44,7 @@ type Project implements Node {
   isCloned: Boolean!
 }
 
-type Commit {
+type Commit implements Node {
   id: ID!
   headline: String!
   message: String!

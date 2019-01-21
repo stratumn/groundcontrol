@@ -57,6 +57,7 @@ func (Job) IsNode() {}
 
 // JobManager manages creating and running jobs.
 type JobManager struct {
+	nodes  *NodeManager
 	pubsub *pubsub.PubSub
 	queue  *queue.Queue
 
@@ -65,8 +66,9 @@ type JobManager struct {
 }
 
 // NewJobManager creates a JobManager with given concurrency.
-func NewJobManager(pubsub *pubsub.PubSub, concurrency int) *JobManager {
+func NewJobManager(nodes *NodeManager, pubsub *pubsub.PubSub, concurrency int) *JobManager {
 	return &JobManager{
+		nodes:  nodes,
 		pubsub: pubsub,
 		queue:  queue.New(concurrency),
 		list:   list.New(),
@@ -83,7 +85,7 @@ func (j *JobManager) Add(
 	name string,
 	project *Project,
 	fn func() error,
-) {
+) *Job {
 	j.listMu.Lock()
 	defer j.listMu.Unlock()
 
@@ -98,6 +100,7 @@ func (j *JobManager) Add(
 		Project:   project,
 	}
 
+	j.nodes.Store(job.ID, &job)
 	j.list.PushFront(&job)
 	j.pubsub.Publish(JobUpserted, &job)
 
@@ -116,6 +119,8 @@ func (j *JobManager) Add(
 		job.UpdatedAt = date.NowFormatted()
 		j.pubsub.Publish(JobUpserted, &job)
 	})
+
+	return &job
 }
 
 // Jobs returns paginated jobs and supports filtering by status.
