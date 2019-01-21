@@ -44,9 +44,9 @@ func (w Workspace) IsCloning() bool {
 }
 
 // IsCloned returns true if all the projects are cloned.
-func (w Workspace) IsCloned() bool {
+func (w Workspace) IsCloned(getProjectPath ProjectPathGetter) bool {
 	for _, v := range w.Projects {
-		if !v.IsCloned {
+		if !v.IsCloned(getProjectPath) {
 			return false
 		}
 	}

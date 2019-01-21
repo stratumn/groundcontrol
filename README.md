@@ -10,7 +10,7 @@ A project corresponds to a branch of a repository.
 
 The Ground Control user interface allows you to perform operations across the projects of a workspace, including:
 
-- Cloning all repositories (defaults to `$HOME/groundcontrol/workspaces/WORKSPACE/PROJECT`)
+- Cloning all repositories (defaults to `$PWD/workspaces/WORKSPACE/PROJECT`)
 - Check the status of repositories against their origins
 - Pull all outdated repositories
 - Define workspace wide tasks
@@ -74,8 +74,6 @@ UI runs on `http://localhost:3000` during development.
 ## TODO
 
 - [ ] node resolver and registry
-- [ ] clone mutations and jobs
-- [ ] cleanup and remove globals
 - [ ] menu notification labels
 - [ ] git pull mutations
 - [ ] periodically check remotes

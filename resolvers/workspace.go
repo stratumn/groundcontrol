@@ -20,21 +20,10 @@ import (
 	"github.com/stratumn/groundcontrol/models"
 )
 
-type projectResolver struct {
+type workspaceResolver struct {
 	*Resolver
 }
 
-func (r *projectResolver) IsCloned(ctx context.Context, obj *models.Project) (bool, error) {
+func (r *workspaceResolver) IsCloned(ctx context.Context, obj *models.Workspace) (bool, error) {
 	return obj.IsCloned(r.GetProjectPath), nil
-}
-
-func (r *projectResolver) Commits(
-	ctx context.Context,
-	obj *models.Project,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-) (models.CommitConnection, error) {
-	return obj.Commits(r.JobManager, r.PubSub, after, before, first, last)
 }

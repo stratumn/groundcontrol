@@ -18,9 +18,14 @@ models:
   Project:
     model: github.com/stratumn/groundcontrol/models.Project
     fields:
+      isCloned:
+        resolver: true
       commits:
         resolver: true
   User:
     model: github.com/stratumn/groundcontrol/models.User
   Workspace:
     model: github.com/stratumn/groundcontrol/models.Workspace
+    fields:
+      isCloned:
+        resolver: true

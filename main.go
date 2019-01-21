@@ -22,6 +22,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/99designs/gqlgen/handler"
@@ -69,6 +70,9 @@ func main() {
 	resolver := resolvers.Resolver{
 		JobManager: models.NewJobManager(pubsub, 2),
 		PubSub:     pubsub,
+		GetProjectPath: func(workspaceSlug, repo, branch string) string {
+			return filepath.Join("workspaces", workspaceSlug, path.Base(repo))
+		},
 	}
 
 	err = models.LoadUserYAML(filename, &resolver.Viewer)

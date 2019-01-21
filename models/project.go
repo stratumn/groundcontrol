@@ -16,6 +16,7 @@ package models
 
 import (
 	"container/list"
+	"os"
 	"strings"
 	"sync/atomic"
 
@@ -32,6 +33,7 @@ import (
 // Job names.
 const (
 	LoadCommitsJob = "Load Commits"
+	CloneJob       = "Clone"
 )
 
 // Message types.
@@ -45,6 +47,9 @@ var commitPaginator = relay.Paginator{
 	},
 }
 
+// ProjectPathGetter is a function that returns the path to a project.
+type ProjectPathGetter func(workspaceSlug, repo, branch string) string
+
 // Project represents a project in the app.
 type Project struct {
 	ID          string     `json:"id"`
@@ -52,16 +57,22 @@ type Project struct {
 	Branch      string     `json:"branch"`
 	Description *string    `json:"description"`
 	IsCloning   bool       `json:"isCloning"`
-	IsCloned    bool       `json:"isCloned"`
 	Workspace   *Workspace `json:"workspace"`
 
 	commitList *list.List
 
 	isLoadingCommits uint32
+	isCloning        uint32
 }
 
 // IsNode is used by gqlgen.
 func (*Project) IsNode() {}
+
+// IsCloned checks if the project is cloned.
+func (p *Project) IsCloned(getProjectPath ProjectPathGetter) bool {
+	_, err := os.Stat(getProjectPath(p.Workspace.Slug, p.Repository, p.Branch))
+	return !os.IsNotExist(err)
+}
 
 // Commits returns paginated commits.
 // If there are no commits in memory, it may create a LoadCommitJob.
@@ -107,20 +118,63 @@ func (p *Project) loadCommitsJob(jobManager *JobManager, pubsub *pubsub.PubSub) 
 		return
 	}
 
-	jobManager.Add(
-		LoadCommitsJob,
-		p,
-		func() error {
-			err := p.loadCommits()
-			atomic.StoreUint32(&p.isLoadingCommits, 0)
-			pubsub.Publish(ProjectUpdated, p)
-			pubsub.Publish(WorkspaceUpdated, p.Workspace)
-			return err
-		},
-	)
+	jobManager.Add(LoadCommitsJob, p, func() error {
+		err := p.loadCommits()
+		atomic.StoreUint32(&p.isLoadingCommits, 0)
+		pubsub.Publish(ProjectUpdated, p)
+		pubsub.Publish(WorkspaceUpdated, p.Workspace)
+		return err
+	})
 }
 
 func (p *Project) loadCommits() error {
+	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+		URL:           p.Repository,
+		ReferenceName: plumbing.NewBranchReferenceName(p.Branch),
+	})
+	if err != nil {
+		return err
+	}
+
+	ref, err := repo.Head()
+	if err != nil {
+		return err
+	}
+
+	iter, err := repo.Log(&git.LogOptions{From: ref.Hash()})
+	if err != nil {
+		return err
+	}
+
+	return iter.ForEach(func(c *object.Commit) error {
+		p.commitList.PushBack(Commit{
+			ID:       c.Hash.String(),
+			Headline: strings.Split(c.Message, "\n")[0],
+			Message:  c.Message,
+			Author:   c.Author.Name,
+			Date:     c.Author.When.Format(date.DateFormat),
+		})
+
+		return nil
+	})
+}
+
+// CloneJob add a job to clone the repo if there isn't alreay one.
+func (p *Project) CloneJob(jobManager *JobManager, pubsub *pubsub.PubSub) {
+	if !atomic.CompareAndSwapUint32(&p.isCloning, 0, 1) {
+		return
+	}
+
+	jobManager.Add(CloneJob, p, func() error {
+		err := p.clone()
+		atomic.StoreUint32(&p.isCloning, 0)
+		pubsub.Publish(ProjectUpdated, p)
+		pubsub.Publish(WorkspaceUpdated, p.Workspace)
+		return err
+	})
+}
+
+func (p *Project) clone() error {
 	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:           p.Repository,
 		ReferenceName: plumbing.NewBranchReferenceName(p.Branch),
