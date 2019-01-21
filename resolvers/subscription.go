@@ -22,62 +22,57 @@ import (
 
 type subscriptionResolver struct{ *Resolver }
 
-func (r *subscriptionResolver) WorkspaceUpdated(ctx context.Context, id *string) (<-chan models.Workspace, error) {
+func (r *subscriptionResolver) WorkspaceUpdated(
+	ctx context.Context,
+	id *string,
+) (<-chan models.Workspace, error) {
 	ch := make(chan models.Workspace)
 
-	unsubscribe := models.SubscribeWorkspaceUpdated(func(workspace *models.Workspace) {
+	r.PubSub.Subscribe(ctx, models.WorkspaceUpdated, func(msg interface{}) {
+		workspace := msg.(*models.Workspace)
 		if id != nil && *id != workspace.ID {
 			return
 		}
-
-		ch <- *workspace
-	})
-
-	go func() {
-		<-ctx.Done()
-		unsubscribe()
-		for len(ch) > 0 {
-			<-ch
+		select {
+		case <-ctx.Done():
+		case ch <- *workspace:
 		}
-	}()
+	})
 
 	return ch, nil
 }
-func (r *subscriptionResolver) ProjectUpdated(ctx context.Context, id *string) (<-chan models.Project, error) {
+
+func (r *subscriptionResolver) ProjectUpdated(
+	ctx context.Context,
+	id *string,
+) (<-chan models.Project, error) {
 	ch := make(chan models.Project)
 
-	unsubscribe := models.SubscribeProjectUpdated(func(project *models.Project) {
+	r.PubSub.Subscribe(ctx, models.ProjectUpdated, func(msg interface{}) {
+		project := msg.(*models.Project)
 		if id != nil && *id != project.ID {
 			return
 		}
-
-		ch <- *project
-	})
-
-	go func() {
-		<-ctx.Done()
-		unsubscribe()
-		for len(ch) > 0 {
-			<-ch
+		select {
+		case <-ctx.Done():
+		case ch <- *project:
 		}
-	}()
+	})
 
 	return ch, nil
 }
-func (r *subscriptionResolver) JobUpserted(ctx context.Context) (<-chan models.Job, error) {
+
+func (r *subscriptionResolver) JobUpserted(
+	ctx context.Context,
+) (<-chan models.Job, error) {
 	ch := make(chan models.Job)
 
-	unsubscribe := r.JobManager.Subscribe(func(job *models.Job) {
-		ch <- *job
-	})
-
-	go func() {
-		<-ctx.Done()
-		unsubscribe()
-		for len(ch) > 0 {
-			<-ch
+	r.PubSub.Subscribe(ctx, models.JobUpserted, func(msg interface{}) {
+		select {
+		case <-ctx.Done():
+		case ch <- *msg.(*models.Job):
 		}
-	}()
+	})
 
 	return ch, nil
 }

@@ -13,8 +13,6 @@ resolver:
 models:
   Job:
     model: github.com/stratumn/groundcontrol/models.Job
-  JobEdge:
-    model: github.com/stratumn/groundcontrol/models.JobEdge
   PageInfo:
     model: github.com/stratumn/groundcontrol/relay.PageInfo
   Project:

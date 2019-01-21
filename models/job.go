@@ -23,8 +23,14 @@ import (
 	"sync/atomic"
 
 	"github.com/stratumn/groundcontrol/date"
+	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/queue"
 	"github.com/stratumn/groundcontrol/relay"
+)
+
+// Message types.
+const (
+	JobUpserted = "JOB_UPSERTED" // Go type *Job
 )
 
 var (
@@ -51,20 +57,19 @@ func (Job) IsNode() {}
 
 // JobManager manages creating and running jobs.
 type JobManager struct {
-	queue *queue.Queue
+	pubsub *pubsub.PubSub
+	queue  *queue.Queue
 
 	list   *list.List
 	listMu sync.Mutex
-
-	subs      sync.Map
-	nextSubID uint64
 }
 
 // NewJobManager creates a JobManager with given concurrency.
-func NewJobManager(concurrency int) *JobManager {
+func NewJobManager(pubsub *pubsub.PubSub, concurrency int) *JobManager {
 	return &JobManager{
-		queue: queue.New(concurrency),
-		list:  list.New(),
+		pubsub: pubsub,
+		queue:  queue.New(concurrency),
+		list:   list.New(),
 	}
 }
 
@@ -94,12 +99,12 @@ func (j *JobManager) Add(
 	}
 
 	j.list.PushFront(&job)
-	j.publish(&job)
+	j.pubsub.Publish(JobUpserted, &job)
 
 	go j.queue.Do(func() {
 		job.Status = JobStatusRunning
 		job.UpdatedAt = date.NowFormatted()
-		j.publish(&job)
+		j.pubsub.Publish(JobUpserted, &job)
 
 		if err := fn(); err != nil {
 			log.Println(err)
@@ -109,7 +114,7 @@ func (j *JobManager) Add(
 		}
 
 		job.UpdatedAt = date.NowFormatted()
-		j.publish(&job)
+		j.pubsub.Publish(JobUpserted, &job)
 	})
 }
 
@@ -151,7 +156,7 @@ func (j *JobManager) Jobs(
 
 	for i, v := range connection.Edges {
 		edges[i] = JobEdge{
-			Node:   v.Node.(*Job),
+			Node:   *v.Node.(*Job),
 			Cursor: v.Cursor,
 		}
 	}
@@ -160,23 +165,4 @@ func (j *JobManager) Jobs(
 		Edges:    edges,
 		PageInfo: connection.PageInfo,
 	}, nil
-}
-
-// Subscribe registers a function that will receive new and updated jobs.
-// It returns a function to unsubscribe.
-func (j *JobManager) Subscribe(fn func(*Job)) func() {
-	id := atomic.AddUint64(&j.nextSubID, 1)
-	j.subs.Store(id, fn)
-
-	return func() {
-		j.subs.Delete(id)
-	}
-}
-
-func (j *JobManager) publish(job *Job) {
-	j.subs.Range(func(_, v interface{}) bool {
-		fn := v.(func(*Job))
-		fn(job)
-		return true
-	})
 }

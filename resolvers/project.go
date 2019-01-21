@@ -30,5 +30,5 @@ func (r *projectResolver) Commits(
 	first *int,
 	last *int,
 ) (models.CommitConnection, error) {
-	return obj.Commits(r.JobManager, after, before, first, last)
+	return obj.Commits(r.JobManager, r.PubSub, after, before, first, last)
 }

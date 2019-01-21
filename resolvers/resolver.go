@@ -17,12 +17,14 @@ package resolvers
 import (
 	"github.com/stratumn/groundcontrol/gql"
 	"github.com/stratumn/groundcontrol/models"
+	"github.com/stratumn/groundcontrol/pubsub"
 )
 
 // Resolver is the root GraphQL resolver.
 type Resolver struct {
 	Viewer     models.User
 	JobManager *models.JobManager
+	PubSub     *pubsub.PubSub
 }
 
 // Query returns the resolver for queries.

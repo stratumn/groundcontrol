@@ -18,7 +18,6 @@ import (
 	"container/list"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -26,9 +25,27 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 
 	"github.com/stratumn/groundcontrol/date"
+	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 )
 
+// Job names.
+const (
+	LoadCommitsJob = "Load Commits"
+)
+
+// Message types.
+const (
+	ProjectUpdated = "PROJECT_UPDATED" // Go type *Project
+)
+
+var commitPaginator = relay.Paginator{
+	GetID: func(node interface{}) string {
+		return node.(Commit).ID
+	},
+}
+
+// Project represents a project in the app.
 type Project struct {
 	ID          string     `json:"id"`
 	Repository  string     `json:"repository"`
@@ -47,42 +64,21 @@ type Project struct {
 	isCloning bool
 }
 
+// IsNode is used by gqlgen.
 func (*Project) IsNode() {}
 
-var commitPaginator = relay.Paginator{
-	GetID: func(node interface{}) string {
-		return node.(Commit).ID
-	},
-}
-
+// Commits returns paginated commits.
+// If there are no commits in memory, it may create a LoadCommitJob.
 func (p *Project) Commits(
 	jobManager *JobManager,
+	pubsub *pubsub.PubSub,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (CommitConnection, error) {
 	if p.commitList.Len() == 0 {
-		p.commitsMu.Lock()
-		defer p.commitsMu.Unlock()
-
-		if !p.isLoadingCommits {
-			p.isLoadingCommits = true
-
-			jobManager.Add(
-				"Load Commits",
-				p,
-				func() error {
-					err := p.loadCommits()
-					p.commitsMu.Lock()
-					p.isLoadingCommits = false
-					p.commitsMu.Unlock()
-					PublishProjectUpdated(p)
-					PublishWorkspaceUpdated(p.Workspace)
-					return err
-				},
-			)
-		}
+		p.loadCommitsJob(jobManager, pubsub)
 
 		return CommitConnection{
 			IsLoading: true,
@@ -108,6 +104,29 @@ func (p *Project) Commits(
 		PageInfo:  connection.PageInfo,
 		IsLoading: p.isLoadingCommits,
 	}, nil
+}
+
+func (p *Project) loadCommitsJob(jobManager *JobManager, pubsub *pubsub.PubSub) {
+	p.commitsMu.Lock()
+	defer p.commitsMu.Unlock()
+
+	if !p.isLoadingCommits {
+		p.isLoadingCommits = true
+
+		jobManager.Add(
+			LoadCommitsJob,
+			p,
+			func() error {
+				err := p.loadCommits()
+				p.commitsMu.Lock()
+				p.isLoadingCommits = false
+				p.commitsMu.Unlock()
+				pubsub.Publish(ProjectUpdated, p)
+				pubsub.Publish(WorkspaceUpdated, p.Workspace)
+				return err
+			},
+		)
+	}
 }
 
 func (p *Project) loadCommits() error {
@@ -139,27 +158,5 @@ func (p *Project) loadCommits() error {
 		})
 
 		return nil
-	})
-}
-
-var (
-	nextProjectSubscriptionID   = uint64(0)
-	projectUpdatedSubscriptions = sync.Map{}
-)
-
-func SubscribeProjectUpdated(fn func(*Project)) func() {
-	id := atomic.AddUint64(&nextProjectSubscriptionID, 1)
-	projectUpdatedSubscriptions.Store(id, fn)
-
-	return func() {
-		projectUpdatedSubscriptions.Delete(id)
-	}
-}
-
-func PublishProjectUpdated(project *Project) {
-	projectUpdatedSubscriptions.Range(func(_, v interface{}) bool {
-		fn := v.(func(*Project))
-		fn(project)
-		return true
 	})
 }

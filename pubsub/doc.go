@@ -12,9 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
-
-type JobEdge struct {
-	Cursor string `json:"cursor"`
-	Node   *Job   `json:"node"`
-}
+// Package pubsub contains types to deal with subscriptions.
+package pubsub

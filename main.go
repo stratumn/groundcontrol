@@ -31,6 +31,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/stratumn/groundcontrol/gql"
 	"github.com/stratumn/groundcontrol/models"
+	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/resolvers"
 )
 
@@ -65,12 +66,15 @@ func main() {
 		checkError(err)
 	}
 
-	resolver := resolvers.Resolver{}
+	pubsub := pubsub.New()
+	resolver := resolvers.Resolver{
+		JobManager: models.NewJobManager(pubsub, 2),
+		PubSub:     pubsub,
+	}
 
 	err = models.LoadUserYAML(filename, &resolver.Viewer)
 	checkError(err)
 
-	resolver.JobManager = models.NewJobManager(2)
 	go resolver.JobManager.Work(context.Background())
 
 	config := gql.Config{

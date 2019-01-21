@@ -14,9 +14,9 @@
 
 package models
 
-import (
-	"sync"
-	"sync/atomic"
+// Message types.
+const (
+	WorkspaceUpdated = "WORKSPACE_UPDATED" // Go type *Workspace
 )
 
 type Workspace struct {
@@ -48,26 +48,4 @@ func (w Workspace) IsCloned() bool {
 	}
 
 	return true
-}
-
-var (
-	nextWorkspaceSubscriptionID   = uint64(0)
-	workspaceUpdatedSubscriptions = sync.Map{}
-)
-
-func SubscribeWorkspaceUpdated(fn func(*Workspace)) func() {
-	id := atomic.AddUint64(&nextWorkspaceSubscriptionID, 1)
-	workspaceUpdatedSubscriptions.Store(id, fn)
-
-	return func() {
-		workspaceUpdatedSubscriptions.Delete(id)
-	}
-}
-
-func PublishWorkspaceUpdated(workspace *Workspace) {
-	workspaceUpdatedSubscriptions.Range(func(_, v interface{}) bool {
-		fn := v.(func(*Workspace))
-		fn(workspace)
-		return true
-	})
 }
