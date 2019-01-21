@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"sync/atomic"
 
 	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/pubsub"
@@ -29,7 +30,8 @@ import (
 
 // Message types.
 const (
-	JobUpserted = "JOB_UPSERTED" // Go type *Job
+	JobUpserted       = "JOB_UPSERTED"        // Go type *Job
+	JobMetricsUpdated = "JOB_METRICS_UPDATED" // Go type *JobMetrics
 )
 
 var jobPaginator = relay.Paginator{
@@ -60,6 +62,11 @@ type JobManager struct {
 	mu        sync.Mutex
 	list      *list.List
 	nextJobID uint64
+
+	queuedCounter  int64
+	runningCounter int64
+	doneCounter    int64
+	failedCounter  int64
 }
 
 // NewJobManager creates a JobManager with given concurrency.
@@ -101,21 +108,30 @@ func (j *JobManager) Add(
 	j.nodes.Store(job.ID, &job)
 	j.list.PushFront(&job)
 	j.pubsub.Publish(JobUpserted, &job)
+	atomic.AddInt64(&j.queuedCounter, 1)
+	j.publishMetrics()
 
 	go j.queue.Do(func() {
 		job.Status = JobStatusRunning
 		job.UpdatedAt = date.NowFormatted()
 		j.pubsub.Publish(JobUpserted, &job)
+		atomic.AddInt64(&j.runningCounter, 1)
+		atomic.AddInt64(&j.queuedCounter, -1)
+		j.publishMetrics()
 
 		if err := fn(); err != nil {
 			log.Println(err)
 			job.Status = JobStatusFailed
+			atomic.AddInt64(&j.failedCounter, 1)
 		} else {
 			job.Status = JobStatusDone
+			atomic.AddInt64(&j.doneCounter, 1)
 		}
 
 		job.UpdatedAt = date.NowFormatted()
 		j.pubsub.Publish(JobUpserted, &job)
+		atomic.AddInt64(&j.runningCounter, -1)
+		j.publishMetrics()
 	})
 
 	return &job
@@ -168,4 +184,13 @@ func (j *JobManager) Jobs(
 		Edges:    edges,
 		PageInfo: connection.PageInfo,
 	}, nil
+}
+
+func (j *JobManager) publishMetrics() {
+	j.pubsub.Publish(JobMetricsUpdated, &JobMetrics{
+		Queued:  int(atomic.LoadInt64(&j.queuedCounter)),
+		Running: int(atomic.LoadInt64(&j.runningCounter)),
+		Done:    int(atomic.LoadInt64(&j.doneCounter)),
+		Failed:  int(atomic.LoadInt64(&j.failedCounter)),
+	})
 }

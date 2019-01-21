@@ -89,6 +89,13 @@ type JobEdge {
   node: Job!
 }
 
+type JobMetrics {
+  queued: Int!
+  running: Int!
+  done: Int!
+  failed: Int!
+}
+
 type PageInfo {
   hasNextPage: Boolean
   hasPreviousPage: Boolean
@@ -110,4 +117,5 @@ type Subscription {
   workspaceUpdated(id: ID): Workspace!
   projectUpdated(id: ID): Project!
   jobUpserted: Job!
+  jobMetricsUpdated: JobMetrics!
 }

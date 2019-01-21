@@ -73,7 +73,6 @@ UI runs on `http://localhost:3000` during development.
 
 ## TODO
 
-- [ ] node resolver and registry
 - [ ] menu notification labels
 - [ ] git pull mutations
 - [ ] periodically check remotes

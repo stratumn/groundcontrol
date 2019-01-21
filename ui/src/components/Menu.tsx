@@ -27,7 +27,6 @@ export default class Menu extends Component {
             activePropName="active"
           >
             Workspaces
-            <Label color="purple">1</Label>
           </Link>
           <Link
             to="/jobs"
@@ -43,7 +42,6 @@ export default class Menu extends Component {
             activePropName="active"
           >
             Processes
-            <Label color="blue">1</Label>
           </Link>
           <Link
             to="/errors"
@@ -51,7 +49,6 @@ export default class Menu extends Component {
             activePropName="active"
           >
             Logs
-            <Label color="pink">2</Label>
           </Link>
         </Container>
       </SemanticMenu>

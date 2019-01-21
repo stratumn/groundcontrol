@@ -78,3 +78,18 @@ func (r *subscriptionResolver) JobUpserted(
 
 	return ch, nil
 }
+
+func (r *subscriptionResolver) JobMetricsUpdated(
+	ctx context.Context,
+) (<-chan models.JobMetrics, error) {
+	ch := make(chan models.JobMetrics)
+
+	r.PubSub.Subscribe(ctx, models.JobMetricsUpdated, func(msg interface{}) {
+		select {
+		case <-ctx.Done():
+		case ch <- *msg.(*models.JobMetrics):
+		}
+	})
+
+	return ch, nil
+}
