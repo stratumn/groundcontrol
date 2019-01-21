@@ -17,24 +17,20 @@ import { requestSubscription } from "react-relay";
 import { Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription workspaceUpdatedSubscription($id: ID) {
-    workspaceUpdated(id: $id) {
-      ...WorkspaceCard_item
-      ...WorkspaceMenu_workspace
-      projects {
-        ...ProjectCard_item
-      }
+  subscription jobMetricsUpdatedSubscription {
+    jobMetricsUpdated {
+      ...Menu_jobMetrics
     }
   }
 `;
 
-export function subscribe(environment: Environment, id?: string) {
+export function subscribe(environment: Environment) {
   return requestSubscription(
     environment,
     {
       onError: (error) => console.error(error),
       subscription,
-      variables: { id },
+      variables: {},
     },
   );
 }

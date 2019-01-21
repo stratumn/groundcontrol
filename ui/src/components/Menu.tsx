@@ -12,12 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import graphql from "babel-plugin-relay/macro";
 import { Link } from "found";
 import React, { Component } from "react";
+import { createFragmentContainer } from "react-relay";
 import { Container, Label, Menu as SemanticMenu } from "semantic-ui-react";
 
-export default class Menu extends Component {
+import { Menu_jobMetrics } from "./__generated__/Menu_jobMetrics.graphql";
+
+interface IProps {
+  jobMetrics: Menu_jobMetrics;
+}
+
+export class Menu extends Component<IProps> {
   public render() {
+    const { queued, running } = this.props.jobMetrics;
+    const active = queued + running;
+
     return (
       <SemanticMenu fixed="top" color="teal" inverted={true}>
         <Container>
@@ -34,7 +45,9 @@ export default class Menu extends Component {
             activePropName="active"
           >
             Jobs
-            <Label color="blue">3</Label>
+            <Label color="blue">
+              {active}
+            </Label>
           </Link>
           <Link
             to="/processes"
@@ -55,3 +68,10 @@ export default class Menu extends Component {
     );
   }
 }
+
+export default createFragmentContainer(Menu, graphql`
+  fragment Menu_jobMetrics on JobMetrics {
+    queued
+    running
+  }`,
+);

@@ -71,12 +71,17 @@ type JobManager struct {
 
 // NewJobManager creates a JobManager with given concurrency.
 func NewJobManager(nodes *NodeManager, pubsub *pubsub.PubSub, concurrency int) *JobManager {
-	return &JobManager{
+	jobs := JobManager{
 		nodes:  nodes,
 		pubsub: pubsub,
 		queue:  queue.New(concurrency),
 		list:   list.New(),
 	}
+
+	// To register the metrics node.
+	jobs.publishMetrics()
+
+	return &jobs
 }
 
 // Work starts running jobs and blocks until the context is done.
@@ -186,11 +191,21 @@ func (j *JobManager) Jobs(
 	}, nil
 }
 
-func (j *JobManager) publishMetrics() {
-	j.pubsub.Publish(JobMetricsUpdated, &JobMetrics{
+// Metrics returns job metrics.
+// The ID of the node is always the same even though it is dynamically generated.
+func (j *JobManager) Metrics() *JobMetrics {
+	return &JobMetrics{
+		// Should be unique :)
+		ID:      relay.EncodeID(JobMetricsType, fmt.Sprintf("%p", j)),
 		Queued:  int(atomic.LoadInt64(&j.queuedCounter)),
 		Running: int(atomic.LoadInt64(&j.runningCounter)),
 		Done:    int(atomic.LoadInt64(&j.doneCounter)),
 		Failed:  int(atomic.LoadInt64(&j.failedCounter)),
-	})
+	}
+}
+
+func (j *JobManager) publishMetrics() {
+	metrics := j.Metrics()
+	j.nodes.Store(metrics.ID, metrics)
+	j.pubsub.Publish(JobMetricsUpdated, metrics)
 }

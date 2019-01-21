@@ -30,10 +30,6 @@ interface IProps {
   viewer: WorkspaceListPage_viewer;
 }
 
-interface IProps {
-  viewer: WorkspaceListPage_viewer;
-}
-
 interface IState {
   query: string;
 }

@@ -12,22 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
+import { createFragmentContainer, RelayProp } from "react-relay";
+import { Disposable } from "relay-runtime";
 import { Container } from "semantic-ui-react";
 
+import { App_viewer } from "./__generated__/App_viewer.graphql";
+
 import Menu from "../components/Menu";
+import { subscribe } from "../subscriptions/jobMetricsUpdated";
 
 import "./App.css";
 
-export default class App extends Component {
+interface IProps {
+  relay: RelayProp;
+  viewer: App_viewer;
+}
+
+export class App extends Component<IProps> {
+
+  private disposables: Disposable[] = [];
+
   public render() {
+    const viewer = this.props.viewer;
+
     return (
       <div className="App">
-        <Menu />
+        <Menu jobMetrics={viewer.jobMetrics} />
         <Container>
           {this.props.children}
         </Container>
       </div>
     );
   }
+
+  public componentDidMount() {
+    this.disposables.push(subscribe(this.props.relay.environment));
+  }
+
+  public componentWillUnmount() {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+
+    this.disposables = [];
+  }
 }
+
+export default createFragmentContainer(App, graphql`
+  fragment App_viewer on User {
+    jobMetrics {
+      ...Menu_jobMetrics
+    }
+  }`,
+);

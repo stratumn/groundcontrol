@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HttpError } from "found";
+import { HttpError, Link } from "found";
 import React, { Component } from "react";
+import { Container } from "semantic-ui-react";
 
 import Page from "../components/Page";
 
@@ -27,14 +28,19 @@ export default class ErrorPage extends Component<IProps> {
     const error = this.props.error;
 
     return (
-      <Page
-        header="Oops"
-        subheader="Looks like something's wrong."
-        icon="warning"
-      >
-        <h4>Error {error.status}</h4>
-        <pre>{error.data}</pre>
-      </Page>
+      <div className="App">
+        <Container>
+          <Page
+            header="Oops"
+            subheader="Looks like something's wrong."
+            icon="warning"
+          >
+            <h4>Error {error.status}</h4>
+            <pre>{error.data}</pre>
+            <Link to="/workspaces">Go back to a safe place.</Link>
+          </Page>
+        </Container>
+      </div>
     );
   }
 

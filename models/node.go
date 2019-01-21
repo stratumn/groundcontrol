@@ -23,11 +23,12 @@ import (
 
 // Types.
 var (
-	UserType      = "User"
-	WorkspaceType = "Workspace"
-	ProjectType   = "Project"
-	CommitType    = "Commit"
-	JobType       = "Job"
+	UserType       = "User"
+	WorkspaceType  = "Workspace"
+	ProjectType    = "Project"
+	CommitType     = "Commit"
+	JobType        = "Job"
+	JobMetricsType = "JobMetrics"
 )
 
 // Errors.
@@ -140,4 +141,21 @@ func (n *NodeManager) LoadJob(id string) (*Job, error) {
 	}
 
 	return node.(*Job), nil
+}
+
+// LoadJobMetrics loads a job metrics.
+func (n *NodeManager) LoadJobMetrics(id string) (*JobMetrics, error) {
+	identifiers, err := relay.DecodeID(id)
+	if err != nil {
+		return nil, err
+	}
+	if identifiers[0] != JobMetricsType {
+		return nil, ErrType
+	}
+	node, ok := n.store.Load(id)
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	return node.(*JobMetrics), nil
 }

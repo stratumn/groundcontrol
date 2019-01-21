@@ -32,6 +32,14 @@ import JobListPage from "./containers/JobListPage";
 import WorkspaceListPage from "./containers/WorkspaceListPage";
 import WorkspaceViewPage from "./containers/WorkspaceViewPage";
 
+const appQuery = graphql`
+  query RouterAppQuery {
+    viewer {
+      ...App_viewer
+    }
+  }
+`;
+
 const workspaceListQuery = graphql`
   query RouterWorkspacesQuery {
     viewer {
@@ -81,6 +89,7 @@ export default createFarceRouter({
     <Route
       path="/"
       Component={App}
+      query={appQuery}
     >
       <Redirect from="/" to="/workspaces" />
       <Route path="workspaces">
@@ -114,11 +123,7 @@ export default createFarceRouter({
   ),
 
   render: createRender({
-    renderError: ({ error }) => (
-      <App>
-        <HttpErrorPage error={error} />
-      </App>
-    ),
+    renderError: ({ error }) => <HttpErrorPage error={error} />,
   }),
 
 });

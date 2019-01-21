@@ -15,6 +15,7 @@ type User implements Node {
     last: Int
     status: [JobStatus!]
   ): JobConnection!
+  jobMetrics: JobMetrics!
 }
 
 type Workspace implements Node {
@@ -89,7 +90,8 @@ type JobEdge {
   node: Job!
 }
 
-type JobMetrics {
+type JobMetrics implements Node {
+  id: ID!
   queued: Int!
   running: Int!
   done: Int!

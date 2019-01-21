@@ -35,3 +35,10 @@ func (r *userResolver) Jobs(
 ) (models.JobConnection, error) {
 	return r.JobManager.Jobs(after, before, first, last, status)
 }
+
+func (r *userResolver) JobMetrics(
+	ctx context.Context,
+	obj *models.User,
+) (models.JobMetrics, error) {
+	return *r.JobManager.Metrics(), nil
+}
