@@ -21,6 +21,7 @@ import {
   Card,
   Divider,
   Header,
+  Label,
  } from "semantic-ui-react";
 
 import { WorkspaceCard_item } from "./__generated__/WorkspaceCard_item.graphql";
@@ -38,7 +39,19 @@ export class WorkspaceCard extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
+    const labels: JSX.Element[] = [];
     const buttons: JSX.Element[] = [];
+
+    if (item.isCloned) {
+      labels.push((
+        <Label
+          key="cloned"
+          content="cloned"
+          color="blue"
+          size="small"
+        />
+      ));
+    }
 
     if (!item.isCloned) {
       buttons.push((
@@ -62,7 +75,8 @@ export class WorkspaceCard extends Component<IProps> {
           >
             {item.name}
           </Link>
-          <Card.Meta>{item.description}</Card.Meta>
+          {labels}
+          <Card.Description>{item.description}</Card.Description>
           <Divider horizontal={true}>
             <Header as="h6">Repositories</Header>
           </Divider>

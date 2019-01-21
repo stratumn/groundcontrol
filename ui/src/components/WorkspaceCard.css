@@ -1,3 +1,8 @@
-.WorkspaceCard.ui.card > .content > .meta {
+.WorkspaceCard.ui.card > .content > .ui.label {
+  margin-top: .6em;
+  margin-left: 0;
+}
+
+.WorkspaceCard.ui.card > .content > .description {
   margin-top: 1em;
 }

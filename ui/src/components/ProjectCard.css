@@ -1,5 +1,5 @@
 .ProjectCard .ui.label {
-  margin-top: .8em;
+  margin: .6em .8em 0 0;
 }
 
 .ProjectCard.ui.card > .content > .description {

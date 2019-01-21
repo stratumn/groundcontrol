@@ -43,7 +43,19 @@ export class ProjectCard extends Component<IProps> {
     const item = this.props.item;
     const isLoading = item.commits.isLoading;
     const commits = item.commits.edges.map(({ node }) => node);
+    const labels: JSX.Element[] = [];
     const buttons: JSX.Element[] = [];
+
+    if (item.isCloned) {
+      labels.push((
+        <Label
+          key="cloned"
+          content="cloned"
+          color="blue"
+          size="small"
+        />
+      ));
+    }
 
     if (!item.isCloned) {
       buttons.push((
@@ -70,7 +82,8 @@ export class ProjectCard extends Component<IProps> {
           <Card.Header>
             <RepositoryShortName repository={item.repository} />
           </Card.Header>
-          <Label color="blue">{item.branch}</Label>
+          <Label size="small">{item.branch}</Label>
+          {labels}
           <Card.Description>
             {item.description || "No description."}
           </Card.Description>
