@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate go run scripts/nodesgen.go -t User,Workspace,Project,Commit,System,Job,JobMetrics -o models/auto_nodes.go
+//go:generate go run scripts/paginatorsgen.go -t Commit,Job -o models/auto_paginators.go
 //go:generate go run scripts/gqlgen.go
 
 package main
@@ -32,6 +34,7 @@ import (
 	"github.com/stratumn/groundcontrol/gql"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
+	"github.com/stratumn/groundcontrol/relay"
 	"github.com/stratumn/groundcontrol/resolvers"
 )
 
@@ -66,27 +69,45 @@ func main() {
 		checkError(err)
 	}
 
+	config, err := models.LoadConfigYAML(filename)
+	checkError(err)
+
 	nodes := &models.NodeManager{}
-	ps := pubsub.New()
-	jobs := models.NewJobManager(nodes, ps, 2)
+	viewer, err := config.CreateNodes(nodes)
+	checkError(err)
+
+	systemID := relay.EncodeID(models.NodeTypeSystem, filename)
+	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, filename)
+
+	nodes.MustStoreJobMetrics(models.JobMetrics{
+		ID: jobMetricsID,
+	})
+
+	nodes.MustStoreSystem(models.System{
+		ID:           systemID,
+		JobMetricsID: jobMetricsID,
+	})
+
+	subs := pubsub.New()
+	jobs := models.NewJobManager(nodes, subs, 2, systemID)
+
 	resolver := resolvers.Resolver{
-		NodeManager: nodes,
-		JobManager:  jobs,
-		PubSub:      ps,
+		Nodes: nodes,
+		Jobs:  jobs,
+		Subs:  subs,
 		GetProjectPath: func(workspaceSlug, repo, branch string) string {
 			name := path.Base(repo)
 			ext := path.Ext(name)
 			name = name[:len(name)-len(ext)]
 			return filepath.Join("workspaces", workspaceSlug, name)
 		},
+		ViewerID: viewer.ID,
+		SystemID: systemID,
 	}
 
-	err = models.LoadUserYAML(filename, &resolver.Viewer, nodes)
-	checkError(err)
+	go jobs.Work(context.Background())
 
-	go resolver.JobManager.Work(context.Background())
-
-	config := gql.Config{
+	gqlConfig := gql.Config{
 		Resolvers: &resolver,
 	}
 
@@ -112,7 +133,7 @@ func main() {
 	}
 
 	router.Handle("/query", handler.GraphQL(
-		gql.NewExecutableSchema(config),
+		gql.NewExecutableSchema(gqlConfig),
 		handler.WebsocketUpgrader(websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		}),

@@ -34,8 +34,8 @@ import WorkspaceViewPage from "./containers/WorkspaceViewPage";
 
 const appQuery = graphql`
   query RouterAppQuery {
-    viewer {
-      ...App_viewer
+    system {
+      ...App_system
     }
   }
 `;
@@ -58,8 +58,8 @@ const workspaceViewQuery = graphql`
 
 const jobListQuery = graphql`
   query RouterJobsQuery($status: [JobStatus!]) {
-    viewer {
-      ...JobListPage_viewer @arguments(status: $status)
+    system {
+      ...JobListPage_system @arguments(status: $status)
     }
   }
 `;

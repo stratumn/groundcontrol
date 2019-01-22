@@ -17,6 +17,8 @@ package resolvers
 import (
 	"context"
 
+	"github.com/stratumn/groundcontrol/jobs"
+
 	"github.com/stratumn/groundcontrol/models"
 )
 
@@ -25,37 +27,34 @@ type mutationResolver struct {
 }
 
 func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.Job, error) {
-	project, err := r.NodeManager.LoadProject(id)
+	jobID, err := jobs.Clone(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, id)
 	if err != nil {
 		return models.Job{}, err
 	}
 
-	job, err := project.CloneJob(r.JobManager, r.PubSub, r.GetProjectPath)
-	if err != nil {
-		return models.Job{}, err
-	}
-
-	return *job, nil
+	return r.Nodes.MustLoadJob(jobID), nil
 }
 
 func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]models.Job, error) {
-	workspace, err := r.NodeManager.LoadWorkspace(id)
+	workspace, err := r.Nodes.LoadWorkspace(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var jobs []models.Job
+	var slice []models.Job
 
-	for _, project := range workspace.Projects {
-		job, err := project.CloneJob(r.JobManager, r.PubSub, r.GetProjectPath)
-		if err == nil {
-			jobs = append(jobs, *job)
-			continue
-		} else if err == models.ErrCloning || err == models.ErrCloned {
+	for _, project := range workspace.Projects(r.Nodes) {
+		if project.IsCloning || project.IsCloned(r.Nodes, r.GetProjectPath) {
 			continue
 		}
-		return jobs, err
+
+		jobID, err := jobs.Clone(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, project.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		slice = append(slice, r.Nodes.MustLoadJob(jobID))
 	}
 
-	return jobs, nil
+	return slice, nil
 }

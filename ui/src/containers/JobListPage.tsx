@@ -20,7 +20,7 @@ import { Button } from "semantic-ui-react";
 
 import { createPaginationContainer, RelayPaginationProp } from "react-relay";
 
-import { JobListPage_viewer } from "./__generated__/JobListPage_viewer.graphql";
+import { JobListPage_system } from "./__generated__/JobListPage_system.graphql";
 
 import JobFilter from "../components/JobFilter";
 import JobTable from "../components/JobTable";
@@ -31,7 +31,7 @@ import { subscribe } from "../subscriptions/jobUpserted";
 interface IProps {
   relay: RelayPaginationProp;
   router: Router;
-  viewer: JobListPage_viewer;
+  system: JobListPage_system;
   params: {
     filters: string | undefined;
   };
@@ -42,7 +42,7 @@ export class JobListPage extends Component<IProps> {
   private disposables: Disposable[] = [];
 
   public render() {
-    const items = this.props.viewer.jobs.edges.map(({ node }) => node);
+    const items = this.props.system.jobs.edges.map(({ node }) => node);
     const filters = this.props.params.filters === undefined ? undefined :
       this.props.params.filters.split(",");
 
@@ -108,7 +108,7 @@ export class JobListPage extends Component<IProps> {
 export default createPaginationContainer(
   JobListPage,
   graphql`
-    fragment JobListPage_viewer on User
+    fragment JobListPage_system on System
       @argumentDefinitions(
         count: {type: "Int", defaultValue: 10},
         cursor: {type: "String"},
@@ -133,7 +133,7 @@ export default createPaginationContainer(
     }`,
   {
     direction: "forward",
-    getConnectionFromProps: (props) => props.viewer && props.viewer.jobs,
+    getConnectionFromProps: (props) => props.system && props.system.jobs,
     getVariables: (_, {count, cursor}, fragmentVariables) => ({
       count,
       cursor,
@@ -145,8 +145,8 @@ export default createPaginationContainer(
         $cursor: String,
         $status: [JobStatus!],
       ) {
-        viewer {
-          ...JobListPage_viewer @arguments(
+        system {
+          ...JobListPage_system @arguments(
             count: $count,
             cursor: $cursor,
             status: $status,

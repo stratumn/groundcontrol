@@ -17,36 +17,28 @@ package resolvers
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/jobs"
 	"github.com/stratumn/groundcontrol/models"
 )
 
-type projectResolver struct {
+type systemResolver struct {
 	*Resolver
 }
 
-func (r *projectResolver) Commits(
+func (r *systemResolver) Jobs(
 	ctx context.Context,
-	obj *models.Project,
+	obj *models.System,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
-) (models.CommitConnection, error) {
-	commits, err := obj.Commits(r.Nodes, r.Jobs, r.Subs, after, before, first, last)
-	if err != nil || len(commits.Edges) > 0 || obj.IsLoadingCommits {
-		return commits, err
-	}
-
-	_, err = jobs.LoadCommits(r.Nodes, r.Jobs, r.Subs, obj.ID)
-
-	return commits, err
+	status []models.JobStatus,
+) (models.JobConnection, error) {
+	return obj.Jobs(r.Nodes, after, before, first, last, status)
 }
 
-func (r *projectResolver) Workspace(ctx context.Context, obj *models.Project) (models.Workspace, error) {
-	return obj.Workspace(r.Nodes), nil
-}
-
-func (r *projectResolver) IsCloned(ctx context.Context, obj *models.Project) (bool, error) {
-	return obj.IsCloned(r.Nodes, r.GetProjectPath), nil
+func (r *systemResolver) JobMetrics(
+	ctx context.Context,
+	obj *models.System,
+) (models.JobMetrics, error) {
+	return obj.JobMetrics(r.Nodes), nil
 }

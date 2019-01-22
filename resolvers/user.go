@@ -24,21 +24,10 @@ type userResolver struct {
 	*Resolver
 }
 
-func (r *userResolver) Jobs(
-	ctx context.Context,
-	obj *models.User,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-	status []models.JobStatus,
-) (models.JobConnection, error) {
-	return r.JobManager.Jobs(after, before, first, last, status)
+func (r *userResolver) Workspaces(ctx context.Context, obj *models.User) ([]models.Workspace, error) {
+	return obj.Workspaces(r.Nodes), nil
 }
 
-func (r *userResolver) JobMetrics(
-	ctx context.Context,
-	obj *models.User,
-) (models.JobMetrics, error) {
-	return *r.JobManager.Metrics(), nil
+func (r *userResolver) Workspace(ctx context.Context, obj *models.User, slug string) (*models.Workspace, error) {
+	return obj.Workspace(r.Nodes, slug), nil
 }

@@ -12,27 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build ignore
-
-package main
+package models
 
 import (
-	"log"
-	"net/http"
-
-	"github.com/shurcooL/vfsgen"
+	"errors"
 )
 
-func main() {
-	var fs http.FileSystem = http.Dir("ui/build")
-
-	err := vfsgen.Generate(fs, vfsgen.Options{
-		PackageName:  "main",
-		BuildTags:    "release",
-		VariableName: "embeddedUI",
-		Filename:     "auto_ui",
-	})
-	if err != nil {
-		log.Fatalln(err)
-	}
-}
+// Errors.
+var (
+	ErrNotFound = errors.New("not found")
+	ErrType     = errors.New("wrong type")
+)

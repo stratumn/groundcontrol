@@ -15,8 +15,8 @@
 package relay
 
 import (
-	"container/list"
 	"errors"
+	"reflect"
 )
 
 // Pagination errors.
@@ -31,57 +31,56 @@ var (
 type Paginator struct {
 	// GetID must return the ID of a list value.
 	GetID func(node interface{}) string
+
+	// CreateEdge must create an edge given a cursor and a value.
+	CreateEdge func(cursor string, node interface{}) interface{}
+
+	// GetEdgeCursor must return the cursor assigned to an edge.
+	GetEdgeCursor func(edge interface{}) string
+
+	// EdgeType is the zero value of an edge.
+	EdgeType interface{}
 }
 
 // PaginationConnection represents the result of a pagination.
 type PaginationConnection struct {
-	Edges    []PaginationEdge
+	Edges    interface{}
 	PageInfo PageInfo
-}
-
-// PaginationEdge represents an edge in a pagination connection.
-type PaginationEdge struct {
-	Cursor string
-	Node   interface{}
 }
 
 // PageInfo contains fields related to pagination.
 type PageInfo struct {
-	HasNextPage     *bool   `json:"hasNextPage"`
-	HasPreviousPage *bool   `json:"hasPreviousPage"`
-	EndCursor       *string `json:"endCursor"`
-	StartCursor     *string `json:"startCursor"`
+	HasPreviousPage bool   `json:"hasPreviousPage"`
+	HasNextPage     bool   `json:"hasNextPage"`
+	StartCursor     string `json:"startCursor"`
+	EndCursor       string `json:"endCursor"`
 }
 
-// Paginate paginates a list given query parameters.
-func (p Paginator) Paginate(l *list.List, after, before *string, first, last *int) (*PaginationConnection, error) {
-	edges, hadMore := p.applyCursors(l, after, before)
-	pageInfo := PageInfo{
-		HasNextPage:     new(bool),
-		HasPreviousPage: new(bool),
-		EndCursor:       new(string),
-		StartCursor:     new(string),
-	}
+// Paginate paginates a slice of nodes given query parameters.
+func (p Paginator) Paginate(slice interface{}, after, before *string, first, last *int) (*PaginationConnection, error) {
+	edgeSlice, hadMore := p.applyCursors(slice, after, before)
+	edgeSliceV := reflect.ValueOf(edgeSlice)
+	edgeSliceLen := edgeSliceV.Len()
 
-	*pageInfo.HasNextPage = false
-	*pageInfo.HasPreviousPage = false
+	pageInfo := PageInfo{}
 
 	if first != nil {
 		firstValue := *first
 		if firstValue < 0 {
 			return nil, ErrPaginateFirst
 		}
-		if firstValue > len(edges) {
-			firstValue = len(edges)
+		if firstValue > edgeSliceLen {
+			firstValue = edgeSliceLen
 		}
-		if firstValue < len(edges) {
-			*pageInfo.HasNextPage = true
+		if firstValue < edgeSliceLen {
+			pageInfo.HasNextPage = true
 		} else if before != nil {
-			*pageInfo.HasNextPage = hadMore
+			pageInfo.HasNextPage = hadMore
 		}
-		edges = edges[:firstValue]
+		edgeSliceV = edgeSliceV.Slice(0, firstValue)
+		edgeSliceLen = edgeSliceV.Len()
 	} else if before != nil {
-		*pageInfo.HasNextPage = hadMore
+		pageInfo.HasNextPage = hadMore
 	}
 
 	if last != nil {
@@ -89,89 +88,93 @@ func (p Paginator) Paginate(l *list.List, after, before *string, first, last *in
 		if lastValue < 0 {
 			return nil, ErrPaginateLast
 		}
-		if lastValue > len(edges) {
-			lastValue = len(edges)
+		if lastValue > edgeSliceLen {
+			lastValue = edgeSliceLen
 		}
-		if lastValue < len(edges) {
-			*pageInfo.HasPreviousPage = true
+		if lastValue < edgeSliceLen {
+			pageInfo.HasPreviousPage = true
 		} else if after != nil {
-			*pageInfo.HasPreviousPage = hadMore
+			pageInfo.HasPreviousPage = hadMore
 		}
-		end := len(edges) - lastValue
-		edges = edges[end:]
+		end := edgeSliceLen - lastValue
+		edgeSliceV = edgeSliceV.Slice(end, edgeSliceLen)
+		edgeSliceLen = edgeSliceV.Len()
 	} else if after != nil {
-		*pageInfo.HasPreviousPage = hadMore
+		pageInfo.HasPreviousPage = hadMore
 	}
 
-	if len(edges) > 0 {
-		*pageInfo.EndCursor = edges[len(edges)-1].Cursor
-		*pageInfo.StartCursor = edges[0].Cursor
+	if edgeSliceLen > 0 {
+		pageInfo.StartCursor = p.GetEdgeCursor(edgeSliceV.Index(0).Interface())
+		pageInfo.EndCursor = p.GetEdgeCursor(edgeSliceV.Index(edgeSliceLen - 1).Interface())
 	}
 
 	return &PaginationConnection{
-		Edges:    edges,
+		Edges:    edgeSliceV.Interface(),
 		PageInfo: pageInfo,
 	}, nil
 }
 
-func (p Paginator) applyCursors(l *list.List, after, before *string) (edges []PaginationEdge, hadMore bool) {
+func (p Paginator) applyCursors(slice interface{}, after, before *string) (interface{}, bool) {
+	sliceV := reflect.ValueOf(slice)
+	edgeT := reflect.TypeOf(p.EdgeType)
+	edgeSliceT := reflect.SliceOf(edgeT)
+	edgeSliceV := reflect.MakeSlice(edgeSliceT, 0, 10)
+	hadMore := false
+
 	if after != nil {
-		element := p.find(l, *after)
-		if element != nil {
-			hadMore = element.Prev() != nil
-			element = element.Next()
-			for element != nil {
-				edges = append(edges, PaginationEdge{
-					Cursor: p.GetID(element.Value),
-					Node:   element.Value,
-				})
-				element = element.Next()
-			}
+		index := p.indexOf(slice, *after)
+		if index < 0 {
+			return nil, false
 		}
-		return
+		hadMore = index > 0
+		for i := index + 1; i < sliceV.Len(); i++ {
+			node := sliceV.Index(i).Interface()
+			edgeSliceV = reflect.Append(edgeSliceV, reflect.ValueOf(p.CreateEdge(
+				p.GetID(node),
+				node,
+			)))
+		}
+		return edgeSliceV.Interface(), hadMore
 	}
 
 	if before != nil {
-		element := p.find(l, *before)
-		if element != nil {
-			hadMore = element.Next() != nil
-			element = l.Front()
-			for element != nil {
-				id := p.GetID(element.Value)
-				if before != nil && *before == id {
-					return nil, hadMore
-				}
-				edges = append(edges, PaginationEdge{
-					Cursor: p.GetID(element.Value),
-					Node:   element.Value,
-				})
-				element = element.Next()
-			}
+		index := p.indexOf(slice, *before)
+		if index < 0 {
+			return nil, false
 		}
-		return
+		hadMore = index < sliceV.Len()-1
+		for i := 0; i < index-1; i++ {
+			node := sliceV.Index(i).Interface()
+			edgeSliceV = reflect.Append(edgeSliceV, reflect.ValueOf(p.CreateEdge(
+				p.GetID(node),
+				node,
+			)))
+		}
+		return edgeSliceV.Interface(), hadMore
 	}
 
-	element := l.Front()
-	for element != nil {
-		edges = append(edges, PaginationEdge{
-			Cursor: p.GetID(element.Value),
-			Node:   element.Value,
-		})
-		element = element.Next()
+	for i := 0; i < sliceV.Len(); i++ {
+		node := sliceV.Index(i).Interface()
+		edgeSliceV = reflect.Append(edgeSliceV, reflect.ValueOf(p.CreateEdge(
+			p.GetID(node),
+			node,
+		)))
 	}
 
-	return
+	return edgeSliceV.Interface(), hadMore
 }
 
-func (p Paginator) find(l *list.List, id string) *list.Element {
-	element := l.Front()
+func (p Paginator) indexOf(slice interface{}, id string) int {
+	sliceV := reflect.ValueOf(slice)
 
-	for element != nil {
-		if p.GetID(element.Value) == id {
-			return element
+	for i := 0; i < sliceV.Len(); i++ {
+		elemV := sliceV.Index(i)
+		elemID := p.GetID(elemV.Interface())
+
+		if elemID == id {
+			return i
 		}
-		element = element.Next()
 	}
 
-	return nil
+	return -1
 }

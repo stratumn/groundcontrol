@@ -12,27 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build ignore
+package models
 
-package main
+// Job represents a job in the app.
+type Job struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt string    `json:"createdAt"`
+	UpdatedAt string    `json:"updatedAt"`
+	Status    JobStatus `json:"status"`
+	ProjectID string    `json:"projectID"`
+}
 
-import (
-	"log"
-	"net/http"
+// IsNode tells gqlgen that it implements Node.
+func (Job) IsNode() {}
 
-	"github.com/shurcooL/vfsgen"
-)
-
-func main() {
-	var fs http.FileSystem = http.Dir("ui/build")
-
-	err := vfsgen.Generate(fs, vfsgen.Options{
-		PackageName:  "main",
-		BuildTags:    "release",
-		VariableName: "embeddedUI",
-		Filename:     "auto_ui",
-	})
-	if err != nil {
-		log.Fatalln(err)
-	}
+// Project returns the project associated with the job.
+func (j Job) Project(nodes *NodeManager) Project {
+	return nodes.MustLoadProject(j.ProjectID)
 }

@@ -41,7 +41,6 @@ export class ProjectCard extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
-    const isLoading = item.commits.isLoading;
     const commits = item.commits.edges.map(({ node }) => node);
     const labels: JSX.Element[] = [];
     const buttons: JSX.Element[] = [];
@@ -73,7 +72,7 @@ export class ProjectCard extends Component<IProps> {
     return (
       <Card className="ProjectCard">
         <Dimmer
-          active={isLoading}
+          active={item.isLoadingCommits}
           inverted={true}
         >
           <Loader />
@@ -112,6 +111,7 @@ export default createFragmentContainer(ProjectCard, graphql`
     repository
     branch
     description
+    isLoadingCommits
     isCloning
     isCloned
     commits(first: $commitsLimit) {
@@ -120,7 +120,6 @@ export default createFragmentContainer(ProjectCard, graphql`
           ...CommitFeed_items
         }
       }
-      isLoading
     }
   }`,
 );

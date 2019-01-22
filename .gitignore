@@ -1,6 +1,4 @@
 vendor
+auto_*
 groundcontrol
-gql/generated.go
-models/generated.go
-embeddedui_vfsdata.go
-workspaces
+workspaces 

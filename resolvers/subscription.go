@@ -30,14 +30,14 @@ func (r *subscriptionResolver) WorkspaceUpdated(
 ) (<-chan models.Workspace, error) {
 	ch := make(chan models.Workspace)
 
-	r.PubSub.Subscribe(ctx, models.WorkspaceUpdated, func(msg interface{}) {
-		workspace := msg.(*models.Workspace)
-		if id != nil && *id != workspace.ID {
+	r.Subs.Subscribe(ctx, models.WorkspaceUpdated, func(msg interface{}) {
+		nodeID := msg.(string)
+		if id != nil && *id != nodeID {
 			return
 		}
 		select {
 		case <-ctx.Done():
-		case ch <- *workspace:
+		case ch <- r.Nodes.MustLoadWorkspace(nodeID):
 		}
 	})
 
@@ -50,14 +50,14 @@ func (r *subscriptionResolver) ProjectUpdated(
 ) (<-chan models.Project, error) {
 	ch := make(chan models.Project)
 
-	r.PubSub.Subscribe(ctx, models.ProjectUpdated, func(msg interface{}) {
-		project := msg.(*models.Project)
-		if id != nil && *id != project.ID {
+	r.Subs.Subscribe(ctx, models.ProjectUpdated, func(msg interface{}) {
+		nodeID := msg.(string)
+		if id != nil && *id != nodeID {
 			return
 		}
 		select {
 		case <-ctx.Done():
-		case ch <- *project:
+		case ch <- r.Nodes.MustLoadProject(nodeID):
 		}
 	})
 
@@ -69,10 +69,10 @@ func (r *subscriptionResolver) JobUpserted(
 ) (<-chan models.Job, error) {
 	ch := make(chan models.Job)
 
-	r.PubSub.Subscribe(ctx, models.JobUpserted, func(msg interface{}) {
+	r.Subs.Subscribe(ctx, models.JobUpserted, func(msg interface{}) {
 		select {
 		case <-ctx.Done():
-		case ch <- *msg.(*models.Job):
+		case ch <- r.Nodes.MustLoadJob(msg.(string)):
 		}
 	})
 
@@ -84,10 +84,10 @@ func (r *subscriptionResolver) JobMetricsUpdated(
 ) (<-chan models.JobMetrics, error) {
 	ch := make(chan models.JobMetrics)
 
-	r.PubSub.Subscribe(ctx, models.JobMetricsUpdated, func(msg interface{}) {
+	r.Subs.Subscribe(ctx, models.JobMetricsUpdated, func(msg interface{}) {
 		select {
 		case <-ctx.Done():
-		case ch <- *msg.(*models.JobMetrics):
+		case ch <- r.Nodes.MustLoadJobMetrics(msg.(string)):
 		}
 	})
 

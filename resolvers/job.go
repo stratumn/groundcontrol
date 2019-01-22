@@ -12,27 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build ignore
-
-package main
+package resolvers
 
 import (
-	"log"
-	"net/http"
+	"context"
 
-	"github.com/shurcooL/vfsgen"
+	"github.com/stratumn/groundcontrol/models"
 )
 
-func main() {
-	var fs http.FileSystem = http.Dir("ui/build")
+type jobResolver struct {
+	*Resolver
+}
 
-	err := vfsgen.Generate(fs, vfsgen.Options{
-		PackageName:  "main",
-		BuildTags:    "release",
-		VariableName: "embeddedUI",
-		Filename:     "auto_ui",
-	})
-	if err != nil {
-		log.Fatalln(err)
-	}
+func (r *jobResolver) Project(ctx context.Context, obj *models.Job) (models.Project, error) {
+	return obj.Project(r.Nodes), nil
 }

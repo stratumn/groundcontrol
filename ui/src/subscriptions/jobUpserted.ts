@@ -57,12 +57,12 @@ export function subscribe(environment: Environment) {
         const record = store.getRootField("jobUpserted")!;
         const recordId = record.getValue("id");
         const status = record!.getValue("status");
-        const viewer = store.getRoot().getLinkedRecord("viewer");
+        const system = store.getRoot().getLinkedRecord("system");
 
         // Remove job from connections that don't have the new status.
         for (const combination of notStatusCombinations[status]) {
           const connection = ConnectionHandler.getConnection(
-            viewer,
+            system,
             "JobListPage_jobs",
             { status: combination },
           );
@@ -75,7 +75,7 @@ export function subscribe(environment: Environment) {
         // Add job to connections that have the new status (if it doesn't already exist).
         for (const combination of [undefined, ...statusCombinations[status]]) {
           const connection = ConnectionHandler.getConnection(
-            viewer,
+            system,
             "JobListPage_jobs",
             { status: combination },
           );

@@ -14,28 +14,34 @@
 
 package models
 
-// Message types.
-const (
-	WorkspaceUpdated = "WORKSPACE_UPDATED" // Go type *Workspace
-)
-
 // Workspace represents a workspace in the app.
 type Workspace struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name"`
-	Slug        string     `json:"slug"`
-	Projects    []*Project `json:"projects"`
-	Description string     `json:"description"`
-	Notes       *string    `json:"notes"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Slug        string   `json:"slug"`
+	ProjectIDs  []string `json:"projectIDs"`
+	Description string   `json:"description"`
+	Notes       *string  `json:"notes"`
 }
 
-// IsNode is used by gqlgen.
+// IsNode tells gqlgen that it implements Node.
 func (Workspace) IsNode() {}
 
+// Projects returns the workspace's projects.
+func (w Workspace) Projects(nodes *NodeManager) []Project {
+	var slice []Project
+
+	for _, nodeID := range w.ProjectIDs {
+		slice = append(slice, nodes.MustLoadProject(nodeID))
+	}
+
+	return slice
+}
+
 // IsCloning returns true if any of the projects is cloning.
-func (w Workspace) IsCloning() bool {
-	for _, v := range w.Projects {
-		if v.IsCloning() {
+func (w Workspace) IsCloning(nodes *NodeManager) bool {
+	for _, v := range w.Projects(nodes) {
+		if v.IsCloning {
 			return true
 		}
 	}
@@ -44,9 +50,9 @@ func (w Workspace) IsCloning() bool {
 }
 
 // IsCloned returns true if all the projects are cloned.
-func (w Workspace) IsCloned(getProjectPath ProjectPathGetter) bool {
-	for _, v := range w.Projects {
-		if !v.IsCloned(getProjectPath) {
+func (w Workspace) IsCloned(nodes *NodeManager, getProjectPath ProjectPathGetter) bool {
+	for _, v := range w.Projects(nodes) {
+		if !v.IsCloned(nodes, getProjectPath) {
 			return false
 		}
 	}

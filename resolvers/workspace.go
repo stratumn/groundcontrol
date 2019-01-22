@@ -24,6 +24,14 @@ type workspaceResolver struct {
 	*Resolver
 }
 
+func (r *workspaceResolver) Projects(ctx context.Context, obj *models.Workspace) ([]models.Project, error) {
+	return obj.Projects(r.Nodes), nil
+}
+
+func (r *workspaceResolver) IsCloning(ctx context.Context, obj *models.Workspace) (bool, error) {
+	return obj.IsCloning(r.Nodes), nil
+}
+
 func (r *workspaceResolver) IsCloned(ctx context.Context, obj *models.Workspace) (bool, error) {
-	return obj.IsCloned(r.GetProjectPath), nil
+	return obj.IsCloned(r.Nodes, r.GetProjectPath), nil
 }

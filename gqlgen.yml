@@ -1,31 +1,25 @@
 schema:
 - schema.graphql
 exec:
-  filename: gql/generated.go
+  filename: gql/auto_gql.go
   package: gql
 model:
-  filename: models/generated.go
+  filename: models/auto_models.go
   package: models
 resolver:
   filename: resolvers/resolver.go
   package: resolvers
   type: Resolver
 models:
-  Job:
-    model: github.com/stratumn/groundcontrol/models.Job
-  PageInfo:
-    model: github.com/stratumn/groundcontrol/relay.PageInfo
-  Project:
-    model: github.com/stratumn/groundcontrol/models.Project
-    fields:
-      isCloned:
-        resolver: true
-      commits:
-        resolver: true
   User:
     model: github.com/stratumn/groundcontrol/models.User
   Workspace:
     model: github.com/stratumn/groundcontrol/models.Workspace
-    fields:
-      isCloned:
-        resolver: true
+  Project:
+    model: github.com/stratumn/groundcontrol/models.Project
+  Job:
+    model: github.com/stratumn/groundcontrol/models.Job
+  System:
+    model: github.com/stratumn/groundcontrol/models.System
+  PageInfo:
+    model: github.com/stratumn/groundcontrol/relay.PageInfo

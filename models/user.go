@@ -14,63 +14,33 @@
 
 package models
 
-import (
-	"container/list"
-	"io/ioutil"
-
-	yaml "gopkg.in/yaml.v2"
-
-	"github.com/stratumn/groundcontrol/relay"
-)
-
 // User contains all the data of the person using the app.
 type User struct {
-	ID         string       `json:"id"`
-	Workspaces []*Workspace `json:"workspaces"`
+	ID           string   `json:"id"`
+	WorkspaceIDs []string `json:"workspaceIDs"`
 }
 
-// IsNode is used by gqlgen.
-func (*User) IsNode() {}
+// IsNode tells gqlgen that it implements Node.
+func (User) IsNode() {}
 
-// Workspace returns the workspace with the given slug.
-func (u *User) Workspace(slug string) *Workspace {
-	for _, v := range u.Workspaces {
-		if v.Slug == slug {
-			return v
-		}
+// Workspaces returns the user's workspaces.
+func (u User) Workspaces(nodes *NodeManager) []Workspace {
+	var slice []Workspace
+
+	for _, nodeID := range u.WorkspaceIDs {
+		slice = append(slice, nodes.MustLoadWorkspace(nodeID))
 	}
 
-	return nil
+	return slice
 }
 
-// LoadUserYAML loads the content of a YAML file into a User model.
-func LoadUserYAML(file string, user *User, nodes *NodeManager) error {
-	user.ID = relay.EncodeID(UserType, file)
-	nodes.Store(user.ID, user)
+// Workspace finds a workspace.
+func (u User) Workspace(nodes *NodeManager, slug string) *Workspace {
+	for _, id := range u.WorkspaceIDs {
+		node := nodes.MustLoadWorkspace(id)
 
-	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return err
-	}
-
-	if err := yaml.UnmarshalStrict(bytes, &user); err != nil {
-		return err
-	}
-
-	for _, workspace := range user.Workspaces {
-		workspace.ID = relay.EncodeID(WorkspaceType, workspace.Slug)
-		nodes.Store(workspace.ID, workspace)
-
-		for _, project := range workspace.Projects {
-			project.ID = relay.EncodeID(
-				ProjectType,
-				workspace.Slug,
-				project.Repository,
-				project.Branch,
-			)
-			nodes.Store(project.ID, project)
-			project.Workspace = workspace
-			project.commitList = list.New()
+		if node.Slug == slug {
+			return &node
 		}
 	}
 

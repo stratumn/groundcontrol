@@ -8,14 +8,6 @@ type User implements Node {
   id: ID!
   workspaces: [Workspace!]!
   workspace(slug: String!): Workspace
-  jobs(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    status: [JobStatus!]
-  ): JobConnection!
-  jobMetrics: JobMetrics!
 }
 
 type Workspace implements Node {
@@ -41,12 +33,14 @@ type Project implements Node {
   ): CommitConnection!
   description: String
   workspace: Workspace!
+  isLoadingCommits: Boolean!
   isCloning: Boolean!
   isCloned: Boolean!
 }
 
 type Commit implements Node {
   id: ID!
+  SHA: String!
   headline: String!
   message: String!
   author: String!
@@ -56,12 +50,23 @@ type Commit implements Node {
 type CommitConnection {
   edges: [CommitEdge!]!
   pageInfo: PageInfo!
-  isLoading: Boolean!
 }
 
 type CommitEdge {
   cursor: String!
   node: Commit!
+}
+
+type System implements Node {
+  id: ID!
+  jobs(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    status: [JobStatus!]
+  ): JobConnection!
+  jobMetrics: JobMetrics!
 }
 
 type Job implements Node {
@@ -99,15 +104,16 @@ type JobMetrics implements Node {
 }
 
 type PageInfo {
-  hasNextPage: Boolean
-  hasPreviousPage: Boolean
-  endCursor: String
-  startCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  endCursor: String!
+  startCursor: String!
 }
 
 type Query {
   node(id: ID!): Node
   viewer: User!
+  system: System!
 }
 
 type Mutation {

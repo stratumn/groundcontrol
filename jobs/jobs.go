@@ -12,27 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build ignore
+package jobs
 
-package main
-
-import (
-	"log"
-	"net/http"
-
-	"github.com/shurcooL/vfsgen"
+// Job names.
+const (
+	LoadCommitsJob = "Load Commits"
+	CloneJob       = "Clone"
 )
-
-func main() {
-	var fs http.FileSystem = http.Dir("ui/build")
-
-	err := vfsgen.Generate(fs, vfsgen.Options{
-		PackageName:  "main",
-		BuildTags:    "release",
-		VariableName: "embeddedUI",
-		Filename:     "auto_ui",
-	})
-	if err != nil {
-		log.Fatalln(err)
-	}
-}

@@ -18,7 +18,7 @@ import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
 import { Container } from "semantic-ui-react";
 
-import { App_viewer } from "./__generated__/App_viewer.graphql";
+import { App_system } from "./__generated__/App_system.graphql";
 
 import Menu from "../components/Menu";
 import { subscribe } from "../subscriptions/jobMetricsUpdated";
@@ -27,7 +27,7 @@ import "./App.css";
 
 interface IProps {
   relay: RelayProp;
-  viewer: App_viewer;
+  system: App_system;
 }
 
 export class App extends Component<IProps> {
@@ -35,11 +35,11 @@ export class App extends Component<IProps> {
   private disposables: Disposable[] = [];
 
   public render() {
-    const viewer = this.props.viewer;
+    const system = this.props.system;
 
     return (
       <div className="App">
-        <Menu jobMetrics={viewer.jobMetrics} />
+        <Menu jobMetrics={system.jobMetrics} />
         <Container>
           {this.props.children}
         </Container>
@@ -61,7 +61,7 @@ export class App extends Component<IProps> {
 }
 
 export default createFragmentContainer(App, graphql`
-  fragment App_viewer on User {
+  fragment App_system on System {
     jobMetrics {
       ...Menu_jobMetrics
     }

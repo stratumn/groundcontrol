@@ -25,11 +25,14 @@ type queryResolver struct {
 }
 
 func (r *queryResolver) Node(ctx context.Context, id string) (models.Node, error) {
-	node, _ := r.NodeManager.Load(id)
-
+	node, _ := r.Nodes.Load(id)
 	return node, nil
 }
 
 func (r *queryResolver) Viewer(ctx context.Context) (models.User, error) {
-	return r.Resolver.Viewer, nil
+	return r.Nodes.MustLoadUser(r.ViewerID), nil
+}
+
+func (r *queryResolver) System(ctx context.Context) (models.System, error) {
+	return r.Nodes.MustLoadSystem(r.SystemID), nil
 }
