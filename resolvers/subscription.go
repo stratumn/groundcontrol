@@ -20,6 +20,10 @@ import (
 	"github.com/stratumn/groundcontrol/models"
 )
 
+// SubscriptionChannelSize is the size of a subscription channel.
+// If a channel is full new messages will be dropped and the client won't receive them.
+const SubscriptionChannelSize = 128
+
 type subscriptionResolver struct {
 	*Resolver
 }
@@ -28,7 +32,7 @@ func (r *subscriptionResolver) WorkspaceUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Workspace, error) {
-	ch := make(chan models.Workspace)
+	ch := make(chan models.Workspace, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.WorkspaceUpdated, func(msg interface{}) {
 		nodeID := msg.(string)
@@ -36,8 +40,8 @@ func (r *subscriptionResolver) WorkspaceUpdated(
 			return
 		}
 		select {
-		case <-ctx.Done():
 		case ch <- r.Nodes.MustLoadWorkspace(nodeID):
+		default:
 		}
 	})
 
@@ -48,7 +52,7 @@ func (r *subscriptionResolver) ProjectUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Project, error) {
-	ch := make(chan models.Project)
+	ch := make(chan models.Project, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.ProjectUpdated, func(msg interface{}) {
 		nodeID := msg.(string)
@@ -56,8 +60,8 @@ func (r *subscriptionResolver) ProjectUpdated(
 			return
 		}
 		select {
-		case <-ctx.Done():
 		case ch <- r.Nodes.MustLoadProject(nodeID):
+		default:
 		}
 	})
 
@@ -67,12 +71,12 @@ func (r *subscriptionResolver) ProjectUpdated(
 func (r *subscriptionResolver) JobUpserted(
 	ctx context.Context,
 ) (<-chan models.Job, error) {
-	ch := make(chan models.Job)
+	ch := make(chan models.Job, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.JobUpserted, func(msg interface{}) {
 		select {
-		case <-ctx.Done():
 		case ch <- r.Nodes.MustLoadJob(msg.(string)):
+		default:
 		}
 	})
 
@@ -82,12 +86,12 @@ func (r *subscriptionResolver) JobUpserted(
 func (r *subscriptionResolver) JobMetricsUpdated(
 	ctx context.Context,
 ) (<-chan models.JobMetrics, error) {
-	ch := make(chan models.JobMetrics)
+	ch := make(chan models.JobMetrics, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.JobMetricsUpdated, func(msg interface{}) {
 		select {
-		case <-ctx.Done():
 		case ch <- r.Nodes.MustLoadJobMetrics(msg.(string)):
+		default:
 		}
 	})
 

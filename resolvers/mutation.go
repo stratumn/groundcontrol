@@ -26,6 +26,39 @@ type mutationResolver struct {
 	*Resolver
 }
 
+func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (models.Job, error) {
+	jobID, err := jobs.LoadCommits(r.Nodes, r.Jobs, r.Subs, id)
+	if err != nil {
+		return models.Job{}, err
+	}
+
+	return r.Nodes.MustLoadJob(jobID), nil
+}
+
+func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) ([]models.Job, error) {
+	workspace, err := r.Nodes.LoadWorkspace(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var slice []models.Job
+
+	for _, project := range workspace.Projects(r.Nodes) {
+		if project.IsLoadingCommits || len(project.CommitIDs) > 0 {
+			continue
+		}
+
+		jobID, err := jobs.LoadCommits(r.Nodes, r.Jobs, r.Subs, project.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		slice = append(slice, r.Nodes.MustLoadJob(jobID))
+	}
+
+	return slice, nil
+}
+
 func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.Job, error) {
 	jobID, err := jobs.Clone(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, id)
 	if err != nil {

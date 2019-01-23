@@ -17,7 +17,6 @@ package resolvers
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/jobs"
 	"github.com/stratumn/groundcontrol/models"
 )
 
@@ -33,14 +32,7 @@ func (r *projectResolver) Commits(
 	first *int,
 	last *int,
 ) (models.CommitConnection, error) {
-	commits, err := obj.Commits(r.Nodes, r.Jobs, r.Subs, after, before, first, last)
-	if err != nil || len(commits.Edges) > 0 || obj.IsLoadingCommits {
-		return commits, err
-	}
-
-	_, err = jobs.LoadCommits(r.Nodes, r.Jobs, r.Subs, obj.ID)
-
-	return commits, err
+	return obj.Commits(r.Nodes, after, before, first, last)
 }
 
 func (r *projectResolver) Workspace(ctx context.Context, obj *models.Project) (models.Workspace, error) {

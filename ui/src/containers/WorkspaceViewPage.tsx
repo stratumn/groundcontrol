@@ -25,6 +25,7 @@ import ProjectCardGroup from "../components/ProjectCardGroup";
 import WorkspaceMenu from "../components/WorkspaceMenu";
 import { commit as cloneProject } from "../mutations/cloneProject";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
+import { commit as loadWorkspaceCommits } from "../mutations/loadWorkspaceCommits";
 import { subscribe } from "../subscriptions/workspaceUpdated";
 
 import "./WorkspaceViewPage.css";
@@ -68,6 +69,7 @@ export class WorkspaceViewPage extends Component<IProps> {
 
   public componentDidMount() {
     this.disposables.push(subscribe(this.props.relay.environment, this.props.viewer.workspace!.id));
+    loadWorkspaceCommits(this.props.relay.environment, this.props.viewer.workspace!.id);
   }
 
   public componentWillUnmount() {

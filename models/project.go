@@ -16,8 +16,6 @@ package models
 
 import (
 	"os"
-
-	"github.com/stratumn/groundcontrol/pubsub"
 )
 
 // ProjectPathGetter is a function that returns the path to a project.
@@ -61,8 +59,6 @@ func (p Project) isCloned(directory string) bool {
 // If there are no commits in memory, it may create a LoadCommitJob.
 func (p Project) Commits(
 	nodes *NodeManager,
-	jobManager *JobManager,
-	pubsub *pubsub.PubSub,
 	after *string,
 	before *string,
 	first *int,

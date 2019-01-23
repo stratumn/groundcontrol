@@ -72,10 +72,10 @@ export class ProjectCard extends Component<IProps> {
     return (
       <Card className="ProjectCard">
         <Dimmer
-          active={item.isLoadingCommits}
+          active={item.isLoadingCommits || item.commits.edges.length < 1}
           inverted={true}
         >
-          <Loader />
+          <Loader content="Loading project commits..." />
         </Dimmer>
         <Card.Content>
           <Card.Header>

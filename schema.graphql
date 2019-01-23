@@ -117,6 +117,8 @@ type Query {
 }
 
 type Mutation {
+  loadProjectCommits(id: String!): Job!
+  loadWorkspaceCommits(id: String!): [Job!]!
   cloneProject(id: String!): Job!
   cloneWorkspace(id: String!): [Job!]!
 }

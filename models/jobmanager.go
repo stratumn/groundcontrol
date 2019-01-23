@@ -87,16 +87,16 @@ func (j *JobManager) Add(
 		ProjectID: projectID,
 	}
 	j.nodes.MustStoreJob(job)
+	j.subs.Publish(JobUpserted, job.ID)
 
 	j.nodes.Lock(j.systemID)
 	system := j.nodes.MustLoadSystem(j.systemID)
-	system.JobIDs = append(system.JobIDs, job.ID)
+	system.JobIDs = append([]string{job.ID}, system.JobIDs...)
 	j.nodes.MustStoreSystem(system)
 	j.nodes.Unlock(j.systemID)
 
 	j.nextJobID++
 	j.list.PushFront(job.ID)
-	j.subs.Publish(JobUpserted, job.ID)
 	atomic.AddInt64(&j.queuedCounter, 1)
 	j.publishMetrics()
 
