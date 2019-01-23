@@ -136,10 +136,10 @@ func (j *JobManager) publishMetrics() {
 	defer j.nodes.Unlock(system.JobMetricsID)
 
 	jobMetrics := j.nodes.MustLoadJobMetrics(system.JobMetricsID)
-	jobMetrics.Queued = int(j.queuedCounter)
-	jobMetrics.Running = int(j.runningCounter)
-	jobMetrics.Done = int(j.doneCounter)
-	jobMetrics.Failed = int(j.failedCounter)
+	jobMetrics.Queued = int(atomic.LoadInt64(&j.queuedCounter))
+	jobMetrics.Running = int(atomic.LoadInt64(&j.runningCounter))
+	jobMetrics.Done = int(atomic.LoadInt64(&j.doneCounter))
+	jobMetrics.Failed = int(atomic.LoadInt64(&j.failedCounter))
 
 	j.nodes.MustStoreJobMetrics(jobMetrics)
 	j.subs.Publish(JobMetricsUpdated, system.JobMetricsID)
