@@ -69,7 +69,11 @@ export class WorkspaceViewPage extends Component<IProps> {
 
   public componentDidMount() {
     this.disposables.push(subscribe(this.props.relay.environment, this.props.viewer.workspace!.id));
-    loadWorkspaceCommits(this.props.relay.environment, this.props.viewer.workspace!.id);
+    // The timeout is to give subscriptions a chance to connect before something happens.
+    setTimeout(
+      () => loadWorkspaceCommits(this.props.relay.environment, this.props.viewer.workspace!.id),
+      1000,
+    );
   }
 
   public componentWillUnmount() {
