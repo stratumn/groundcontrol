@@ -30,7 +30,7 @@ func main() {
 		PackageName:  "main",
 		BuildTags:    "release",
 		VariableName: "embeddedUI",
-		Filename:     "auto_ui",
+		Filename:     "auto_ui.go",
 	})
 	if err != nil {
 		log.Fatalln(err)
