@@ -67,6 +67,14 @@ type System implements Node {
     status: [JobStatus!]
   ): JobConnection!
   jobMetrics: JobMetrics!
+  logEntries(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    level: [LogLevel!]
+  ): LogEntryConnection!
+  logMetrics: LogMetrics!
 }
 
 type Job implements Node {
@@ -103,6 +111,39 @@ type JobMetrics implements Node {
   failed: Int!
 }
 
+type LogEntry implements Node {
+  id: ID!
+  level: LogLevel!
+  createdAt: DateTime!
+  message: String!
+  metaJSON: String!
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARNING
+  ERROR
+}
+
+type LogEntryConnection {
+  edges: [LogEntryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type LogEntryEdge {
+  cursor: String!
+  node: LogEntry!
+}
+
+type LogMetrics implements Node {
+  id: ID!
+  debug: Int!
+  info: Int!
+  warning: Int!
+  error: Int!
+}
+
 type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
@@ -128,4 +169,6 @@ type Subscription {
   projectUpdated(id: ID): Project!
   jobUpserted: Job!
   jobMetricsUpdated: JobMetrics!
+  logEntryAdded: LogEntry!
+  logMetricsUpdated: LogMetrics!
 }

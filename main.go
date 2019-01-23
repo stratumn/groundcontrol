@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run scripts/nodesgen.go -t User,Workspace,Project,Commit,System,Job,JobMetrics -o models/auto_nodes.go
-//go:generate go run scripts/paginatorsgen.go -t Commit,Job -o models/auto_paginators.go
+//go:generate go run scripts/nodesgen.go -t User,Workspace,Project,Commit,System,Job,JobMetrics,LogEntry,LogMetrics -o models/auto_nodes.go
+//go:generate go run scripts/paginatorsgen.go -t Commit,Job,LogEntry -o models/auto_paginators.go
 //go:generate go run scripts/gqlgen.go
 
 package main
@@ -78,23 +78,31 @@ func main() {
 
 	systemID := relay.EncodeID(models.NodeTypeSystem, filename)
 	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, filename)
+	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, filename)
 
 	nodes.MustStoreJobMetrics(models.JobMetrics{
 		ID: jobMetricsID,
 	})
 
+	nodes.MustStoreLogMetrics(models.LogMetrics{
+		ID: logMetricsID,
+	})
+
 	nodes.MustStoreSystem(models.System{
 		ID:           systemID,
 		JobMetricsID: jobMetricsID,
+		LogMetricsID: logMetricsID,
 	})
 
 	subs := pubsub.New()
 	jobs := models.NewJobManager(nodes, subs, 2, systemID)
+	logger := models.NewLogger(nodes, subs, 100, models.LogLevelDebug, systemID)
 
 	resolver := resolvers.Resolver{
 		Nodes: nodes,
 		Jobs:  jobs,
 		Subs:  subs,
+		Log:   logger,
 		GetProjectPath: func(workspaceSlug, repo, branch string) string {
 			name := path.Base(repo)
 			ext := path.Ext(name)
@@ -140,9 +148,9 @@ func main() {
 	))
 
 	if ui != nil {
-		log.Printf("connect to http://localhost:%s/ for web interface", port)
+		logger.Info(fmt.Sprintf("connect to http://localhost:%s/ for web interface", port), nil)
 	} else {
-		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+		logger.Info(fmt.Sprintf("connect to http://localhost:%s/ for GraphQL playground", port), nil)
 	}
 
 	log.Fatal(http.ListenAndServe(":"+port, router))

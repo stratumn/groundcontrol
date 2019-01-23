@@ -29,6 +29,7 @@ import App from "./containers/App";
 import ErrorPage from "./containers/ErrorPage";
 import HttpErrorPage from "./containers/HttpErrorPage";
 import JobListPage from "./containers/JobListPage";
+import LogEntryListPage from "./containers/LogEntryListPage";
 import WorkspaceListPage from "./containers/WorkspaceListPage";
 import WorkspaceViewPage from "./containers/WorkspaceViewPage";
 
@@ -41,7 +42,7 @@ const appQuery = graphql`
 `;
 
 const workspaceListQuery = graphql`
-  query RouterWorkspacesQuery {
+  query RouterWorkspaceListQuery {
     viewer {
       ...WorkspaceListPage_viewer
     }
@@ -49,7 +50,7 @@ const workspaceListQuery = graphql`
 `;
 
 const workspaceViewQuery = graphql`
-  query RouterWorkspaceQuery($slug: String!) {
+  query RouterWorkspaceViewQuery($slug: String!) {
     viewer {
       ...WorkspaceViewPage_viewer @arguments(slug: $slug)
     }
@@ -57,15 +58,27 @@ const workspaceViewQuery = graphql`
 `;
 
 const jobListQuery = graphql`
-  query RouterJobsQuery($status: [JobStatus!]) {
+  query RouterJobListQuery($status: [JobStatus!]) {
     system {
       ...JobListPage_system @arguments(status: $status)
     }
   }
 `;
 
+const logEntryListQuery = graphql`
+  query RouterLogEntryListQuery($level: [LogLevel!]) {
+    system {
+      ...LogEntryListPage_system @arguments(level: $level)
+    }
+  }
+`;
+
 function prepareJobListVariables({ filters }: { filters: string }) {
   return { status: filters ? filters.split(",") : null };
+}
+
+function prepareLogEntryListVariables({ filters }: { filters: string }) {
+  return { level: filters ? filters.split(",") : null };
 }
 
 function render(args: RouteRenderArgs) {
@@ -116,6 +129,20 @@ export default createFarceRouter({
           Component={JobListPage}
           query={jobListQuery}
           prepareVariables={prepareJobListVariables}
+          render={render}
+        />
+      </Route>
+      <Route path="logs">
+        <Route
+          Component={LogEntryListPage}
+          query={logEntryListQuery}
+          render={render}
+        />
+        <Route
+          path=":filters"
+          Component={LogEntryListPage}
+          query={logEntryListQuery}
+          prepareVariables={prepareLogEntryListVariables}
           render={render}
         />
       </Route>

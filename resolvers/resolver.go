@@ -25,6 +25,7 @@ type Resolver struct {
 	Nodes          *models.NodeManager
 	Jobs           *models.JobManager
 	Subs           *pubsub.PubSub
+	Log            *models.Logger
 	GetProjectPath models.ProjectPathGetter
 	ViewerID       string
 	SystemID       string

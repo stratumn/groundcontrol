@@ -12,14 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
+import graphql from "babel-plugin-relay/macro";
+import { requestSubscription } from "react-relay";
+import { Environment } from "relay-runtime";
 
-// Message types.
-const (
-	WorkspaceUpdated  = "WORKSPACE_UPDATED"
-	ProjectUpdated    = "PROJECT_UPDATED"
-	JobUpserted       = "JOB_UPSERTED"
-	JobMetricsUpdated = "JOB_METRICS_UPDATED"
-	LogEntryAdded     = "LOG_ENTRY_ADDED"
-	LogMetricsUpdated = "LOG_METRICS_UPDATED"
-)
+const subscription = graphql`
+  subscription logMetricsUpdatedSubscription {
+    logMetricsUpdated {
+      ...Menu_logMetrics
+    }
+  }
+`;
+
+export function subscribe(environment: Environment) {
+  return requestSubscription(
+    environment,
+    {
+      onError: (error) => console.error(error),
+      subscription,
+      variables: {},
+    },
+  );
+}

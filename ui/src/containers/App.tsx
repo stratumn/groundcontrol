@@ -21,7 +21,8 @@ import { Container } from "semantic-ui-react";
 import { App_system } from "./__generated__/App_system.graphql";
 
 import Menu from "../components/Menu";
-import { subscribe } from "../subscriptions/jobMetricsUpdated";
+import { subscribe as subscribeJobMetrics } from "../subscriptions/jobMetricsUpdated";
+import { subscribe as subscribeLogMetrics } from "../subscriptions/logMetricsUpdated";
 
 import "./App.css";
 
@@ -39,7 +40,7 @@ export class App extends Component<IProps> {
 
     return (
       <div className="App">
-        <Menu jobMetrics={system.jobMetrics} />
+        <Menu system={system} />
         <Container>
           {this.props.children}
         </Container>
@@ -48,7 +49,9 @@ export class App extends Component<IProps> {
   }
 
   public componentDidMount() {
-    this.disposables.push(subscribe(this.props.relay.environment));
+    const environment = this.props.relay.environment;
+    this.disposables.push(subscribeJobMetrics(environment));
+    this.disposables.push(subscribeLogMetrics(environment));
   }
 
   public componentWillUnmount() {
@@ -62,8 +65,6 @@ export class App extends Component<IProps> {
 
 export default createFragmentContainer(App, graphql`
   fragment App_system on System {
-    jobMetrics {
-      ...Menu_jobMetrics
-    }
+    ...Menu_system
   }`,
 );

@@ -32,6 +32,14 @@ func (r *subscriptionResolver) WorkspaceUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Workspace, error) {
+	r.Log.Debug("subscribe", struct {
+		MessageType string
+		WorkspaceID *string
+	}{
+		models.WorkspaceUpdated,
+		id,
+	})
+
 	ch := make(chan models.Workspace, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.WorkspaceUpdated, func(msg interface{}) {
@@ -91,6 +99,36 @@ func (r *subscriptionResolver) JobMetricsUpdated(
 	r.Subs.Subscribe(ctx, models.JobMetricsUpdated, func(msg interface{}) {
 		select {
 		case ch <- r.Nodes.MustLoadJobMetrics(msg.(string)):
+		default:
+		}
+	})
+
+	return ch, nil
+}
+
+func (r *subscriptionResolver) LogEntryAdded(
+	ctx context.Context,
+) (<-chan models.LogEntry, error) {
+	ch := make(chan models.LogEntry, SubscriptionChannelSize)
+
+	r.Subs.Subscribe(ctx, models.LogEntryAdded, func(msg interface{}) {
+		select {
+		case ch <- r.Nodes.MustLoadLogEntry(msg.(string)):
+		default:
+		}
+	})
+
+	return ch, nil
+}
+
+func (r *subscriptionResolver) LogMetricsUpdated(
+	ctx context.Context,
+) (<-chan models.LogMetrics, error) {
+	ch := make(chan models.LogMetrics, SubscriptionChannelSize)
+
+	r.Subs.Subscribe(ctx, models.LogMetricsUpdated, func(msg interface{}) {
+		select {
+		case ch <- r.Nodes.MustLoadLogMetrics(msg.(string)):
 		default:
 		}
 	})

@@ -19,43 +19,43 @@ import { createPaginationContainer, RelayPaginationProp } from "react-relay";
 import { Disposable } from "relay-runtime";
 import { Button } from "semantic-ui-react";
 
-import { JobListPage_system } from "./__generated__/JobListPage_system.graphql";
+import { LogEntryListPage_system } from "./__generated__/LogEntryListPage_system.graphql";
 
-import JobFilter from "../components/JobFilter";
-import JobTable from "../components/JobTable";
+import LogEntryFilter from "../components/LogEntryFilter";
+import LogEntryTable from "../components/LogEntryTable";
 import Page from "../components/Page";
 
-import { subscribe } from "../subscriptions/jobUpserted";
+import { subscribe } from "../subscriptions/logEntryAdded";
 
 interface IProps {
   relay: RelayPaginationProp;
   router: Router;
-  system: JobListPage_system;
+  system: LogEntryListPage_system;
   params: {
     filters: string | undefined;
   };
 }
 
-export class JobListPage extends Component<IProps> {
+export class LogEntryListPage extends Component<IProps> {
 
   private disposables: Disposable[] = [];
 
   public render() {
-    const items = this.props.system.jobs.edges.map(({ node }) => node);
+    const items = this.props.system.logEntries.edges.map(({ node }) => node);
     const filters = this.props.params.filters === undefined ? undefined :
       this.props.params.filters.split(",");
 
     return (
       <Page
-        header="Jobs"
-        subheader="Jobs are short lived tasks such as cloning a repository."
-        icon="tasks"
+        header="Logs"
+        subheader="Logs are short messages emitted after events of various level."
+        icon="book"
       >
-        <JobFilter
+        <LogEntryFilter
           filters={filters}
           onChange={this.handleFiltersChange}
         />
-        <JobTable items={items} />
+        <LogEntryTable items={items} />
         <Button
           disabled={!this.props.relay.hasMore() || this.props.relay.isLoading()}
           loading={this.props.relay.isLoading()}
@@ -82,10 +82,10 @@ export class JobListPage extends Component<IProps> {
 
   private handleFiltersChange = (filters: string[]) => {
     if (filters.length < 1 || filters.length > 3) {
-      return this.props.router.replace("/jobs");
+      return this.props.router.replace("/logs");
     }
 
-    this.props.router.replace(`/jobs/${filters.join(",")}`);
+    this.props.router.replace(`/logs/${filters.join(",")}`);
   }
 
   private handleLoadMore = () => {
@@ -105,26 +105,26 @@ export class JobListPage extends Component<IProps> {
 }
 
 export default createPaginationContainer(
-  JobListPage,
+  LogEntryListPage,
   graphql`
-    fragment JobListPage_system on System
+    fragment LogEntryListPage_system on System
       @argumentDefinitions(
         count: {type: "Int", defaultValue: 10},
         cursor: {type: "String"},
-        status: { type: "[JobStatus!]", defaultValue: null },
+        level: { type: "[LogLevel!]", defaultValue: null },
       ) {
-      jobs(
+      logEntries(
        first: $count,
        after: $cursor,
-       status: $status,
+       level: $level,
       )
         @connection(
-          key: "JobListPage_jobs",
-          filters: ["status"],
+          key: "LogEntryListPage_logEntries",
+          filters: ["level"],
         ) {
         edges {
           node {
-            ...JobTable_items
+            ...LogEntryTable_items
             id
           }
         }
@@ -132,23 +132,23 @@ export default createPaginationContainer(
     }`,
   {
     direction: "forward",
-    getConnectionFromProps: (props) => props.system && props.system.jobs,
+    getConnectionFromProps: (props) => props.system && props.system.logEntries,
     getVariables: (_, {count, cursor}, fragmentVariables) => ({
       count,
       cursor,
-      status: fragmentVariables.status,
+      level: fragmentVariables.level,
     }),
     query: graphql`
-      query JobListPagePaginationQuery(
+      query LogEntryListPagePaginationQuery(
         $count: Int!,
         $cursor: String,
-        $status: [JobStatus!],
+        $level: [LogLevel!],
       ) {
         system {
-          ...JobListPage_system @arguments(
+          ...LogEntryListPage_system @arguments(
             count: $count,
             cursor: $cursor,
-            status: $status,
+            level: $level,
           )
         }
       }

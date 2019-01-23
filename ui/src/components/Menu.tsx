@@ -18,15 +18,16 @@ import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
 import { Container, Label, Menu as SemanticMenu } from "semantic-ui-react";
 
-import { Menu_jobMetrics } from "./__generated__/Menu_jobMetrics.graphql";
+import { Menu_system } from "./__generated__/Menu_system.graphql";
 
 interface IProps {
-  jobMetrics: Menu_jobMetrics;
+  system: Menu_system;
 }
 
 export class Menu extends Component<IProps> {
   public render() {
-    const { queued, running } = this.props.jobMetrics;
+    const { queued, running } = this.props.system.jobMetrics;
+    const { error } = this.props.system.logMetrics;
     const active = queued + running;
 
     return (
@@ -57,11 +58,14 @@ export class Menu extends Component<IProps> {
             Processes
           </Link>
           <Link
-            to="/errors"
+            to="/logs"
             Component={SemanticMenu.Item}
             activePropName="active"
           >
             Logs
+            <Label color="pink">
+              {error}
+            </Label>
           </Link>
         </Container>
       </SemanticMenu>
@@ -69,9 +73,26 @@ export class Menu extends Component<IProps> {
   }
 }
 
-export default createFragmentContainer(Menu, graphql`
+export const jobMetrics = graphql`
   fragment Menu_jobMetrics on JobMetrics {
     queued
     running
+  }
+`;
+
+export const logMetrics = graphql`
+  fragment Menu_logMetrics on LogMetrics {
+    error
+  }
+`;
+
+export default createFragmentContainer(Menu, graphql`
+  fragment Menu_system on System {
+    jobMetrics {
+      ...Menu_jobMetrics @relay(mask: false)
+    }
+    logMetrics {
+      ...Menu_logMetrics @relay(mask: false)
+    }
   }`,
 );

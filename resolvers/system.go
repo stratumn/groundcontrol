@@ -42,3 +42,22 @@ func (r *systemResolver) JobMetrics(
 ) (models.JobMetrics, error) {
 	return obj.JobMetrics(r.Nodes), nil
 }
+
+func (r *systemResolver) LogEntries(
+	ctx context.Context,
+	obj *models.System,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+	level []models.LogLevel,
+) (models.LogEntryConnection, error) {
+	return obj.LogEntries(r.Nodes, r.Log.Cap(), after, before, first, last, level)
+}
+
+func (r *systemResolver) LogMetrics(
+	ctx context.Context,
+	obj *models.System,
+) (models.LogMetrics, error) {
+	return obj.LogMetrics(r.Nodes), nil
+}

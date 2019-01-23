@@ -15,7 +15,6 @@
 package models
 
 import (
-	"container/list"
 	"context"
 	"fmt"
 	"log"
@@ -36,9 +35,8 @@ type JobManager struct {
 
 	systemID string
 
-	mu        sync.Mutex
-	list      *list.List
-	nextJobID uint64
+	mu     sync.Mutex
+	nextID uint64
 
 	queuedCounter  int64
 	runningCounter int64
@@ -58,7 +56,6 @@ func NewJobManager(
 		subs:     subs,
 		queue:    queue.New(concurrency),
 		systemID: systemID,
-		list:     list.New(),
 	}
 }
 
@@ -76,7 +73,7 @@ func (j *JobManager) Add(
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
-	id := j.nextJobID
+	id := j.nextID
 	now := date.NowFormatted()
 	job := Job{
 		ID:        relay.EncodeID(NodeTypeJob, fmt.Sprint(id)),
@@ -95,8 +92,7 @@ func (j *JobManager) Add(
 	j.nodes.MustStoreSystem(system)
 	j.nodes.Unlock(j.systemID)
 
-	j.nextJobID++
-	j.list.PushFront(job.ID)
+	j.nextID++
 	atomic.AddInt64(&j.queuedCounter, 1)
 	j.publishMetrics()
 
