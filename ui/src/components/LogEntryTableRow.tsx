@@ -37,7 +37,7 @@ export class LogEntryTableRow extends Component<IProps> {
     const item = this.props.item;
 
     return (
-      <Table.Row className="LogEntryTableWor">
+      <Table.Row className="LogEntryTableRow">
         <Table.Cell>
           <Moment format={dateFormat}>{item.createdAt}</Moment>
         </Table.Cell>

@@ -15,9 +15,13 @@
 package resolvers
 
 import (
+	"path"
+	"path/filepath"
+
 	"github.com/stratumn/groundcontrol/gql"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
+	"github.com/stratumn/groundcontrol/relay"
 )
 
 // Resolver is the root GraphQL resolver.
@@ -69,4 +73,55 @@ func (r *Resolver) Job() gql.JobResolver {
 // System returns the resolver for system data.
 func (r *Resolver) System() gql.SystemResolver {
 	return &systemResolver{r}
+}
+
+// CreateResolver creates a resolver from a config file.
+func CreateResolver(filename string) (*Resolver, error) {
+	config, err := models.LoadConfigYAML(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes := &models.NodeManager{}
+	viewer, err := config.CreateNodes(nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, filename)
+	systemID := relay.EncodeID(models.NodeTypeSystem, filename)
+	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, filename)
+
+	nodes.MustStoreLogMetrics(models.LogMetrics{
+		ID: logMetricsID,
+	})
+
+	nodes.MustStoreJobMetrics(models.JobMetrics{
+		ID: jobMetricsID,
+	})
+
+	nodes.MustStoreSystem(models.System{
+		ID:           systemID,
+		JobMetricsID: jobMetricsID,
+		LogMetricsID: logMetricsID,
+	})
+
+	subs := pubsub.New()
+	log := models.NewLogger(nodes, subs, 100, models.LogLevelDebug, systemID)
+	jobs := models.NewJobManager(nodes, log, subs, 2, systemID)
+
+	return &Resolver{
+		Nodes: nodes,
+		Log:   log,
+		Jobs:  jobs,
+		Subs:  subs,
+		GetProjectPath: func(workspaceSlug, repo, branch string) string {
+			name := path.Base(repo)
+			ext := path.Ext(name)
+			name = name[:len(name)-len(ext)]
+			return filepath.Join("workspaces", workspaceSlug, name)
+		},
+		ViewerID: viewer.ID,
+		SystemID: systemID,
+	}, nil
 }

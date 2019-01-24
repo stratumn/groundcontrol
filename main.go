@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/99designs/gqlgen/handler"
@@ -32,8 +31,6 @@ import (
 	"github.com/rs/cors"
 	"github.com/stratumn/groundcontrol/gql"
 	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
 	"github.com/stratumn/groundcontrol/resolvers"
 )
 
@@ -45,6 +42,23 @@ func checkError(err error) {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+}
+func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Debug("Request", struct {
+				Method     string
+				URL        string
+				RemoteAddr string
+			}{
+				r.Method,
+				r.URL.String(),
+				r.RemoteAddr,
+			})
+
+			h.ServeHTTP(w, r)
+		})
 	}
 }
 
@@ -68,54 +82,13 @@ func main() {
 		checkError(err)
 	}
 
-	config, err := models.LoadConfigYAML(filename)
+	resolver, err := resolvers.CreateResolver(filename)
 	checkError(err)
 
-	nodes := &models.NodeManager{}
-	viewer, err := config.CreateNodes(nodes)
-	checkError(err)
-
-	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, filename)
-	systemID := relay.EncodeID(models.NodeTypeSystem, filename)
-	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, filename)
-
-	nodes.MustStoreLogMetrics(models.LogMetrics{
-		ID: logMetricsID,
-	})
-
-	nodes.MustStoreJobMetrics(models.JobMetrics{
-		ID: jobMetricsID,
-	})
-
-	nodes.MustStoreSystem(models.System{
-		ID:           systemID,
-		JobMetricsID: jobMetricsID,
-		LogMetricsID: logMetricsID,
-	})
-
-	subs := pubsub.New()
-	log := models.NewLogger(nodes, subs, 100, models.LogLevelDebug, systemID)
-	jobs := models.NewJobManager(nodes, log, subs, 2, systemID)
-
-	resolver := resolvers.Resolver{
-		Nodes: nodes,
-		Log:   log,
-		Jobs:  jobs,
-		Subs:  subs,
-		GetProjectPath: func(workspaceSlug, repo, branch string) string {
-			name := path.Base(repo)
-			ext := path.Ext(name)
-			name = name[:len(name)-len(ext)]
-			return filepath.Join("workspaces", workspaceSlug, name)
-		},
-		ViewerID: viewer.ID,
-		SystemID: systemID,
-	}
-
-	go jobs.Work(context.Background())
+	go resolver.Jobs.Work(context.Background())
 
 	gqlConfig := gql.Config{
-		Resolvers: &resolver,
+		Resolvers: resolver,
 	}
 
 	c := cors.New(cors.Options{
@@ -124,7 +97,7 @@ func main() {
 	})
 
 	router := chi.NewRouter()
-	router.Use(c.Handler)
+	router.Use(logMiddleware(resolver.Log), c.Handler)
 
 	if ui != nil {
 		fileServer := http.FileServer(ui)
@@ -147,13 +120,13 @@ func main() {
 	))
 
 	if ui != nil {
-		log.Info("App Ready", struct {
+		resolver.Log.Info("App Ready", struct {
 			UserInterfaceURL string
 		}{
 			fmt.Sprintf("http://localhost:%s", port),
 		})
 	} else {
-		log.Info("App Ready", struct {
+		resolver.Log.Info("App Ready", struct {
 			GraphQLPlaygroundURL string
 		}{
 			fmt.Sprintf("http://localhost:%s", port),
@@ -161,7 +134,7 @@ func main() {
 	}
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
-		log.Error("App Crashed", struct {
+		resolver.Log.Error("App Crashed", struct {
 			Error error
 		}{
 			err,
