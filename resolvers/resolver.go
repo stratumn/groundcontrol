@@ -65,6 +65,16 @@ func (r *Resolver) Project() gql.ProjectResolver {
 	return &projectResolver{r}
 }
 
+// Task returns the resolver for a task.
+func (r *Resolver) Task() gql.TaskResolver {
+	return &taskResolver{r}
+}
+
+// Step returns the resolver for a step.
+func (r *Resolver) Step() gql.StepResolver {
+	return &stepResolver{r}
+}
+
 // Job returns the resolver for a job.
 func (r *Resolver) Job() gql.JobResolver {
 	return &jobResolver{r}

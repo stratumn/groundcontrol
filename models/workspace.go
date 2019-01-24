@@ -20,6 +20,7 @@ type Workspace struct {
 	Name        string   `json:"name"`
 	Slug        string   `json:"slug"`
 	ProjectIDs  []string `json:"projectIDs"`
+	TaskIDs     []string `json:"taskIDs"`
 	Description string   `json:"description"`
 	Notes       *string  `json:"notes"`
 }
@@ -33,6 +34,17 @@ func (w Workspace) Projects(nodes *NodeManager) []Project {
 
 	for _, nodeID := range w.ProjectIDs {
 		slice = append(slice, nodes.MustLoadProject(nodeID))
+	}
+
+	return slice
+}
+
+// Tasks returns the workspace's tasks.
+func (w Workspace) Tasks(nodes *NodeManager) []Task {
+	var slice []Task
+
+	for _, nodeID := range w.TaskIDs {
+		slice = append(slice, nodes.MustLoadTask(nodeID))
 	}
 
 	return slice

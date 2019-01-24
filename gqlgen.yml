@@ -21,5 +21,9 @@ models:
     model: github.com/stratumn/groundcontrol/models.Job
   System:
     model: github.com/stratumn/groundcontrol/models.System
+  Task:
+    model: github.com/stratumn/groundcontrol/models.Task
+  Step:
+    model: github.com/stratumn/groundcontrol/models.Step
   PageInfo:
     model: github.com/stratumn/groundcontrol/relay.PageInfo

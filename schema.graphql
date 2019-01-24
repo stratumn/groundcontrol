@@ -15,6 +15,7 @@ type Workspace implements Node {
   name: String!
   slug: String!
   projects: [Project!]!
+  tasks: [Task!]!
   description: String
   notes: String
   isCloning: Boolean!
@@ -33,7 +34,6 @@ type Project implements Node {
     first: Int
     last: Int
   ): CommitConnection!
-  tasks: [Task!]!
   workspace: Workspace!
   isLoadingCommits: Boolean!
   isCloning: Boolean!
@@ -49,6 +49,7 @@ type Task implements Node {
 }
 
 type Step implements Node {
+  id: ID!
   projects: [Project!]!
   commands: [String!]!
   background: Boolean!

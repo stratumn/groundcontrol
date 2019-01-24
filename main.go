@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run scripts/nodesgen.go -t User,Workspace,Project,Commit,System,Job,JobMetrics,LogEntry,LogMetrics -o models/auto_nodes.go
+//go:generate go run scripts/nodesgen.go -t User,Workspace,Project,Commit,System,Job,JobMetrics,LogEntry,LogMetrics,Task,Step -o models/auto_nodes.go
 //go:generate go run scripts/paginatorsgen.go -t Commit,Job,LogEntry -o models/auto_paginators.go
 //go:generate go run scripts/gqlgen.go
 

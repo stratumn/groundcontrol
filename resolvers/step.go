@@ -20,26 +20,14 @@ import (
 	"github.com/stratumn/groundcontrol/models"
 )
 
-type workspaceResolver struct {
+type stepResolver struct {
 	*Resolver
 }
 
-func (r *workspaceResolver) Projects(ctx context.Context, obj *models.Workspace) ([]models.Project, error) {
+func (r *stepResolver) Projects(ctx context.Context, obj *models.Step) ([]models.Project, error) {
 	return obj.Projects(r.Nodes), nil
 }
 
-func (r *workspaceResolver) Tasks(ctx context.Context, obj *models.Workspace) ([]models.Task, error) {
-	return obj.Tasks(r.Nodes), nil
-}
-
-func (r *workspaceResolver) IsCloning(ctx context.Context, obj *models.Workspace) (bool, error) {
-	return obj.IsCloning(r.Nodes), nil
-}
-
-func (r *workspaceResolver) IsCloned(ctx context.Context, obj *models.Workspace) (bool, error) {
-	return obj.IsCloned(r.Nodes, r.GetProjectPath), nil
-}
-
-func (r *workspaceResolver) IsPulling(ctx context.Context, obj *models.Workspace) (bool, error) {
-	return obj.IsPulling(r.Nodes), nil
+func (r *stepResolver) Task(ctx context.Context, obj *models.Step) (models.Task, error) {
+	return obj.Task(r.Nodes), nil
 }
