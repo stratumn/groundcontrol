@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"sync"
 	"sync/atomic"
 
 	"github.com/stratumn/groundcontrol/date"
@@ -42,7 +41,6 @@ type Logger struct {
 	level    LogLevel
 	systemID string
 
-	mu     sync.Mutex
 	nextID uint64
 
 	debugCounter   int64
@@ -83,7 +81,6 @@ func (l *Logger) Add(
 	}
 
 	metaJSON := ""
-
 	if meta != nil {
 		b, err := json.Marshal(meta)
 		if err != nil {
@@ -91,13 +88,9 @@ func (l *Logger) Add(
 		}
 		metaJSON = string(b)
 	}
-
 	log.Printf("%s\t%s %s", level, message, string(metaJSON))
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	id := l.nextID
+	id := atomic.AddUint64(&l.nextID, 1)
 	now := date.NowFormatted()
 	logEntry := LogEntry{
 		ID:        relay.EncodeID(NodeTypeLogEntry, fmt.Sprint(id)),
@@ -109,20 +102,17 @@ func (l *Logger) Add(
 	l.nodes.MustStoreLogEntry(logEntry)
 	l.subs.Publish(LogEntryAdded, logEntry.ID)
 
-	l.nodes.Lock(l.systemID)
-	system := l.nodes.MustLoadSystem(l.systemID)
+	l.nodes.MustLockSystem(l.systemID, func(system System) {
+		if len(system.LogEntryIDs) >= l.cap*2 {
+			// TODO: remove previous log entries
+			logEntryIDs := make([]string, l.cap, l.cap*2)
+			copy(logEntryIDs, system.LogEntryIDs[:l.cap])
+			system.LogEntryIDs = logEntryIDs
+		}
 
-	if len(system.LogEntryIDs) >= l.cap*2 {
-		logEntryIDs := make([]string, l.cap, l.cap*2)
-		copy(logEntryIDs, system.LogEntryIDs[:l.cap])
-		system.LogEntryIDs = logEntryIDs
-	}
-
-	system.LogEntryIDs = append([]string{logEntry.ID}, system.LogEntryIDs...)
-	l.nodes.MustStoreSystem(system)
-	l.nodes.Unlock(l.systemID)
-
-	l.nextID++
+		system.LogEntryIDs = append([]string{logEntry.ID}, system.LogEntryIDs...)
+		l.nodes.MustStoreSystem(system)
+	})
 
 	switch level {
 	case LogLevelDebug:
@@ -134,6 +124,7 @@ func (l *Logger) Add(
 	case LogLevelError:
 		atomic.AddInt64(&l.errorCounter, 1)
 	}
+
 	l.publishMetrics()
 
 	return logEntry.ID, nil
@@ -178,15 +169,13 @@ func (l *Logger) Error(message string, meta interface{}) string {
 func (l *Logger) publishMetrics() {
 	system := l.nodes.MustLoadSystem(l.systemID)
 
-	l.nodes.Lock(system.LogMetricsID)
-	defer l.nodes.Unlock(system.LogMetricsID)
+	l.nodes.MustLockLogMetrics(system.LogMetricsID, func(metrics LogMetrics) {
+		metrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
+		metrics.Info = int(atomic.LoadInt64(&l.infoCounter))
+		metrics.Warning = int(atomic.LoadInt64(&l.warningCounter))
+		metrics.Error = int(atomic.LoadInt64(&l.errorCounter))
+		l.nodes.MustStoreLogMetrics(metrics)
+	})
 
-	logMetrics := l.nodes.MustLoadLogMetrics(system.LogMetricsID)
-	logMetrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
-	logMetrics.Info = int(atomic.LoadInt64(&l.infoCounter))
-	logMetrics.Warning = int(atomic.LoadInt64(&l.warningCounter))
-	logMetrics.Error = int(atomic.LoadInt64(&l.errorCounter))
-
-	l.nodes.MustStoreLogMetrics(logMetrics)
 	l.subs.Publish(LogMetricsUpdated, system.LogMetricsID)
 }

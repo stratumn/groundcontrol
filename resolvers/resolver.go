@@ -23,9 +23,9 @@ import (
 // Resolver is the root GraphQL resolver.
 type Resolver struct {
 	Nodes          *models.NodeManager
+	Log            *models.Logger
 	Jobs           *models.JobManager
 	Subs           *pubsub.PubSub
-	Log            *models.Logger
 	GetProjectPath models.ProjectPathGetter
 	ViewerID       string
 	SystemID       string

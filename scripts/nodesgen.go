@@ -117,5 +117,66 @@ func (n *NodeManager) MustLoad{{$type}}(id string) {{$type}} {
 
 	return node
 }
+
+// Lock{{$type}} loads a {{$type}} and locks it until the callback returns.
+func (n *NodeManager) Lock{{$type}}(id string, fn func({{$type}})) error {
+	n.Lock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err != nil {
+		return err
+	}
+
+	fn(node)
+	n.Unlock(id)
+
+	return nil
+}
+
+
+// MustLock{{$type}} loads a {{$type}} or panics on error and locks it until the callback returns.
+func (n *NodeManager) MustLock{{$type}}(id string, fn func({{$type}})) {
+	n.Lock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err != nil {
+		panic(err)
+	}
+
+	fn(node)
+
+	n.Unlock(id)
+}
+
+
+// Lock{{$type}} loads a {{$type}} and read-locks it until the callback returns.
+func (n *NodeManager) RLock{{$type}}(id string, fn func({{$type}})) error {
+	n.RLock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err != nil {
+		return err
+	}
+
+	fn(node)
+	n.RUnlock(id)
+
+	return nil
+}
+
+
+// MustLock{{$type}} loads a {{$type}} or panics on error and read-locks it until the callback returns.
+func (n *NodeManager) RMustLock{{$type}}(id string, fn func({{$type}})) {
+	n.RLock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err != nil {
+		panic(err)
+	}
+
+	fn(node)
+
+	n.RUnlock(id)
+}
 {{end -}}
 `

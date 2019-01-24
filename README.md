@@ -76,13 +76,11 @@ UI runs on `http://localhost:3000` during development.
 - All models must be *pure*. Mutations must create a new copy of the model. Avoid pointer accessors for models.
 - Reference models by ID. Do not keep pointers.
 - Models must not store a mutex. Use NodeManager.Lock().
-- Queries must have no side effects. This may require more mutations triggered by the client.
+- Queries must have no side effects (except appending the log). This may require more mutations triggered by the client.
 
 ## TODO
 
-- [ ] menu notification labels
 - [ ] git pull mutations
 - [ ] periodically check remotes
-- [ ] logs
 - [ ] tasks and processes
 - [ ] tests

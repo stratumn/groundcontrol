@@ -48,7 +48,7 @@ export class LogEntryListPage extends Component<IProps> {
     return (
       <Page
         header="Logs"
-        subheader="Logs are short messages emitted after events of various level."
+        subheader="Logs are short messages emitted after events of various levels."
         icon="book"
       >
         <LogEntryFilter

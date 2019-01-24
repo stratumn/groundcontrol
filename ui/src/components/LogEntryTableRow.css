@@ -1,0 +1,4 @@
+.LogEntryTableRow pre {
+  word-wrap: break-all;
+  white-space: pre-wrap;
+}

@@ -34,26 +34,35 @@ func LoadCommits(
 	subs *pubsub.PubSub,
 	projectID string,
 ) (string, error) {
-	nodes.Lock(projectID)
-	defer nodes.Unlock(projectID)
+	var (
+		err         error
+		workspaceID string
+	)
 
-	project, err := nodes.LoadProject(projectID)
+	err = nodes.LockProject(projectID, func(project models.Project) {
+		if project.IsLoadingCommits {
+			err = ErrDuplicate
+			return
+		}
+
+		workspaceID = project.WorkspaceID
+		project.IsLoadingCommits = true
+		nodes.MustStoreProject(project)
+	})
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
-	if project.IsLoadingCommits {
-		return "", ErrDuplicate
-	}
-
-	project.IsLoadingCommits = true
-
-	nodes.MustStoreProject(project)
 	subs.Publish(models.ProjectUpdated, projectID)
-	subs.Publish(models.WorkspaceUpdated, project.WorkspaceID)
+	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(LoadCommitsJob, project.ID, func() error {
-		return doLoadCommits(nodes, subs, projectID)
+	jobID := jobs.Add(LoadCommitsJob, projectID, func() error {
+		return doLoadCommits(
+			nodes,
+			subs,
+			projectID,
+			workspaceID,
+		)
 	})
 
 	return jobID, nil
@@ -63,20 +72,19 @@ func doLoadCommits(
 	nodes *models.NodeManager,
 	subs *pubsub.PubSub,
 	projectID string,
+	workspaceID string,
 ) error {
 	var commitIDs []string
 
 	defer func() {
-		nodes.Lock(projectID)
-		defer nodes.Unlock(projectID)
+		nodes.MustLockProject(projectID, func(project models.Project) {
+			project.CommitIDs = commitIDs
+			project.IsLoadingCommits = false
+			nodes.MustStoreProject(project)
+		})
 
-		project := nodes.MustLoadProject(projectID)
-		project.CommitIDs = commitIDs
-		project.IsLoadingCommits = false
-
-		nodes.MustStoreProject(project)
 		subs.Publish(models.ProjectUpdated, projectID)
-		subs.Publish(models.WorkspaceUpdated, project.WorkspaceID)
+		subs.Publish(models.WorkspaceUpdated, workspaceID)
 	}()
 
 	project := nodes.MustLoadProject(projectID)

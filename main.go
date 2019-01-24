@@ -21,7 +21,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -76,16 +75,16 @@ func main() {
 	viewer, err := config.CreateNodes(nodes)
 	checkError(err)
 
+	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, filename)
 	systemID := relay.EncodeID(models.NodeTypeSystem, filename)
 	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, filename)
-	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, filename)
-
-	nodes.MustStoreJobMetrics(models.JobMetrics{
-		ID: jobMetricsID,
-	})
 
 	nodes.MustStoreLogMetrics(models.LogMetrics{
 		ID: logMetricsID,
+	})
+
+	nodes.MustStoreJobMetrics(models.JobMetrics{
+		ID: jobMetricsID,
 	})
 
 	nodes.MustStoreSystem(models.System{
@@ -95,14 +94,14 @@ func main() {
 	})
 
 	subs := pubsub.New()
-	jobs := models.NewJobManager(nodes, subs, 2, systemID)
-	logger := models.NewLogger(nodes, subs, 100, models.LogLevelDebug, systemID)
+	log := models.NewLogger(nodes, subs, 100, models.LogLevelDebug, systemID)
+	jobs := models.NewJobManager(nodes, log, subs, 2, systemID)
 
 	resolver := resolvers.Resolver{
 		Nodes: nodes,
+		Log:   log,
 		Jobs:  jobs,
 		Subs:  subs,
-		Log:   logger,
 		GetProjectPath: func(workspaceSlug, repo, branch string) string {
 			name := path.Base(repo)
 			ext := path.Ext(name)
@@ -148,10 +147,24 @@ func main() {
 	))
 
 	if ui != nil {
-		logger.Info(fmt.Sprintf("connect to http://localhost:%s/ for web interface", port), nil)
+		log.Info("App Ready", struct {
+			UserInterfaceURL string
+		}{
+			fmt.Sprintf("http://localhost:%s", port),
+		})
 	} else {
-		logger.Info(fmt.Sprintf("connect to http://localhost:%s/ for GraphQL playground", port), nil)
+		log.Info("App Ready", struct {
+			GraphQLPlaygroundURL string
+		}{
+			fmt.Sprintf("http://localhost:%s", port),
+		})
 	}
 
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	if err := http.ListenAndServe(":"+port, router); err != nil {
+		log.Error("App Crashed", struct {
+			Error error
+		}{
+			err,
+		})
+	}
 }

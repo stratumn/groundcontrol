@@ -17,8 +17,6 @@ package models
 import (
 	"context"
 	"fmt"
-	"log"
-	"sync"
 	"sync/atomic"
 
 	"github.com/stratumn/groundcontrol/date"
@@ -30,12 +28,12 @@ import (
 // JobManager manages creating and running jobs.
 type JobManager struct {
 	nodes *NodeManager
+	log   *Logger
 	subs  *pubsub.PubSub
 	queue *queue.Queue
 
 	systemID string
 
-	mu     sync.Mutex
 	nextID uint64
 
 	queuedCounter  int64
@@ -47,12 +45,14 @@ type JobManager struct {
 // NewJobManager creates a JobManager with given concurrency.
 func NewJobManager(
 	nodes *NodeManager,
+	log *Logger,
 	subs *pubsub.PubSub,
 	concurrency int,
 	systemID string,
 ) *JobManager {
 	return &JobManager{
 		nodes:    nodes,
+		log:      log,
 		subs:     subs,
 		queue:    queue.New(concurrency),
 		systemID: systemID,
@@ -70,10 +70,19 @@ func (j *JobManager) Add(
 	projectID string,
 	fn func() error,
 ) string {
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	meta := struct {
+		Name      string
+		ProjectID string
+		Error     error
+	}{
+		name,
+		projectID,
+		nil,
+	}
 
-	id := j.nextID
+	j.log.Info("Job Queued", meta)
+
+	id := atomic.AddUint64(&j.nextID, 1)
 	now := date.NowFormatted()
 	job := Job{
 		ID:        relay.EncodeID(NodeTypeJob, fmt.Sprint(id)),
@@ -86,17 +95,17 @@ func (j *JobManager) Add(
 	j.nodes.MustStoreJob(job)
 	j.subs.Publish(JobUpserted, job.ID)
 
-	j.nodes.Lock(j.systemID)
-	system := j.nodes.MustLoadSystem(j.systemID)
-	system.JobIDs = append([]string{job.ID}, system.JobIDs...)
-	j.nodes.MustStoreSystem(system)
-	j.nodes.Unlock(j.systemID)
+	j.nodes.MustLockSystem(j.systemID, func(system System) {
+		system.JobIDs = append([]string{job.ID}, system.JobIDs...)
+		j.nodes.MustStoreSystem(system)
+	})
 
-	j.nextID++
 	atomic.AddInt64(&j.queuedCounter, 1)
 	j.publishMetrics()
 
 	go j.queue.Do(func() {
+		j.log.Info("Job Running", meta)
+
 		job.Status = JobStatusRunning
 		job.UpdatedAt = date.NowFormatted()
 		j.nodes.MustStoreJob(job)
@@ -106,10 +115,12 @@ func (j *JobManager) Add(
 		j.publishMetrics()
 
 		if err := fn(); err != nil {
-			log.Println(err)
+			meta.Error = err
+			j.log.Error("Job Failed", meta)
 			job.Status = JobStatusFailed
 			atomic.AddInt64(&j.failedCounter, 1)
 		} else {
+			j.log.Info("Job Done", meta)
 			job.Status = JobStatusDone
 			atomic.AddInt64(&j.doneCounter, 1)
 		}
@@ -128,15 +139,13 @@ func (j *JobManager) Add(
 func (j *JobManager) publishMetrics() {
 	system := j.nodes.MustLoadSystem(j.systemID)
 
-	j.nodes.Lock(system.JobMetricsID)
-	defer j.nodes.Unlock(system.JobMetricsID)
+	j.nodes.MustLockJobMetrics(system.JobMetricsID, func(metrics JobMetrics) {
+		metrics.Queued = int(atomic.LoadInt64(&j.queuedCounter))
+		metrics.Running = int(atomic.LoadInt64(&j.runningCounter))
+		metrics.Done = int(atomic.LoadInt64(&j.doneCounter))
+		metrics.Failed = int(atomic.LoadInt64(&j.failedCounter))
+		j.nodes.MustStoreJobMetrics(metrics)
+	})
 
-	jobMetrics := j.nodes.MustLoadJobMetrics(system.JobMetricsID)
-	jobMetrics.Queued = int(atomic.LoadInt64(&j.queuedCounter))
-	jobMetrics.Running = int(atomic.LoadInt64(&j.runningCounter))
-	jobMetrics.Done = int(atomic.LoadInt64(&j.doneCounter))
-	jobMetrics.Failed = int(atomic.LoadInt64(&j.failedCounter))
-
-	j.nodes.MustStoreJobMetrics(jobMetrics)
 	j.subs.Publish(JobMetricsUpdated, system.JobMetricsID)
 }

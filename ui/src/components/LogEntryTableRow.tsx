@@ -13,18 +13,17 @@
 // limitations under the License.
 
 import graphql from "babel-plugin-relay/macro";
-import { Link } from "found";
 import React, { Component } from "react";
 import {
   Table,
  } from "semantic-ui-react";
 
+import Moment from "react-moment";
 import { createFragmentContainer } from "react-relay";
 
 import { LogEntryTableRow_item } from "./__generated__/LogEntryTableRow_item.graphql";
 
-import Moment from "react-moment";
-import RepositoryShortName from "./RepositoryShortName";
+import "./LogEntryTableRow.css";
 
 const dateFormat = "L LTS";
 
@@ -38,7 +37,7 @@ export class LogEntryTableRow extends Component<IProps> {
     const item = this.props.item;
 
     return (
-      <Table.Row>
+      <Table.Row className="LogEntryTableWor">
         <Table.Cell>
           <Moment format={dateFormat}>{item.createdAt}</Moment>
         </Table.Cell>

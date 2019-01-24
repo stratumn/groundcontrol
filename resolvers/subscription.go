@@ -32,13 +32,19 @@ func (r *subscriptionResolver) WorkspaceUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Workspace, error) {
-	r.Log.Debug("subscribe", struct {
+	meta := struct {
 		MessageType string
 		WorkspaceID *string
 	}{
 		models.WorkspaceUpdated,
 		id,
-	})
+	}
+
+	r.Log.Debug("Subscribe", meta)
+	go func() {
+		<-ctx.Done()
+		r.Log.Debug("Unsubscribe", meta)
+	}()
 
 	ch := make(chan models.Workspace, SubscriptionChannelSize)
 
@@ -49,7 +55,9 @@ func (r *subscriptionResolver) WorkspaceUpdated(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadWorkspace(nodeID):
+			r.Log.Debug("Send Message", meta)
 		default:
+			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -60,6 +68,20 @@ func (r *subscriptionResolver) ProjectUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Project, error) {
+	meta := struct {
+		MessageType string
+		ProjectID   *string
+	}{
+		models.WorkspaceUpdated,
+		id,
+	}
+
+	r.Log.Debug("Subscribe", meta)
+	go func() {
+		<-ctx.Done()
+		r.Log.Debug("Unsubscribe", meta)
+	}()
+
 	ch := make(chan models.Project, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.ProjectUpdated, func(msg interface{}) {
@@ -69,7 +91,9 @@ func (r *subscriptionResolver) ProjectUpdated(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadProject(nodeID):
+			r.Log.Debug("Send Message", meta)
 		default:
+			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -79,12 +103,26 @@ func (r *subscriptionResolver) ProjectUpdated(
 func (r *subscriptionResolver) JobUpserted(
 	ctx context.Context,
 ) (<-chan models.Job, error) {
+	meta := struct {
+		MessageType string
+	}{
+		models.JobUpserted,
+	}
+
+	r.Log.Debug("Subscribe", meta)
+	go func() {
+		<-ctx.Done()
+		r.Log.Debug("Unsubscribe", meta)
+	}()
+
 	ch := make(chan models.Job, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.JobUpserted, func(msg interface{}) {
 		select {
 		case ch <- r.Nodes.MustLoadJob(msg.(string)):
+			r.Log.Debug("Send Message", meta)
 		default:
+			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -94,17 +132,33 @@ func (r *subscriptionResolver) JobUpserted(
 func (r *subscriptionResolver) JobMetricsUpdated(
 	ctx context.Context,
 ) (<-chan models.JobMetrics, error) {
+	meta := struct {
+		MessageType string
+	}{
+		models.JobMetricsUpdated,
+	}
+
+	r.Log.Debug("Subscribe", meta)
+	go func() {
+		<-ctx.Done()
+		r.Log.Debug("Unsubscribe", meta)
+	}()
+
 	ch := make(chan models.JobMetrics, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.JobMetricsUpdated, func(msg interface{}) {
 		select {
 		case ch <- r.Nodes.MustLoadJobMetrics(msg.(string)):
+			r.Log.Debug("Send Message", meta)
 		default:
+			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
 	return ch, nil
 }
+
+// Note: don't log log events, it would go in infinite loop.
 
 func (r *subscriptionResolver) LogEntryAdded(
 	ctx context.Context,

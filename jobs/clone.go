@@ -29,26 +29,36 @@ func Clone(
 	getProjectPath models.ProjectPathGetter,
 	projectID string,
 ) (string, error) {
-	nodes.Lock(projectID)
-	defer nodes.Unlock(projectID)
+	var (
+		err         error
+		workspaceID string
+	)
 
-	project, err := nodes.LoadProject(projectID)
+	err = nodes.LockProject(projectID, func(project models.Project) {
+		if project.IsCloning {
+			err = ErrDuplicate
+			return
+		}
+
+		workspaceID = project.WorkspaceID
+		project.IsCloning = true
+		nodes.MustStoreProject(project)
+	})
 	if err != nil {
 		return "", err
 	}
 
-	if project.IsCloning {
-		return "", ErrDuplicate
-	}
-
-	project.IsCloning = true
-
-	nodes.MustStoreProject(project)
 	subs.Publish(models.ProjectUpdated, projectID)
-	subs.Publish(models.WorkspaceUpdated, project.WorkspaceID)
+	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(CloneJob, project.ID, func() error {
-		return doClone(nodes, subs, getProjectPath, projectID)
+	jobID := jobs.Add(CloneJob, projectID, func() error {
+		return doClone(
+			nodes,
+			subs,
+			getProjectPath,
+			projectID,
+			workspaceID,
+		)
 	})
 
 	return jobID, nil
@@ -59,6 +69,7 @@ func doClone(
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
 	projectID string,
+	workspaceID string,
 ) error {
 	project := nodes.MustLoadProject(projectID)
 
@@ -67,15 +78,13 @@ func doClone(
 	}
 
 	defer func() {
-		nodes.Lock(projectID)
-		defer nodes.Unlock(projectID)
+		nodes.MustLockProject(projectID, func(project models.Project) {
+			project.IsCloning = false
+			nodes.MustStoreProject(project)
+		})
 
-		project := nodes.MustLoadProject(projectID)
-		project.IsCloning = false
-
-		nodes.MustStoreProject(project)
 		subs.Publish(models.ProjectUpdated, projectID)
-		subs.Publish(models.WorkspaceUpdated, project.WorkspaceID)
+		subs.Publish(models.WorkspaceUpdated, workspaceID)
 	}()
 
 	workspace := project.Workspace(nodes)
