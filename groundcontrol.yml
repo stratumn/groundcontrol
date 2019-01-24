@@ -22,6 +22,27 @@ workspaces:
   - repository: git@github.com:stratumn/account-ui.git
     branch: master
     description: The UI for Account.
+  tasks:
+  - name: Install dependencies
+    steps:
+    - projects:
+      - stratumn/trace-api
+      - stratumn/trace-ui
+      - stratumn/trace-sdk-js
+      - stratumn/account-api
+      - stratumn/account-ui
+      commands:
+      - yarn install
+  - name: Launch everything
+    steps:
+    - background: true
+    - projects:
+      - stratumn/trace-api
+      - stratumn/trace-ui
+      - stratumn/account-api
+      - stratumn/account-ui
+      commands:
+      - yarn start
 - name: Go Core Dev
   slug: go-core-dev
   description: A workspace containing all the master branches of the Go Core projects.

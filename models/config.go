@@ -34,7 +34,15 @@ type Config struct {
 			Repository  string  `json:"repository"`
 			Branch      string  `json:"branch"`
 			Description *string `json:"description"`
-		}
+		} `json:"projects"`
+		Tasks []struct {
+			Name  string `json:"name"`
+			Steps []struct {
+				Projects   []string `json:"projects"`
+				Commands   []string `json:"commands"`
+				Background bool     `json:"background"`
+			} `json:"tasks"`
+		} `json:"tasks"`
 	} `json:"workspaces"`
 }
 
