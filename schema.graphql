@@ -26,18 +26,33 @@ type Project implements Node {
   id: ID!
   repository: String!
   branch: String!
+  description: String
   commits(
     after: String
     before: String
     first: Int
     last: Int
   ): CommitConnection!
-  description: String
+  tasks: [Task!]!
   workspace: Workspace!
   isLoadingCommits: Boolean!
   isCloning: Boolean!
   isCloned: Boolean!
   isPulling: Boolean!
+}
+
+type Task implements Node {
+  id: ID!
+  name: String!
+  steps: [Step!]!
+  project: Project!
+}
+
+type Step implements Node {
+  projects: [Project!]!
+  commands: [String!]!
+  background: Boolean!
+  task: Task!
 }
 
 type Commit implements Node {

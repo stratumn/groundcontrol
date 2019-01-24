@@ -29,6 +29,7 @@ type Project struct {
 	Description      *string  `json:"description"`
 	WorkspaceID      string   `json:"workspaceID"`
 	CommitIDs        []string `json:"commitIDs"`
+	Tasks            []Task   `json:"projects"`
 	IsLoadingCommits bool     `json:"isLoadingCommits"`
 	IsCloning        bool     `json:"isCloning"`
 	IsPulling        bool     `json:"isPulling"`
