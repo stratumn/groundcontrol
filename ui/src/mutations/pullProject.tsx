@@ -12,13 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package jobs
+import graphql from "babel-plugin-relay/macro";
+import { commitMutation } from "react-relay";
+import { Environment } from "relay-runtime";
 
-import "errors"
+const mutation = graphql`
+  mutation pullProjectMutation($id: String!) {
+    pullProject(id: $id) {
+      id
+    }
+  }
+`;
 
-// Errors.
-var (
-	ErrDuplicate = errors.New("a job already exists")
-	ErrCloned    = errors.New("project is already cloned")
-	ErrNotCloned = errors.New("project isn't cloned")
-)
+export function commit(environment: Environment, id: string) {
+  commitMutation(environment, {
+    mutation,
+    variables: { id },
+  });
+}

@@ -73,11 +73,11 @@ func (j *JobManager) Add(
 	meta := struct {
 		Name      string
 		ProjectID string
-		Error     error
+		Error     string
 	}{
 		name,
 		projectID,
-		nil,
+		"",
 	}
 
 	j.log.Info("Job Queued", meta)
@@ -115,7 +115,7 @@ func (j *JobManager) Add(
 		j.publishMetrics()
 
 		if err := fn(); err != nil {
-			meta.Error = err
+			meta.Error = err.Error()
 			j.log.Error("Job Failed", meta)
 			job.Status = JobStatusFailed
 			atomic.AddInt64(&j.failedCounter, 1)

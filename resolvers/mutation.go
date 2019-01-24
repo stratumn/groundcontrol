@@ -91,3 +91,36 @@ func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]mod
 
 	return slice, nil
 }
+
+func (r *mutationResolver) PullProject(ctx context.Context, id string) (models.Job, error) {
+	jobID, err := jobs.Pull(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, id)
+	if err != nil {
+		return models.Job{}, err
+	}
+
+	return r.Nodes.MustLoadJob(jobID), nil
+}
+
+func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]models.Job, error) {
+	workspace, err := r.Nodes.LoadWorkspace(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var slice []models.Job
+
+	for _, project := range workspace.Projects(r.Nodes) {
+		if project.IsPulling || !project.IsCloned(r.Nodes, r.GetProjectPath) {
+			continue
+		}
+
+		jobID, err := jobs.Pull(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, project.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		slice = append(slice, r.Nodes.MustLoadJob(jobID))
+	}
+
+	return slice, nil
+}

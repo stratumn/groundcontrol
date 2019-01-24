@@ -35,6 +35,7 @@ import "./ProjectCard.css";
 interface IProps {
   item: ProjectCard_item;
   onClone: () => any;
+  onPull: () => any;
 }
 
 export class ProjectCard extends Component<IProps> {
@@ -56,7 +57,18 @@ export class ProjectCard extends Component<IProps> {
       ));
     }
 
-    if (!item.isCloned) {
+    if (item.isCloned) {
+      buttons.push((
+        <Button
+          key="pull"
+          content="Pull"
+          color="teal"
+          disabled={item.isPulling}
+          loading={item.isPulling}
+          onClick={this.props.onPull}
+        />
+      ));
+    } else {
       buttons.push((
         <Button
           key="clone"
@@ -114,6 +126,7 @@ export default createFragmentContainer(ProjectCard, graphql`
     isLoadingCommits
     isCloning
     isCloned
+    isPulling
     commits(first: $commitsLimit) {
       edges {
         node {

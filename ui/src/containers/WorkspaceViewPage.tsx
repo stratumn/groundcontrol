@@ -26,6 +26,8 @@ import WorkspaceMenu from "../components/WorkspaceMenu";
 import { commit as cloneProject } from "../mutations/cloneProject";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
 import { commit as loadWorkspaceCommits } from "../mutations/loadWorkspaceCommits";
+import { commit as pullProject } from "../mutations/pullProject";
+import { commit as pullWorkspace } from "../mutations/pullWorkspace";
 import { subscribe } from "../subscriptions/workspaceUpdated";
 
 import "./WorkspaceViewPage.css";
@@ -58,10 +60,12 @@ export class WorkspaceViewPage extends Component<IProps> {
         <WorkspaceMenu
           workspace={workspace}
           onClone={this.handleCloneWorkspace}
+          onPull={this.handlePullWorkspace}
         />
         <ProjectCardGroup
           items={items}
           onClone={this.handleCloneProject}
+          onPull={this.handlePullProject}
         />
       </Page>
     );
@@ -90,6 +94,14 @@ export class WorkspaceViewPage extends Component<IProps> {
 
   private handleCloneProject = (id: string) => {
     cloneProject(this.props.relay.environment, id);
+  }
+
+  private handlePullWorkspace = () => {
+    pullWorkspace(this.props.relay.environment, this.props.viewer.workspace!.id);
+  }
+
+  private handlePullProject = (id: string) => {
+    pullProject(this.props.relay.environment, id);
   }
 }
 

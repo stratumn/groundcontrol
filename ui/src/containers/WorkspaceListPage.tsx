@@ -23,6 +23,7 @@ import Page from "../components/Page";
 import WorkspacesCardGroup from "../components/WorkspaceCardGroup";
 import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
+import { commit as pullWorkspace } from "../mutations/pullWorkspace";
 import { subscribe } from "../subscriptions/workspaceUpdated";
 
 interface IProps {
@@ -60,6 +61,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
         <WorkspacesCardGroup
           items={items}
           onClone={this.handleClone}
+          onPull={this.handlePull}
         />
       </Page>
     );
@@ -83,6 +85,10 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 
   private handleClone = (id: string) => {
     cloneWorkspace(this.props.relay.environment, id);
+  }
+
+  private handlePull = (id: string) => {
+    pullWorkspace(this.props.relay.environment, id);
   }
 }
 

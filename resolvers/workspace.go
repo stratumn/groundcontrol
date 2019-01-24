@@ -35,3 +35,7 @@ func (r *workspaceResolver) IsCloning(ctx context.Context, obj *models.Workspace
 func (r *workspaceResolver) IsCloned(ctx context.Context, obj *models.Workspace) (bool, error) {
 	return obj.IsCloned(r.Nodes, r.GetProjectPath), nil
 }
+
+func (r *workspaceResolver) IsPulling(ctx context.Context, obj *models.Workspace) (bool, error) {
+	return obj.IsPulling(r.Nodes), nil
+}

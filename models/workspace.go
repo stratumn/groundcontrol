@@ -59,3 +59,14 @@ func (w Workspace) IsCloned(nodes *NodeManager, getProjectPath ProjectPathGetter
 
 	return true
 }
+
+// IsPulling returns true if any of the projects is pulling.
+func (w Workspace) IsPulling(nodes *NodeManager) bool {
+	for _, v := range w.Projects(nodes) {
+		if v.IsPulling {
+			return true
+		}
+	}
+
+	return false
+}

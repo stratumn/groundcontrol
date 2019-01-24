@@ -24,6 +24,7 @@ import ProjectCard from "./ProjectCard";
 interface IProps {
   items: ProjectCardGroup_items;
   onClone: (id: string) => any;
+  onPull: (id: string) => any;
 }
 
 export class ProjectCardGroup extends Component<IProps> {
@@ -35,6 +36,7 @@ export class ProjectCardGroup extends Component<IProps> {
         key={item.id}
         item={item}
         onClone={this.handleClone.bind(this, item.id)}
+        onPull={this.handlePull.bind(this, item.id)}
       />
      ));
 
@@ -43,6 +45,10 @@ export class ProjectCardGroup extends Component<IProps> {
 
   private handleClone(id: string) {
     this.props.onClone(id);
+  }
+
+  private handlePull(id: string) {
+    this.props.onPull(id);
   }
 }
 

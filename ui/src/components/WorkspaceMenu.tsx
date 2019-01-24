@@ -26,12 +26,13 @@ import { WorkspaceMenu_workspace } from "./__generated__/WorkspaceMenu_workspace
 interface IProps {
   workspace: WorkspaceMenu_workspace;
   onClone: () => any;
+  onPull: () => any;
 }
 
 export class WorkspaceMenu extends Component<IProps> {
 
   public render() {
-    const { isCloning, isCloned } = this.props.workspace;
+    const { isCloning, isCloned, isPulling } = this.props.workspace;
 
     return (
       <Menu secondary={true}>
@@ -42,9 +43,12 @@ export class WorkspaceMenu extends Component<IProps> {
           <Icon name="clone" />
           Clone All
         </Menu.Item>
-        <Menu.Item disabled={true}>
+        <Menu.Item
+          disabled={isPulling || !isCloned}
+          onClick={this.props.onPull}
+        >
           <Icon name="download" />
-          Pull Outdated
+          Pull All
         </Menu.Item>
         <Menu.Item disabled={true}>
           <Icon name="power" />
@@ -68,5 +72,6 @@ export default createFragmentContainer(WorkspaceMenu, graphql`
   fragment WorkspaceMenu_workspace on Workspace {
     isCloning
     isCloned
+    isPulling
   }`,
 );

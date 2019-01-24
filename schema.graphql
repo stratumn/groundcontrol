@@ -19,6 +19,7 @@ type Workspace implements Node {
   notes: String
   isCloning: Boolean!
   isCloned: Boolean!
+  isPulling: Boolean!
 }
 
 type Project implements Node {
@@ -36,6 +37,7 @@ type Project implements Node {
   isLoadingCommits: Boolean!
   isCloning: Boolean!
   isCloned: Boolean!
+  isPulling: Boolean!
 }
 
 type Commit implements Node {
@@ -162,6 +164,8 @@ type Mutation {
   loadWorkspaceCommits(id: String!): [Job!]!
   cloneProject(id: String!): Job!
   cloneWorkspace(id: String!): [Job!]!
+  pullProject(id: String!): Job!
+  pullWorkspace(id: String!): [Job!]!
 }
 
 type Subscription {
