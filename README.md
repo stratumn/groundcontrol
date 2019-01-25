@@ -73,14 +73,18 @@ UI runs on `http://localhost:3000` during development.
 
 ### Notes
 
+#### General
+
+- Lines of code don't matter if the code can be generated. Focus on writing repeatable code then write a generator once it makes sense.
+
+#### Server
+
 - All models must be *pure*. Mutations must create a new copy of the model. Avoid pointer accessors for models.
-- Reference models by ID. Do not keep pointers.
-- Models must not store a mutex. Use NodeManager.Lock().
+- Reference models by ID. Do not keep pointers. Do not pass models around.
+- Models should only store GraphQL fields and IDs of nodes they reference. They must not store a mutex. Use `NodeManager.Lock()`.
 - Queries must have no side effects (except appending the log). This may require more mutations triggered by the client.
 
-## TODO
+#### Client
 
-- [ ] git pull mutations
-- [ ] periodically check remotes
-- [ ] tasks and processes
-- [ ] tests
+- Queries, mutations, subscriptions, and events must be handled at the top level.
+- Avoid using `@relay(mask: false)`.
