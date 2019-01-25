@@ -15,6 +15,7 @@
 package models
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v2"
@@ -26,11 +27,12 @@ import (
 type Config struct {
 	Filename   string `json:"filename"`
 	Workspaces []struct {
-		Name        string  `json:"name"`
 		Slug        string  `json:"slug"`
+		Name        string  `json:"name"`
 		Description string  `json:"description"`
 		Notes       *string `json:"notes"`
 		Projects    []struct {
+			Slug        string  `json:"slug"`
 			Repository  string  `json:"repository"`
 			Branch      string  `json:"branch"`
 			Description *string `json:"description"`
@@ -56,20 +58,22 @@ func (c Config) CreateNodes(nodes *NodeManager) (User, error) {
 	for _, workspaceConfig := range c.Workspaces {
 		workspace := Workspace{
 			ID:          relay.EncodeID(NodeTypeWorkspace, workspaceConfig.Slug),
-			Name:        workspaceConfig.Name,
 			Slug:        workspaceConfig.Slug,
+			Name:        workspaceConfig.Name,
 			Description: workspaceConfig.Description,
 			Notes:       workspaceConfig.Notes,
 		}
+
+		projectSlugToID := map[string]string{}
 
 		for _, projectConfig := range workspaceConfig.Projects {
 			project := Project{
 				ID: relay.EncodeID(
 					NodeTypeProject,
 					workspace.Slug,
-					projectConfig.Repository,
-					projectConfig.Branch,
+					projectConfig.Slug,
 				),
+				Slug:        projectConfig.Slug,
 				Repository:  projectConfig.Repository,
 				Branch:      projectConfig.Branch,
 				Description: nil,
@@ -78,6 +82,49 @@ func (c Config) CreateNodes(nodes *NodeManager) (User, error) {
 
 			nodes.MustStoreProject(project)
 			workspace.ProjectIDs = append(workspace.ProjectIDs, project.ID)
+			projectSlugToID[project.Slug] = project.ID
+		}
+
+		for i, taskConfig := range workspaceConfig.Tasks {
+			task := Task{
+				ID: relay.EncodeID(
+					NodeTypeTask,
+					workspace.Slug,
+					fmt.Sprint(i),
+				),
+				Name:        taskConfig.Name,
+				WorkspaceID: workspace.ID,
+			}
+
+			for j, stepConfig := range taskConfig.Steps {
+				var projectIDs []string
+
+				for _, slug := range stepConfig.Projects {
+					id, ok := projectSlugToID[slug]
+					if !ok {
+						return User{}, ErrNotFound
+					}
+					projectIDs = append(projectIDs, id)
+				}
+
+				step := Step{
+					ID: relay.EncodeID(
+						NodeTypeStep,
+						workspace.Slug,
+						fmt.Sprint(j),
+					),
+					ProjectIDs: projectIDs,
+					Commands:   stepConfig.Commands,
+					Background: stepConfig.Background,
+					TaskID:     task.ID,
+				}
+
+				nodes.MustStoreStep(step)
+				task.StepIDs = append(task.StepIDs, step.ID)
+			}
+
+			nodes.MustStoreTask(task)
+			workspace.TaskIDs = append(workspace.TaskIDs, task.ID)
 		}
 
 		nodes.MustStoreWorkspace(workspace)

@@ -24,6 +24,7 @@ type ProjectPathGetter func(workspaceSlug, repo, branch string) string
 // Project represents a project in the app.
 type Project struct {
 	ID               string   `json:"id"`
+	Slug             string   `json:"slug"`
 	Repository       string   `json:"repository"`
 	Branch           string   `json:"branch"`
 	Description      *string  `json:"description"`

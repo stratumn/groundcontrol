@@ -21,6 +21,7 @@ interface IProps {
 export default class RepositoryShortName extends Component<IProps> {
 
   public render() {
+    // TODO: more generic...
     const shortName = this.props.repository
       .replace(/^git@github\.com:/, "")
       .replace(/\.git$/, "");

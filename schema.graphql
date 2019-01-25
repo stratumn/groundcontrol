@@ -12,8 +12,8 @@ type User implements Node {
 
 type Workspace implements Node {
   id: ID!
-  name: String!
   slug: String!
+  name: String!
   projects: [Project!]!
   tasks: [Task!]!
   description: String
@@ -25,6 +25,7 @@ type Workspace implements Node {
 
 type Project implements Node {
   id: ID!
+  slug: String!
   repository: String!
   branch: String!
   description: String
@@ -45,7 +46,7 @@ type Task implements Node {
   id: ID!
   name: String!
   steps: [Step!]!
-  project: Project!
+  workspace: Workspace!
 }
 
 type Step implements Node {

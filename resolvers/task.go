@@ -28,6 +28,6 @@ func (r *taskResolver) Steps(ctx context.Context, obj *models.Task) ([]models.St
 	return obj.Steps(r.Nodes), nil
 }
 
-func (r *taskResolver) Project(ctx context.Context, obj *models.Task) (models.Project, error) {
-	return obj.Project(r.Nodes), nil
+func (r *taskResolver) Workspace(ctx context.Context, obj *models.Task) (models.Workspace, error) {
+	return obj.Workspace(r.Nodes), nil
 }

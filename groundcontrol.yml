@@ -7,46 +7,44 @@ workspaces:
 
     It can even use **Markdown!** How *unsafe.*
   projects:
-  - repository: git@github.com:stratumn/trace-api.git
+  - slug: trace-api
+    repository: git@github.com:stratumn/trace-api.git
     branch: master
     description: The API for Trace.
-  - repository: git@github.com:stratumn/trace-ui.git
+  - slug: trace-ui
+    repository: git@github.com:stratumn/trace-ui.git
     branch: master
     description: The UI for Trace.
-  - repository: git@github.com:stratumn/trace-sdk-js.git
+  - slug: trace-sdk-js
+    repository: git@github.com:stratumn/trace-sdk-js.git
     branch: master
     description: The SDK for Trace.
-  - repository: git@github.com:stratumn/account-api.git
+  - slug: account-api
+    repository: git@github.com:stratumn/account-api.git
     branch: master
     description: The API for Account.
-  - repository: git@github.com:stratumn/account-ui.git
+  - slug: account-ui
+    repository: git@github.com:stratumn/account-ui.git
     branch: master
     description: The UI for Account.
   tasks:
   - name: Install dependencies
     steps:
     - projects:
-      - stratumn/trace-api
-      - stratumn/trace-ui
-      - stratumn/trace-sdk-js
-      - stratumn/account-api
-      - stratumn/account-ui
+      - trace-api
+      - trace-ui
+      - trace-sdk-js
+      - account-api
+      - account-ui
       commands:
       - yarn install
   - name: Launch everything
     steps:
-    - background: true
     - projects:
-      - stratumn/trace-api
-      - stratumn/trace-ui
-      - stratumn/account-api
-      - stratumn/account-ui
+      - trace-api
+      - trace-ui
+      - account-api
+      - account-ui
       commands:
       - yarn start
-- name: Go Core Dev
-  slug: go-core-dev
-  description: A workspace containing all the master branches of the Go Core projects.
-  notes: This should probably contain installation instructions.
-  projects:
-  - repository: git@github.com:stratumn/go-core.git
-    branch: master
+      background: true

@@ -16,10 +16,10 @@ package models
 
 // Task represents a workspace task in the app.
 type Task struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	StepIDs   []string `json:"stepIDs"`
-	ProjectID string   `json:"projectID"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	StepIDs     []string `json:"stepIDs"`
+	WorkspaceID string   `json:"workspace"`
 }
 
 // IsNode tells gqlgen that it implements Node.
@@ -36,7 +36,7 @@ func (t Task) Steps(nodes *NodeManager) []Step {
 	return slice
 }
 
-// Project returns the task's project.
-func (t Task) Project(nodes *NodeManager) Project {
-	return nodes.MustLoadProject(t.ProjectID)
+// Workspace returns the task's workspace.
+func (t Task) Workspace(nodes *NodeManager) Workspace {
+	return nodes.MustLoadWorkspace(t.WorkspaceID)
 }

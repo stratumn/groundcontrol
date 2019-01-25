@@ -17,8 +17,8 @@ package models
 // Workspace represents a workspace in the app.
 type Workspace struct {
 	ID          string   `json:"id"`
-	Name        string   `json:"name"`
 	Slug        string   `json:"slug"`
+	Name        string   `json:"name"`
 	ProjectIDs  []string `json:"projectIDs"`
 	TaskIDs     []string `json:"taskIDs"`
 	Description string   `json:"description"`
