@@ -18,6 +18,7 @@ package models
 const (
 	WorkspaceUpdated  = "WORKSPACE_UPDATED"
 	ProjectUpdated    = "PROJECT_UPDATED"
+	TaskUpdated       = "TASK_UPDATED"
 	JobUpserted       = "JOB_UPSERTED"
 	JobMetricsUpdated = "JOB_METRICS_UPDATED"
 	LogEntryAdded     = "LOG_ENTRY_ADDED"

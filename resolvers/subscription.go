@@ -72,7 +72,7 @@ func (r *subscriptionResolver) ProjectUpdated(
 		MessageType string
 		ProjectID   *string
 	}{
-		models.WorkspaceUpdated,
+		models.ProjectUpdated,
 		id,
 	}
 
@@ -91,6 +91,42 @@ func (r *subscriptionResolver) ProjectUpdated(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadProject(nodeID):
+			r.Log.Debug("Send Message", meta)
+		default:
+			r.Log.Debug("Drop Message", meta)
+		}
+	})
+
+	return ch, nil
+}
+
+func (r *subscriptionResolver) TaskUpdated(
+	ctx context.Context,
+	id *string,
+) (<-chan models.Task, error) {
+	meta := struct {
+		MessageType string
+		TaskID      *string
+	}{
+		models.WorkspaceUpdated,
+		id,
+	}
+
+	r.Log.Debug("Subscribe", meta)
+	go func() {
+		<-ctx.Done()
+		r.Log.Debug("Unsubscribe", meta)
+	}()
+
+	ch := make(chan models.Task, SubscriptionChannelSize)
+
+	r.Subs.Subscribe(ctx, models.TaskUpdated, func(msg interface{}) {
+		nodeID := msg.(string)
+		if id != nil && *id != nodeID {
+			return
+		}
+		select {
+		case ch <- r.Nodes.MustLoadTask(nodeID):
 			r.Log.Debug("Send Message", meta)
 		default:
 			r.Log.Debug("Drop Message", meta)

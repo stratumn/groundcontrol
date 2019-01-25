@@ -43,7 +43,6 @@ export class JobTableRow extends Component<IProps> {
     let projectRepository = "-";
     let projectBranch = "-";
 
-
     switch (owner.__typename) {
     case "Workspace":
       workspaceSlug = owner.slug;

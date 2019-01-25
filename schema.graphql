@@ -190,6 +190,7 @@ type Mutation {
 type Subscription {
   workspaceUpdated(id: ID): Workspace!
   projectUpdated(id: ID): Project!
+  taskUpdated(id: ID): Task!
   jobUpserted: Job!
   jobMetricsUpdated: JobMetrics!
   logEntryAdded: LogEntry!

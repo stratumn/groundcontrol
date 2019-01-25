@@ -48,8 +48,8 @@ func Run(
 		return "", err
 	}
 
-	//subs.Publish(models.ProjectUpdated, projectID)
-	//subs.Publish(models.WorkspaceUpdated, workspaceID)
+	subs.Publish(models.TaskUpdated, taskID)
+	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
 	jobID := jobs.Add(RunJob, workspaceID, func() error {
 		return doRun(
@@ -57,6 +57,7 @@ func Run(
 			subs,
 			getProjectPath,
 			taskID,
+			workspaceID,
 		)
 	})
 
@@ -68,7 +69,20 @@ func doRun(
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
 	taskID string,
+	workspaceID string,
 ) error {
+	//task := nodes.MustLoadTask(taskID)
+
+	defer func() {
+		nodes.MustLockTask(taskID, func(task models.Task) {
+			task.IsRunning = false
+			nodes.MustStoreTask(task)
+		})
+
+		subs.Publish(models.TaskUpdated, taskID)
+		subs.Publish(models.WorkspaceUpdated, workspaceID)
+	}()
+
 	time.Sleep(10 * time.Second)
 	return nil
 }
