@@ -61,6 +61,7 @@ export class WorkspaceViewPage extends Component<IProps> {
           workspace={workspace}
           onClone={this.handleCloneWorkspace}
           onPull={this.handlePullWorkspace}
+          onRun={this.handleRun}
         />
         <ProjectCardGroup
           items={items}
@@ -102,6 +103,10 @@ export class WorkspaceViewPage extends Component<IProps> {
 
   private handlePullProject = (id: string) => {
     pullProject(this.props.relay.environment, id);
+  }
+
+  private handleRun = (id: string) => {
+    alert(`Run task ${id}`);
   }
 }
 

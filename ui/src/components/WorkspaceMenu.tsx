@@ -16,51 +16,49 @@ import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
 import {
-  Dropdown,
   Icon,
   Menu,
 } from "semantic-ui-react";
 
 import { WorkspaceMenu_workspace } from "./__generated__/WorkspaceMenu_workspace.graphql";
 
+import WorkspaceTaskDropdown from "./WorkspaceTaskDropdown";
+
 interface IProps {
   workspace: WorkspaceMenu_workspace;
   onClone: () => any;
   onPull: () => any;
+  onRun: (id: string) => any;
 }
 
 export class WorkspaceMenu extends Component<IProps> {
 
   public render() {
-    const { isCloning, isCloned, isPulling } = this.props.workspace;
+    const { isCloning, isCloned, isPulling, tasks } = this.props.workspace;
+    const { onClone, onPull, onRun } = this.props;
 
     return (
       <Menu secondary={true}>
         <Menu.Item
           disabled={isCloning || isCloned}
-          onClick={this.props.onClone}
+          onClick={onClone}
         >
           <Icon name="clone" />
           Clone All
         </Menu.Item>
         <Menu.Item
           disabled={isPulling || !isCloned}
-          onClick={this.props.onPull}
+          onClick={onPull}
         >
           <Icon name="download" />
           Pull All
         </Menu.Item>
-        <Menu.Item disabled={true}>
-          <Icon name="power" />
-          Power On
-        </Menu.Item>
         <Menu.Item>
-          <Dropdown item={true} text="Tasks" pointing={true} disabled={true}>
-            <Dropdown.Menu>
-              <Dropdown.Item>Run Tests</Dropdown.Item>
-              <Dropdown.Item>Clear Database</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+          <WorkspaceTaskDropdown
+            items={tasks}
+            enabled={isCloned}
+            onRun={onRun}
+          />
         </Menu.Item>
       </Menu>
     );
@@ -70,6 +68,9 @@ export class WorkspaceMenu extends Component<IProps> {
 
 export default createFragmentContainer(WorkspaceMenu, graphql`
   fragment WorkspaceMenu_workspace on Workspace {
+    tasks {
+      ...WorkspaceTaskDropdown_items
+    }
     isCloning
     isCloned
     isPulling
