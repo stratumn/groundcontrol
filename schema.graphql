@@ -183,6 +183,7 @@ type Mutation {
   cloneWorkspace(id: String!): [Job!]!
   pullProject(id: String!): Job!
   pullWorkspace(id: String!): [Job!]!
+  run(id: String!): Job!
 }
 
 type Subscription {

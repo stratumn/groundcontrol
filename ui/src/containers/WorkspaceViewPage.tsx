@@ -28,6 +28,7 @@ import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
 import { commit as loadWorkspaceCommits } from "../mutations/loadWorkspaceCommits";
 import { commit as pullProject } from "../mutations/pullProject";
 import { commit as pullWorkspace } from "../mutations/pullWorkspace";
+import { commit as run } from "../mutations/run";
 import { subscribe } from "../subscriptions/workspaceUpdated";
 
 import "./WorkspaceViewPage.css";
@@ -106,7 +107,7 @@ export class WorkspaceViewPage extends Component<IProps> {
   }
 
   private handleRun = (id: string) => {
-    alert(`Run task ${id}`);
+    run(this.props.relay.environment, id);
   }
 }
 
