@@ -131,6 +131,13 @@ type JobMetrics implements Node {
   failed: Int!
 }
 
+type Process implements Node {
+  id: ID!
+  output: String!
+  task: Task!
+  isRunning: Boolean
+}
+
 type LogEntry implements Node {
   id: ID!
   level: LogLevel!

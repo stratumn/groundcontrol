@@ -15,15 +15,39 @@
 package jobs
 
 import (
+	"bufio"
+	"io"
+	"os/exec"
 	"time"
 
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
 )
 
+// Remember to call close().
+func createCommandWriter(
+	write func(string, interface{}) string,
+	meta interface{},
+) io.WriteCloser {
+	r, w := io.Pipe()
+	scanner := bufio.NewScanner(r)
+
+	go func() {
+		for scanner.Scan() {
+			write(scanner.Text(), meta)
+
+			// Don't kill the poor browser.
+			time.Sleep(10 * time.Millisecond)
+		}
+	}()
+
+	return w
+}
+
 // Run runs a remote repository locally.
 func Run(
 	nodes *models.NodeManager,
+	log *models.Logger,
 	jobs *models.JobManager,
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
@@ -54,6 +78,7 @@ func Run(
 	jobID := jobs.Add(RunJob, workspaceID, func() error {
 		return doRun(
 			nodes,
+			log,
 			subs,
 			getProjectPath,
 			taskID,
@@ -66,13 +91,12 @@ func Run(
 
 func doRun(
 	nodes *models.NodeManager,
+	log *models.Logger,
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
 	taskID string,
 	workspaceID string,
 ) error {
-	//task := nodes.MustLoadTask(taskID)
-
 	defer func() {
 		nodes.MustLockTask(taskID, func(task models.Task) {
 			task.IsRunning = false
@@ -83,6 +107,43 @@ func doRun(
 		subs.Publish(models.WorkspaceUpdated, workspaceID)
 	}()
 
-	time.Sleep(10 * time.Second)
+	workspace := nodes.MustLoadWorkspace(workspaceID)
+	task := nodes.MustLoadTask(taskID)
+
+	for _, step := range task.Steps(nodes) {
+		for _, project := range step.Projects(nodes) {
+			for _, command := range step.Commands {
+				projectPath := getProjectPath(workspace.Slug, project.Repository, project.Branch)
+
+				meta := struct {
+					TaskID      string
+					WorkspaceID string
+					ProjectID   string
+					ProjectPath string
+					Command     string
+				}{
+					taskID,
+					workspaceID,
+					project.ID,
+					projectPath,
+					command,
+				}
+
+				stdout := createCommandWriter(log.Info, meta)
+				stderr := createCommandWriter(log.Warning, meta)
+
+				cmd := exec.Command("sh", "-c", command)
+				cmd.Dir = projectPath
+				cmd.Stdout = stdout
+				cmd.Stderr = stderr
+
+				err := cmd.Run()
+				stdout.Close()
+				stderr.Close()
+				return err
+			}
+		}
+	}
+
 	return nil
 }

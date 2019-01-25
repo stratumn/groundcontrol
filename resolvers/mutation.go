@@ -125,7 +125,7 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 }
 
 func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.Run(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, id)
+	jobID, err := jobs.Run(r.Nodes, r.Log, r.Jobs, r.Subs, r.GetProjectPath, id)
 	if err != nil {
 		return models.Job{}, err
 	}

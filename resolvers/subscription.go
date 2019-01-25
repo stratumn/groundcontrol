@@ -22,7 +22,7 @@ import (
 
 // SubscriptionChannelSize is the size of a subscription channel.
 // If a channel is full new messages will be dropped and the client won't receive them.
-const SubscriptionChannelSize = 128
+const SubscriptionChannelSize = 1024
 
 type subscriptionResolver struct {
 	*Resolver

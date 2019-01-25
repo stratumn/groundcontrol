@@ -36,6 +36,7 @@ export class WorkspaceTaskDropdown extends Component<IProps> {
 
     const dropdownItems = items.map(({id, name, isRunning}) => (
       <Dropdown.Item
+        key={id}
         disabled={isRunning}
         onClick={this.handleRun.bind(this, id)}
       >

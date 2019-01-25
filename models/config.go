@@ -76,7 +76,7 @@ func (c Config) CreateNodes(nodes *NodeManager) (User, error) {
 				Slug:        projectConfig.Slug,
 				Repository:  projectConfig.Repository,
 				Branch:      projectConfig.Branch,
-				Description: nil,
+				Description: projectConfig.Description,
 				WorkspaceID: workspace.ID,
 			}
 
@@ -111,6 +111,7 @@ func (c Config) CreateNodes(nodes *NodeManager) (User, error) {
 					ID: relay.EncodeID(
 						NodeTypeStep,
 						workspace.Slug,
+						fmt.Sprint(i),
 						fmt.Sprint(j),
 					),
 					ProjectIDs: projectIDs,

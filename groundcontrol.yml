@@ -37,7 +37,7 @@ workspaces:
       - account-api
       - account-ui
       commands:
-      - yarn install
+      - yarn install || true
   - name: Launch everything
     steps:
     - projects:
@@ -46,5 +46,5 @@ workspaces:
       - account-api
       - account-ui
       commands:
-      - yarn start
+      - spawn yarn start
       background: true

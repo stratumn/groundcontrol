@@ -75,8 +75,6 @@ func doPull(
 	projectID string,
 	workspaceID string,
 ) error {
-	project := nodes.MustLoadProject(projectID)
-
 	defer func() {
 		nodes.MustLockProject(projectID, func(project models.Project) {
 			project.IsPulling = false
@@ -87,6 +85,7 @@ func doPull(
 		subs.Publish(models.WorkspaceUpdated, workspaceID)
 	}()
 
+	project := nodes.MustLoadProject(projectID)
 	workspace := project.Workspace(nodes)
 	directory := getProjectPath(workspace.Slug, project.Repository, project.Branch)
 
