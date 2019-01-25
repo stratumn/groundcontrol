@@ -36,19 +36,39 @@ export class JobTableRow extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
+    const owner = item.owner;
+
+    let workspaceSlug = "-";
+    let workspaceName = "-";
+    let projectRepository = "-";
+    let projectBranch = "-";
+
+
+    switch (owner.__typename) {
+    case "Workspace":
+      workspaceSlug = owner.slug;
+      workspaceName = owner.name;
+      break;
+    case "Project":
+      workspaceSlug = owner.workspace.slug;
+      workspaceName = owner.workspace.name;
+      projectRepository = owner.repository;
+      projectBranch = owner.branch;
+      break;
+    }
 
     return (
       <Table.Row>
         <Table.Cell>{item.name}</Table.Cell>
         <Table.Cell>
-          <Link to={`/workspaces/${item.project.workspace.slug}`}>
-            {item.project.workspace.name}
+          <Link to={`/workspaces/${workspaceSlug}`}>
+            {workspaceName}
           </Link>
         </Table.Cell>
         <Table.Cell>
-          <RepositoryShortName repository={item.project.repository} />
+          <RepositoryShortName repository={projectRepository} />
         </Table.Cell>
-        <Table.Cell>{item.project.branch}</Table.Cell>
+        <Table.Cell>{projectBranch}</Table.Cell>
         <Table.Cell>
           <Moment format={dateFormat}>{item.createdAt}</Moment>
         </Table.Cell>
@@ -74,12 +94,19 @@ export default createFragmentContainer(JobTableRow, graphql`
     status
     createdAt
     updatedAt
-    project {
-      repository
-      branch
-      workspace {
+    owner {
+      __typename
+      ... on Workspace {
         slug
         name
+      }
+      ... on Project {
+        repository
+        branch
+        workspace {
+          slug
+          name
+        }
       }
     }
   }`,

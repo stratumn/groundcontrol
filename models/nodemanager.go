@@ -34,6 +34,16 @@ func (n *NodeManager) Load(id string) (Node, bool) {
 	return nil, false
 }
 
+// MustLoad loads a node or panics if it doesn't exist.
+func (n *NodeManager) MustLoad(id string) Node {
+	node, ok := n.Load(id)
+	if !ok {
+		panic(ErrNotFound)
+	}
+
+	return node
+}
+
 // Lock locks the given IDs.
 func (n *NodeManager) Lock(ids ...string) {
 	for _, id := range ids {

@@ -19,4 +19,5 @@ const (
 	LoadCommitsJob = "Load Commits"
 	CloneJob       = "Clone"
 	PullJob        = "Pull"
+	RunJob         = "Run"
 )

@@ -47,6 +47,7 @@ type Task implements Node {
   name: String!
   steps: [Step!]!
   workspace: Workspace!
+  isRunning: Boolean!
 }
 
 type Step implements Node {
@@ -102,7 +103,7 @@ type Job implements Node {
   createdAt: DateTime!
   updatedAt: DateTime!
   status: JobStatus!
-  project: Project!
+  owner: Node!
 }
 
 enum JobStatus {

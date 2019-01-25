@@ -20,6 +20,7 @@ type Task struct {
 	Name        string   `json:"name"`
 	StepIDs     []string `json:"stepIDs"`
 	WorkspaceID string   `json:"workspace"`
+	IsRunning   bool     `json:"isRunning"`
 }
 
 // IsNode tells gqlgen that it implements Node.

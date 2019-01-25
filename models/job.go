@@ -21,13 +21,13 @@ type Job struct {
 	CreatedAt string    `json:"createdAt"`
 	UpdatedAt string    `json:"updatedAt"`
 	Status    JobStatus `json:"status"`
-	ProjectID string    `json:"projectID"`
+	OwnerID   string    `json:"ownerID"`
 }
 
 // IsNode tells gqlgen that it implements Node.
 func (Job) IsNode() {}
 
-// Project returns the project associated with the job.
-func (j Job) Project(nodes *NodeManager) Project {
-	return nodes.MustLoadProject(j.ProjectID)
+// Owner returns the node associated with the job.
+func (j Job) Owner(nodes *NodeManager) Node {
+	return nodes.MustLoad(j.OwnerID)
 }

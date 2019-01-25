@@ -24,6 +24,6 @@ type jobResolver struct {
 	*Resolver
 }
 
-func (r *jobResolver) Project(ctx context.Context, obj *models.Job) (models.Project, error) {
-	return obj.Project(r.Nodes), nil
+func (r *jobResolver) Owner(ctx context.Context, obj *models.Job) (models.Node, error) {
+	return obj.Owner(r.Nodes), nil
 }

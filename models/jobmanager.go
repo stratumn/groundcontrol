@@ -67,16 +67,16 @@ func (j *JobManager) Work(ctx context.Context) error {
 // Add adds a job to the queue and returns the job's ID.
 func (j *JobManager) Add(
 	name string,
-	projectID string,
+	ownerID string,
 	fn func() error,
 ) string {
 	meta := struct {
-		Name      string
-		ProjectID string
-		Error     string
+		Name   string
+		NodeID string
+		Error  string
 	}{
 		name,
-		projectID,
+		ownerID,
 		"",
 	}
 
@@ -90,7 +90,7 @@ func (j *JobManager) Add(
 		Status:    JobStatusQueued,
 		CreatedAt: now,
 		UpdatedAt: now,
-		ProjectID: projectID,
+		OwnerID:   ownerID,
 	}
 	j.nodes.MustStoreJob(job)
 	j.subs.Publish(JobUpserted, job.ID)

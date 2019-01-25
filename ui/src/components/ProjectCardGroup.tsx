@@ -50,6 +50,7 @@ export class ProjectCardGroup extends Component<IProps> {
   private handlePull(id: string) {
     this.props.onPull(id);
   }
+
 }
 
 export default createFragmentContainer(ProjectCardGroup, graphql`

@@ -16,7 +16,6 @@ package resolvers
 
 import (
 	"context"
-	"log"
 
 	"github.com/stratumn/groundcontrol/jobs"
 	"github.com/stratumn/groundcontrol/models"
@@ -126,6 +125,10 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 }
 
 func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, error) {
-	log.Println("Run task", id)
-	return models.Job{}, nil
+	jobID, err := jobs.Run(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, id)
+	if err != nil {
+		return models.Job{}, err
+	}
+
+	return r.Nodes.MustLoadJob(jobID), nil
 }
