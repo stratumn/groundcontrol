@@ -148,7 +148,10 @@ func doRun(
 				err := cmd.Run()
 				stdout.Close()
 				stderr.Close()
-				return err
+
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
