@@ -87,6 +87,13 @@ type System implements Node {
     status: [JobStatus!]
   ): JobConnection!
   jobMetrics: JobMetrics!
+  processGroups(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): ProcessGroupConnection!
+  processGroupMetrics: ProcessGroupMetrics!
   logEntries(
     after: String
     before: String
@@ -131,11 +138,33 @@ type JobMetrics implements Node {
   failed: Int!
 }
 
+type ProcessGroup implements Node {
+  id: ID!
+  createdAt: DateTime!
+  workspace: Workspace!
+  processes: [Process!]!
+}
+
+type ProcessGroupConnection {
+  edges: [ProcessGroupEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessGroupEdge {
+  cursor: String!
+  node: ProcessGroup!
+}
+
+type ProcessGroupMetrics implements Node {
+  id: ID!
+  running: Int!
+}
+
 type Process implements Node {
   id: ID!
-  output: String!
-  task: Task!
-  isRunning: Boolean
+  command: String!
+  processGroup: ProcessGroup!
+  isRunning: Boolean!
 }
 
 type LogEntry implements Node {

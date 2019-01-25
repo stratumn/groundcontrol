@@ -16,8 +16,10 @@ package jobs
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/stratumn/groundcontrol/models"
@@ -111,8 +113,8 @@ func doRun(
 	task := nodes.MustLoadTask(taskID)
 
 	for _, step := range task.Steps(nodes) {
-		for _, project := range step.Projects(nodes) {
-			for _, command := range step.Commands {
+		for _, command := range step.Commands {
+			for _, project := range step.Projects(nodes) {
 				projectPath := getProjectPath(workspace.Slug, project.Repository, project.Branch)
 
 				meta := struct {
@@ -127,6 +129,12 @@ func doRun(
 					project.ID,
 					projectPath,
 					command,
+				}
+
+				parts := strings.Split(command, " ")
+				if len(parts) > 0 && parts[0] == "spawn" {
+					rest := strings.Join(parts[1:], " ")
+					fmt.Println("Must spawn command", rest)
 				}
 
 				stdout := createCommandWriter(log.Info, meta)

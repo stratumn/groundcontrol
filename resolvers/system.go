@@ -43,6 +43,24 @@ func (r *systemResolver) JobMetrics(
 	return obj.JobMetrics(r.Nodes), nil
 }
 
+func (r *systemResolver) ProcessGroups(
+	ctx context.Context,
+	obj *models.System,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (models.ProcessGroupConnection, error) {
+	return obj.ProcessGroups(r.Nodes, after, before, first, last)
+}
+
+func (r *systemResolver) ProcessGroupMetrics(
+	ctx context.Context,
+	obj *models.System,
+) (models.ProcessGroupMetrics, error) {
+	return obj.ProcessGroupMetrics(r.Nodes), nil
+}
+
 func (r *systemResolver) LogEntries(
 	ctx context.Context,
 	obj *models.System,
