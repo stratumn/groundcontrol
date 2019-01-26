@@ -12,17 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
+package resolvers
 
-// Message types.
-const (
-	WorkspaceUpdated     = "WORKSPACE_UPDATED"
-	ProjectUpdated       = "PROJECT_UPDATED"
-	TaskUpdated          = "TASK_UPDATED"
-	JobUpserted          = "JOB_UPSERTED"
-	JobMetricsUpdated    = "JOB_METRICS_UPDATED"
-	ProcessGroupUpserted = "PROCESS_GROUP_UPSERTED"
-	ProcessUpserted      = "PROCESS_UPSERTED"
-	LogEntryAdded        = "LOG_ENTRY_ADDED"
-	LogMetricsUpdated    = "LOG_METRICS_UPDATED"
+import (
+	"context"
+
+	"github.com/stratumn/groundcontrol/models"
 )
+
+type processGroupResolver struct {
+	*Resolver
+}
+
+func (r *processGroupResolver) Processes(ctx context.Context, obj *models.ProcessGroup) ([]models.Process, error) {
+	return obj.Processes(r.Nodes), nil
+}
+
+func (r *processGroupResolver) Task(ctx context.Context, obj *models.ProcessGroup) (models.Task, error) {
+	return obj.Task(r.Nodes), nil
+}
+
+func (r *processGroupResolver) Status(ctx context.Context, obj *models.ProcessGroup) (models.ProcessStatus, error) {
+	return obj.Status(r.Nodes), nil
+}

@@ -76,12 +76,24 @@ func (s System) ProcessGroups(
 	before *string,
 	first *int,
 	last *int,
+	status []ProcessStatus,
 ) (ProcessGroupConnection, error) {
 	var slice []ProcessGroup
 
 	for _, nodeID := range s.ProcessGroupIDs {
 		node := nodes.MustLoadProcessGroup(nodeID)
-		slice = append(slice, node)
+		match := len(status) == 0
+
+		for _, v := range status {
+			if node.Status(nodes) == v {
+				match = true
+				break
+			}
+		}
+
+		if match {
+			slice = append(slice, node)
+		}
 	}
 
 	return PaginateProcessGroupSlice(

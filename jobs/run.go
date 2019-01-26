@@ -20,10 +20,18 @@ import (
 	"io"
 	"os/exec"
 	"strings"
+	"sync/atomic"
 	"time"
 
+	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
+	"github.com/stratumn/groundcontrol/relay"
+)
+
+var (
+	nextProcessGroupID uint64
+	nextProcessID      uint64
 )
 
 // Remember to call close().
@@ -54,6 +62,7 @@ func Run(
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
 	taskID string,
+	systemID string,
 ) (string, error) {
 	var (
 		err         error
@@ -85,6 +94,7 @@ func Run(
 			getProjectPath,
 			taskID,
 			workspaceID,
+			systemID,
 		)
 	})
 
@@ -98,6 +108,7 @@ func doRun(
 	getProjectPath models.ProjectPathGetter,
 	taskID string,
 	workspaceID string,
+	systemID string,
 ) error {
 	defer func() {
 		nodes.MustLockTask(taskID, func(task models.Task) {
@@ -111,6 +122,7 @@ func doRun(
 
 	workspace := nodes.MustLoadWorkspace(workspaceID)
 	task := nodes.MustLoadTask(taskID)
+	processGroupID := ""
 
 	for _, step := range task.Steps(nodes) {
 		for _, command := range step.Commands {
@@ -119,33 +131,44 @@ func doRun(
 
 				meta := struct {
 					TaskID      string
-					WorkspaceID string
 					ProjectID   string
 					ProjectPath string
 					Command     string
 				}{
 					taskID,
-					workspaceID,
 					project.ID,
 					projectPath,
 					command,
 				}
 
 				parts := strings.Split(command, " ")
+
 				if len(parts) > 0 && parts[0] == "spawn" {
+					if processGroupID == "" {
+						processGroupID = relay.EncodeID(
+							models.NodeTypeProcessGroup,
+							fmt.Sprint(atomic.AddUint64(&nextProcessGroupID, 1)),
+						)
+						nodes.MustStoreProcessGroup(models.ProcessGroup{
+							ID:        processGroupID,
+							CreatedAt: date.NowFormatted(),
+							TaskID:    taskID,
+						})
+						nodes.MustLockSystem(systemID, func(system models.System) {
+							system.ProcessGroupIDs = append(system.ProcessGroupIDs, processGroupID)
+							nodes.MustStoreSystem(system)
+						})
+					}
+
 					rest := strings.Join(parts[1:], " ")
-					fmt.Println("Must spawn command", rest)
+					spawn(nodes, log, subs, rest, projectPath, processGroupID)
+					return nil
 				}
 
 				stdout := createCommandWriter(log.Info, meta)
 				stderr := createCommandWriter(log.Warning, meta)
+				err := run(command, projectPath, stdout, stderr)
 
-				cmd := exec.Command("sh", "-c", command)
-				cmd.Dir = projectPath
-				cmd.Stdout = stdout
-				cmd.Stderr = stderr
-
-				err := cmd.Run()
 				stdout.Close()
 				stderr.Close()
 
@@ -157,4 +180,81 @@ func doRun(
 	}
 
 	return nil
+}
+
+func spawn(
+	nodes *models.NodeManager,
+	log *models.Logger,
+	subs *pubsub.PubSub,
+	command string,
+	projectPath string,
+	processGroupID string,
+) {
+	meta := struct {
+		ProjectPath    string
+		Command        string
+		ProcessGroupID string
+	}{
+		projectPath,
+		command,
+		processGroupID,
+	}
+
+	id := relay.EncodeID(
+		models.NodeTypeProcess,
+		fmt.Sprint(atomic.AddUint64(&nextProcessID, 1)),
+	)
+
+	process := models.Process{
+		ID:             id,
+		Command:        command,
+		Status:         models.ProcessStatusRunning,
+		ProcessGroupID: processGroupID,
+	}
+
+	nodes.MustStoreProcess(process)
+
+	nodes.MustLockProcessGroup(processGroupID, func(processGroup models.ProcessGroup) {
+		processGroup.ProcessIDs = append(processGroup.ProcessIDs, id)
+		nodes.MustStoreProcessGroup(processGroup)
+	})
+
+	subs.Publish(models.ProcessUpserted, id)
+	subs.Publish(models.ProcessGroupUpserted, processGroupID)
+
+	go func() {
+		stdout := createCommandWriter(log.Info, meta)
+		stderr := createCommandWriter(log.Warning, meta)
+
+		err := run(command, projectPath, stdout, stderr)
+
+		nodes.MustLockProcess(id, func(process models.Process) {
+			if err != nil {
+				log.Error("Process Failed", meta)
+				process.Status = models.ProcessStatusFailed
+			} else {
+				log.Info("Process Done", meta)
+				process.Status = models.ProcessStatusDone
+			}
+
+			nodes.MustStoreProcess(process)
+		})
+
+		subs.Publish(models.ProcessUpserted, id)
+		subs.Publish(models.ProcessGroupUpserted, processGroupID)
+	}()
+}
+
+func run(
+	command string,
+	dir string,
+	stdout io.Writer,
+	stderr io.Writer,
+) error {
+	cmd := exec.Command("bash", "-l", "-c", command)
+	cmd.Dir = dir
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	return cmd.Run()
 }

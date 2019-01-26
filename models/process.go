@@ -14,15 +14,18 @@
 
 package models
 
-// Message types.
-const (
-	WorkspaceUpdated     = "WORKSPACE_UPDATED"
-	ProjectUpdated       = "PROJECT_UPDATED"
-	TaskUpdated          = "TASK_UPDATED"
-	JobUpserted          = "JOB_UPSERTED"
-	JobMetricsUpdated    = "JOB_METRICS_UPDATED"
-	ProcessGroupUpserted = "PROCESS_GROUP_UPSERTED"
-	ProcessUpserted      = "PROCESS_UPSERTED"
-	LogEntryAdded        = "LOG_ENTRY_ADDED"
-	LogMetricsUpdated    = "LOG_METRICS_UPDATED"
-)
+// Process represents a process in the app.
+type Process struct {
+	ID             string        `json:"id"`
+	Command        string        `json:"command"`
+	ProcessGroupID string        `json:"processGroupID"`
+	Status         ProcessStatus `json:"status"`
+}
+
+// IsNode tells gqlgen that it implements Node.
+func (Process) IsNode() {}
+
+// ProcessGroup returns the ProcessGroup associated with the Process.
+func (p Process) ProcessGroup(nodes *NodeManager) ProcessGroup {
+	return nodes.MustLoadProcessGroup(p.ProcessGroupID)
+}

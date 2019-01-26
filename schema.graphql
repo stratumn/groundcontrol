@@ -92,6 +92,7 @@ type System implements Node {
     before: String
     first: Int
     last: Int
+    status: [ProcessStatus!]
   ): ProcessGroupConnection!
   processGroupMetrics: ProcessGroupMetrics!
   logEntries(
@@ -141,8 +142,15 @@ type JobMetrics implements Node {
 type ProcessGroup implements Node {
   id: ID!
   createdAt: DateTime!
-  workspace: Workspace!
+  status: ProcessStatus!
+  task: Task!
   processes: [Process!]!
+}
+
+enum ProcessStatus {
+  RUNNING
+  DONE
+  FAILED
 }
 
 type ProcessGroupConnection {
@@ -163,8 +171,8 @@ type ProcessGroupMetrics implements Node {
 type Process implements Node {
   id: ID!
   command: String!
+  status: ProcessStatus!
   processGroup: ProcessGroup!
-  isRunning: Boolean!
 }
 
 type LogEntry implements Node {

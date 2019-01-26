@@ -4,14 +4,6 @@
   font-family: monospace;
 }
 
-.LogEntryTableRowCreatedAt {
-  width: 15em;
-}
-
-.LogEntryTableRowLevel {
-  width: 6em;
-}
-
 .ui.table .LogEntryTableRow td.warning {
   background: inherit !important;
   color: #a333c8 !important;

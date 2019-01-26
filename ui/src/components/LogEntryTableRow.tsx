@@ -48,13 +48,17 @@ export class LogEntryTableRow extends Component<IProps> {
         className="LogEntryTableRow"
         verticalAlign="top"
       >
-        <Table.Cell className="LogEntryTableRowCreatedAt">
+        <Table.Cell
+          className="LogEntryTableRowCreatedAt"
+          collapsing={true}
+        >
           <Moment format={dateFormat}>{item.createdAt}</Moment>
         </Table.Cell>
         <Table.Cell
           className="LogEntryTableRowLevel"
           warning={item.level === "WARNING"}
           error={item.level === "ERROR"}
+          collapsing={true}
         >
           {item.level}
         </Table.Cell>

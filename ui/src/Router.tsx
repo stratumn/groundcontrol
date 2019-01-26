@@ -30,6 +30,7 @@ import ErrorPage from "./containers/ErrorPage";
 import HttpErrorPage from "./containers/HttpErrorPage";
 import JobListPage from "./containers/JobListPage";
 import LogEntryListPage from "./containers/LogEntryListPage";
+import ProcessGroupListPage from "./containers/ProcessGroupListPage";
 import WorkspaceListPage from "./containers/WorkspaceListPage";
 import WorkspaceViewPage from "./containers/WorkspaceViewPage";
 
@@ -65,6 +66,14 @@ const jobListQuery = graphql`
   }
 `;
 
+const processGroupListQuery = graphql`
+  query RouterProcessGroupListQuery($status: [ProcessStatus!]) {
+    system {
+      ...ProcessGroupListPage_system @arguments(status: $status)
+    }
+  }
+`;
+
 const logEntryListQuery = graphql`
   query RouterLogEntryListQuery($level: [LogLevel!]) {
     system {
@@ -74,6 +83,10 @@ const logEntryListQuery = graphql`
 `;
 
 function prepareJobListVariables({ filters }: { filters: string }) {
+  return { status: filters ? filters.split(",") : null };
+}
+
+function prepareProcessGroupListVariables({ filters }: { filters: string }) {
   return { status: filters ? filters.split(",") : null };
 }
 
@@ -115,6 +128,20 @@ export default createFarceRouter({
           path=":slug"
           Component={WorkspaceViewPage}
           query={workspaceViewQuery}
+          render={render}
+        />
+      </Route>
+      <Route path="processes">
+        <Route
+          Component={ProcessGroupListPage}
+          query={processGroupListQuery}
+          render={render}
+        />
+        <Route
+          path=":filters"
+          Component={ProcessGroupListPage}
+          query={processGroupListQuery}
+          prepareVariables={prepareProcessGroupListVariables}
           render={render}
         />
       </Route>

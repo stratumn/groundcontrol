@@ -75,14 +75,24 @@ func (r *Resolver) Step() gql.StepResolver {
 	return &stepResolver{r}
 }
 
+// System returns the resolver for system data.
+func (r *Resolver) System() gql.SystemResolver {
+	return &systemResolver{r}
+}
+
 // Job returns the resolver for a job.
 func (r *Resolver) Job() gql.JobResolver {
 	return &jobResolver{r}
 }
 
-// System returns the resolver for system data.
-func (r *Resolver) System() gql.SystemResolver {
-	return &systemResolver{r}
+// ProcessGroup returns the resolver for a process group.
+func (r *Resolver) ProcessGroup() gql.ProcessGroupResolver {
+	return &processGroupResolver{r}
+}
+
+// Process returns the resolver for a process.
+func (r *Resolver) Process() gql.ProcessResolver {
+	return &processResolver{r}
 }
 
 // CreateResolver creates a resolver from a config file.

@@ -17,13 +17,17 @@ models:
     model: github.com/stratumn/groundcontrol/models.Workspace
   Project:
     model: github.com/stratumn/groundcontrol/models.Project
-  Job:
-    model: github.com/stratumn/groundcontrol/models.Job
   System:
     model: github.com/stratumn/groundcontrol/models.System
+  Job:
+    model: github.com/stratumn/groundcontrol/models.Job
   Task:
     model: github.com/stratumn/groundcontrol/models.Task
   Step:
     model: github.com/stratumn/groundcontrol/models.Step
+  ProcessGroup:
+    model: github.com/stratumn/groundcontrol/models.ProcessGroup
+  Process:
+    model: github.com/stratumn/groundcontrol/models.Process
   PageInfo:
     model: github.com/stratumn/groundcontrol/relay.PageInfo

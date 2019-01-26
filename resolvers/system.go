@@ -50,8 +50,9 @@ func (r *systemResolver) ProcessGroups(
 	before *string,
 	first *int,
 	last *int,
+	status []models.ProcessStatus,
 ) (models.ProcessGroupConnection, error) {
-	return obj.ProcessGroups(r.Nodes, after, before, first, last)
+	return obj.ProcessGroups(r.Nodes, after, before, first, last, status)
 }
 
 func (r *systemResolver) ProcessGroupMetrics(

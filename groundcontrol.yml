@@ -48,3 +48,29 @@ workspaces:
       commands:
       - spawn yarn start
       background: true
+- name: stratumn.com
+  slug: stratumn.com
+  description: A workspace containing all the master branches of the stratumn.com projects.
+  notes: You need ruby, rvm, node, and yarn.
+  projects:
+  - slug: stratumn.com
+    repository: git@github.com:stratumn/stratumn.com.git
+    branch: redesign
+    description: The main stratumn.com repo.
+  tasks:
+  - name: Install dependencies
+    steps:
+    - projects:
+      - stratumn.com
+      commands:
+      - rvm install $(cat .ruby-version) --with-openssl-dir=/usr/local/opt/openssl
+      - rvm use $(cat .ruby-version)
+      - gem install bundler
+      - bundle install
+      - yarn install
+  - name: Launch
+    steps:
+    - projects:
+      - stratumn.com
+      commands:
+      - spawn yarn serve
