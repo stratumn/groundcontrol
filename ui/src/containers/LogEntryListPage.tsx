@@ -62,7 +62,7 @@ export class LogEntryListPage extends Component<IProps> {
           color="grey"
           onClick={this.handleLoadMore}
         >
-          Load More
+          Load Older Entries
         </Button>
       </Page>
     );
@@ -90,7 +90,7 @@ export class LogEntryListPage extends Component<IProps> {
 
   private handleLoadMore = () => {
     this.props.relay.loadMore(
-      10,
+      50,
       (err) => {
         if (err) {
           console.log(err);
@@ -109,7 +109,7 @@ export default createPaginationContainer(
   graphql`
     fragment LogEntryListPage_system on System
       @argumentDefinitions(
-        count: {type: "Int", defaultValue: 10},
+        count: {type: "Int", defaultValue: 50},
         cursor: {type: "String"},
         level: { type: "[LogLevel!]", defaultValue: null },
       ) {

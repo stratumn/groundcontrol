@@ -39,13 +39,12 @@ export class LogEntryTable extends Component<IProps> {
     ));
 
     return (
-      <Table celled={true} striped={true}>
+      <Table inverted={true}>
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell>Created At</Table.HeaderCell>
             <Table.HeaderCell>Level</Table.HeaderCell>
             <Table.HeaderCell>Message</Table.HeaderCell>
-            <Table.HeaderCell>Meta</Table.HeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>{rows}</Table.Body>

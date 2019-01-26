@@ -118,6 +118,30 @@ func (n *NodeManager) MustLoad{{$type}}(id string) {{$type}} {
 	return node
 }
 
+// Delete{{$type}} deletes a {{$type}}.
+// If the node doesn't exist it's a NOP.
+func (n *NodeManager) Delete{{$type}}(id string) error {
+	identifiers, err := relay.DecodeID(id)
+	if err != nil {
+		return err
+	}
+	if identifiers[0] != NodeType{{$type}} {
+		return ErrType
+	}
+
+	n.store.Delete(id)
+	return nil
+}
+
+// MustDelete{{$type}} deletes a {{$type}} or panics on failure.
+// If the node doesn't exist it's a NOP.
+func (n *NodeManager) MustDelete{{$type}}(id string) {
+	err := n.Delete{{$type}}(id)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // Lock{{$type}} loads a {{$type}} and locks it until the callback returns.
 func (n *NodeManager) Lock{{$type}}(id string, fn func({{$type}})) error {
 	n.Lock(id)

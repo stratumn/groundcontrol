@@ -15,6 +15,8 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import {
+  Accordion,
+  Icon,
   Table,
  } from "semantic-ui-react";
 
@@ -35,25 +37,29 @@ export class LogEntryTableRow extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
+    const panels = [{
+      content: JSON.stringify(JSON.parse(item.metaJSON), null, 2),
+      key: "details",
+      title: item.message,
+    }];
 
     return (
-      <Table.Row className="LogEntryTableRow">
-        <Table.Cell>
+      <Table.Row
+        className="LogEntryTableRow"
+        verticalAlign="top"
+      >
+        <Table.Cell className="LogEntryTableRowCreatedAt">
           <Moment format={dateFormat}>{item.createdAt}</Moment>
         </Table.Cell>
         <Table.Cell
+          className="LogEntryTableRowLevel"
           warning={item.level === "WARNING"}
-          negative={item.level === "ERROR"}
+          error={item.level === "ERROR"}
         >
           {item.level}
         </Table.Cell>
-        <Table.Cell>{item.message}</Table.Cell>
         <Table.Cell>
-          <code>
-            <pre>
-              {item.metaJSON ? JSON.stringify(JSON.parse(item.metaJSON), null, 2) : ""}
-            </pre>
-          </code>
+          <Accordion panels={panels} />
         </Table.Cell>
       </Table.Row>
     );

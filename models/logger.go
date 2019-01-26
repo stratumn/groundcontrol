@@ -41,7 +41,9 @@ type Logger struct {
 	level    LogLevel
 	systemID string
 
-	nextID uint64
+	nextID       uint64
+	logEntryIDs  []string
+	logEntryHead int
 
 	debugCounter   int64
 	infoCounter    int64
@@ -58,16 +60,13 @@ func NewLogger(
 	systemID string,
 ) *Logger {
 	return &Logger{
-		nodes:    nodes,
-		subs:     subs,
-		cap:      cap,
-		systemID: systemID,
+		nodes:        nodes,
+		subs:         subs,
+		cap:          cap,
+		systemID:     systemID,
+		logEntryIDs:  make([]string, cap*2),
+		logEntryHead: cap * 2,
 	}
-}
-
-// Cap returns the capacity of the logger.
-func (l *Logger) Cap() int {
-	return l.cap
 }
 
 // Add adds a log entry.
@@ -103,14 +102,39 @@ func (l *Logger) Add(
 	l.subs.Publish(LogEntryAdded, logEntry.ID)
 
 	l.nodes.MustLockSystem(l.systemID, func(system System) {
-		if len(system.LogEntryIDs) >= l.cap*2 {
-			// TODO: remove previous log entries
-			logEntryIDs := make([]string, l.cap, l.cap*2)
-			copy(logEntryIDs, system.LogEntryIDs[:l.cap])
-			system.LogEntryIDs = logEntryIDs
+		l.logEntryHead--
+
+		if l.logEntryHead < 0 {
+			copy(l.logEntryIDs[l.cap+1:], l.logEntryIDs[:l.cap-1])
+			l.logEntryHead = l.cap
 		}
 
-		system.LogEntryIDs = append([]string{logEntry.ID}, system.LogEntryIDs...)
+		if l.logEntryHead < l.cap {
+			oldEntryID := l.logEntryIDs[l.logEntryHead+l.cap]
+			oldEntry := l.nodes.MustLoadLogEntry(oldEntryID)
+
+			switch oldEntry.Level {
+			case LogLevelDebug:
+				atomic.AddInt64(&l.debugCounter, -1)
+			case LogLevelInfo:
+				atomic.AddInt64(&l.infoCounter, -1)
+			case LogLevelWarning:
+				atomic.AddInt64(&l.warningCounter, -1)
+			case LogLevelError:
+				atomic.AddInt64(&l.errorCounter, -1)
+			}
+
+			l.nodes.MustDeleteLogEntry(oldEntryID)
+		}
+
+		l.logEntryIDs[l.logEntryHead] = logEntry.ID
+
+		end := l.logEntryHead + l.cap
+		if end > l.cap*2 {
+			end = l.cap * 2
+		}
+		system.LogEntryIDs = l.logEntryIDs[l.logEntryHead:end]
+
 		l.nodes.MustStoreSystem(system)
 	})
 

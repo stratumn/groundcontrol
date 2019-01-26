@@ -17,22 +17,31 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/shurcooL/vfsgen"
 )
 
+func checkError(err error) {
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	var fs http.FileSystem = http.Dir("ui/build")
 
-	err := vfsgen.Generate(fs, vfsgen.Options{
+	err := os.Remove("auto_ui.go")
+	checkError(err)
+
+	err = vfsgen.Generate(fs, vfsgen.Options{
 		PackageName:  "main",
 		BuildTags:    "release",
 		VariableName: "embeddedUI",
 		Filename:     "auto_ui.go",
 	})
-	if err != nil {
-		log.Fatalln(err)
-	}
+	checkError(err)
 }

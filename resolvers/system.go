@@ -70,7 +70,7 @@ func (r *systemResolver) LogEntries(
 	last *int,
 	level []models.LogLevel,
 ) (models.LogEntryConnection, error) {
-	return obj.LogEntries(r.Nodes, r.Log.Cap(), after, before, first, last, level)
+	return obj.LogEntries(r.Nodes, after, before, first, last, level)
 }
 
 func (r *systemResolver) LogMetrics(

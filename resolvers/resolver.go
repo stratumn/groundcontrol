@@ -117,7 +117,7 @@ func CreateResolver(filename string) (*Resolver, error) {
 	})
 
 	subs := pubsub.New()
-	log := models.NewLogger(nodes, subs, 100, models.LogLevelDebug, systemID)
+	log := models.NewLogger(nodes, subs, 10000, models.LogLevelDebug, systemID)
 	jobs := models.NewJobManager(nodes, log, subs, 2, systemID)
 
 	return &Resolver{

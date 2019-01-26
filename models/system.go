@@ -101,7 +101,6 @@ func (s System) ProcessGroupMetrics(nodes *NodeManager) ProcessGroupMetrics {
 // LogEntries returns paginated log entries.
 func (s System) LogEntries(
 	nodes *NodeManager,
-	cap int,
 	after *string,
 	before *string,
 	first *int,
@@ -110,11 +109,7 @@ func (s System) LogEntries(
 ) (LogEntryConnection, error) {
 	var slice []LogEntry
 
-	if cap > len(s.LogEntryIDs) {
-		cap = len(s.LogEntryIDs)
-	}
-
-	for _, nodeID := range s.LogEntryIDs[:cap] {
+	for _, nodeID := range s.LogEntryIDs {
 		node := nodes.MustLoadLogEntry(nodeID)
 		match := len(level) == 0
 
