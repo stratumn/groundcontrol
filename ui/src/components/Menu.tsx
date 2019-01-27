@@ -26,9 +26,7 @@ interface IProps {
 
 export class Menu extends Component<IProps> {
   public render() {
-    const { queued, running } = this.props.system.jobMetrics;
-    const { error } = this.props.system.logMetrics;
-    const active = queued + running;
+    const { jobMetrics, processMetrics, logMetrics } = this.props.system;
 
     return (
       <SemanticMenu
@@ -52,7 +50,7 @@ export class Menu extends Component<IProps> {
           >
             Jobs
             <Label color="blue">
-              {active}
+              {jobMetrics.queued + jobMetrics.running}
             </Label>
           </Link>
           <Link
@@ -61,6 +59,9 @@ export class Menu extends Component<IProps> {
             activePropName="active"
           >
             Processes
+            <Label color="blue">
+              {processMetrics.running}
+            </Label>
           </Link>
           <Link
             to="/logs"
@@ -69,7 +70,7 @@ export class Menu extends Component<IProps> {
           >
             Logs
             <Label color="pink">
-              {error}
+              {logMetrics.error}
             </Label>
           </Link>
         </Container>
@@ -78,14 +79,20 @@ export class Menu extends Component<IProps> {
   }
 }
 
-export const jobMetrics = graphql`
+export const jobMetricsFragment = graphql`
   fragment Menu_jobMetrics on JobMetrics {
     queued
     running
   }
 `;
 
-export const logMetrics = graphql`
+export const processMetricsFragment = graphql`
+  fragment Menu_processMetrics on ProcessMetrics {
+    running
+  }
+`;
+
+export const logMetricsFragment = graphql`
   fragment Menu_logMetrics on LogMetrics {
     error
   }
@@ -95,6 +102,9 @@ export default createFragmentContainer(Menu, graphql`
   fragment Menu_system on System {
     jobMetrics {
       ...Menu_jobMetrics @relay(mask: false)
+    }
+    processMetrics {
+      ...Menu_processMetrics @relay(mask: false)
     }
     logMetrics {
       ...Menu_logMetrics @relay(mask: false)

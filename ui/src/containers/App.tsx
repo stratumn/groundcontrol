@@ -23,6 +23,7 @@ import { App_system } from "./__generated__/App_system.graphql";
 import Menu from "../components/Menu";
 import { subscribe as subscribeJobMetrics } from "../subscriptions/jobMetricsUpdated";
 import { subscribe as subscribeLogMetrics } from "../subscriptions/logMetricsUpdated";
+import { subscribe as subscribeProcessMetrics } from "../subscriptions/processMetricsUpdated";
 
 import "./App.css";
 
@@ -51,6 +52,7 @@ export class App extends Component<IProps> {
   public componentDidMount() {
     const environment = this.props.relay.environment;
     this.disposables.push(subscribeJobMetrics(environment));
+    this.disposables.push(subscribeProcessMetrics(environment));
     this.disposables.push(subscribeLogMetrics(environment));
   }
 
