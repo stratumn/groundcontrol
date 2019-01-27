@@ -94,7 +94,7 @@ type System implements Node {
     last: Int
     status: [ProcessStatus!]
   ): ProcessGroupConnection!
-  processGroupMetrics: ProcessGroupMetrics!
+  processMetrics: ProcessMetrics!
   logEntries(
     after: String
     before: String
@@ -163,9 +163,11 @@ type ProcessGroupEdge {
   node: ProcessGroup!
 }
 
-type ProcessGroupMetrics implements Node {
+type ProcessMetrics implements Node {
   id: ID!
   running: Int!
+  done: Int!
+  failed: Int!
 }
 
 type Process implements Node {
@@ -238,6 +240,9 @@ type Subscription {
   taskUpdated(id: ID): Task!
   jobUpserted: Job!
   jobMetricsUpdated: JobMetrics!
+  processGroupUpserted: ProcessGroup!
+  processUpserted: Process!
+  processMetricsUpdated: ProcessMetrics!
   logEntryAdded: LogEntry!
   logMetricsUpdated: LogMetrics!
 }

@@ -15,50 +15,20 @@
 package jobs
 
 import (
-	"bufio"
-	"fmt"
 	"io"
 	"os/exec"
 	"strings"
-	"sync/atomic"
-	"time"
 
-	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
 )
-
-var (
-	nextProcessGroupID uint64
-	nextProcessID      uint64
-)
-
-// Remember to call close().
-func createCommandWriter(
-	write func(string, interface{}) string,
-	meta interface{},
-) io.WriteCloser {
-	r, w := io.Pipe()
-	scanner := bufio.NewScanner(r)
-
-	go func() {
-		for scanner.Scan() {
-			write(scanner.Text(), meta)
-
-			// Don't kill the poor browser.
-			time.Sleep(10 * time.Millisecond)
-		}
-	}()
-
-	return w
-}
 
 // Run runs a remote repository locally.
 func Run(
 	nodes *models.NodeManager,
 	log *models.Logger,
 	jobs *models.JobManager,
+	pm *models.ProcessManager,
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
 	taskID string,
@@ -90,6 +60,7 @@ func Run(
 		return doRun(
 			nodes,
 			log,
+			pm,
 			subs,
 			getProjectPath,
 			taskID,
@@ -104,6 +75,7 @@ func Run(
 func doRun(
 	nodes *models.NodeManager,
 	log *models.Logger,
+	pm *models.ProcessManager,
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
 	taskID string,
@@ -130,10 +102,10 @@ func doRun(
 				projectPath := getProjectPath(workspace.Slug, project.Repository, project.Branch)
 
 				meta := struct {
-					TaskID      string
-					ProjectID   string
-					ProjectPath string
-					Command     string
+					TaskID    string
+					ProjectID string
+					Dir       string
+					Command   string
 				}{
 					taskID,
 					project.ID,
@@ -145,41 +117,17 @@ func doRun(
 
 				if len(parts) > 0 && parts[0] == "spawn" {
 					if processGroupID == "" {
-						processGroupID = relay.EncodeID(
-							models.NodeTypeProcessGroup,
-							fmt.Sprint(atomic.AddUint64(&nextProcessGroupID, 1)),
-						)
-						nodes.MustStoreProcessGroup(models.ProcessGroup{
-							ID:        processGroupID,
-							CreatedAt: date.NowFormatted(),
-							TaskID:    taskID,
-						})
-						nodes.MustLockSystem(systemID, func(system models.System) {
-							system.ProcessGroupIDs = append(
-								[]string{processGroupID},
-								system.ProcessGroupIDs...,
-							)
-							nodes.MustStoreSystem(system)
-						})
+						processGroupID = pm.CreateGroup(taskID)
 					}
 
 					rest := strings.Join(parts[1:], " ")
-
-					spawn(
-						nodes,
-						log,
-						subs,
-						rest,
-						projectPath,
-						processGroupID,
-						project.ID,
-					)
+					pm.Run(rest, processGroupID, project.ID, projectPath)
 
 					continue
 				}
 
-				stdout := createCommandWriter(log.Info, meta)
-				stderr := createCommandWriter(log.Warning, meta)
+				stdout := models.CreateLineWriter(log.Info, meta)
+				stderr := models.CreateLineWriter(log.Warning, meta)
 				err := run(command, projectPath, stdout, stderr)
 
 				stdout.Close()
@@ -193,71 +141,6 @@ func doRun(
 	}
 
 	return nil
-}
-
-func spawn(
-	nodes *models.NodeManager,
-	log *models.Logger,
-	subs *pubsub.PubSub,
-	command string,
-	projectPath string,
-	processGroupID string,
-	projectID string,
-) {
-	meta := struct {
-		ProjectPath    string
-		Command        string
-		ProcessGroupID string
-	}{
-		projectPath,
-		command,
-		processGroupID,
-	}
-
-	id := relay.EncodeID(
-		models.NodeTypeProcess,
-		fmt.Sprint(atomic.AddUint64(&nextProcessID, 1)),
-	)
-
-	process := models.Process{
-		ID:             id,
-		Command:        command,
-		Status:         models.ProcessStatusRunning,
-		ProcessGroupID: processGroupID,
-		ProjectID:      projectID,
-	}
-
-	nodes.MustStoreProcess(process)
-
-	nodes.MustLockProcessGroup(processGroupID, func(processGroup models.ProcessGroup) {
-		processGroup.ProcessIDs = append(processGroup.ProcessIDs, id)
-		nodes.MustStoreProcessGroup(processGroup)
-	})
-
-	subs.Publish(models.ProcessUpserted, id)
-	subs.Publish(models.ProcessGroupUpserted, processGroupID)
-
-	go func() {
-		stdout := createCommandWriter(log.Info, meta)
-		stderr := createCommandWriter(log.Warning, meta)
-
-		err := run(command, projectPath, stdout, stderr)
-
-		nodes.MustLockProcess(id, func(process models.Process) {
-			if err != nil {
-				log.Error("Process Failed", meta)
-				process.Status = models.ProcessStatusFailed
-			} else {
-				log.Info("Process Done", meta)
-				process.Status = models.ProcessStatusDone
-			}
-
-			nodes.MustStoreProcess(process)
-		})
-
-		subs.Publish(models.ProcessUpserted, id)
-		subs.Publish(models.ProcessGroupUpserted, processGroupID)
-	}()
 }
 
 func run(

@@ -16,13 +16,13 @@ package models
 
 // System contains information about the running app.
 type System struct {
-	ID                    string   `json:"id"`
-	JobIDs                []string `json:"jobsIDs"`
-	JobMetricsID          string   `json:"jobMetricsID"`
-	ProcessGroupIDs       []string `json:"processGroupIDs"`
-	ProcessGroupMetricsID string   `json:"processGroupMetricsID"`
-	LogEntryIDs           []string `json:"logEntryIDs"`
-	LogMetricsID          string   `json:"logMetricsID"`
+	ID               string   `json:"id"`
+	JobIDs           []string `json:"jobsIDs"`
+	JobMetricsID     string   `json:"jobMetricsID"`
+	ProcessGroupIDs  []string `json:"processGroupIDs"`
+	ProcessMetricsID string   `json:"processMetricsID"`
+	LogEntryIDs      []string `json:"logEntryIDs"`
+	LogMetricsID     string   `json:"logMetricsID"`
 }
 
 // IsNode tells gqlgen that it implements Node.
@@ -105,9 +105,9 @@ func (s System) ProcessGroups(
 	)
 }
 
-// ProcessGroupMetrics returns the ProcessGroupMetrics node.
-func (s System) ProcessGroupMetrics(nodes *NodeManager) ProcessGroupMetrics {
-	return nodes.MustLoadProcessGroupMetrics(s.ProcessGroupMetricsID)
+// ProcessMetrics returns the ProcessMetrics node.
+func (s System) ProcessMetrics(nodes *NodeManager) ProcessMetrics {
+	return nodes.MustLoadProcessMetrics(s.ProcessMetricsID)
 }
 
 // LogEntries returns paginated log entries.

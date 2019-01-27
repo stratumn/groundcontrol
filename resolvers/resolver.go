@@ -29,6 +29,7 @@ type Resolver struct {
 	Nodes          *models.NodeManager
 	Log            *models.Logger
 	Jobs           *models.JobManager
+	PM             *models.ProcessManager
 	Subs           *pubsub.PubSub
 	GetProjectPath models.ProjectPathGetter
 	ViewerID       string
@@ -111,6 +112,7 @@ func CreateResolver(filename string) (*Resolver, error) {
 	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, filename)
 	systemID := relay.EncodeID(models.NodeTypeSystem, filename)
 	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, filename)
+	processMetricsID := relay.EncodeID(models.NodeTypeProcessMetrics, filename)
 
 	nodes.MustStoreLogMetrics(models.LogMetrics{
 		ID: logMetricsID,
@@ -120,20 +122,27 @@ func CreateResolver(filename string) (*Resolver, error) {
 		ID: jobMetricsID,
 	})
 
+	nodes.MustStoreProcessMetrics(models.ProcessMetrics{
+		ID: processMetricsID,
+	})
+
 	nodes.MustStoreSystem(models.System{
-		ID:           systemID,
-		JobMetricsID: jobMetricsID,
-		LogMetricsID: logMetricsID,
+		ID:               systemID,
+		JobMetricsID:     jobMetricsID,
+		LogMetricsID:     logMetricsID,
+		ProcessMetricsID: processMetricsID,
 	})
 
 	subs := pubsub.New()
 	log := models.NewLogger(nodes, subs, 10000, models.LogLevelDebug, systemID)
 	jobs := models.NewJobManager(nodes, log, subs, 2, systemID)
+	pm := models.NewProcessManager(nodes, log, subs, systemID)
 
 	return &Resolver{
 		Nodes: nodes,
 		Log:   log,
 		Jobs:  jobs,
+		PM:    pm,
 		Subs:  subs,
 		GetProjectPath: func(workspaceSlug, repo, branch string) string {
 			name := path.Base(repo)

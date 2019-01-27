@@ -16,13 +16,14 @@ package models
 
 // Message types.
 const (
-	WorkspaceUpdated     = "WORKSPACE_UPDATED"
-	ProjectUpdated       = "PROJECT_UPDATED"
-	TaskUpdated          = "TASK_UPDATED"
-	JobUpserted          = "JOB_UPSERTED"
-	JobMetricsUpdated    = "JOB_METRICS_UPDATED"
-	ProcessGroupUpserted = "PROCESS_GROUP_UPSERTED"
-	ProcessUpserted      = "PROCESS_UPSERTED"
-	LogEntryAdded        = "LOG_ENTRY_ADDED"
-	LogMetricsUpdated    = "LOG_METRICS_UPDATED"
+	WorkspaceUpdated      = "WORKSPACE_UPDATED"
+	ProjectUpdated        = "PROJECT_UPDATED"
+	TaskUpdated           = "TASK_UPDATED"
+	JobUpserted           = "JOB_UPSERTED"
+	JobMetricsUpdated     = "JOB_METRICS_UPDATED"
+	ProcessGroupUpserted  = "PROCESS_GROUP_UPSERTED"
+	ProcessUpserted       = "PROCESS_UPSERTED"
+	ProcessMetricsUpdated = "PROCESS_METRICS_UPDATED"
+	LogEntryAdded         = "LOG_ENTRY_ADDED"
+	LogMetricsUpdated     = "LOG_METRICS_UPDATED"
 )

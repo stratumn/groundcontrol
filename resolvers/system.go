@@ -55,11 +55,11 @@ func (r *systemResolver) ProcessGroups(
 	return obj.ProcessGroups(r.Nodes, after, before, first, last, status)
 }
 
-func (r *systemResolver) ProcessGroupMetrics(
+func (r *systemResolver) ProcessMetrics(
 	ctx context.Context,
 	obj *models.System,
-) (models.ProcessGroupMetrics, error) {
-	return obj.ProcessGroupMetrics(r.Nodes), nil
+) (models.ProcessMetrics, error) {
+	return obj.ProcessMetrics(r.Nodes), nil
 }
 
 func (r *systemResolver) LogEntries(

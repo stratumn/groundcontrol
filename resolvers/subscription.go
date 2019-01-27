@@ -194,6 +194,93 @@ func (r *subscriptionResolver) JobMetricsUpdated(
 	return ch, nil
 }
 
+func (r *subscriptionResolver) ProcessGroupUpserted(
+	ctx context.Context,
+) (<-chan models.ProcessGroup, error) {
+	meta := struct {
+		MessageType string
+	}{
+		models.ProcessGroupUpserted,
+	}
+
+	r.Log.Debug("Subscribe", meta)
+	go func() {
+		<-ctx.Done()
+		r.Log.Debug("Unsubscribe", meta)
+	}()
+
+	ch := make(chan models.ProcessGroup, SubscriptionChannelSize)
+
+	r.Subs.Subscribe(ctx, models.ProcessGroupUpserted, func(msg interface{}) {
+		select {
+		case ch <- r.Nodes.MustLoadProcessGroup(msg.(string)):
+			r.Log.Debug("Send Message", meta)
+		default:
+			r.Log.Debug("Drop Message", meta)
+		}
+	})
+
+	return ch, nil
+}
+
+func (r *subscriptionResolver) ProcessUpserted(
+	ctx context.Context,
+) (<-chan models.Process, error) {
+	meta := struct {
+		MessageType string
+	}{
+		models.ProcessUpserted,
+	}
+
+	r.Log.Debug("Subscribe", meta)
+	go func() {
+		<-ctx.Done()
+		r.Log.Debug("Unsubscribe", meta)
+	}()
+
+	ch := make(chan models.Process, SubscriptionChannelSize)
+
+	r.Subs.Subscribe(ctx, models.ProcessUpserted, func(msg interface{}) {
+		select {
+		case ch <- r.Nodes.MustLoadProcess(msg.(string)):
+			r.Log.Debug("Send Message", meta)
+		default:
+			r.Log.Debug("Drop Message", meta)
+		}
+	})
+
+	return ch, nil
+}
+
+func (r *subscriptionResolver) ProcessMetricsUpdated(
+	ctx context.Context,
+) (<-chan models.ProcessMetrics, error) {
+	meta := struct {
+		MessageType string
+	}{
+		models.ProcessMetricsUpdated,
+	}
+
+	r.Log.Debug("Subscribe", meta)
+	go func() {
+		<-ctx.Done()
+		r.Log.Debug("Unsubscribe", meta)
+	}()
+
+	ch := make(chan models.ProcessMetrics, SubscriptionChannelSize)
+
+	r.Subs.Subscribe(ctx, models.ProcessMetricsUpdated, func(msg interface{}) {
+		select {
+		case ch <- r.Nodes.MustLoadProcessMetrics(msg.(string)):
+			r.Log.Debug("Send Message", meta)
+		default:
+			r.Log.Debug("Drop Message", meta)
+		}
+	})
+
+	return ch, nil
+}
+
 // Note: don't log log events, it would go in infinite loop.
 
 func (r *subscriptionResolver) LogEntryAdded(
