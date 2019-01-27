@@ -39,10 +39,7 @@ export class JobTable extends Component<IProps> {
     ));
 
     return (
-      <Table
-        inverted={true}
-        celled={true}
-      >
+      <Table inverted={true}>
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell>Name</Table.HeaderCell>

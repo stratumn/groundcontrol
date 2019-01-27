@@ -15,11 +15,12 @@
 import graphql from "babel-plugin-relay/macro";
 import { Link } from "found";
 import React, { Component } from "react";
-import { createFragmentContainer } from "react-relay";
 import Moment from "react-moment";
+import { createFragmentContainer } from "react-relay";
 import {
   Button,
   Card,
+  Icon,
  } from "semantic-ui-react";
 
 import { ProcessGroupCard_item } from "./__generated__/ProcessGroupCard_item.graphql";
@@ -32,6 +33,10 @@ const dateFormat = "L LTS";
 
 interface IProps {
   item: ProcessGroupCard_item;
+  onStartGroup: () => any;
+  onStopGroup: () => any;
+  onStartProcess: (id: string) => any;
+  onStopProcess: (id: string) => any;
 }
 
 export class ProcessGroupCard extends Component<IProps> {
@@ -44,6 +49,12 @@ export class ProcessGroupCard extends Component<IProps> {
       task: { workspace },
       processes,
     } = this.props.item;
+    const {
+      onStartGroup,
+      onStopGroup,
+      onStartProcess,
+      onStopProcess,
+    } = this.props;
     const buttons: JSX.Element[] = [];
 
     let color: "grey" | "teal" | "pink" = "grey";
@@ -54,9 +65,13 @@ export class ProcessGroupCard extends Component<IProps> {
       buttons.push((
         <Button
           key="stop"
-          color="pink"
+          color="teal"
           floated="right"
+          icon={true}
+          labelPosition="left"
+          onClick={onStopGroup}
         >
+          <Icon name="pause" />
           Stop Group
         </Button>
       ));
@@ -69,7 +84,11 @@ export class ProcessGroupCard extends Component<IProps> {
           key="start"
           color="teal"
           floated="right"
+          icon={true}
+          labelPosition="left"
+          onClick={onStartGroup}
         >
+          <Icon name="play" />
           Start Group
         </Button>
       ));
@@ -93,7 +112,11 @@ export class ProcessGroupCard extends Component<IProps> {
             <Moment format={dateFormat}>{createdAt}</Moment>
           </Card.Meta>
         </Card.Content>
-        <ProcessTable items={processes} />
+        <ProcessTable
+          items={processes}
+          onStart={onStartProcess}
+          onStop={onStopProcess}
+        />
       </Card>
     );
   }

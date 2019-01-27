@@ -23,20 +23,37 @@ import ProcessGroupCard from "./ProcessGroupCard";
 
 interface IProps {
   items: ProcessGroupCardGroup_items;
+  onStartGroup: (id: string) => any;
+  onStopGroup: (id: string) => any;
+  onStartProcess: (id: string) => any;
+  onStopProcess: (id: string) => any;
 }
 
 export class ProcessGroupCardGroup extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
+    const { onStartProcess, onStopProcess } = this.props;
     const cards = items.map((item) => (
       <ProcessGroupCard
         key={item.id}
         item={item}
+        onStartGroup={this.handleStartGroup.bind(this, item.id)}
+        onStopGroup={this.handleStopGroup.bind(this, item.id)}
+        onStartProcess={onStartProcess}
+        onStopProcess={onStopProcess}
       />
      ));
 
     return <Card.Group>{cards}</Card.Group>;
+  }
+
+  private handleStartGroup(id: string) {
+    this.props.onStartGroup(id);
+  }
+
+  private handleStopGroup(id: string) {
+    this.props.onStopGroup(id);
   }
 
 }

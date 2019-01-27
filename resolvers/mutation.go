@@ -132,3 +132,49 @@ func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, erro
 
 	return r.Nodes.MustLoadJob(jobID), nil
 }
+
+func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) ([]models.Job, error) {
+	processGroup, err := r.Nodes.LoadProcessGroup(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var slice []models.Job
+
+	for _, project := range processGroup.Processes(r.Nodes) {
+		if project.Status == models.ProcessStatusRunning {
+			continue
+		}
+
+		slice = append(slice, models.Job{})
+	}
+
+	return slice, nil
+}
+
+func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) ([]models.Job, error) {
+	processGroup, err := r.Nodes.LoadProcessGroup(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var slice []models.Job
+
+	for _, project := range processGroup.Processes(r.Nodes) {
+		if project.Status == models.ProcessStatusRunning {
+			continue
+		}
+
+		slice = append(slice, models.Job{})
+	}
+
+	return slice, nil
+}
+
+func (r *mutationResolver) StartProcess(ctx context.Context, id string) (models.Job, error) {
+	return models.Job{}, nil
+}
+
+func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.Job, error) {
+	return models.Job{}, nil
+}

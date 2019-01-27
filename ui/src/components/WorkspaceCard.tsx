@@ -62,6 +62,7 @@ export class WorkspaceCard extends Component<IProps> {
           key="pull"
           content="Pull"
           color="teal"
+          icon="download"
           disabled={item.isPulling}
           loading={item.isPulling}
           onClick={this.props.onPull}
@@ -73,6 +74,7 @@ export class WorkspaceCard extends Component<IProps> {
           key="clone"
           content="Clone"
           color="teal"
+          icon="clone"
           disabled={item.isCloning}
           loading={item.isCloning}
           onClick={this.props.onClone}

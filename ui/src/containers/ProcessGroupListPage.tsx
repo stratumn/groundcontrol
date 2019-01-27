@@ -24,6 +24,10 @@ import { ProcessGroupListPage_system } from "./__generated__/ProcessGroupListPag
 import Page from "../components/Page";
 import ProcessGroupCardGroup from "../components/ProcessGroupCardGroup";
 import ProcessGroupFilter from "../components/ProcessGroupFilter";
+import { commit as startProcess} from "../mutations/startProcess";
+import { commit as startProcessGroup } from "../mutations/startProcessGroup";
+import { commit as stopProcess} from "../mutations/stopProcess";
+import { commit as stopProcessGroup } from "../mutations/stopProcessGroup";
 
 // import { subscribe } from "../subscriptions/jobUpserted";
 
@@ -55,7 +59,13 @@ export class ProcessGroupListPage extends Component<IProps> {
           filters={filters}
           onChange={this.handleFiltersChange}
         />
-        <ProcessGroupCardGroup items={items} />
+        <ProcessGroupCardGroup
+          items={items}
+          onStartGroup={this.handleStartProcessGroup}
+          onStopGroup={this.handleStopProcessGroup}
+          onStartProcess={this.handleStartProcess}
+          onStopProcess={this.handleStopProcess}
+        />
         <Button
           disabled={!this.props.relay.hasMore() || this.props.relay.isLoading()}
           loading={this.props.relay.isLoading()}
@@ -100,6 +110,22 @@ export class ProcessGroupListPage extends Component<IProps> {
         this.forceUpdate();
       },
     );
+  }
+
+  private handleStartProcessGroup = (id: string) => {
+    startProcessGroup(this.props.relay.environment, id);
+  }
+
+  private handleStopProcessGroup = (id: string) => {
+    stopProcessGroup(this.props.relay.environment, id);
+  }
+
+  private handleStartProcess = (id: string) => {
+    startProcess(this.props.relay.environment, id);
+  }
+
+  private handleStopProcess = (id: string) => {
+    stopProcess(this.props.relay.environment, id);
   }
 
 }

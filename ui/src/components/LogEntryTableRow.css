@@ -1,7 +1,8 @@
 .LogEntryTableRow td {
   word-break: break-all;
   white-space: pre-wrap;
-  font-family: monospace;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-size: .9em;
 }
 
 .ui.table .LogEntryTableRow td.warning {

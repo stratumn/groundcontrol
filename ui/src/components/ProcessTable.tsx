@@ -27,6 +27,8 @@ import "./ProcessTable.css";
 
 interface IProps {
   items: ProcessTable_items;
+  onStart: (id: string) => any;
+  onStop: (id: string) => any;
 }
 
 export class ProcessTable extends Component<IProps> {
@@ -37,6 +39,8 @@ export class ProcessTable extends Component<IProps> {
       <ProcessTableRow
         key={item.id}
         item={item}
+        onStart={this.handleStart.bind(this, item.id)}
+        onStop={this.handleStop.bind(this, item.id)}
       />
     ));
 
@@ -56,6 +60,14 @@ export class ProcessTable extends Component<IProps> {
         <Table.Body>{rows}</Table.Body>
       </Table>
     );
+  }
+
+  private handleStart(id: string) {
+    this.props.onStart(id);
+  }
+
+  private handleStop(id: string) {
+    this.props.onStop(id);
   }
 
 }

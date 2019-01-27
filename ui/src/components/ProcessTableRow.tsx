@@ -14,12 +14,12 @@
 
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
+import { createFragmentContainer } from "react-relay";
 import {
   Button,
+  Icon,
   Table,
  } from "semantic-ui-react";
-
-import { createFragmentContainer } from "react-relay";
 
 import { ProcessTableRow_item } from "./__generated__/ProcessTableRow_item.graphql";
 
@@ -29,12 +29,15 @@ import "./ProcessTableRow.css";
 
 interface IProps {
   item: ProcessTableRow_item;
+  onStart: () => any;
+  onStop: () => any;
 }
 
 export class ProcessTableRow extends Component<IProps> {
 
   public render() {
     const { command, status, project: { repository } } = this.props.item;
+    const { onStart, onStop } = this.props;
     const buttons: JSX.Element[] = [];
 
     switch (status) {
@@ -45,7 +48,11 @@ export class ProcessTableRow extends Component<IProps> {
           key="start"
           size="tiny"
           color="teal"
+          icon={true}
+          labelPosition="left"
+          onClick={onStart}
         >
+          <Icon name="play" />
           Start
         </Button>
       ));
@@ -55,8 +62,11 @@ export class ProcessTableRow extends Component<IProps> {
         <Button
           key="stop"
           size="tiny"
-          color="pink"
+          icon={true}
+          labelPosition="left"
+          onClick={onStop}
         >
+          <Icon name="pause" />
           Stop
         </Button>
       ));

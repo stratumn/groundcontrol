@@ -232,6 +232,10 @@ type Mutation {
   pullProject(id: String!): Job!
   pullWorkspace(id: String!): [Job!]!
   run(id: String!): Job!
+  startProcess(id: String!): Job!
+  stopProcess(id: String!): Job!
+  startProcessGroup(id: String!): [Job!]!
+  stopProcessGroup(id: String!): [Job!]!
 }
 
 type Subscription {
