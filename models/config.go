@@ -40,9 +40,8 @@ type Config struct {
 		Tasks []struct {
 			Name  string `json:"name"`
 			Steps []struct {
-				Projects   []string `json:"projects"`
-				Commands   []string `json:"commands"`
-				Background bool     `json:"background"`
+				Projects []string `json:"projects"`
+				Commands []string `json:"commands"`
 			} `json:"tasks"`
 		} `json:"tasks"`
 	} `json:"workspaces"`
@@ -116,7 +115,6 @@ func (c Config) CreateNodes(nodes *NodeManager) (User, error) {
 					),
 					ProjectIDs: projectIDs,
 					Commands:   stepConfig.Commands,
-					Background: stepConfig.Background,
 					TaskID:     task.ID,
 				}
 

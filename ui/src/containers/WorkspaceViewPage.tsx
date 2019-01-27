@@ -17,6 +17,7 @@ import React, { Component } from "react";
 import ReactMarkdown from "react-markdown";
 import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
+import { Segment } from "semantic-ui-react";
 
 import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_viewer.graphql";
 
@@ -54,16 +55,18 @@ export class WorkspaceViewPage extends Component<IProps> {
         subheader={workspace.description || "No description."}
         icon="cube"
       >
-        <ReactMarkdown
-          className="description"
-          source={notes}
-        />
         <WorkspaceMenu
           workspace={workspace}
           onClone={this.handleCloneWorkspace}
           onPull={this.handlePullWorkspace}
           onRun={this.handleRun}
         />
+        <Segment className="WorkspaceViewPageDescription">
+          <ReactMarkdown
+            source={notes}
+            className="markdown-body"
+          />
+        </Segment>
         <ProjectCardGroup
           items={items}
           onClone={this.handleCloneProject}

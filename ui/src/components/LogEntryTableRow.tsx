@@ -16,7 +16,6 @@ import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import {
   Accordion,
-  Icon,
   Table,
  } from "semantic-ui-react";
 

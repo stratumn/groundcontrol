@@ -26,6 +26,8 @@ import { JobTableRow_item } from "./__generated__/JobTableRow_item.graphql";
 import Moment from "react-moment";
 import RepositoryShortName from "./RepositoryShortName";
 
+import "./JobTableRow.css";
+
 const dateFormat = "L LTS";
 
 interface IProps {
@@ -57,7 +59,7 @@ export class JobTableRow extends Component<IProps> {
     }
 
     return (
-      <Table.Row>
+      <Table.Row className="JobTableRow">
         <Table.Cell>{item.name}</Table.Cell>
         <Table.Cell>
           <Link to={`/workspaces/${workspaceSlug}`}>
@@ -77,7 +79,7 @@ export class JobTableRow extends Component<IProps> {
         <Table.Cell
           positive={item.status === "DONE"}
           warning={item.status === "RUNNING"}
-          negative={item.status === "FAILED"}
+          error={item.status === "FAILED"}
         >
           {item.status}
         </Table.Cell>

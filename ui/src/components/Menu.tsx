@@ -31,7 +31,12 @@ export class Menu extends Component<IProps> {
     const active = queued + running;
 
     return (
-      <SemanticMenu fixed="top" color="teal" inverted={true}>
+      <SemanticMenu
+        fixed="top"
+        size="large"
+        color="teal"
+        inverted={true}
+      >
         <Container>
           <Link
             to="/workspaces"

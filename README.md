@@ -51,7 +51,7 @@ If you didn't run `make`, do:
 
 ```
 make deps
-make generate
+go generate ./...
 ```
 
 ### Server

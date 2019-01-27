@@ -1,0 +1,11 @@
+.ui.card.ProcessGroupCard {
+  margin: 1em .7em;
+}
+
+.ui.card.ProcessGroupCard:first-child {
+  margin-top: 2em;
+}
+
+.ui.card.ProcessGroupCard:last-child {
+  margin-bottom: 2em;
+}

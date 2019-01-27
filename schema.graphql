@@ -173,6 +173,7 @@ type Process implements Node {
   command: String!
   status: ProcessStatus!
   processGroup: ProcessGroup!
+  project: Project!
 }
 
 type LogEntry implements Node {

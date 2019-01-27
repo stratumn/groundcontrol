@@ -155,14 +155,27 @@ func doRun(
 							TaskID:    taskID,
 						})
 						nodes.MustLockSystem(systemID, func(system models.System) {
-							system.ProcessGroupIDs = append(system.ProcessGroupIDs, processGroupID)
+							system.ProcessGroupIDs = append(
+								[]string{processGroupID},
+								system.ProcessGroupIDs...,
+							)
 							nodes.MustStoreSystem(system)
 						})
 					}
 
 					rest := strings.Join(parts[1:], " ")
-					spawn(nodes, log, subs, rest, projectPath, processGroupID)
-					return nil
+
+					spawn(
+						nodes,
+						log,
+						subs,
+						rest,
+						projectPath,
+						processGroupID,
+						project.ID,
+					)
+
+					continue
 				}
 
 				stdout := createCommandWriter(log.Info, meta)
@@ -189,6 +202,7 @@ func spawn(
 	command string,
 	projectPath string,
 	processGroupID string,
+	projectID string,
 ) {
 	meta := struct {
 		ProjectPath    string
@@ -210,6 +224,7 @@ func spawn(
 		Command:        command,
 		Status:         models.ProcessStatusRunning,
 		ProcessGroupID: processGroupID,
+		ProjectID:      projectID,
 	}
 
 	nodes.MustStoreProcess(process)

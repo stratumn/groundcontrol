@@ -28,6 +28,19 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:3c1b2a3b4f61355c883f878b5754bc27c0d159151cf84fbe21913756d74f539c"
+  name = "github.com/aws/aws-lambda-go"
+  packages = [
+    "events",
+    "lambda",
+    "lambda/messages",
+    "lambdacontext",
+  ]
+  pruneopts = "UT"
+  revision = "928161204cad89472f9e6b5dd49ce16bc91230de"
+  version = "v1.8.1"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -49,6 +62,14 @@
   pruneopts = "UT"
   revision = "1615341f118ae12f353cc8a983f35b584342c9b3"
   version = "v1.12.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:81e3822611f995815aae84f75d2a2a705921976364d8bc4280a1c329fd96a3c9"
+  name = "github.com/fnproject/fdk-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bd24a5aa63cf1a4355575d8eec6cd30d4702d99b"
 
 [[projects]]
   digest = "1:b8d8afedc1ea9028d6b8a037a61acaf5bac8ffb1ceb4b285a0af6654bfc62f16"
@@ -212,7 +233,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bf70dfc25db5199c8b6ba168f153ab18bc6d734c8ff03b254aaba4074a4089ee"
+  digest = "1:eae9b4f01be64e3bff53d6389cd0e5d0dbce5b95051a855e5f586d8fe6720543"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -227,6 +248,7 @@
     "openpgp/errors",
     "openpgp/packet",
     "openpgp/s2k",
+    "pbkdf2",
     "poly1305",
     "ssh",
     "ssh/agent",
@@ -372,16 +394,16 @@
   analyzer-version = 1
   input-imports = [
     "github.com/99designs/gqlgen/cmd",
-    "github.com/99designs/gqlgen/graphql",
-    "github.com/99designs/gqlgen/graphql/introspection",
     "github.com/99designs/gqlgen/handler",
+    "github.com/aws/aws-lambda-go/events",
+    "github.com/aws/aws-lambda-go/lambda",
+    "github.com/fnproject/fdk-go",
     "github.com/go-chi/chi",
     "github.com/gorilla/websocket",
     "github.com/rs/cors",
     "github.com/shurcooL/vfsgen",
     "github.com/stretchr/testify/assert",
-    "github.com/vektah/gqlparser",
-    "github.com/vektah/gqlparser/ast",
+    "golang.org/x/crypto/pbkdf2",
     "gopkg.in/src-d/go-git.v4",
     "gopkg.in/src-d/go-git.v4/plumbing",
     "gopkg.in/src-d/go-git.v4/plumbing/object",

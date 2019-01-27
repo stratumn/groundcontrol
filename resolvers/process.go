@@ -27,3 +27,7 @@ type processResolver struct {
 func (r *processResolver) ProcessGroup(ctx context.Context, obj *models.Process) (models.ProcessGroup, error) {
 	return obj.ProcessGroup(r.Nodes), nil
 }
+
+func (r *processResolver) Project(ctx context.Context, obj *models.Process) (models.Project, error) {
+	return obj.Project(r.Nodes), nil
+}

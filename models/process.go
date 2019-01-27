@@ -19,6 +19,7 @@ type Process struct {
 	ID             string        `json:"id"`
 	Command        string        `json:"command"`
 	ProcessGroupID string        `json:"processGroupID"`
+	ProjectID      string        `json:"projectID"`
 	Status         ProcessStatus `json:"status"`
 }
 
@@ -28,4 +29,9 @@ func (Process) IsNode() {}
 // ProcessGroup returns the ProcessGroup associated with the Process.
 func (p Process) ProcessGroup(nodes *NodeManager) ProcessGroup {
 	return nodes.MustLoadProcessGroup(p.ProcessGroupID)
+}
+
+// Project returns the Project associated with the Process.
+func (p Process) Project(nodes *NodeManager) Project {
+	return nodes.MustLoadProject(p.ProjectID)
 }

@@ -19,20 +19,22 @@ import {
   Table,
  } from "semantic-ui-react";
 
-import { JobTable_items } from "./__generated__/JobTable_items.graphql";
+import { ProcessTable_items } from "./__generated__/ProcessTable_items.graphql";
 
-import JobTableRow from "./JobTableRow";
+import ProcessTableRow from "./ProcessTableRow";
+
+import "./ProcessTable.css";
 
 interface IProps {
-  items: JobTable_items;
+  items: ProcessTable_items;
 }
 
-export class JobTable extends Component<IProps> {
+export class ProcessTable extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
     const rows = items.map((item) => (
-      <JobTableRow
+      <ProcessTableRow
         key={item.id}
         item={item}
       />
@@ -40,18 +42,15 @@ export class JobTable extends Component<IProps> {
 
     return (
       <Table
+        className="ProcessTable"
         inverted={true}
-        celled={true}
       >
         <Table.Header>
           <Table.Row>
-            <Table.HeaderCell>Name</Table.HeaderCell>
-            <Table.HeaderCell>Workspace</Table.HeaderCell>
-            <Table.HeaderCell>Repository</Table.HeaderCell>
-            <Table.HeaderCell>Branch</Table.HeaderCell>
-            <Table.HeaderCell>Created At</Table.HeaderCell>
-            <Table.HeaderCell>Updated At</Table.HeaderCell>
+            <Table.HeaderCell>Project</Table.HeaderCell>
+            <Table.HeaderCell>Command</Table.HeaderCell>
             <Table.HeaderCell>Status</Table.HeaderCell>
+            <Table.HeaderCell />
           </Table.Row>
         </Table.Header>
         <Table.Body>{rows}</Table.Body>
@@ -61,10 +60,10 @@ export class JobTable extends Component<IProps> {
 
 }
 
-export default createFragmentContainer(JobTable, graphql`
-  fragment JobTable_items on Job
+export default createFragmentContainer(ProcessTable, graphql`
+  fragment ProcessTable_items on Process
     @relay(plural: true) {
-    ...JobTableRow_item
+    ...ProcessTableRow_item
     id
   }`,
 );

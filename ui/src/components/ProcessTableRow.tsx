@@ -13,73 +13,90 @@
 // limitations under the License.
 
 import graphql from "babel-plugin-relay/macro";
-import React, { Component, Fragment } from "react";
-import { createFragmentContainer } from "react-relay";
-import { Button, Table } from "semantic-ui-react";
+import React, { Component } from "react";
+import {
+  Button,
+  Table,
+ } from "semantic-ui-react";
 
-import { ProcessGroupTableProcessCells_item } from "./__generated__/ProcessGroupTableProcessCells_item.graphql";
+import { createFragmentContainer } from "react-relay";
+
+import { ProcessTableRow_item } from "./__generated__/ProcessTableRow_item.graphql";
+
+import RepositoryShortName from "./RepositoryShortName";
+
+import "./ProcessTableRow.css";
 
 interface IProps {
-  item: ProcessGroupTableProcessCells_item;
+  item: ProcessTableRow_item;
 }
 
-export class ProcessGroupTableProcessCells extends Component<IProps> {
+export class ProcessTableRow extends Component<IProps> {
 
   public render() {
-    const { command, status } = this.props.item;
-
-    let actions: JSX.Element[] = [];
+    const { command, status, project: { repository } } = this.props.item;
+    const buttons: JSX.Element[] = [];
 
     switch (status) {
     case "DONE":
     case "FAILED":
-      actions.push((
+      buttons.push((
         <Button
           key="start"
           size="tiny"
           color="teal"
         >
-          Start Process
+          Start
         </Button>
       ));
       break;
     case "RUNNING":
-      actions.push((
+      buttons.push((
         <Button
           key="stop"
           size="tiny"
           color="pink"
         >
-          Stop Process
+          Stop
         </Button>
       ));
       break;
     }
 
+
     return (
-      <Fragment>
-        <Table.Cell>
+      <Table.Row className="ProcessTableRow">
+        <Table.Cell collapsing={true}>
+          <RepositoryShortName repository={repository} />
+        </Table.Cell>
+        <Table.Cell
+          className="ProcessTableRowCommand"
+        >
           {command}
         </Table.Cell>
         <Table.Cell
           positive={status === "DONE"}
           warning={status === "RUNNING"}
-          negative={status === "FAILED"}
+          error={status === "FAILED"}
+          collapsing={true}
         >
           {status}
         </Table.Cell>
         <Table.Cell collapsing={true}>
-          {actions}
+          {buttons}
         </Table.Cell>
-      </Fragment>
+      </Table.Row>
     );
   }
 
 }
 
-export default createFragmentContainer(ProcessGroupTableProcessCells, graphql`
-  fragment ProcessGroupTableProcessCells_item on Process {
+export default createFragmentContainer(ProcessTableRow, graphql`
+  fragment ProcessTableRow_item on Process {
     command
     status
+    project {
+      repository
+    }
   }`,
 );

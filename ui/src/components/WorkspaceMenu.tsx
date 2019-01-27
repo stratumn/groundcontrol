@@ -38,7 +38,7 @@ export class WorkspaceMenu extends Component<IProps> {
     const { onClone, onPull, onRun } = this.props;
 
     return (
-      <Menu secondary={true}>
+      <Menu size="large">
         <Menu.Item
           disabled={isCloning || isCloned}
           onClick={onClone}
@@ -53,13 +53,11 @@ export class WorkspaceMenu extends Component<IProps> {
           <Icon name="download" />
           Pull All
         </Menu.Item>
-        <Menu.Item>
-          <WorkspaceTaskDropdown
-            items={tasks}
-            enabled={isCloned}
-            onRun={onRun}
-          />
-        </Menu.Item>
+        <WorkspaceTaskDropdown
+          items={tasks}
+          enabled={isCloned}
+          onRun={onRun}
+        />
       </Menu>
     );
   }

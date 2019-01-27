@@ -22,8 +22,8 @@ import { Button } from "semantic-ui-react";
 import { ProcessGroupListPage_system } from "./__generated__/ProcessGroupListPage_system.graphql";
 
 import Page from "../components/Page";
+import ProcessGroupCardGroup from "../components/ProcessGroupCardGroup";
 import ProcessGroupFilter from "../components/ProcessGroupFilter";
-import ProcessGroupTable from "../components/ProcessGroupTable";
 
 // import { subscribe } from "../subscriptions/jobUpserted";
 
@@ -55,7 +55,7 @@ export class ProcessGroupListPage extends Component<IProps> {
           filters={filters}
           onChange={this.handleFiltersChange}
         />
-        <ProcessGroupTable items={items} />
+        <ProcessGroupCardGroup items={items} />
         <Button
           disabled={!this.props.relay.hasMore() || this.props.relay.isLoading()}
           loading={this.props.relay.isLoading()}
@@ -124,7 +124,7 @@ export default createPaginationContainer(
         ) {
         edges {
           node {
-            ...ProcessGroupTable_items
+            ...ProcessGroupCardGroup_items
             id
           }
         }

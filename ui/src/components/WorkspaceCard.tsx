@@ -43,7 +43,11 @@ export class WorkspaceCard extends Component<IProps> {
     const labels: JSX.Element[] = [];
     const buttons: JSX.Element[] = [];
 
+    let color: "grey" | "teal" = "grey";
+
     if (item.isCloned) {
+      color = "teal";
+
       labels.push((
         <Label
           key="cloned"
@@ -52,9 +56,7 @@ export class WorkspaceCard extends Component<IProps> {
           size="small"
         />
       ));
-    }
 
-    if (item.isCloned) {
       buttons.push((
         <Button
           key="pull"
@@ -79,7 +81,10 @@ export class WorkspaceCard extends Component<IProps> {
     }
 
     return (
-      <Card className="WorkspaceCard">
+      <Card
+        className="WorkspaceCard"
+        color={color}
+      >
         <Card.Content>
           <Link
             to={`/workspaces/${item.slug}`}
