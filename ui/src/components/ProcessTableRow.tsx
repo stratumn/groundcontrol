@@ -47,7 +47,6 @@ export class ProcessTableRow extends Component<IProps> {
         <Button
           key="start"
           size="tiny"
-          color="teal"
           icon={true}
           labelPosition="left"
           onClick={onStart}
@@ -72,7 +71,6 @@ export class ProcessTableRow extends Component<IProps> {
       ));
       break;
     }
-
 
     return (
       <Table.Row className="ProcessTableRow">

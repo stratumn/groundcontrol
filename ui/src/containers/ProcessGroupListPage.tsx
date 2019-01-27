@@ -28,8 +28,7 @@ import { commit as startProcess} from "../mutations/startProcess";
 import { commit as startProcessGroup } from "../mutations/startProcessGroup";
 import { commit as stopProcess} from "../mutations/stopProcess";
 import { commit as stopProcessGroup } from "../mutations/stopProcessGroup";
-
-// import { subscribe } from "../subscriptions/jobUpserted";
+import { subscribe } from "../subscriptions/processGroupUpserted";
 
 interface IProps {
   relay: RelayPaginationProp;
@@ -79,7 +78,7 @@ export class ProcessGroupListPage extends Component<IProps> {
   }
 
   public componentDidMount() {
-    // this.disposables.push(subscribe(this.props.relay.environment));
+    this.disposables.push(subscribe(this.props.relay.environment));
   }
 
   public componentWillUnmount() {

@@ -152,7 +152,7 @@ func (p *ProcessManager) Run(
 	p.publishMetrics()
 
 	if err != nil {
-		p.log.Info("Process Failed", meta)
+		p.log.Error("Process Failed", meta)
 		stdout.Close()
 		stderr.Close()
 		return id
@@ -167,15 +167,16 @@ func (p *ProcessManager) Run(
 		p.nodes.MustLockProcess(id, func(process Process) {
 			if err == nil {
 				process.Status = ProcessStatusRunning
-				atomic.AddInt64(&p.runningCounter, 1)
+				atomic.AddInt64(&p.doneCounter, 1)
 				p.log.Info("Process Done", meta)
 			} else {
 				process.Status = ProcessStatusFailed
 				meta.Error = err.Error()
 				atomic.AddInt64(&p.failedCounter, 1)
-				p.log.Info("Process Running", meta)
+				p.log.Error("Process Failed", meta)
 			}
 
+			atomic.AddInt64(&p.runningCounter, -1)
 			p.nodes.MustStoreProcess(process)
 		})
 

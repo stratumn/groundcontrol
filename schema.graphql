@@ -242,11 +242,11 @@ type Subscription {
   workspaceUpdated(id: ID): Workspace!
   projectUpdated(id: ID): Project!
   taskUpdated(id: ID): Task!
-  jobUpserted: Job!
-  jobMetricsUpdated: JobMetrics!
-  processGroupUpserted: ProcessGroup!
-  processUpserted: Process!
-  processMetricsUpdated: ProcessMetrics!
+  jobUpserted(id: ID): Job!
+  jobMetricsUpdated(id: ID): JobMetrics!
+  processGroupUpserted(id: ID): ProcessGroup!
+  processUpserted(id: ID): Process!
+  processMetricsUpdated(id: ID): ProcessMetrics!
   logEntryAdded: LogEntry!
-  logMetricsUpdated: LogMetrics!
+  logMetricsUpdated(id: ID): LogMetrics!
 }
