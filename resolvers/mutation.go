@@ -133,53 +133,58 @@ func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, erro
 	return r.Nodes.MustLoadJob(jobID), nil
 }
 
-func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) ([]models.Job, error) {
+func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (models.ProcessGroup, error) {
 	processGroup, err := r.Nodes.LoadProcessGroup(id)
 	if err != nil {
-		return nil, err
+		return models.ProcessGroup{}, err
 	}
 
-	var slice []models.Job
-
-	for _, project := range processGroup.Processes(r.Nodes) {
-		if project.Status == models.ProcessStatusRunning {
+	for _, process := range processGroup.Processes(r.Nodes) {
+		if process.Status == models.ProcessStatusRunning {
 			continue
 		}
 
-		slice = append(slice, models.Job{})
+		if err := r.PM.Start(process.ID); err != nil {
+			return models.ProcessGroup{}, err
+		}
 	}
 
-	return slice, nil
+	return processGroup, nil
 }
 
-func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) ([]models.Job, error) {
+func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) (models.ProcessGroup, error) {
 	processGroup, err := r.Nodes.LoadProcessGroup(id)
 	if err != nil {
-		return nil, err
+		return models.ProcessGroup{}, err
 	}
 
-	var slice []models.Job
-
-	for _, project := range processGroup.Processes(r.Nodes) {
-		if project.Status != models.ProcessStatusRunning {
+	for _, process := range processGroup.Processes(r.Nodes) {
+		if process.Status != models.ProcessStatusRunning {
 			continue
 		}
 
-		slice = append(slice, models.Job{})
+		if err := r.PM.Stop(process.ID); err != nil {
+			return models.ProcessGroup{}, err
+		}
 	}
 
-	return slice, nil
+	return processGroup, nil
 }
 
-func (r *mutationResolver) StartProcess(ctx context.Context, id string) (models.Job, error) {
-	return models.Job{}, nil
-}
-
-func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.StopProcess(r.Nodes, r.Jobs, r.PM, id)
+func (r *mutationResolver) StartProcess(ctx context.Context, id string) (models.Process, error) {
+	err := r.PM.Start(id)
 	if err != nil {
-		return models.Job{}, err
+		return models.Process{}, err
 	}
 
-	return r.Nodes.MustLoadJob(jobID), nil
+	return r.Nodes.MustLoadProcess(id), nil
+}
+
+func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.Process, error) {
+	err := r.PM.Stop(id)
+	if err != nil {
+		return models.Process{}, err
+	}
+
+	return r.Nodes.MustLoadProcess(id), nil
 }

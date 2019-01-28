@@ -193,6 +193,11 @@ func (p *ProcessManager) Run(
 	return id
 }
 
+// Start starts a process that was stopped.
+func (p *ProcessManager) Start(processID string) error {
+	return nil
+}
+
 // Stop stops a running process.
 func (p *ProcessManager) Stop(processID string) error {
 	var processError error

@@ -16,10 +16,8 @@ package jobs
 
 // Job names.
 const (
-	LoadCommitsJob  = "Load Commits"
-	CloneJob        = "Clone"
-	PullJob         = "Pull"
-	RunJob          = "Run"
-	StartProcessJob = "Start Process"
-	StopProcessJob  = "Stop Process"
+	LoadCommitsJob = "Load Commits"
+	CloneJob       = "Clone"
+	PullJob        = "Pull"
+	RunJob         = "Run"
 )
