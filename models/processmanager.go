@@ -34,6 +34,8 @@ type ProcessManager struct {
 	log   *Logger
 	subs  *pubsub.PubSub
 
+	getProjectPath ProjectPathGetter
+
 	systemID string
 
 	nextID   uint64
@@ -50,14 +52,16 @@ func NewProcessManager(
 	nodes *NodeManager,
 	log *Logger,
 	subs *pubsub.PubSub,
+	getProjectPath ProjectPathGetter,
 	systemID string,
 ) *ProcessManager {
 	return &ProcessManager{
-		nodes:    nodes,
-		log:      log,
-		subs:     subs,
-		systemID: systemID,
-		commands: map[string]*exec.Cmd{},
+		nodes:          nodes,
+		log:            log,
+		subs:           subs,
+		getProjectPath: getProjectPath,
+		systemID:       systemID,
+		commands:       map[string]*exec.Cmd{},
 	}
 }
 
@@ -94,28 +98,11 @@ func (p *ProcessManager) Run(
 	command string,
 	processGroupID string,
 	projectID string,
-	dir string,
 ) string {
 	id := relay.EncodeID(
 		NodeTypeProcess,
 		fmt.Sprint(atomic.AddUint64(&p.nextID, 1)),
 	)
-
-	meta := struct {
-		ProcessID      string
-		ProcessGroupID string
-		ProjectID      string
-		Dir            string
-		Command        string
-		Error          string
-	}{
-		id,
-		processGroupID,
-		projectID,
-		dir,
-		command,
-		"",
-	}
 
 	process := Process{
 		ID:             id,
@@ -124,77 +111,42 @@ func (p *ProcessManager) Run(
 		ProjectID:      projectID,
 	}
 
-	stdout := CreateLineWriter(p.log.Info, meta)
-	stderr := CreateLineWriter(p.log.Warning, meta)
-	cmd := exec.Command("bash", "-l", "-c", command)
-	cmd.Dir = dir
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
-	err := cmd.Start()
-
-	if err == nil {
-		process.Status = ProcessStatusRunning
-		atomic.AddInt64(&p.runningCounter, 1)
-	} else {
-		process.Status = ProcessStatusFailed
-		meta.Error = err.Error()
-		atomic.AddInt64(&p.failedCounter, 1)
-	}
-
 	p.nodes.MustStoreProcess(process)
 	p.nodes.MustLockProcessGroup(processGroupID, func(processGroup ProcessGroup) {
 		processGroup.ProcessIDs = append([]string{id}, processGroup.ProcessIDs...)
 		p.nodes.MustStoreProcessGroup(processGroup)
 	})
 
-	p.subs.Publish(ProcessUpserted, id)
-	p.subs.Publish(ProcessGroupUpserted, processGroupID)
-	p.publishMetrics()
-
-	if err != nil {
-		p.log.Error("Process Failed", meta)
-		stdout.Close()
-		stderr.Close()
-		return id
-	}
-
-	p.log.Info("Process Running", meta)
-	p.commands[id] = cmd
-
-	go func() {
-		err := cmd.Wait()
-
-		p.nodes.MustLockProcess(id, func(process Process) {
-			if err == nil {
-				process.Status = ProcessStatusDone
-				atomic.AddInt64(&p.doneCounter, 1)
-				p.log.Info("Process Done", meta)
-			} else {
-				process.Status = ProcessStatusFailed
-				meta.Error = err.Error()
-				atomic.AddInt64(&p.failedCounter, 1)
-				p.log.Error("Process Failed", meta)
-			}
-
-			atomic.AddInt64(&p.runningCounter, -1)
-			p.nodes.MustStoreProcess(process)
-		})
-
-		p.subs.Publish(ProcessUpserted, id)
-		p.subs.Publish(ProcessGroupUpserted, processGroupID)
-		p.publishMetrics()
-
-		stdout.Close()
-		stderr.Close()
-	}()
+	p.exec(id)
 
 	return id
 }
 
 // Start starts a process that was stopped.
 func (p *ProcessManager) Start(processID string) error {
+	var processError error
+
+	err := p.nodes.LockProcess(processID, func(process Process) {
+		switch process.Status {
+		case ProcessStatusRunning, ProcessStatusStopping:
+			processError = ErrNotStopped
+			return
+		case ProcessStatusDone:
+			atomic.AddInt64(&p.doneCounter, -1)
+		case ProcessStatusFailed:
+			atomic.AddInt64(&p.failedCounter, -1)
+		}
+
+	})
+	if err != nil {
+		return err
+	}
+	if processError != nil {
+		return processError
+	}
+
+	p.exec(processID) // will publish metrics
+
 	return nil
 }
 
@@ -231,6 +183,97 @@ func (p *ProcessManager) Stop(processID string) error {
 	}
 
 	return processError
+}
+
+func (p *ProcessManager) exec(id string) {
+	p.nodes.MustLockProcess(id, func(process Process) {
+		project := process.Project(p.nodes)
+		workspace := project.Workspace(p.nodes)
+
+		dir := p.getProjectPath(
+			workspace.Slug,
+			project.Repository,
+			project.Branch,
+		)
+
+		meta := struct {
+			ProcessID      string
+			ProcessGroupID string
+			ProjectID      string
+			Dir            string
+			Command        string
+			Error          string
+		}{
+			id,
+			process.ProcessGroupID,
+			process.ProjectID,
+			dir,
+			process.Command,
+			"",
+		}
+
+		stdout := CreateLineWriter(p.log.Info, meta)
+		stderr := CreateLineWriter(p.log.Warning, meta)
+		cmd := exec.Command("bash", "-l", "-c", process.Command)
+		cmd.Dir = dir
+		cmd.Stdout = stdout
+		cmd.Stderr = stderr
+		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+		err := cmd.Start()
+		if err == nil {
+			process.Status = ProcessStatusRunning
+			atomic.AddInt64(&p.runningCounter, 1)
+		} else {
+			process.Status = ProcessStatusFailed
+			meta.Error = err.Error()
+			atomic.AddInt64(&p.failedCounter, 1)
+		}
+
+		p.nodes.MustStoreProcess(process)
+		p.subs.Publish(ProcessUpserted, id)
+		p.subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
+		p.publishMetrics()
+
+		if err != nil {
+			p.log.Error("Process Failed", meta)
+			stdout.Close()
+			stderr.Close()
+			return
+		}
+
+		p.log.Info("Process Running", meta)
+		p.commands[id] = cmd
+
+		go func() {
+			err := cmd.Wait()
+
+			p.nodes.MustLockProcess(id, func(process Process) {
+				delete(p.commands, id)
+
+				if err == nil {
+					process.Status = ProcessStatusDone
+					atomic.AddInt64(&p.doneCounter, 1)
+					p.log.Info("Process Done", meta)
+				} else {
+					process.Status = ProcessStatusFailed
+					meta.Error = err.Error()
+					atomic.AddInt64(&p.failedCounter, 1)
+					p.log.Error("Process Failed", meta)
+				}
+
+				atomic.AddInt64(&p.runningCounter, -1)
+				p.nodes.MustStoreProcess(process)
+			})
+
+			p.subs.Publish(ProcessUpserted, id)
+			p.subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
+			p.publishMetrics()
+
+			stdout.Close()
+			stderr.Close()
+		}()
+	})
 }
 
 func (p *ProcessManager) publishMetrics() {

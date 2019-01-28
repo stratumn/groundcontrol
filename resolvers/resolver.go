@@ -136,21 +136,23 @@ func CreateResolver(filename string) (*Resolver, error) {
 	subs := pubsub.New()
 	log := models.NewLogger(nodes, subs, 10000, models.LogLevelDebug, systemID)
 	jobs := models.NewJobManager(nodes, log, subs, 2, systemID)
-	pm := models.NewProcessManager(nodes, log, subs, systemID)
+	pm := models.NewProcessManager(nodes, log, subs, getProjectPath, systemID)
 
 	return &Resolver{
-		Nodes: nodes,
-		Log:   log,
-		Jobs:  jobs,
-		PM:    pm,
-		Subs:  subs,
-		GetProjectPath: func(workspaceSlug, repo, branch string) string {
-			name := path.Base(repo)
-			ext := path.Ext(name)
-			name = name[:len(name)-len(ext)]
-			return filepath.Join("workspaces", workspaceSlug, name)
-		},
-		ViewerID: viewer.ID,
-		SystemID: systemID,
+		Nodes:          nodes,
+		Log:            log,
+		Jobs:           jobs,
+		PM:             pm,
+		Subs:           subs,
+		GetProjectPath: getProjectPath,
+		ViewerID:       viewer.ID,
+		SystemID:       systemID,
 	}, nil
+}
+
+func getProjectPath(workspaceSlug, repo, branch string) string {
+	name := path.Base(repo)
+	ext := path.Ext(name)
+	name = name[:len(name)-len(ext)]
+	return filepath.Join("workspaces", workspaceSlug, name)
 }

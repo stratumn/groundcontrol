@@ -124,7 +124,7 @@ func doRun(
 					}
 
 					rest := strings.Join(parts[1:], " ")
-					pm.Run(rest, processGroupID, project.ID, projectPath)
+					pm.Run(rest, processGroupID, project.ID)
 
 					continue
 				}
