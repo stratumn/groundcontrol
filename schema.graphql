@@ -54,7 +54,6 @@ type Step implements Node {
   id: ID!
   projects: [Project!]!
   commands: [String!]!
-  background: Boolean!
   task: Task!
 }
 

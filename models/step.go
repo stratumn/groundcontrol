@@ -19,7 +19,6 @@ type Step struct {
 	ID         string   `json:"id"`
 	ProjectIDs []string `json:"projectIDs"`
 	Commands   []string `json:"commands"`
-	Background bool     `json:"background"`
 	TaskID     string   `json:"taskID"`
 }
 
