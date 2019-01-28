@@ -8,6 +8,11 @@
   white-space: pre-wrap;
 }
 
+.ui.table .ProcessTableRow td.positive {
+  background: inherit !important;
+  color: #00b5ad !important;
+}
+
 .ui.table .ProcessTableRow td.warning {
   background: inherit !important;
   color: #a333c8 !important;

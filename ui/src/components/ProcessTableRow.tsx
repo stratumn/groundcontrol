@@ -70,6 +70,21 @@ export class ProcessTableRow extends Component<IProps> {
         </Button>
       ));
       break;
+    case "STOPPING":
+      buttons.push((
+        <Button
+          key="stop"
+          size="tiny"
+          icon={true}
+          labelPosition="left"
+          disabled={true}
+          loading={true}
+        >
+          <Icon name="pause" />
+          Stop
+        </Button>
+      ));
+      break;
     }
 
     return (

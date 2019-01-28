@@ -23,7 +23,7 @@ import (
 	"github.com/stratumn/groundcontrol/pubsub"
 )
 
-// Run runs a remote repository locally.
+// Run runs a task.
 func Run(
 	nodes *models.NodeManager,
 	log *models.Logger,
@@ -35,13 +35,13 @@ func Run(
 	systemID string,
 ) (string, error) {
 	var (
-		err         error
+		taskError   error
 		workspaceID string
 	)
 
-	err = nodes.LockTask(taskID, func(task models.Task) {
+	err := nodes.LockTask(taskID, func(task models.Task) {
 		if task.IsRunning {
-			err = ErrDuplicate
+			taskError = ErrDuplicate
 			return
 		}
 
@@ -51,6 +51,9 @@ func Run(
 	})
 	if err != nil {
 		return "", err
+	}
+	if taskError != nil {
+		return "", taskError
 	}
 
 	subs.Publish(models.TaskUpdated, taskID)

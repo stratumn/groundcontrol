@@ -30,13 +30,13 @@ func Clone(
 	projectID string,
 ) (string, error) {
 	var (
-		err         error
-		workspaceID string
+		projectError error
+		workspaceID  string
 	)
 
-	err = nodes.LockProject(projectID, func(project models.Project) {
+	err := nodes.LockProject(projectID, func(project models.Project) {
 		if project.IsCloning {
-			err = ErrDuplicate
+			projectError = ErrDuplicate
 			return
 		}
 
@@ -46,6 +46,9 @@ func Clone(
 	})
 	if err != nil {
 		return "", err
+	}
+	if projectError != nil {
+		return "", projectError
 	}
 
 	subs.Publish(models.ProjectUpdated, projectID)

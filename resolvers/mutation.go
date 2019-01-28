@@ -161,7 +161,7 @@ func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) ([]m
 	var slice []models.Job
 
 	for _, project := range processGroup.Processes(r.Nodes) {
-		if project.Status == models.ProcessStatusRunning {
+		if project.Status != models.ProcessStatusRunning {
 			continue
 		}
 
@@ -176,5 +176,10 @@ func (r *mutationResolver) StartProcess(ctx context.Context, id string) (models.
 }
 
 func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.Job, error) {
-	return models.Job{}, nil
+	jobID, err := jobs.StopProcess(r.Nodes, r.Jobs, r.PM, id)
+	if err != nil {
+		return models.Job{}, err
+	}
+
+	return r.Nodes.MustLoadJob(jobID), nil
 }

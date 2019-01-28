@@ -18,9 +18,9 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/stratumn/groundcontrol/date"
@@ -36,8 +36,8 @@ type ProcessManager struct {
 
 	systemID string
 
-	nextID    uint64
-	processes map[string]*os.Process
+	nextID   uint64
+	commands map[string]*exec.Cmd
 
 	runningCounter int64
 	doneCounter    int64
@@ -45,6 +45,7 @@ type ProcessManager struct {
 }
 
 // NewProcessManager creates a ProcessManager.
+// TODO: Add Clean() method to terminate all processes on shutdown.
 func NewProcessManager(
 	nodes *NodeManager,
 	log *Logger,
@@ -52,11 +53,11 @@ func NewProcessManager(
 	systemID string,
 ) *ProcessManager {
 	return &ProcessManager{
-		nodes:     nodes,
-		log:       log,
-		subs:      subs,
-		systemID:  systemID,
-		processes: map[string]*os.Process{},
+		nodes:    nodes,
+		log:      log,
+		subs:     subs,
+		systemID: systemID,
+		commands: map[string]*exec.Cmd{},
 	}
 }
 
@@ -129,6 +130,7 @@ func (p *ProcessManager) Run(
 	cmd.Dir = dir
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	err := cmd.Start()
 
@@ -159,14 +161,14 @@ func (p *ProcessManager) Run(
 	}
 
 	p.log.Info("Process Running", meta)
-	// cmd.Process
+	p.commands[id] = cmd
 
 	go func() {
 		err := cmd.Wait()
 
 		p.nodes.MustLockProcess(id, func(process Process) {
 			if err == nil {
-				process.Status = ProcessStatusRunning
+				process.Status = ProcessStatusDone
 				atomic.AddInt64(&p.doneCounter, 1)
 				p.log.Info("Process Done", meta)
 			} else {
@@ -189,6 +191,41 @@ func (p *ProcessManager) Run(
 	}()
 
 	return id
+}
+
+// Stop stops a running process.
+func (p *ProcessManager) Stop(processID string) error {
+	var processError error
+
+	err := p.nodes.LockProcess(processID, func(process Process) {
+		if process.Status != ProcessStatusRunning {
+			processError = ErrNotRunning
+			return
+		}
+
+		process.Status = ProcessStatusStopping
+		p.nodes.MustStoreProcess(process)
+
+		p.subs.Publish(ProcessUpserted, processID)
+		p.subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
+
+		cmd := p.commands[processID]
+
+		pgid, processError := syscall.Getpgid(cmd.Process.Pid)
+		if processError != nil {
+			return
+		}
+
+		processError = syscall.Kill(-pgid, syscall.SIGINT)
+		if processError != nil {
+			return
+		}
+	})
+	if err != nil {
+		return err
+	}
+
+	return processError
 }
 
 func (p *ProcessManager) publishMetrics() {

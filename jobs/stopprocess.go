@@ -12,16 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
+package jobs
 
 import (
-	"errors"
+	"github.com/stratumn/groundcontrol/models"
 )
 
-// Errors.
-var (
-	ErrNotFound   = errors.New("not found")
-	ErrType       = errors.New("wrong type")
-	ErrNotRunning = errors.New("project isn't running")
-	ErrNotStopped = errors.New("project isn't stopped")
-)
+// StopProcess stops a process.
+func StopProcess(
+	nodes *models.NodeManager,
+	jobs *models.JobManager,
+	pm *models.ProcessManager,
+	processID string,
+) (string, error) {
+	var projectID string
+
+	err := nodes.LockProcess(processID, func(process models.Process) {
+		projectID = process.ProjectID
+	})
+	if err != nil {
+		return "", err
+	}
+
+	jobID := jobs.Add(StopProcessJob, projectID, func() error {
+		return pm.Stop(processID)
+	})
+
+	return jobID, nil
+}

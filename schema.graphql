@@ -149,6 +149,7 @@ type ProcessGroup implements Node {
 
 enum ProcessStatus {
   RUNNING
+  STOPPING
   DONE
   FAILED
 }

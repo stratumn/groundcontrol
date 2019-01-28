@@ -57,11 +57,8 @@ export class ProcessGroupCard extends Component<IProps> {
     } = this.props;
     const buttons: JSX.Element[] = [];
 
-    let color: "grey" | "teal" | "pink" = "grey";
-
     switch (status) {
     case "RUNNING":
-      color = "teal";
       buttons.push((
         <Button
           key="stop"
@@ -78,7 +75,6 @@ export class ProcessGroupCard extends Component<IProps> {
       break;
     case "DONE":
     case "FAILED":
-      color = "teal";
       buttons.push((
         <Button
           key="start"
@@ -99,7 +95,6 @@ export class ProcessGroupCard extends Component<IProps> {
       <Card
         className="ProcessGroupCard"
         fluid={true}
-        color={color}
       >
         <Card.Content>
           <Card.Header>
