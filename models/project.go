@@ -59,7 +59,6 @@ func (p Project) isCloned(directory string) bool {
 }
 
 // Commits returns paginated commits.
-// If there are no commits in memory, it may create a LoadCommitJob.
 func (p Project) Commits(
 	nodes *NodeManager,
 	after *string,
