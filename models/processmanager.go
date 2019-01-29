@@ -216,7 +216,6 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 		waitGroup.Add(1)
 
 		processCtx, cancel := context.WithCancel(ctx)
-		defer cancel()
 
 		go func() {
 			<-processCtx.Done()
@@ -233,8 +232,8 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 
 			switch process.Status {
 			case ProcessStatusDone, ProcessStatusFailed:
-				cancel()
 				p.log.Info("Process Stopped", meta)
+				cancel()
 			}
 		})
 
