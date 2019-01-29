@@ -71,19 +71,6 @@ func (j *JobManager) Add(
 	priority JobPriority,
 	fn func() error,
 ) string {
-	meta := struct {
-		Name     string
-		NodeID   string
-		Priority JobPriority
-		Error    string
-	}{
-		name,
-		ownerID,
-		priority,
-		"",
-	}
-
-	j.log.Info("Job Queued", meta)
 
 	id := atomic.AddUint64(&j.nextID, 1)
 	now := date.NowFormatted()
@@ -96,6 +83,16 @@ func (j *JobManager) Add(
 		UpdatedAt: now,
 		OwnerID:   ownerID,
 	}
+
+	meta := struct {
+		Job   Job
+		Error string
+	}{
+		job,
+		"",
+	}
+
+	j.log.Info("Job Queued", meta)
 	j.nodes.MustStoreJob(job)
 	j.subs.Publish(JobUpserted, job.ID)
 

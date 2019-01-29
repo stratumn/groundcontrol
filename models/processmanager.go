@@ -198,10 +198,10 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 		processID := k.(string)
 
 		meta := struct {
-			ProcessID string
-			Error     string
+			Process Process
+			Error   string
 		}{
-			processID,
+			p.nodes.MustLoadProcess(processID),
 			"",
 		}
 
@@ -255,18 +255,12 @@ func (p *ProcessManager) exec(id string) {
 		)
 
 		meta := struct {
-			ProcessID      string
-			ProcessGroupID string
-			ProjectID      string
-			Dir            string
-			Command        string
-			Error          string
+			Process Process
+			Dir     string
+			Error   string
 		}{
-			id,
-			process.ProcessGroupID,
-			process.ProjectID,
+			process,
 			dir,
-			process.Command,
 			"",
 		}
 
