@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -197,6 +198,8 @@ func updateWorkspaces(
 ) {
 	for {
 		viewer := nodes.MustLoadUser(viewerID)
+		waitGroup := sync.WaitGroup{}
+		ctx, cancel := context.WithCancel(context.Background())
 
 		for _, workspace := range viewer.Workspaces(nodes) {
 			for _, project := range workspace.Projects(nodes) {
@@ -204,7 +207,7 @@ func updateWorkspaces(
 					continue
 				}
 
-				_, err := jobs.LoadCommits(
+				jobID, err := jobs.LoadCommits(
 					nodes,
 					jobManager,
 					subs,
@@ -221,10 +224,25 @@ func updateWorkspaces(
 						project,
 						err.Error(),
 					})
+					continue
 				}
+
+				waitGroup.Add(1)
+				subs.Subscribe(ctx, models.JobUpserted, func(msg interface{}) {
+					if msg.(string) != jobID {
+						return
+					}
+
+					switch nodes.MustLoadJob(jobID).Status {
+					case models.JobStatusDone, models.JobStatusFailed:
+						waitGroup.Done()
+					}
+				})
 			}
 		}
 
-		time.Sleep(5 * time.Minute)
+		waitGroup.Wait()
+		cancel()
+		time.Sleep(time.Minute)
 	}
 }
