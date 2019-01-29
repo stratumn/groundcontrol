@@ -106,7 +106,10 @@ func doLoadCommits(
 		return err
 	}
 
-	iter, err := repo.Log(&git.LogOptions{From: ref.Hash()})
+	iter, err := repo.Log(&git.LogOptions{
+		From:  ref.Hash(),
+		Order: git.LogOrderCommitterTime,
+	})
 	if err != nil {
 		return err
 	}

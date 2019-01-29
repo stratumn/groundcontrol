@@ -15,9 +15,15 @@
 package jobs
 
 import (
+	"strings"
+
+	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
+	"github.com/stratumn/groundcontrol/relay"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 // Pull clones a remote repository locally.
@@ -103,11 +109,55 @@ func doPull(
 	}
 
 	err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
+	if err != nil {
+		return err
+	}
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
 	}
 
-	// TODO: update project commits
+	refName := plumbing.NewBranchReferenceName(project.Branch)
+	ref, err := repo.Reference(refName, true)
+	if err != nil {
+		return err
+	}
 
-	return err
+	iter, err := repo.Log(&git.LogOptions{
+		From:  ref.Hash(),
+		Order: git.LogOrderCommitterTime,
+	})
+	if err != nil {
+		return err
+	}
+
+	var commitIDs []string
+
+	err = iter.ForEach(func(c *object.Commit) error {
+		commit := models.Commit{
+			ID:       relay.EncodeID(models.NodeTypeCommit, c.Hash.String()),
+			SHA:      c.Hash.String(),
+			Headline: strings.Split(c.Message, "\n")[0],
+			Message:  c.Message,
+			Author:   c.Author.Name,
+			Date:     c.Author.When.Format(date.DateFormat),
+		}
+
+		nodes.MustStoreCommit(commit)
+		commitIDs = append(commitIDs, commit.ID)
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	nodes.MustLockProject(projectID, func(project models.Project) {
+		project.CommitIDs = commitIDs
+		nodes.MustStoreProject(project)
+	})
+
+	subs.Publish(models.ProjectUpdated, projectID)
+	subs.Publish(models.WorkspaceUpdated, workspaceID)
+
+	return nil
 }
