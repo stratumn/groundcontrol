@@ -105,7 +105,7 @@ func (j *JobManager) Add(
 	j.publishMetrics()
 
 	do := j.queue.Do
-	if priority == JobPriorityHi {
+	if priority == JobPriorityHigh {
 		do = j.queue.DoHi
 	}
 

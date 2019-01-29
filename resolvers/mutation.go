@@ -32,7 +32,7 @@ func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (m
 		r.Subs,
 		r.GetProjectCachePath,
 		id,
-		models.JobPriorityHi,
+		models.JobPriorityHigh,
 	)
 	if err != nil {
 		return models.Job{}, err
@@ -60,7 +60,7 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 			r.Subs,
 			r.GetProjectCachePath,
 			project.ID,
-			models.JobPriorityHi,
+			models.JobPriorityHigh,
 		)
 		if err != nil {
 			return nil, err
@@ -79,7 +79,7 @@ func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.
 		r.Subs,
 		r.GetProjectPath,
 		id,
-		models.JobPriorityHi,
+		models.JobPriorityHigh,
 	)
 	if err != nil {
 		return models.Job{}, err
@@ -107,7 +107,7 @@ func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]mod
 			r.Subs,
 			r.GetProjectPath,
 			project.ID,
-			models.JobPriorityHi,
+			models.JobPriorityHigh,
 		)
 		if err != nil {
 			return nil, err
@@ -126,7 +126,7 @@ func (r *mutationResolver) PullProject(ctx context.Context, id string) (models.J
 		r.Subs,
 		r.GetProjectPath,
 		id,
-		models.JobPriorityHi,
+		models.JobPriorityHigh,
 	)
 	if err != nil {
 		return models.Job{}, err
@@ -154,7 +154,7 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 			r.Subs,
 			r.GetProjectPath,
 			project.ID,
-			models.JobPriorityHi,
+			models.JobPriorityHigh,
 		)
 		if err != nil {
 			return nil, err
@@ -176,7 +176,7 @@ func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, erro
 		r.GetProjectPath,
 		id,
 		r.SystemID,
-		models.JobPriorityHi,
+		models.JobPriorityHigh,
 	)
 	if err != nil {
 		return models.Job{}, err
