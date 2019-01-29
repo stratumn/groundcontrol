@@ -91,7 +91,7 @@ export class ProjectCard extends Component<IProps> {
         color={color}
       >
         <Dimmer
-          active={item.isLoadingCommits || item.commits.edges.length < 1}
+          active={item.commits.edges.length < 1}
           inverted={true}
         >
           <Loader content="Loading project commits..." />
@@ -130,7 +130,6 @@ export default createFragmentContainer(ProjectCard, graphql`
     repository
     branch
     description
-    isLoadingCommits
     isCloning
     isCloned
     isPulling

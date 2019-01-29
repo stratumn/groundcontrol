@@ -30,6 +30,7 @@ func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (m
 		r.Nodes,
 		r.Jobs,
 		r.Subs,
+		r.GetProjectCachePath,
 		id,
 		models.JobPriorityHi,
 	)
@@ -57,6 +58,7 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 			r.Nodes,
 			r.Jobs,
 			r.Subs,
+			r.GetProjectCachePath,
 			project.ID,
 			models.JobPriorityHi,
 		)

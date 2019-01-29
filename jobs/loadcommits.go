@@ -15,6 +15,7 @@
 package jobs
 
 import (
+	"os"
 	"strings"
 
 	"github.com/stratumn/groundcontrol/date"
@@ -22,16 +23,20 @@ import (
 	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"gopkg.in/src-d/go-git.v4/storage/memory"
 )
+
+// ProjectCachePathGetter is a function that returns the path to a project's cache.
+type ProjectCachePathGetter func(workspaceSlug, repo, branch string) string
 
 // LoadCommits loads the commits of a project from a remote repo.
 func LoadCommits(
 	nodes *models.NodeManager,
 	jobs *models.JobManager,
 	subs *pubsub.PubSub,
+	getProjectCachePath ProjectCachePathGetter,
 	projectID string,
 	priority models.JobPriority,
 ) (string, error) {
@@ -68,6 +73,7 @@ func LoadCommits(
 			return doLoadCommits(
 				nodes,
 				subs,
+				getProjectCachePath,
 				projectID,
 				workspaceID,
 			)
@@ -80,6 +86,7 @@ func LoadCommits(
 func doLoadCommits(
 	nodes *models.NodeManager,
 	subs *pubsub.PubSub,
+	getProjectCachePath ProjectCachePathGetter,
 	projectID string,
 	workspaceID string,
 ) error {
@@ -87,7 +94,10 @@ func doLoadCommits(
 
 	defer func() {
 		nodes.MustLockProject(projectID, func(project models.Project) {
-			project.CommitIDs = commitIDs
+			if len(commitIDs) > 0 {
+				project.CommitIDs = commitIDs
+			}
+
 			project.IsLoadingCommits = false
 			nodes.MustStoreProject(project)
 		})
@@ -97,14 +107,38 @@ func doLoadCommits(
 	}()
 
 	project := nodes.MustLoadProject(projectID)
-	refName := plumbing.NewBranchReferenceName(project.Branch)
+	workspace := project.Workspace(nodes)
+	directory := getProjectCachePath(workspace.Slug, project.Repository, project.Branch)
+	refName := plumbing.NewRemoteReferenceName("origin", project.Branch)
 
-	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
-		URL:           project.Repository,
-		ReferenceName: refName,
-	})
-	if err != nil {
-		return err
+	var (
+		repo *git.Repository
+		err  error
+	)
+
+	if exists(directory) {
+		repo, err = git.PlainOpen(directory)
+		if err != nil {
+			return err
+		}
+		err = repo.Fetch(&git.FetchOptions{
+			RefSpecs: []config.RefSpec{},
+		})
+		if err == git.NoErrAlreadyUpToDate {
+			if len(project.CommitIDs) > 0 {
+				return nil
+			}
+		} else if err != nil {
+			return err
+		}
+	} else {
+		repo, err = git.PlainClone(directory, true, &git.CloneOptions{
+			URL:           project.Repository,
+			ReferenceName: plumbing.NewBranchReferenceName(project.Branch),
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	ref, err := repo.Reference(refName, true)
@@ -135,4 +169,9 @@ func doLoadCommits(
 
 		return nil
 	})
+}
+
+func exists(directory string) bool {
+	_, err := os.Stat(directory)
+	return !os.IsNotExist(err)
 }

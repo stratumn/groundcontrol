@@ -28,6 +28,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/stratumn/groundcontrol/jobs"
+	"github.com/stratumn/groundcontrol/pubsub"
+
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
@@ -40,31 +43,6 @@ import (
 const defaultPort = "8080"
 
 var ui http.FileSystem
-
-func checkError(err error) {
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Debug("Request", struct {
-				Method     string
-				URL        string
-				RemoteAddr string
-			}{
-				r.Method,
-				r.URL.String(),
-				r.RemoteAddr,
-			})
-
-			h.ServeHTTP(w, r)
-		})
-	}
-}
 
 func main() {
 	port := os.Getenv("PORT")
@@ -137,32 +115,16 @@ func main() {
 		})
 	}
 
-	signalCh := make(chan os.Signal)
-	signal.Notify(signalCh, syscall.SIGTERM)
-	signal.Notify(signalCh, syscall.SIGINT)
+	go updateWorkspaces(
+		resolver.Nodes,
+		resolver.Log,
+		resolver.Jobs,
+		resolver.Subs,
+		resolver.GetProjectCachePath,
+		resolver.ViewerID,
+	)
 
-	go func() {
-		meta := struct {
-			Signal os.Signal
-		}{
-			<-signalCh,
-		}
-
-		resolver.Log.Info("Start Graceful Shutdown", meta)
-
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-		defer cancel()
-
-		resolver.PM.Clean(ctx)
-
-		if ctx.Err() != nil {
-			resolver.Log.Info("Graceful Shutdown Failed", meta)
-			os.Exit(1)
-		}
-
-		resolver.Log.Info("Graceful Shutdown Complete", meta)
-		os.Exit(0)
-	}()
+	go handleSignals(resolver.Log, resolver.PM)
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		resolver.Log.Error("App Crashed", struct {
@@ -170,5 +132,99 @@ func main() {
 		}{
 			err,
 		})
+	}
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Debug("Request", struct {
+				Method     string
+				URL        string
+				RemoteAddr string
+			}{
+				r.Method,
+				r.URL.String(),
+				r.RemoteAddr,
+			})
+
+			h.ServeHTTP(w, r)
+		})
+	}
+}
+
+func handleSignals(log *models.Logger, pm *models.ProcessManager) {
+	signalCh := make(chan os.Signal)
+	signal.Notify(signalCh, syscall.SIGTERM)
+	signal.Notify(signalCh, syscall.SIGINT)
+
+	meta := struct {
+		Signal os.Signal
+	}{
+		<-signalCh,
+	}
+
+	log.Info("Start Graceful Shutdown", meta)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pm.Clean(ctx)
+
+	if ctx.Err() != nil {
+		log.Info("Graceful Shutdown Failed", meta)
+		os.Exit(1)
+	}
+
+	log.Info("Graceful Shutdown Complete", meta)
+	os.Exit(0)
+}
+
+func updateWorkspaces(
+	nodes *models.NodeManager,
+	log *models.Logger,
+	jobManager *models.JobManager,
+	subs *pubsub.PubSub,
+	getProjectCachePath jobs.ProjectCachePathGetter,
+	viewerID string,
+) {
+	for {
+		viewer := nodes.MustLoadUser(viewerID)
+
+		for _, workspace := range viewer.Workspaces(nodes) {
+			for _, project := range workspace.Projects(nodes) {
+				if project.IsLoadingCommits {
+					continue
+				}
+
+				_, err := jobs.LoadCommits(
+					nodes,
+					jobManager,
+					subs,
+					getProjectCachePath,
+					project.ID,
+					models.JobPriorityNormal,
+				)
+
+				if err != nil {
+					log.Error("LoadCommits Failed", struct {
+						Project models.Project
+						Error   string
+					}{
+						project,
+						err.Error(),
+					})
+				}
+			}
+		}
+
+		time.Sleep(5 * time.Minute)
 	}
 }

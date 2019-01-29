@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 
 	"github.com/stratumn/groundcontrol/gql"
+	"github.com/stratumn/groundcontrol/jobs"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
@@ -26,14 +27,15 @@ import (
 
 // Resolver is the root GraphQL resolver.
 type Resolver struct {
-	Nodes          *models.NodeManager
-	Log            *models.Logger
-	Jobs           *models.JobManager
-	PM             *models.ProcessManager
-	Subs           *pubsub.PubSub
-	GetProjectPath models.ProjectPathGetter
-	ViewerID       string
-	SystemID       string
+	Nodes               *models.NodeManager
+	Log                 *models.Logger
+	Jobs                *models.JobManager
+	PM                  *models.ProcessManager
+	Subs                *pubsub.PubSub
+	GetProjectPath      models.ProjectPathGetter
+	GetProjectCachePath jobs.ProjectCachePathGetter
+	ViewerID            string
+	SystemID            string
 }
 
 // Query returns the resolver for queries.
@@ -139,14 +141,15 @@ func CreateResolver(filename string) (*Resolver, error) {
 	pm := models.NewProcessManager(nodes, log, subs, getProjectPath, systemID)
 
 	return &Resolver{
-		Nodes:          nodes,
-		Log:            log,
-		Jobs:           jobs,
-		PM:             pm,
-		Subs:           subs,
-		GetProjectPath: getProjectPath,
-		ViewerID:       viewer.ID,
-		SystemID:       systemID,
+		Nodes:               nodes,
+		Log:                 log,
+		Jobs:                jobs,
+		PM:                  pm,
+		Subs:                subs,
+		GetProjectPath:      getProjectPath,
+		GetProjectCachePath: getProjectCachePath,
+		ViewerID:            viewer.ID,
+		SystemID:            systemID,
 	}, nil
 }
 
@@ -155,4 +158,11 @@ func getProjectPath(workspaceSlug, repo, branch string) string {
 	ext := path.Ext(name)
 	name = name[:len(name)-len(ext)]
 	return filepath.Join("workspaces", workspaceSlug, name)
+}
+
+func getProjectCachePath(workspaceSlug, repo, branch string) string {
+	name := path.Base(repo)
+	ext := path.Ext(name)
+	name = name[:len(name)-len(ext)]
+	return filepath.Join("cache", workspaceSlug, name)
 }
