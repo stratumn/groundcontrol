@@ -16,9 +16,11 @@ package models
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os/exec"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -39,7 +41,7 @@ type ProcessManager struct {
 	systemID string
 
 	nextID   uint64
-	commands map[string]*exec.Cmd
+	commands sync.Map
 
 	runningCounter int64
 	doneCounter    int64
@@ -61,7 +63,6 @@ func NewProcessManager(
 		subs:           subs,
 		getProjectPath: getProjectPath,
 		systemID:       systemID,
-		commands:       map[string]*exec.Cmd{},
 	}
 }
 
@@ -166,7 +167,11 @@ func (p *ProcessManager) Stop(processID string) error {
 		p.subs.Publish(ProcessUpserted, processID)
 		p.subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
 
-		cmd := p.commands[processID]
+		actual, ok := p.commands.Load(processID)
+		if !ok {
+			panic("Command not found")
+		}
+		cmd := actual.(*exec.Cmd)
 
 		pgid, processError := syscall.Getpgid(cmd.Process.Pid)
 		if processError != nil {
@@ -183,6 +188,60 @@ func (p *ProcessManager) Stop(processID string) error {
 	}
 
 	return processError
+}
+
+// Clean terminates all running processes.
+func (p *ProcessManager) Clean(ctx context.Context) {
+	waitGroup := sync.WaitGroup{}
+
+	p.commands.Range(func(k, _ interface{}) bool {
+		processID := k.(string)
+
+		meta := struct {
+			ProcessID string
+			Error     string
+		}{
+			processID,
+			"",
+		}
+
+		p.log.Info("Stop Process", meta)
+
+		if err := p.Stop(processID); err != nil {
+			meta.Error = err.Error()
+			p.log.Error("Stop Process Failed", meta)
+			return true
+		}
+
+		waitGroup.Add(1)
+
+		processCtx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		go func() {
+			<-processCtx.Done()
+			waitGroup.Done()
+		}()
+
+		p.subs.Subscribe(processCtx, ProcessUpserted, func(msg interface{}) {
+			id := msg.(string)
+			if id != processID {
+				return
+			}
+
+			process := p.nodes.MustLoadProcess(id)
+
+			switch process.Status {
+			case ProcessStatusDone, ProcessStatusFailed:
+				cancel()
+				p.log.Info("Process Stopped", meta)
+			}
+		})
+
+		return true
+	})
+
+	waitGroup.Wait()
 }
 
 func (p *ProcessManager) exec(id string) {
@@ -243,13 +302,13 @@ func (p *ProcessManager) exec(id string) {
 		}
 
 		p.log.Info("Process Running", meta)
-		p.commands[id] = cmd
+		p.commands.Store(id, cmd)
 
 		go func() {
 			err := cmd.Wait()
 
 			p.nodes.MustLockProcess(id, func(process Process) {
-				delete(p.commands, id)
+				p.commands.Delete(id)
 
 				if err == nil {
 					process.Status = ProcessStatusDone

@@ -23,7 +23,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
+	"time"
 
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
@@ -133,6 +136,33 @@ func main() {
 			fmt.Sprintf("http://localhost:%s", port),
 		})
 	}
+
+	signalCh := make(chan os.Signal)
+	signal.Notify(signalCh, syscall.SIGTERM)
+	signal.Notify(signalCh, syscall.SIGINT)
+
+	go func() {
+		meta := struct {
+			Signal os.Signal
+		}{
+			<-signalCh,
+		}
+
+		resolver.Log.Info("Start Graceful Shutdown", meta)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+
+		resolver.PM.Clean(ctx)
+
+		if ctx.Err() != nil {
+			resolver.Log.Info("Graceful Shutdown Failed", meta)
+			os.Exit(1)
+		}
+
+		resolver.Log.Info("Graceful Shutdown Complete", meta)
+		os.Exit(0)
+	}()
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		resolver.Log.Error("App Crashed", struct {
