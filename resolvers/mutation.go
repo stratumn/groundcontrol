@@ -26,7 +26,13 @@ type mutationResolver struct {
 }
 
 func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.LoadCommits(r.Nodes, r.Jobs, r.Subs, id)
+	jobID, err := jobs.LoadCommits(
+		r.Nodes,
+		r.Jobs,
+		r.Subs,
+		id,
+		models.JobPriorityHi,
+	)
 	if err != nil {
 		return models.Job{}, err
 	}
@@ -47,7 +53,13 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 			continue
 		}
 
-		jobID, err := jobs.LoadCommits(r.Nodes, r.Jobs, r.Subs, project.ID)
+		jobID, err := jobs.LoadCommits(
+			r.Nodes,
+			r.Jobs,
+			r.Subs,
+			project.ID,
+			models.JobPriorityHi,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +71,14 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 }
 
 func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.Clone(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, id)
+	jobID, err := jobs.Clone(
+		r.Nodes,
+		r.Jobs,
+		r.Subs,
+		r.GetProjectPath,
+		id,
+		models.JobPriorityHi,
+	)
 	if err != nil {
 		return models.Job{}, err
 	}
@@ -80,7 +99,14 @@ func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]mod
 			continue
 		}
 
-		jobID, err := jobs.Clone(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, project.ID)
+		jobID, err := jobs.Clone(
+			r.Nodes,
+			r.Jobs,
+			r.Subs,
+			r.GetProjectPath,
+			project.ID,
+			models.JobPriorityHi,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +118,14 @@ func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]mod
 }
 
 func (r *mutationResolver) PullProject(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.Pull(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, id)
+	jobID, err := jobs.Pull(
+		r.Nodes,
+		r.Jobs,
+		r.Subs,
+		r.GetProjectPath,
+		id,
+		models.JobPriorityHi,
+	)
 	if err != nil {
 		return models.Job{}, err
 	}
@@ -113,7 +146,14 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 			continue
 		}
 
-		jobID, err := jobs.Pull(r.Nodes, r.Jobs, r.Subs, r.GetProjectPath, project.ID)
+		jobID, err := jobs.Pull(
+			r.Nodes,
+			r.Jobs,
+			r.Subs,
+			r.GetProjectPath,
+			project.ID,
+			models.JobPriorityHi,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +165,17 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 }
 
 func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.Run(r.Nodes, r.Log, r.Jobs, r.PM, r.Subs, r.GetProjectPath, id, r.SystemID)
+	jobID, err := jobs.Run(
+		r.Nodes,
+		r.Log,
+		r.Jobs,
+		r.PM,
+		r.Subs,
+		r.GetProjectPath,
+		id,
+		r.SystemID,
+		models.JobPriorityHi,
+	)
 	if err != nil {
 		return models.Job{}, err
 	}

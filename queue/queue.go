@@ -22,6 +22,7 @@ import (
 // Queue is a simple queue with concurency support.
 type Queue struct {
 	ch          chan func()
+	hiCh        chan func()
 	concurrency int
 }
 
@@ -29,6 +30,7 @@ type Queue struct {
 func New(concurrency int) *Queue {
 	return &Queue{
 		ch:          make(chan func()),
+		hiCh:        make(chan func()),
 		concurrency: concurrency,
 	}
 }
@@ -48,6 +50,17 @@ func (q *Queue) Work(ctx context.Context) error {
 				select {
 				case <-ctx.Done():
 					return
+				case job := <-q.hiCh:
+					job()
+					continue
+				default:
+				}
+
+				select {
+				case <-ctx.Done():
+					return
+				case job := <-q.hiCh:
+					job()
 				case job := <-q.ch:
 					job()
 				}
@@ -75,6 +88,27 @@ func (q *Queue) DoError(job func() error) error {
 	done := make(chan error, 1)
 	q.ch <- func() {
 		done <- job()
+	}
+	return <-done
+}
+
+// DoHi puts a task at the end of the hi-priority queue and blocks until
+// executed.
+func (q *Queue) DoHi(task func()) {
+	done := make(chan struct{})
+	q.hiCh <- func() {
+		task()
+		close(done)
+	}
+	<-done
+}
+
+// DoErrorHi puts a task that can return an error at the end of the hi-priority
+// queue and blocks until executed.
+func (q *Queue) DoErrorHi(task func() error) error {
+	done := make(chan error, 1)
+	q.hiCh <- func() {
+		done <- task()
 	}
 	return <-done
 }

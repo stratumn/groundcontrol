@@ -16,12 +16,13 @@ package models
 
 // Job represents a job in the app.
 type Job struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt string    `json:"createdAt"`
-	UpdatedAt string    `json:"updatedAt"`
-	Status    JobStatus `json:"status"`
-	OwnerID   string    `json:"ownerID"`
+	ID        string      `json:"id"`
+	Name      string      `json:"name"`
+	CreatedAt string      `json:"createdAt"`
+	UpdatedAt string      `json:"updatedAt"`
+	Status    JobStatus   `json:"status"`
+	Priority  JobPriority `json:"priority"`
+	OwnerID   string      `json:"ownerID"`
 }
 
 // IsNode tells gqlgen that it implements Node.

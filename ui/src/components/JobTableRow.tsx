@@ -76,6 +76,7 @@ export class JobTableRow extends Component<IProps> {
         <Table.Cell>
           <Moment format={dateFormat}>{item.updatedAt}</Moment>
         </Table.Cell>
+        <Table.Cell>{item.priority}</Table.Cell>
         <Table.Cell
           positive={item.status === "DONE"}
           warning={item.status === "RUNNING"}
@@ -92,7 +93,6 @@ export class JobTableRow extends Component<IProps> {
 export default createFragmentContainer(JobTableRow, graphql`
   fragment JobTableRow_item on Job {
     name
-    status
     createdAt
     updatedAt
     owner {
@@ -110,5 +110,7 @@ export default createFragmentContainer(JobTableRow, graphql`
         }
       }
     }
+    priority
+    status
   }`,
 );

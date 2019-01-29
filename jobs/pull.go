@@ -33,6 +33,7 @@ func Pull(
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
 	projectID string,
+	priority models.JobPriority,
 ) (string, error) {
 	var (
 		projectError error
@@ -64,15 +65,20 @@ func Pull(
 	subs.Publish(models.ProjectUpdated, projectID)
 	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(PullJob, projectID, func() error {
-		return doPull(
-			nodes,
-			subs,
-			getProjectPath,
-			projectID,
-			workspaceID,
-		)
-	})
+	jobID := jobs.Add(
+		PullJob,
+		projectID,
+		priority,
+		func() error {
+			return doPull(
+				nodes,
+				subs,
+				getProjectPath,
+				projectID,
+				workspaceID,
+			)
+		},
+	)
 
 	return jobID, nil
 }
@@ -109,11 +115,11 @@ func doPull(
 	}
 
 	err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
-	if err != nil {
-		return err
-	}
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 
 	refName := plumbing.NewBranchReferenceName(project.Branch)

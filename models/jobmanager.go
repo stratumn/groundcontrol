@@ -68,15 +68,18 @@ func (j *JobManager) Work(ctx context.Context) error {
 func (j *JobManager) Add(
 	name string,
 	ownerID string,
+	priority JobPriority,
 	fn func() error,
 ) string {
 	meta := struct {
-		Name   string
-		NodeID string
-		Error  string
+		Name     string
+		NodeID   string
+		Priority JobPriority
+		Error    string
 	}{
 		name,
 		ownerID,
+		priority,
 		"",
 	}
 
@@ -86,6 +89,7 @@ func (j *JobManager) Add(
 	now := date.NowFormatted()
 	job := Job{
 		ID:        relay.EncodeID(NodeTypeJob, fmt.Sprint(id)),
+		Priority:  priority,
 		Name:      name,
 		Status:    JobStatusQueued,
 		CreatedAt: now,
@@ -103,7 +107,12 @@ func (j *JobManager) Add(
 	atomic.AddInt64(&j.queuedCounter, 1)
 	j.publishMetrics()
 
-	go j.queue.Do(func() {
+	do := j.queue.Do
+	if priority == JobPriorityHi {
+		do = j.queue.DoHi
+	}
+
+	go do(func() {
 		j.log.Info("Job Running", meta)
 
 		job.Status = JobStatusRunning

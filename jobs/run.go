@@ -33,6 +33,7 @@ func Run(
 	getProjectPath models.ProjectPathGetter,
 	taskID string,
 	systemID string,
+	priority models.JobPriority,
 ) (string, error) {
 	var (
 		taskError   error
@@ -59,18 +60,23 @@ func Run(
 	subs.Publish(models.TaskUpdated, taskID)
 	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(RunJob, workspaceID, func() error {
-		return doRun(
-			nodes,
-			log,
-			pm,
-			subs,
-			getProjectPath,
-			taskID,
-			workspaceID,
-			systemID,
-		)
-	})
+	jobID := jobs.Add(
+		RunJob,
+		workspaceID,
+		priority,
+		func() error {
+			return doRun(
+				nodes,
+				log,
+				pm,
+				subs,
+				getProjectPath,
+				taskID,
+				workspaceID,
+				systemID,
+			)
+		},
+	)
 
 	return jobID, nil
 }

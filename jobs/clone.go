@@ -28,6 +28,7 @@ func Clone(
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
 	projectID string,
+	priority models.JobPriority,
 ) (string, error) {
 	var (
 		projectError error
@@ -54,15 +55,20 @@ func Clone(
 	subs.Publish(models.ProjectUpdated, projectID)
 	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(CloneJob, projectID, func() error {
-		return doClone(
-			nodes,
-			subs,
-			getProjectPath,
-			projectID,
-			workspaceID,
-		)
-	})
+	jobID := jobs.Add(
+		CloneJob,
+		projectID,
+		priority,
+		func() error {
+			return doClone(
+				nodes,
+				subs,
+				getProjectPath,
+				projectID,
+				workspaceID,
+			)
+		},
+	)
 
 	return jobID, nil
 }

@@ -48,6 +48,7 @@ export class JobTable extends Component<IProps> {
             <Table.HeaderCell>Branch</Table.HeaderCell>
             <Table.HeaderCell>Created At</Table.HeaderCell>
             <Table.HeaderCell>Updated At</Table.HeaderCell>
+            <Table.HeaderCell>Priority</Table.HeaderCell>
             <Table.HeaderCell>Status</Table.HeaderCell>
           </Table.Row>
         </Table.Header>

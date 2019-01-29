@@ -110,6 +110,7 @@ type Job implements Node {
   createdAt: DateTime!
   updatedAt: DateTime!
   status: JobStatus!
+  priority: JobPriority!
   owner: Node!
 }
 
@@ -118,6 +119,11 @@ enum JobStatus {
   RUNNING
   DONE
   FAILED
+}
+
+enum JobPriority {
+  NORMAL
+  HI
 }
 
 type JobConnection {

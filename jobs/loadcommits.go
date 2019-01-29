@@ -33,6 +33,7 @@ func LoadCommits(
 	jobs *models.JobManager,
 	subs *pubsub.PubSub,
 	projectID string,
+	priority models.JobPriority,
 ) (string, error) {
 	var (
 		projectError error
@@ -59,14 +60,19 @@ func LoadCommits(
 	subs.Publish(models.ProjectUpdated, projectID)
 	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(LoadCommitsJob, projectID, func() error {
-		return doLoadCommits(
-			nodes,
-			subs,
-			projectID,
-			workspaceID,
-		)
-	})
+	jobID := jobs.Add(
+		LoadCommitsJob,
+		projectID,
+		priority,
+		func() error {
+			return doLoadCommits(
+				nodes,
+				subs,
+				projectID,
+				workspaceID,
+			)
+		},
+	)
 
 	return jobID, nil
 }
