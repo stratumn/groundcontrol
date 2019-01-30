@@ -34,6 +34,8 @@ type Project struct {
 	IsLoadingCommits bool     `json:"isLoadingCommits"`
 	IsCloning        bool     `json:"isCloning"`
 	IsPulling        bool     `json:"isPulling"`
+	IsBehind         bool     `json:"isBehing"`
+	IsAhead          bool     `json:"isAhead"`
 }
 
 // IsNode tells gqlgen that it implements Node.

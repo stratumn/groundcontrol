@@ -82,3 +82,25 @@ func (w Workspace) IsPulling(nodes *NodeManager) bool {
 
 	return false
 }
+
+// IsBehind returns true if any of the projects is behind origin.
+func (w Workspace) IsBehind(nodes *NodeManager) bool {
+	for _, v := range w.Projects(nodes) {
+		if v.IsBehind {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsAhead returns true if any of the projects is ahead origin.
+func (w Workspace) IsAhead(nodes *NodeManager) bool {
+	for _, v := range w.Projects(nodes) {
+		if v.IsAhead {
+			return true
+		}
+	}
+
+	return false
+}

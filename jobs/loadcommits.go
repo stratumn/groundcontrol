@@ -15,6 +15,7 @@
 package jobs
 
 import (
+	"bytes"
 	"os"
 	"strings"
 
@@ -26,12 +27,13 @@ import (
 	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
 // ProjectCachePathGetter is a function that returns the path to a project's cache.
 type ProjectCachePathGetter func(workspaceSlug, repo, branch string) string
 
-// LoadCommits loads the commits of a project from a remote repo.
+// LoadCommits loads the commits of a project from a remote repo and updates the project.
 func LoadCommits(
 	nodes *models.NodeManager,
 	jobs *models.JobManager,
@@ -120,24 +122,26 @@ func doLoadCommits(
 		getProjectCachePath,
 		projectID,
 	)
-	if err == git.NoErrAlreadyUpToDate {
-		if len(project.CommitIDs) > 0 {
-			return nil
-		}
-	} else if err != nil {
+	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return err
 	}
 
 	refName := plumbing.NewRemoteReferenceName("origin", project.Branch)
-
 	ref, err := repo.Reference(refName, true)
 	if err != nil {
 		return err
 	}
 
 	commitIDs, err = getCommits(nodes, repo, ref)
+	if err != nil {
+		return err
+	}
 
-	return err
+	if project.IsCloned(nodes, getProjectPath) {
+		return updateStatus(nodes, repo, projectID)
+	}
+
+	return nil
 }
 
 func cloneOrFetch(
@@ -205,6 +209,57 @@ func getCommits(
 
 		return nil
 	})
+}
+
+func updateStatus(
+	nodes *models.NodeManager,
+	repo *git.Repository,
+	projectID string,
+) (projectError error) {
+	nodes.MustLockProject(projectID, func(project models.Project) {
+		refName := plumbing.NewBranchReferenceName(project.Branch)
+		ref, err := repo.Reference(refName, true)
+		if err != nil {
+			projectError = err
+			return
+		}
+
+		remoteRefName := plumbing.NewRemoteReferenceName("origin", project.Branch)
+		remoteRef, err := repo.Reference(remoteRefName, true)
+		if err != nil {
+			projectError = err
+			return
+		}
+
+		iter, err := repo.Log(&git.LogOptions{
+			From:  ref.Hash(),
+			Order: git.LogOrderCommitterTime,
+		})
+		if err != nil {
+			projectError = err
+			return
+		}
+
+		project.IsBehind = true
+		project.IsAhead = false
+		remoteHash := remoteRef.Hash()
+		last := true
+
+		iter.ForEach(func(commit *object.Commit) error {
+			if bytes.Compare(remoteHash[:], commit.Hash[:]) == 0 {
+				project.IsBehind = false
+				project.IsAhead = !last
+				return storer.ErrStop
+			}
+
+			last = false
+			return nil
+		})
+
+		nodes.MustStoreProject(project)
+	})
+
+	return
 }
 
 func exists(directory string) bool {

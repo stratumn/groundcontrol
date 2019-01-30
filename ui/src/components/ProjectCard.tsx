@@ -46,11 +46,9 @@ export class ProjectCard extends Component<IProps> {
     const labels: JSX.Element[] = [];
     const buttons: JSX.Element[] = [];
 
-    let color: "grey" | "teal" = "grey";
+    let color: "grey" | "teal" | "pink" | "purple" = "grey";
 
     if (item.isCloned) {
-      color = "teal";
-
       labels.push((
         <Label
           key="cloned"
@@ -66,11 +64,24 @@ export class ProjectCard extends Component<IProps> {
           content="Pull"
           color="teal"
           icon="download"
-          disabled={item.isPulling}
+          disabled={item.isPulling || !item.isBehind}
           loading={item.isPulling}
           onClick={this.props.onPull}
         />
       ));
+
+      if (!item.isBehind && !item.isAhead) {
+        color = "teal";
+
+        labels.push((
+          <Label
+            key="uptodate"
+            content="up-to-date"
+            color="teal"
+            size="small"
+          />
+        ));
+      }
     } else {
       buttons.push((
         <Button
@@ -81,6 +92,32 @@ export class ProjectCard extends Component<IProps> {
           disabled={item.isCloning}
           loading={item.isCloning}
           onClick={this.props.onClone}
+        />
+      ));
+    }
+
+    if (item.isAhead) {
+      color = "purple";
+
+      labels.push((
+        <Label
+          key="ahead"
+          content="ahead"
+          color="purple"
+          size="small"
+        />
+      ));
+    }
+
+    if (item.isBehind) {
+      color = "pink";
+
+      labels.push((
+        <Label
+          key="behind"
+          content="behind"
+          color="pink"
+          size="small"
         />
       ));
     }
@@ -133,6 +170,8 @@ export default createFragmentContainer(ProjectCard, graphql`
     isCloning
     isCloned
     isPulling
+    isBehind
+    isAhead
     commits(first: $commitsLimit) {
       edges {
         node {

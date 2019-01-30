@@ -15,6 +15,7 @@
 package jobs
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/stratumn/groundcontrol/date"
@@ -26,7 +27,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-// Pull clones a remote repository locally.
+// Pull clones a remote repository locally and updates the project.
 func Pull(
 	nodes *models.NodeManager,
 	jobs *models.JobManager,
@@ -157,8 +158,24 @@ func doPull(
 		return err
 	}
 
+	remoteRefName := plumbing.NewRemoteReferenceName("origin", project.Branch)
+	remoteRef, err := repo.Reference(remoteRefName, true)
+	if err != nil {
+		return err
+	}
+
+	hash := ref.Hash()
+	remoteHash := remoteRef.Hash()
+
 	nodes.MustLockProject(projectID, func(project models.Project) {
 		project.CommitIDs = commitIDs
+		project.IsBehind = false
+		project.IsAhead = false
+
+		if bytes.Compare(hash[:], remoteHash[:]) != 0 {
+			project.IsAhead = true
+		}
+
 		nodes.MustStoreProject(project)
 	})
 

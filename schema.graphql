@@ -21,6 +21,8 @@ type Workspace implements Node {
   isCloning: Boolean!
   isCloned: Boolean!
   isPulling: Boolean!
+  isBehind: Boolean!
+  isAhead: Boolean!
 }
 
 type Project implements Node {
@@ -40,6 +42,8 @@ type Project implements Node {
   isCloning: Boolean!
   isCloned: Boolean!
   isPulling: Boolean!
+  isBehind: Boolean!
+  isAhead: Boolean!
 }
 
 type Task implements Node {

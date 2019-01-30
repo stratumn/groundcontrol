@@ -43,3 +43,11 @@ func (r *workspaceResolver) IsCloned(ctx context.Context, obj *models.Workspace)
 func (r *workspaceResolver) IsPulling(ctx context.Context, obj *models.Workspace) (bool, error) {
 	return obj.IsPulling(r.Nodes), nil
 }
+
+func (r *workspaceResolver) IsBehind(ctx context.Context, obj *models.Workspace) (bool, error) {
+	return obj.IsBehind(r.Nodes), nil
+}
+
+func (r *workspaceResolver) IsAhead(ctx context.Context, obj *models.Workspace) (bool, error) {
+	return obj.IsAhead(r.Nodes), nil
+}
