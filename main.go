@@ -123,6 +123,7 @@ func main() {
 		resolver.Log,
 		resolver.Jobs,
 		resolver.Subs,
+		resolver.GetProjectPath,
 		resolver.GetProjectCachePath,
 		resolver.ViewerID,
 	)
@@ -196,6 +197,7 @@ func startPeriodicJobs(
 	log *models.Logger,
 	jobManager *models.JobManager,
 	subs *pubsub.PubSub,
+	getProjectPath models.ProjectPathGetter,
 	getProjectCachePath jobs.ProjectCachePathGetter,
 	viewerID string,
 ) {
@@ -210,6 +212,7 @@ func startPeriodicJobs(
 				log,
 				jobManager,
 				subs,
+				getProjectPath,
 				getProjectCachePath,
 				viewerID,
 			)

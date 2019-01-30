@@ -36,6 +36,7 @@ func LoadCommits(
 	nodes *models.NodeManager,
 	jobs *models.JobManager,
 	subs *pubsub.PubSub,
+	getProjectPath models.ProjectPathGetter,
 	getProjectCachePath ProjectCachePathGetter,
 	projectID string,
 	priority models.JobPriority,
@@ -73,6 +74,7 @@ func LoadCommits(
 			return doLoadCommits(
 				nodes,
 				subs,
+				getProjectPath,
 				getProjectCachePath,
 				projectID,
 				workspaceID,
@@ -86,11 +88,15 @@ func LoadCommits(
 func doLoadCommits(
 	nodes *models.NodeManager,
 	subs *pubsub.PubSub,
+	getProjectPath models.ProjectPathGetter,
 	getProjectCachePath ProjectCachePathGetter,
 	projectID string,
 	workspaceID string,
 ) error {
-	var commitIDs []string
+	var (
+		commitIDs []string
+		err       error
+	)
 
 	defer func() {
 		nodes.MustLockProject(projectID, func(project models.Project) {
@@ -107,54 +113,84 @@ func doLoadCommits(
 	}()
 
 	project := nodes.MustLoadProject(projectID)
-	workspace := project.Workspace(nodes)
-	directory := getProjectCachePath(workspace.Slug, project.Repository, project.Branch)
-	refName := plumbing.NewRemoteReferenceName("origin", project.Branch)
 
-	var (
-		repo *git.Repository
-		err  error
+	repo, err := cloneOrFetch(
+		nodes,
+		getProjectPath,
+		getProjectCachePath,
+		projectID,
 	)
-
-	if exists(directory) {
-		repo, err = git.PlainOpen(directory)
-		if err != nil {
-			return err
+	if err == git.NoErrAlreadyUpToDate {
+		if len(project.CommitIDs) > 0 {
+			return nil
 		}
-		err = repo.Fetch(&git.FetchOptions{
-			RefSpecs: []config.RefSpec{},
-		})
-		if err == git.NoErrAlreadyUpToDate {
-			if len(project.CommitIDs) > 0 {
-				return nil
-			}
-		} else if err != nil {
-			return err
-		}
-	} else {
-		repo, err = git.PlainClone(directory, true, &git.CloneOptions{
-			URL:           project.Repository,
-			ReferenceName: plumbing.NewBranchReferenceName(project.Branch),
-		})
-		if err != nil {
-			return err
-		}
+	} else if err != nil {
+		return err
 	}
+
+	refName := plumbing.NewRemoteReferenceName("origin", project.Branch)
 
 	ref, err := repo.Reference(refName, true)
 	if err != nil {
 		return err
 	}
 
+	commitIDs, err = getCommits(nodes, repo, ref)
+
+	return err
+}
+
+func cloneOrFetch(
+	nodes *models.NodeManager,
+	getProjectPath models.ProjectPathGetter,
+	getProjectCachePath ProjectCachePathGetter,
+	projectID string,
+) (repo *git.Repository, err error) {
+	project := nodes.MustLoadProject(projectID)
+	workspace := project.Workspace(nodes)
+	projectDir := getProjectPath(workspace.Slug, project.Repository, project.Branch)
+	cacheDir := getProjectCachePath(workspace.Slug, project.Repository, project.Branch)
+
+	if project.IsCloned(nodes, getProjectPath) {
+		repo, err = git.PlainOpen(projectDir)
+	} else if exists(cacheDir) {
+		repo, err = git.PlainOpen(cacheDir)
+	}
+
+	if err != nil {
+		return
+	}
+
+	if repo != nil {
+		err = repo.Fetch(&git.FetchOptions{
+			RefSpecs: []config.RefSpec{},
+		})
+	} else {
+		repo, err = git.PlainClone(cacheDir, true, &git.CloneOptions{
+			URL:           project.Repository,
+			ReferenceName: plumbing.NewBranchReferenceName(project.Branch),
+		})
+	}
+
+	return
+}
+
+func getCommits(
+	nodes *models.NodeManager,
+	repo *git.Repository,
+	ref *plumbing.Reference,
+) ([]string, error) {
+	var commitIDs []string
+
 	iter, err := repo.Log(&git.LogOptions{
 		From:  ref.Hash(),
 		Order: git.LogOrderCommitterTime,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return iter.ForEach(func(c *object.Commit) error {
+	return commitIDs, iter.ForEach(func(c *object.Commit) error {
 		commit := models.Commit{
 			ID:       relay.EncodeID(models.NodeTypeCommit, c.Hash.String()),
 			SHA:      c.Hash.String(),

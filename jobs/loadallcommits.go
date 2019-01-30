@@ -26,6 +26,7 @@ func LoadAllCommits(
 	log *models.Logger,
 	jobManager *models.JobManager,
 	subs *pubsub.PubSub,
+	getProjectPath models.ProjectPathGetter,
 	getProjectCachePath ProjectCachePathGetter,
 	viewerID string,
 ) []string {
@@ -43,6 +44,7 @@ func LoadAllCommits(
 				nodes,
 				jobManager,
 				subs,
+				getProjectPath,
 				getProjectCachePath,
 				project.ID,
 				models.JobPriorityNormal,
