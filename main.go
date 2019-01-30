@@ -52,21 +52,18 @@ func main() {
 		port = defaultPort
 	}
 
-	args := os.Args
-	if len(args) > 2 {
-		fmt.Printf("usage: %s [file]\n", args[0])
-		os.Exit(1)
+	filenames := os.Args[1:]
+	if len(filenames) < 1 {
+		filenames = []string{"groundcontrol.yml"}
 	}
 
-	filename, err := filepath.Abs("groundcontrol.yml")
-	checkError(err)
-
-	if len(args) > 1 {
-		filename, err = filepath.Abs(args[1])
+	for i, filename := range filenames {
+		filename, err := filepath.Abs(filename)
 		checkError(err)
+		filenames[i] = filename
 	}
 
-	resolver, err := resolvers.CreateResolver(filename)
+	resolver, err := resolvers.CreateResolver(filenames...)
 	checkError(err)
 
 	gqlConfig := gql.Config{

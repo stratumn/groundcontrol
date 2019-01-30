@@ -48,11 +48,9 @@ type Config struct {
 }
 
 // CreateNodes creates nodes for the content of the config.
-// It returns a user node with has an ID derived from the filename of the config.
-func (c Config) CreateNodes(nodes *NodeManager) (User, error) {
-	user := User{
-		ID: relay.EncodeID(NodeTypeUser, c.Filename),
-	}
+// The user node must already exists
+func (c Config) CreateNodes(nodes *NodeManager, userID string) error {
+	var workspaceIDs []string
 
 	for _, workspaceConfig := range c.Workspaces {
 		workspace := Workspace{
@@ -101,7 +99,7 @@ func (c Config) CreateNodes(nodes *NodeManager) (User, error) {
 				for _, slug := range stepConfig.Projects {
 					id, ok := projectSlugToID[slug]
 					if !ok {
-						return User{}, ErrNotFound
+						return ErrNotFound
 					}
 					projectIDs = append(projectIDs, id)
 				}
@@ -127,10 +125,15 @@ func (c Config) CreateNodes(nodes *NodeManager) (User, error) {
 		}
 
 		nodes.MustStoreWorkspace(workspace)
-		user.WorkspaceIDs = append(user.WorkspaceIDs, workspace.ID)
+		workspaceIDs = append(workspaceIDs, workspace.ID)
 	}
 
-	return user, nodes.StoreUser(user)
+	nodes.MustLockUser(userID, func(user User) {
+		user.WorkspaceIDs = append(user.WorkspaceIDs, workspaceIDs...)
+		nodes.MustStoreUser(user)
+	})
+
+	return nil
 }
 
 // LoadConfigYAML loads a config from a YAML file.

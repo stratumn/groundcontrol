@@ -17,6 +17,7 @@ package resolvers
 import (
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/stratumn/groundcontrol/gql"
 	"github.com/stratumn/groundcontrol/jobs"
@@ -99,22 +100,30 @@ func (r *Resolver) Process() gql.ProcessResolver {
 }
 
 // CreateResolver creates a resolver from a config file.
-func CreateResolver(filename string) (*Resolver, error) {
-	config, err := models.LoadConfigYAML(filename)
-	if err != nil {
-		return nil, err
-	}
-
+func CreateResolver(filenames ...string) (*Resolver, error) {
+	unique := strings.Join(filenames, ";")
 	nodes := &models.NodeManager{}
-	viewer, err := config.CreateNodes(nodes)
-	if err != nil {
-		return nil, err
+	viewer := models.User{
+		ID: relay.EncodeID(models.NodeTypeUser, unique),
+	}
+	nodes.MustStoreUser(viewer)
+
+	for _, filename := range filenames {
+		config, err := models.LoadConfigYAML(filename)
+		if err != nil {
+			return nil, err
+		}
+
+		err = config.CreateNodes(nodes, viewer.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, filename)
-	systemID := relay.EncodeID(models.NodeTypeSystem, filename)
-	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, filename)
-	processMetricsID := relay.EncodeID(models.NodeTypeProcessMetrics, filename)
+	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, unique)
+	systemID := relay.EncodeID(models.NodeTypeSystem, unique)
+	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, unique)
+	processMetricsID := relay.EncodeID(models.NodeTypeProcessMetrics, unique)
 
 	nodes.MustStoreLogMetrics(models.LogMetrics{
 		ID: logMetricsID,
