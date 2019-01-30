@@ -25,7 +25,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sync"
 	"syscall"
 	"time"
 
@@ -46,6 +45,8 @@ const defaultPort = "8080"
 var ui http.FileSystem
 
 func main() {
+	ctx := context.Background()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
@@ -67,8 +68,6 @@ func main() {
 
 	resolver, err := resolvers.CreateResolver(filename)
 	checkError(err)
-
-	go resolver.Jobs.Work(context.Background())
 
 	gqlConfig := gql.Config{
 		Resolvers: resolver,
@@ -116,7 +115,10 @@ func main() {
 		})
 	}
 
-	go updateWorkspaces(
+	go resolver.Jobs.Work(ctx)
+
+	startPeriodicJobs(
+		ctx,
 		resolver.Nodes,
 		resolver.Log,
 		resolver.Jobs,
@@ -125,7 +127,7 @@ func main() {
 		resolver.ViewerID,
 	)
 
-	go handleSignals(resolver.Log, resolver.PM)
+	go handleSignals(ctx, resolver.Log, resolver.PM)
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		resolver.Log.Error("App Crashed", struct {
@@ -161,7 +163,7 @@ func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
 	}
 }
 
-func handleSignals(log *models.Logger, pm *models.ProcessManager) {
+func handleSignals(ctx context.Context, log *models.Logger, pm *models.ProcessManager) {
 	signalCh := make(chan os.Signal)
 	signal.Notify(signalCh, syscall.SIGTERM)
 	signal.Notify(signalCh, syscall.SIGINT)
@@ -174,12 +176,12 @@ func handleSignals(log *models.Logger, pm *models.ProcessManager) {
 
 	log.Info("Start Graceful Shutdown", meta)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
-	pm.Clean(ctx)
+	pm.Clean(shutdownCtx)
 
-	if ctx.Err() != nil {
+	if shutdownCtx.Err() != nil {
 		log.Info("Graceful Shutdown Failed", meta)
 		os.Exit(1)
 	}
@@ -188,7 +190,8 @@ func handleSignals(log *models.Logger, pm *models.ProcessManager) {
 	os.Exit(0)
 }
 
-func updateWorkspaces(
+func startPeriodicJobs(
+	ctx context.Context,
 	nodes *models.NodeManager,
 	log *models.Logger,
 	jobManager *models.JobManager,
@@ -196,53 +199,20 @@ func updateWorkspaces(
 	getProjectCachePath jobs.ProjectCachePathGetter,
 	viewerID string,
 ) {
-	for {
-		viewer := nodes.MustLoadUser(viewerID)
-		waitGroup := sync.WaitGroup{}
-		ctx, cancel := context.WithCancel(context.Background())
-
-		for _, workspace := range viewer.Workspaces(nodes) {
-			for _, project := range workspace.Projects(nodes) {
-				if project.IsLoadingCommits {
-					continue
-				}
-
-				jobID, err := jobs.LoadCommits(
-					nodes,
-					jobManager,
-					subs,
-					getProjectCachePath,
-					project.ID,
-					models.JobPriorityNormal,
-				)
-
-				if err != nil {
-					log.Error("LoadCommits Failed", struct {
-						Project models.Project
-						Error   string
-					}{
-						project,
-						err.Error(),
-					})
-					continue
-				}
-
-				waitGroup.Add(1)
-				subs.Subscribe(ctx, models.JobUpserted, func(msg interface{}) {
-					if msg.(string) != jobID {
-						return
-					}
-
-					switch nodes.MustLoadJob(jobID).Status {
-					case models.JobStatusDone, models.JobStatusFailed:
-						waitGroup.Done()
-					}
-				})
-			}
-		}
-
-		waitGroup.Wait()
-		cancel()
-		time.Sleep(time.Minute)
-	}
+	go jobs.StartPeriodic(
+		ctx,
+		nodes,
+		subs,
+		time.Minute,
+		func() []string {
+			return jobs.LoadAllCommits(
+				nodes,
+				log,
+				jobManager,
+				subs,
+				getProjectCachePath,
+				viewerID,
+			)
+		},
+	)
 }
