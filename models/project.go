@@ -34,7 +34,7 @@ type Project struct {
 	IsLoadingCommits bool     `json:"isLoadingCommits"`
 	IsCloning        bool     `json:"isCloning"`
 	IsPulling        bool     `json:"isPulling"`
-	IsBehind         bool     `json:"isBehing"`
+	IsBehind         bool     `json:"isBehind"`
 	IsAhead          bool     `json:"isAhead"`
 }
 
