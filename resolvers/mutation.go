@@ -146,7 +146,7 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 	var slice []models.Job
 
 	for _, project := range workspace.Projects(r.Nodes) {
-		if project.IsPulling || !project.IsCloned(r.Nodes, r.GetProjectPath) {
+		if project.IsPulling || !project.IsCloned(r.Nodes, r.GetProjectPath) || !project.IsBehind {
 			continue
 		}
 

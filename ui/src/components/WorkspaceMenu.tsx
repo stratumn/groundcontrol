@@ -34,7 +34,13 @@ interface IProps {
 export class WorkspaceMenu extends Component<IProps> {
 
   public render() {
-    const { isCloning, isCloned, isPulling, tasks } = this.props.workspace;
+    const {
+      isCloning,
+      isCloned,
+      isPulling,
+      isBehind,
+      tasks,
+    } = this.props.workspace;
     const { onClone, onPull, onRun } = this.props;
 
     return (
@@ -47,7 +53,7 @@ export class WorkspaceMenu extends Component<IProps> {
           Clone All
         </Menu.Item>
         <Menu.Item
-          disabled={isPulling || !isCloned}
+          disabled={isPulling || !isCloned || !isBehind}
           onClick={onPull}
         >
           <Icon name="download" />
@@ -72,5 +78,6 @@ export default createFragmentContainer(WorkspaceMenu, graphql`
     isCloning
     isCloned
     isPulling
+    isBehind
   }`,
 );
