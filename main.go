@@ -98,18 +98,12 @@ func main() {
 		}),
 	))
 
+	resolver.Log.Info("app ready")
+
 	if ui != nil {
-		resolver.Log.Info("App Ready", struct {
-			UserInterfaceURL string
-		}{
-			fmt.Sprintf("http://localhost:%s", port),
-		})
+		resolver.Log.Info("user interface on http://localhost:%s", port)
 	} else {
-		resolver.Log.Info("App Ready", struct {
-			GraphQLPlaygroundURL string
-		}{
-			fmt.Sprintf("http://localhost:%s", port),
-		})
+		resolver.Log.Info("GraphQL playground on http://localhost:%s", port)
 	}
 
 	go resolver.Jobs.Work(ctx)
@@ -128,11 +122,7 @@ func main() {
 	go handleSignals(ctx, resolver.Log, resolver.PM)
 
 	if err := http.ListenAndServe(":"+port, router); err != nil {
-		resolver.Log.Error("App Crashed", struct {
-			Error error
-		}{
-			err,
-		})
+		resolver.Log.Error("app crashed because %s", err.Error())
 	}
 }
 
@@ -146,16 +136,7 @@ func checkError(err error) {
 func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Debug("Request", struct {
-				Method     string
-				URL        string
-				RemoteAddr string
-			}{
-				r.Method,
-				r.URL.String(),
-				r.RemoteAddr,
-			})
-
+			log.Debug("%s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
 			h.ServeHTTP(w, r)
 		})
 	}
@@ -166,25 +147,20 @@ func handleSignals(ctx context.Context, log *models.Logger, pm *models.ProcessMa
 	signal.Notify(signalCh, syscall.SIGTERM)
 	signal.Notify(signalCh, syscall.SIGINT)
 
-	meta := struct {
-		Signal os.Signal
-	}{
-		<-signalCh,
-	}
-
-	log.Info("Start Graceful Shutdown", meta)
+	log.Debug("received signal %d", <-signalCh)
+	log.Info("starting graceful shutdown")
 
 	shutdownCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
 	pm.Clean(shutdownCtx)
 
-	if shutdownCtx.Err() != nil {
-		log.Info("Graceful Shutdown Failed", meta)
+	if err := shutdownCtx.Err(); err != nil {
+		log.Error("graceful shutdown failed because %s", err.Error())
 		os.Exit(1)
 	}
 
-	log.Info("Graceful Shutdown Complete", meta)
+	log.Info("graceful shutdown complete, goodbye!")
 	os.Exit(0)
 }
 

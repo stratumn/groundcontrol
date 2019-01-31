@@ -37,7 +37,7 @@ export class LogEntryTableRow extends Component<IProps> {
   public render() {
     const item = this.props.item;
     const panels = [{
-      content: JSON.stringify(JSON.parse(item.metaJSON), null, 2),
+      content: JSON.stringify(item.owner, null, 2),
       key: "details",
       title: item.message,
     }];
@@ -75,6 +75,34 @@ export default createFragmentContainer(LogEntryTableRow, graphql`
     createdAt
     level
     message
-    metaJSON
+    owner {
+      __typename
+      id
+      ... on Project {
+        slug
+        workspace {
+          id
+          name
+        }
+      }
+      ... on Job {
+        name
+        owner {
+          __typename
+          id
+        }
+      }
+      ... on Process {
+        command
+        project {
+          id
+          slug
+          workspace {
+            id
+            slug
+          }
+        }
+      }
+    }
   }`,
 );

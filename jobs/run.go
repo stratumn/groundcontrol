@@ -117,20 +117,9 @@ func doRun(
 				default:
 				}
 
+				log.InfoWithOwner(project.ID, command)
+
 				projectPath := getProjectPath(workspace.Slug, project.Repository, project.Branch)
-
-				meta := struct {
-					TaskID    string
-					ProjectID string
-					Dir       string
-					Command   string
-				}{
-					taskID,
-					project.ID,
-					projectPath,
-					command,
-				}
-
 				parts := strings.Split(command, " ")
 
 				if len(parts) > 0 && parts[0] == "spawn" {
@@ -144,8 +133,8 @@ func doRun(
 					continue
 				}
 
-				stdout := models.CreateLineWriter(log.Info, meta)
-				stderr := models.CreateLineWriter(log.Warning, meta)
+				stdout := models.CreateLineWriter(log.InfoWithOwner, project.ID)
+				stderr := models.CreateLineWriter(log.WarningWithOwner, project.ID)
 				err := run(ctx, command, projectPath, stdout, stderr)
 
 				stdout.Close()

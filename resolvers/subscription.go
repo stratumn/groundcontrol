@@ -32,18 +32,8 @@ func (r *subscriptionResolver) WorkspaceUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Workspace, error) {
-	meta := struct {
-		MessageType string
-		ID          *string
-	}{
-		models.WorkspaceUpdated,
-		id,
-	}
-
-	r.Log.Debug("Subscribe", meta)
 	go func() {
 		<-ctx.Done()
-		r.Log.Debug("Unsubscribe", meta)
 	}()
 
 	ch := make(chan models.Workspace, SubscriptionChannelSize)
@@ -55,9 +45,7 @@ func (r *subscriptionResolver) WorkspaceUpdated(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadWorkspace(nodeID):
-			r.Log.Debug("Send Message", meta)
 		default:
-			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -68,18 +56,8 @@ func (r *subscriptionResolver) ProjectUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Project, error) {
-	meta := struct {
-		MessageType string
-		ID          *string
-	}{
-		models.ProjectUpdated,
-		id,
-	}
-
-	r.Log.Debug("Subscribe", meta)
 	go func() {
 		<-ctx.Done()
-		r.Log.Debug("Unsubscribe", meta)
 	}()
 
 	ch := make(chan models.Project, SubscriptionChannelSize)
@@ -91,9 +69,7 @@ func (r *subscriptionResolver) ProjectUpdated(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadProject(nodeID):
-			r.Log.Debug("Send Message", meta)
 		default:
-			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -104,18 +80,8 @@ func (r *subscriptionResolver) TaskUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Task, error) {
-	meta := struct {
-		MessageType string
-		ID          *string
-	}{
-		models.WorkspaceUpdated,
-		id,
-	}
-
-	r.Log.Debug("Subscribe", meta)
 	go func() {
 		<-ctx.Done()
-		r.Log.Debug("Unsubscribe", meta)
 	}()
 
 	ch := make(chan models.Task, SubscriptionChannelSize)
@@ -127,9 +93,7 @@ func (r *subscriptionResolver) TaskUpdated(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadTask(nodeID):
-			r.Log.Debug("Send Message", meta)
 		default:
-			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -140,18 +104,8 @@ func (r *subscriptionResolver) JobUpserted(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Job, error) {
-	meta := struct {
-		MessageType string
-		ID          *string
-	}{
-		models.JobUpserted,
-		id,
-	}
-
-	r.Log.Debug("Subscribe", meta)
 	go func() {
 		<-ctx.Done()
-		r.Log.Debug("Unsubscribe", meta)
 	}()
 
 	ch := make(chan models.Job, SubscriptionChannelSize)
@@ -163,9 +117,7 @@ func (r *subscriptionResolver) JobUpserted(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadJob(nodeID):
-			r.Log.Debug("Send Message", meta)
 		default:
-			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -176,18 +128,8 @@ func (r *subscriptionResolver) JobMetricsUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.JobMetrics, error) {
-	meta := struct {
-		MessageType string
-		ID          *string
-	}{
-		models.JobMetricsUpdated,
-		id,
-	}
-
-	r.Log.Debug("Subscribe", meta)
 	go func() {
 		<-ctx.Done()
-		r.Log.Debug("Unsubscribe", meta)
 	}()
 
 	ch := make(chan models.JobMetrics, SubscriptionChannelSize)
@@ -199,9 +141,7 @@ func (r *subscriptionResolver) JobMetricsUpdated(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadJobMetrics(nodeID):
-			r.Log.Debug("Send Message", meta)
 		default:
-			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -212,18 +152,8 @@ func (r *subscriptionResolver) ProcessGroupUpserted(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.ProcessGroup, error) {
-	meta := struct {
-		MessageType string
-		ID          *string
-	}{
-		models.ProcessGroupUpserted,
-		id,
-	}
-
-	r.Log.Debug("Subscribe", meta)
 	go func() {
 		<-ctx.Done()
-		r.Log.Debug("Unsubscribe", meta)
 	}()
 
 	ch := make(chan models.ProcessGroup, SubscriptionChannelSize)
@@ -235,9 +165,7 @@ func (r *subscriptionResolver) ProcessGroupUpserted(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadProcessGroup(nodeID):
-			r.Log.Debug("Send Message", meta)
 		default:
-			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -248,18 +176,8 @@ func (r *subscriptionResolver) ProcessUpserted(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.Process, error) {
-	meta := struct {
-		MessageType string
-		ID          *string
-	}{
-		models.ProcessUpserted,
-		id,
-	}
-
-	r.Log.Debug("Subscribe", meta)
 	go func() {
 		<-ctx.Done()
-		r.Log.Debug("Unsubscribe", meta)
 	}()
 
 	ch := make(chan models.Process, SubscriptionChannelSize)
@@ -271,9 +189,7 @@ func (r *subscriptionResolver) ProcessUpserted(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadProcess(nodeID):
-			r.Log.Debug("Send Message", meta)
 		default:
-			r.Log.Debug("Drop Message", meta)
 		}
 	})
 
@@ -284,18 +200,8 @@ func (r *subscriptionResolver) ProcessMetricsUpdated(
 	ctx context.Context,
 	id *string,
 ) (<-chan models.ProcessMetrics, error) {
-	meta := struct {
-		MessageType string
-		ID          *string
-	}{
-		models.ProcessMetricsUpdated,
-		id,
-	}
-
-	r.Log.Debug("Subscribe", meta)
 	go func() {
 		<-ctx.Done()
-		r.Log.Debug("Unsubscribe", meta)
 	}()
 
 	ch := make(chan models.ProcessMetrics, SubscriptionChannelSize)
@@ -307,9 +213,7 @@ func (r *subscriptionResolver) ProcessMetricsUpdated(
 		}
 		select {
 		case ch <- r.Nodes.MustLoadProcessMetrics(nodeID):
-			r.Log.Debug("Send Message", meta)
 		default:
-			r.Log.Debug("Drop Message", meta)
 		}
 	})
 

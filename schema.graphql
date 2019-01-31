@@ -104,6 +104,7 @@ type System implements Node {
     first: Int
     last: Int
     level: [LogLevel!]
+    ownerID: ID
   ): LogEntryConnection!
   logMetrics: LogMetrics!
 }
@@ -194,7 +195,7 @@ type LogEntry implements Node {
   level: LogLevel!
   createdAt: DateTime!
   message: String!
-  metaJSON: String!
+  owner: Node
 }
 
 enum LogLevel {

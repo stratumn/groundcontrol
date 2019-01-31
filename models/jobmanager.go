@@ -86,15 +86,7 @@ func (j *JobManager) Add(
 		OwnerID:   ownerID,
 	}
 
-	meta := struct {
-		Job   Job
-		Error string
-	}{
-		job,
-		"",
-	}
-
-	j.log.Info("Job Queued", meta)
+	j.log.InfoWithOwner(job.ID, "job queued")
 	j.nodes.MustStoreJob(job)
 	j.subs.Publish(JobUpserted, job.ID)
 
@@ -112,7 +104,7 @@ func (j *JobManager) Add(
 	}
 
 	go do(func() {
-		j.log.Info("Job Running", meta)
+		j.log.InfoWithOwner(job.ID, "job running")
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -129,12 +121,11 @@ func (j *JobManager) Add(
 		j.publishMetrics()
 
 		if err := fn(ctx); err != nil {
-			meta.Error = err.Error()
-			j.log.Error("Job Failed", meta)
+			j.log.ErrorWithOwner(job.ID, "job failed because %s", err.Error())
 			job.Status = JobStatusFailed
 			atomic.AddInt64(&j.failedCounter, 1)
 		} else {
-			j.log.Info("Job Done", meta)
+			j.log.InfoWithOwner(job.ID, "job done")
 			job.Status = JobStatusDone
 			atomic.AddInt64(&j.doneCounter, 1)
 		}

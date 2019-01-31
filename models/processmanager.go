@@ -169,7 +169,7 @@ func (p *ProcessManager) Stop(processID string) error {
 
 		actual, ok := p.commands.Load(processID)
 		if !ok {
-			panic("Command not found")
+			panic("command not found")
 		}
 		cmd := actual.(*exec.Cmd)
 
@@ -197,19 +197,10 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 	p.commands.Range(func(k, _ interface{}) bool {
 		processID := k.(string)
 
-		meta := struct {
-			Process Process
-			Error   string
-		}{
-			p.nodes.MustLoadProcess(processID),
-			"",
-		}
-
-		p.log.Info("Stop Process", meta)
+		p.log.InfoWithOwner(processID, "stopping process")
 
 		if err := p.Stop(processID); err != nil {
-			meta.Error = err.Error()
-			p.log.Error("Stop Process Failed", meta)
+			p.log.ErrorWithOwner(processID, "failed to stop process because %s", err.Error())
 			return true
 		}
 
@@ -232,7 +223,7 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 
 			switch process.Status {
 			case ProcessStatusDone, ProcessStatusFailed:
-				p.log.Info("Process Stopped", meta)
+				p.log.InfoWithOwner(processID, "process stopped")
 				cancel()
 			}
 		})
@@ -254,18 +245,8 @@ func (p *ProcessManager) exec(id string) {
 			project.Branch,
 		)
 
-		meta := struct {
-			Process Process
-			Dir     string
-			Error   string
-		}{
-			process,
-			dir,
-			"",
-		}
-
-		stdout := CreateLineWriter(p.log.Info, meta)
-		stderr := CreateLineWriter(p.log.Warning, meta)
+		stdout := CreateLineWriter(p.log.InfoWithOwner, id)
+		stderr := CreateLineWriter(p.log.WarningWithOwner, id)
 		cmd := exec.Command("bash", "-l", "-c", process.Command)
 		cmd.Dir = dir
 		cmd.Stdout = stdout
@@ -278,7 +259,6 @@ func (p *ProcessManager) exec(id string) {
 			atomic.AddInt64(&p.runningCounter, 1)
 		} else {
 			process.Status = ProcessStatusFailed
-			meta.Error = err.Error()
 			atomic.AddInt64(&p.failedCounter, 1)
 		}
 
@@ -288,13 +268,13 @@ func (p *ProcessManager) exec(id string) {
 		p.publishMetrics()
 
 		if err != nil {
-			p.log.Error("Process Failed", meta)
+			p.log.ErrorWithOwner(id, "process failed because %s", err.Error())
 			stdout.Close()
 			stderr.Close()
 			return
 		}
 
-		p.log.Info("Process Running", meta)
+		p.log.InfoWithOwner(id, "process is running")
 		p.commands.Store(id, cmd)
 
 		go func() {
@@ -306,12 +286,11 @@ func (p *ProcessManager) exec(id string) {
 				if err == nil {
 					process.Status = ProcessStatusDone
 					atomic.AddInt64(&p.doneCounter, 1)
-					p.log.Info("Process Done", meta)
+					p.log.InfoWithOwner(id, "process done")
 				} else {
 					process.Status = ProcessStatusFailed
-					meta.Error = err.Error()
 					atomic.AddInt64(&p.failedCounter, 1)
-					p.log.Error("Process Failed", meta)
+					p.log.ErrorWithOwner(id, "process failed because %s", err.Error())
 				}
 
 				atomic.AddInt64(&p.runningCounter, -1)
@@ -344,15 +323,16 @@ func (p *ProcessManager) publishMetrics() {
 // CreateLineWriter creates a writer with a line splitter.
 // Remember to call close().
 func CreateLineWriter(
-	write func(string, interface{}) string,
-	meta interface{},
+	write func(ownerID, message string, a ...interface{}) string,
+	ownerID string,
+	a ...interface{},
 ) io.WriteCloser {
 	r, w := io.Pipe()
 	scanner := bufio.NewScanner(r)
 
 	go func() {
 		for scanner.Scan() {
-			write(scanner.Text(), meta)
+			write(ownerID, scanner.Text(), a...)
 
 			// Don't kill the poor browser.
 			time.Sleep(10 * time.Millisecond)

@@ -99,6 +99,11 @@ func (r *Resolver) Process() gql.ProcessResolver {
 	return &processResolver{r}
 }
 
+// LogEntry returns the resolver for a log entry.
+func (r *Resolver) LogEntry() gql.LogEntryResolver {
+	return &logEntryResolver{r}
+}
+
 // CreateResolver creates a resolver from a config file.
 func CreateResolver(filenames ...string) (*Resolver, error) {
 	unique := strings.Join(filenames, ";")

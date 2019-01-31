@@ -51,13 +51,7 @@ func LoadAllCommits(
 			)
 
 			if err != nil {
-				log.Error("LoadCommits Failed", struct {
-					Project models.Project
-					Error   string
-				}{
-					project,
-					err.Error(),
-				})
+				log.ErrorWithOwner(project.ID, "LoadCommits failed because %s", err.Error())
 				continue
 			}
 

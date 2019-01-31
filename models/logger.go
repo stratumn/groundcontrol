@@ -15,7 +15,6 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"sync/atomic"
@@ -72,22 +71,18 @@ func NewLogger(
 // Add adds a log entry.
 func (l *Logger) Add(
 	level LogLevel,
+	ownerID string,
 	message string,
-	meta interface{},
 ) (string, error) {
 	if logLevelPriorities[level] < logLevelPriorities[l.level] {
 		return "", nil
 	}
 
-	metaJSON := ""
-	if meta != nil {
-		b, err := json.Marshal(meta)
-		if err != nil {
-			return "", err
-		}
-		metaJSON = string(b)
+	if ownerID != "" {
+		log.Printf("%s\t<%s> %s", level, ownerID, message)
+	} else {
+		log.Printf("%s\t%s", level, message)
 	}
-	log.Printf("%s\t%s %s", level, message, string(metaJSON))
 
 	id := atomic.AddUint64(&l.nextID, 1)
 	now := date.NowFormatted()
@@ -96,7 +91,7 @@ func (l *Logger) Add(
 		Level:     level,
 		CreatedAt: now,
 		Message:   message,
-		MetaJSON:  string(metaJSON),
+		OwnerID:   ownerID,
 	}
 	l.nodes.MustStoreLogEntry(logEntry)
 	l.subs.Publish(LogEntryAdded, logEntry.ID)
@@ -155,8 +150,8 @@ func (l *Logger) Add(
 }
 
 // Debug adds a debug entry.
-func (l *Logger) Debug(message string, meta interface{}) string {
-	id, err := l.Add(LogLevelDebug, message, meta)
+func (l *Logger) Debug(message string, a ...interface{}) string {
+	id, err := l.Add(LogLevelDebug, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -164,8 +159,8 @@ func (l *Logger) Debug(message string, meta interface{}) string {
 }
 
 // Info adds an info entry.
-func (l *Logger) Info(message string, meta interface{}) string {
-	id, err := l.Add(LogLevelInfo, message, meta)
+func (l *Logger) Info(message string, a ...interface{}) string {
+	id, err := l.Add(LogLevelInfo, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -173,8 +168,8 @@ func (l *Logger) Info(message string, meta interface{}) string {
 }
 
 // Warning adds a warning entry.
-func (l *Logger) Warning(message string, meta interface{}) string {
-	id, err := l.Add(LogLevelWarning, message, meta)
+func (l *Logger) Warning(message string, a ...interface{}) string {
+	id, err := l.Add(LogLevelWarning, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -182,8 +177,44 @@ func (l *Logger) Warning(message string, meta interface{}) string {
 }
 
 // Error adds an error entry.
-func (l *Logger) Error(message string, meta interface{}) string {
-	id, err := l.Add(LogLevelError, message, meta)
+func (l *Logger) Error(message string, a ...interface{}) string {
+	id, err := l.Add(LogLevelError, "", fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// DebugWithOwner adds a debug entry with an owner.
+func (l *Logger) DebugWithOwner(ownerID string, message string, a ...interface{}) string {
+	id, err := l.Add(LogLevelDebug, ownerID, fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// InfoWithOwner adds an info entry with an owner.
+func (l *Logger) InfoWithOwner(ownerID string, message string, a ...interface{}) string {
+	id, err := l.Add(LogLevelInfo, ownerID, fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// WarningWithOwner adds a warning entry with an owner.
+func (l *Logger) WarningWithOwner(ownerID string, message string, a ...interface{}) string {
+	id, err := l.Add(LogLevelWarning, ownerID, fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// ErrorWithOwner adds an error entry with an owner.
+func (l *Logger) ErrorWithOwner(ownerID string, message string, a ...interface{}) string {
+	id, err := l.Add(LogLevelError, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}

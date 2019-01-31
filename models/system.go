@@ -118,10 +118,15 @@ func (s System) LogEntries(
 	first *int,
 	last *int,
 	level []LogLevel,
+	ownerID *string,
 ) (LogEntryConnection, error) {
 	var slice []LogEntry
 
 	for _, nodeID := range s.LogEntryIDs {
+		if ownerID != nil && *ownerID != nodeID {
+			continue
+		}
+
 		node := nodes.MustLoadLogEntry(nodeID)
 		match := len(level) == 0
 
