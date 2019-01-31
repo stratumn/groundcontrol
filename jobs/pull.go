@@ -16,6 +16,7 @@ package jobs
 
 import (
 	"bytes"
+	"context"
 	"strings"
 
 	"github.com/stratumn/groundcontrol/date"
@@ -70,8 +71,9 @@ func Pull(
 		PullJob,
 		projectID,
 		priority,
-		func() error {
+		func(ctx context.Context) error {
 			return doPull(
+				ctx,
 				nodes,
 				subs,
 				getProjectPath,
@@ -85,6 +87,7 @@ func Pull(
 }
 
 func doPull(
+	ctx context.Context,
 	nodes *models.NodeManager,
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
@@ -115,7 +118,7 @@ func doPull(
 		return err
 	}
 
-	err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
+	err = worktree.PullContext(ctx, &git.PullOptions{RemoteName: "origin"})
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
 	}
@@ -140,6 +143,12 @@ func doPull(
 	var commitIDs []string
 
 	err = iter.ForEach(func(c *object.Commit) error {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
 		commit := models.Commit{
 			ID:       relay.EncodeID(models.NodeTypeCommit, c.Hash.String()),
 			SHA:      c.Hash.String(),

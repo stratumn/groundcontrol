@@ -26,7 +26,9 @@ const subscription = graphql`
 `;
 
 // Compute all possible combinations of status in order to update filtered connection.
-const allStatusCombinations = permutationCombination(["QUEUED", "RUNNING", "DONE", "FAILED"]).toArray() as string[][];
+const allStatusCombinations = permutationCombination(
+  ["QUEUED", "RUNNING", "STOPPING", "DONE", "FAILED"]
+).toArray() as string[][];
 
 // Since there are many combinations we keep a map of combinations that contains a status.
 //
@@ -37,6 +39,7 @@ const statusCombinations: { [s: string]: string[][] } = {
   FAILED: allStatusCombinations.filter((perm: string[]) => perm.indexOf("FAILED") >= 0),
   QUEUED: allStatusCombinations.filter((perm: string[]) => perm.indexOf("QUEUED") >= 0),
   RUNNING: allStatusCombinations.filter((perm: string[]) => perm.indexOf("RUNNING") >= 0),
+  STOPPING: allStatusCombinations.filter((perm: string[]) => perm.indexOf("STOPPING") >= 0),
 };
 
 // Used to remove updated jobs from connections.
@@ -45,6 +48,7 @@ const notStatusCombinations: { [s: string]: string[][] } = {
   FAILED: allStatusCombinations.filter((perm: string[]) => perm.indexOf("FAILED") < 0),
   QUEUED: allStatusCombinations.filter((perm: string[]) => perm.indexOf("QUEUED") < 0),
   RUNNING: allStatusCombinations.filter((perm: string[]) => perm.indexOf("RUNNING") < 0),
+  STOPPING: allStatusCombinations.filter((perm: string[]) => perm.indexOf("STOPPING") < 0),
 };
 
 export function subscribe(environment: Environment) {

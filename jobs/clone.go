@@ -15,6 +15,8 @@
 package jobs
 
 import (
+	"context"
+
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
 	git "gopkg.in/src-d/go-git.v4"
@@ -59,8 +61,9 @@ func Clone(
 		CloneJob,
 		projectID,
 		priority,
-		func() error {
+		func(ctx context.Context) error {
 			return doClone(
+				ctx,
 				nodes,
 				subs,
 				getProjectPath,
@@ -74,6 +77,7 @@ func Clone(
 }
 
 func doClone(
+	ctx context.Context,
 	nodes *models.NodeManager,
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
@@ -99,10 +103,15 @@ func doClone(
 	workspace := project.Workspace(nodes)
 	directory := getProjectPath(workspace.Slug, project.Repository, project.Branch)
 
-	_, err := git.PlainClone(directory, false, &git.CloneOptions{
-		URL:           project.Repository,
-		ReferenceName: plumbing.NewBranchReferenceName(project.Branch),
-	})
+	_, err := git.PlainCloneContext(
+		ctx,
+		directory,
+		false,
+		&git.CloneOptions{
+			URL:           project.Repository,
+			ReferenceName: plumbing.NewBranchReferenceName(project.Branch),
+		},
+	)
 
 	return err
 }

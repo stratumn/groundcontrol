@@ -17,6 +17,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"sync"
 	"sync/atomic"
 
 	"github.com/stratumn/groundcontrol/date"
@@ -33,8 +34,9 @@ type JobManager struct {
 	queue *queue.Queue
 
 	systemID string
+	nextID   uint64
 
-	nextID uint64
+	cancels sync.Map
 
 	queuedCounter  int64
 	runningCounter int64
@@ -69,7 +71,7 @@ func (j *JobManager) Add(
 	name string,
 	ownerID string,
 	priority JobPriority,
-	fn func() error,
+	fn func(ctx context.Context) error,
 ) string {
 
 	id := atomic.AddUint64(&j.nextID, 1)
@@ -112,6 +114,12 @@ func (j *JobManager) Add(
 	go do(func() {
 		j.log.Info("Job Running", meta)
 
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		j.cancels.Store(job.ID, cancel)
+		defer j.cancels.Delete(job.ID)
+
 		job.Status = JobStatusRunning
 		job.UpdatedAt = date.NowFormatted()
 		j.nodes.MustStoreJob(job)
@@ -120,7 +128,7 @@ func (j *JobManager) Add(
 		atomic.AddInt64(&j.queuedCounter, -1)
 		j.publishMetrics()
 
-		if err := fn(); err != nil {
+		if err := fn(ctx); err != nil {
 			meta.Error = err.Error()
 			j.log.Error("Job Failed", meta)
 			job.Status = JobStatusFailed
@@ -140,6 +148,35 @@ func (j *JobManager) Add(
 	})
 
 	return job.ID
+}
+
+// Stop cancels a running job.
+func (j *JobManager) Stop(id string) error {
+	var jobError error
+
+	err := j.nodes.LockJob(id, func(job Job) {
+		if job.Status != JobStatusRunning {
+			jobError = ErrNotRunning
+		}
+
+		actual, ok := j.cancels.Load(id)
+		if !ok {
+			panic("could not find cancel function for job")
+		}
+
+		job.Status = JobStatusStopping
+		job.UpdatedAt = date.NowFormatted()
+		j.nodes.MustStoreJob(job)
+		j.subs.Publish(JobUpserted, id)
+
+		cancel := actual.(context.CancelFunc)
+		cancel()
+	})
+	if err != nil {
+		return err
+	}
+
+	return jobError
 }
 
 func (j *JobManager) publishMetrics() {

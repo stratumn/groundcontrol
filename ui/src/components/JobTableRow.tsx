@@ -16,6 +16,8 @@ import graphql from "babel-plugin-relay/macro";
 import { Link } from "found";
 import React, { Component } from "react";
 import {
+  Button,
+  Icon,
   Table,
  } from "semantic-ui-react";
 
@@ -32,13 +34,15 @@ const dateFormat = "L LTS";
 
 interface IProps {
   item: JobTableRow_item;
+  onStop: () => any;
 }
 
 export class JobTableRow extends Component<IProps> {
 
   public render() {
-    const item = this.props.item;
+    const { item, onStop } = this.props;
     const owner = item.owner;
+    const buttons: JSX.Element[] = [];
 
     let workspaceSlug = "-";
     let workspaceName = "-";
@@ -56,6 +60,21 @@ export class JobTableRow extends Component<IProps> {
       projectRepository = owner.repository;
       projectBranch = owner.branch;
       break;
+    }
+
+    if (item.status === "RUNNING") {
+      buttons.push((
+        <Button
+          key="stop"
+          size="tiny"
+          icon={true}
+          labelPosition="left"
+          onClick={onStop}
+        >
+          <Icon name="pause" />
+          Stop
+        </Button>
+      ));
     }
 
     return (
@@ -83,6 +102,9 @@ export class JobTableRow extends Component<IProps> {
           error={item.status === "FAILED"}
         >
           {item.status}
+        </Table.Cell>
+        <Table.Cell>
+          {buttons}
         </Table.Cell>
       </Table.Row>
     );

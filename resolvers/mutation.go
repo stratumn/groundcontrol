@@ -187,6 +187,14 @@ func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, erro
 	return r.Nodes.MustLoadJob(jobID), nil
 }
 
+func (r *mutationResolver) StopJob(ctx context.Context, id string) (models.Job, error) {
+	if err := r.Jobs.Stop(id); err != nil {
+		return models.Job{}, nil
+	}
+
+	return r.Nodes.MustLoadJob(id), nil
+}
+
 func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (models.ProcessGroup, error) {
 	processGroup, err := r.Nodes.LoadProcessGroup(id)
 	if err != nil {

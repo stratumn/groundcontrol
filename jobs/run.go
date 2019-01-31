@@ -15,6 +15,7 @@
 package jobs
 
 import (
+	"context"
 	"io"
 	"os/exec"
 	"strings"
@@ -64,8 +65,9 @@ func Run(
 		RunJob,
 		workspaceID,
 		priority,
-		func() error {
+		func(ctx context.Context) error {
 			return doRun(
+				ctx,
 				nodes,
 				log,
 				pm,
@@ -82,6 +84,7 @@ func Run(
 }
 
 func doRun(
+	ctx context.Context,
 	nodes *models.NodeManager,
 	log *models.Logger,
 	pm *models.ProcessManager,
@@ -108,6 +111,12 @@ func doRun(
 	for _, step := range task.Steps(nodes) {
 		for _, command := range step.Commands {
 			for _, project := range step.Projects(nodes) {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				default:
+				}
+
 				projectPath := getProjectPath(workspace.Slug, project.Repository, project.Branch)
 
 				meta := struct {
@@ -137,7 +146,7 @@ func doRun(
 
 				stdout := models.CreateLineWriter(log.Info, meta)
 				stderr := models.CreateLineWriter(log.Warning, meta)
-				err := run(command, projectPath, stdout, stderr)
+				err := run(ctx, command, projectPath, stdout, stderr)
 
 				stdout.Close()
 				stderr.Close()
@@ -153,12 +162,13 @@ func doRun(
 }
 
 func run(
+	ctx context.Context,
 	command string,
 	dir string,
 	stdout io.Writer,
 	stderr io.Writer,
 ) error {
-	cmd := exec.Command("bash", "-l", "-c", command)
+	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command)
 	cmd.Dir = dir
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr

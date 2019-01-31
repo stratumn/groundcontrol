@@ -24,6 +24,7 @@ import { JobListPage_system } from "./__generated__/JobListPage_system.graphql";
 import JobFilter from "../components/JobFilter";
 import JobTable from "../components/JobTable";
 import Page from "../components/Page";
+import { commit as stopJob } from "../mutations/stopJob";
 
 import { subscribe } from "../subscriptions/jobUpserted";
 
@@ -55,7 +56,10 @@ export class JobListPage extends Component<IProps> {
           filters={filters}
           onChange={this.handleFiltersChange}
         />
-        <JobTable items={items} />
+        <JobTable
+          items={items}
+          onStop={this.handleStop}
+        />
         <Button
           disabled={!this.props.relay.hasMore() || this.props.relay.isLoading()}
           loading={this.props.relay.isLoading()}
@@ -81,11 +85,15 @@ export class JobListPage extends Component<IProps> {
   }
 
   private handleFiltersChange = (filters: string[]) => {
-    if (filters.length < 1 || filters.length > 3) {
+    if (filters.length < 1 || filters.length > 4) {
       return this.props.router.replace("/jobs");
     }
 
     this.props.router.replace(`/jobs/${filters.join(",")}`);
+  }
+
+  private handleStop = (id: string) => {
+    stopJob(this.props.relay.environment, id);
   }
 
   private handleLoadMore = () => {

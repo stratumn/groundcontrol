@@ -26,6 +26,7 @@ import JobTableRow from "./JobTableRow";
 
 interface IProps {
   items: JobTable_items;
+  onStop: (id: string) => any;
 }
 
 export class JobTable extends Component<IProps> {
@@ -41,6 +42,7 @@ export class JobTable extends Component<IProps> {
       <JobTableRow
         key={item.id}
         item={item}
+        onStop={this.handleStop.bind(this, item.id)}
       />
     ));
 
@@ -56,11 +58,16 @@ export class JobTable extends Component<IProps> {
             <Table.HeaderCell>Updated At</Table.HeaderCell>
             <Table.HeaderCell>Priority</Table.HeaderCell>
             <Table.HeaderCell>Status</Table.HeaderCell>
+            <Table.HeaderCell />
           </Table.Row>
         </Table.Header>
         <Table.Body>{rows}</Table.Body>
       </Table>
     );
+  }
+
+  private handleStop(id: string) {
+    this.props.onStop(id);
   }
 
 }

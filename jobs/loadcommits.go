@@ -16,6 +16,7 @@ package jobs
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"strings"
 
@@ -72,8 +73,9 @@ func LoadCommits(
 		LoadCommitsJob,
 		projectID,
 		priority,
-		func() error {
+		func(ctx context.Context) error {
 			return doLoadCommits(
+				ctx,
 				nodes,
 				subs,
 				getProjectPath,
@@ -88,6 +90,7 @@ func LoadCommits(
 }
 
 func doLoadCommits(
+	ctx context.Context,
 	nodes *models.NodeManager,
 	subs *pubsub.PubSub,
 	getProjectPath models.ProjectPathGetter,
@@ -117,6 +120,7 @@ func doLoadCommits(
 	project := nodes.MustLoadProject(projectID)
 
 	repo, err := cloneOrFetch(
+		ctx,
 		nodes,
 		getProjectPath,
 		getProjectCachePath,
@@ -132,19 +136,20 @@ func doLoadCommits(
 		return err
 	}
 
-	commitIDs, err = getCommits(nodes, repo, ref)
+	commitIDs, err = getCommits(ctx, nodes, repo, ref)
 	if err != nil {
 		return err
 	}
 
 	if project.IsCloned(nodes, getProjectPath) {
-		return updateStatus(nodes, repo, projectID)
+		return updateStatus(ctx, nodes, repo, projectID)
 	}
 
 	return nil
 }
 
 func cloneOrFetch(
+	ctx context.Context,
 	nodes *models.NodeManager,
 	getProjectPath models.ProjectPathGetter,
 	getProjectCachePath ProjectCachePathGetter,
@@ -171,21 +176,29 @@ func cloneOrFetch(
 	}
 
 	if repo != nil {
-		err = repo.Fetch(&git.FetchOptions{
-			RefSpecs: refSpec,
-			Force:    force,
-		})
+		err = repo.FetchContext(
+			ctx,
+			&git.FetchOptions{
+				RefSpecs: refSpec,
+				Force:    force,
+			},
+		)
 	} else {
-		repo, err = git.PlainClone(cacheDir, true, &git.CloneOptions{
-			URL:           project.Repository,
-			ReferenceName: plumbing.NewBranchReferenceName(project.Branch),
-		})
+		repo, err = git.PlainCloneContext(
+			ctx,
+			cacheDir, true,
+			&git.CloneOptions{
+				URL:           project.Repository,
+				ReferenceName: plumbing.NewBranchReferenceName(project.Branch),
+			},
+		)
 	}
 
 	return
 }
 
 func getCommits(
+	ctx context.Context,
 	nodes *models.NodeManager,
 	repo *git.Repository,
 	ref *plumbing.Reference,
@@ -201,6 +214,12 @@ func getCommits(
 	}
 
 	return commitIDs, iter.ForEach(func(c *object.Commit) error {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
 		commit := models.Commit{
 			ID:       relay.EncodeID(models.NodeTypeCommit, c.Hash.String()),
 			SHA:      c.Hash.String(),
@@ -218,6 +237,7 @@ func getCommits(
 }
 
 func updateStatus(
+	ctx context.Context,
 	nodes *models.NodeManager,
 	repo *git.Repository,
 	projectID string,
@@ -251,7 +271,13 @@ func updateStatus(
 		remoteHash := remoteRef.Hash()
 		last := true
 
-		iter.ForEach(func(commit *object.Commit) error {
+		projectError = iter.ForEach(func(commit *object.Commit) error {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
 			if bytes.Compare(remoteHash[:], commit.Hash[:]) == 0 {
 				project.IsBehind = false
 				project.IsAhead = !last
@@ -261,6 +287,9 @@ func updateStatus(
 			last = false
 			return nil
 		})
+		if projectError != nil {
+			return
+		}
 
 		nodes.MustStoreProject(project)
 	})

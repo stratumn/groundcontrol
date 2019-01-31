@@ -121,6 +121,7 @@ type Job implements Node {
 enum JobStatus {
   QUEUED
   RUNNING
+  STOPPING
   DONE
   FAILED
 }
@@ -242,6 +243,7 @@ type Mutation {
   pullProject(id: String!): Job!
   pullWorkspace(id: String!): [Job!]!
   run(id: String!): Job!
+  stopJob(id: String!): Job!
   startProcessGroup(id: String!): ProcessGroup!
   stopProcessGroup(id: String!): ProcessGroup!
   startProcess(id: String!): Process!
