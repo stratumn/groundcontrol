@@ -154,11 +154,16 @@ func cloneOrFetch(
 	workspace := project.Workspace(nodes)
 	projectDir := getProjectPath(workspace.Slug, project.Repository, project.Branch)
 	cacheDir := getProjectCachePath(workspace.Slug, project.Repository, project.Branch)
+	force := false
+
+	var refSpec []config.RefSpec
 
 	if project.IsCloned(nodes, getProjectPath) {
 		repo, err = git.PlainOpen(projectDir)
 	} else if exists(cacheDir) {
 		repo, err = git.PlainOpen(cacheDir)
+		refSpec = []config.RefSpec{"+refs/heads/*:refs/heads/*"}
+		force = true
 	}
 
 	if err != nil {
@@ -167,7 +172,8 @@ func cloneOrFetch(
 
 	if repo != nil {
 		err = repo.Fetch(&git.FetchOptions{
-			RefSpecs: []config.RefSpec{},
+			RefSpecs: refSpec,
+			Force:    force,
 		})
 	} else {
 		repo, err = git.PlainClone(cacheDir, true, &git.CloneOptions{

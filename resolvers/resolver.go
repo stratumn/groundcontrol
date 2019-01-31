@@ -173,5 +173,5 @@ func getProjectCachePath(workspaceSlug, repo, branch string) string {
 	name := path.Base(repo)
 	ext := path.Ext(name)
 	name = name[:len(name)-len(ext)]
-	return filepath.Join("cache", workspaceSlug, name)
+	return filepath.Join("cache", workspaceSlug, name+".git")
 }
