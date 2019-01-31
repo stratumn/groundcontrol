@@ -53,36 +53,54 @@ export function subscribe(environment: Environment) {
 
         // Add log entry to connections that have the level.
         for (const combination of [undefined, ...levelCombinations[level]]) {
-          const connection = ConnectionHandler.getConnection(
-            system,
-            "LogEntryListPage_logEntries",
-            { level: combination },
-          );
+          const connections = [
+            ConnectionHandler.getConnection(
+              system,
+              "LogEntryListPage_logEntries",
+              { level: combination },
+            ),
+          ];
 
-          if (connection) {
-            const edges = connection.getLinkedRecords("edges");
-            let exists = false;
+          const owner = record.getLinkedRecord("owner");
 
-            for (const e of edges) {
-              const id = e.getLinkedRecord("node")!.getValue("id");
-
-              if (recordId === id) {
-                exists = true;
-                break;
-              }
-            }
-
-            if (exists) {
-              continue;
-            }
-
-            const edge = ConnectionHandler.createEdge(
-              store,
-              connection,
-              record,
-              "LogEntrysConnection",
+          if (owner) {
+            console.log("OWNER");
+            const ownerId = owner.getValue("id");
+            connections.push(
+              ConnectionHandler.getConnection(
+                system,
+                "LogEntryListPage_logEntries",
+                { level: combination, ownerId },
+              ),
             );
-            ConnectionHandler.insertEdgeBefore(connection, edge);
+          }
+
+          for (const connection of connections) {
+            if (connection) {
+              const edges = connection.getLinkedRecords("edges");
+              let exists = false;
+
+              for (const e of edges) {
+                const id = e.getLinkedRecord("node")!.getValue("id");
+
+                if (recordId === id) {
+                  exists = true;
+                  break;
+                }
+              }
+
+              if (exists) {
+                continue;
+              }
+
+              const edge = ConnectionHandler.createEdge(
+                store,
+                connection,
+                record,
+                "LogEntrysConnection",
+              );
+              ConnectionHandler.insertEdgeBefore(connection, edge);
+            }
           }
         }
     },

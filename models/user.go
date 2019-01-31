@@ -46,3 +46,14 @@ func (u User) Workspace(nodes *NodeManager, slug string) *Workspace {
 
 	return nil
 }
+
+// Projects returns the user's projects.
+func (u User) Projects(nodes *NodeManager) []Project {
+	var slice []Project
+
+	for _, workspace := range u.Workspaces(nodes) {
+		slice = append(slice, workspace.Projects(nodes)...)
+	}
+
+	return slice
+}

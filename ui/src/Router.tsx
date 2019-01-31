@@ -75,9 +75,12 @@ const processGroupListQuery = graphql`
 `;
 
 const logEntryListQuery = graphql`
-  query RouterLogEntryListQuery($level: [LogLevel!]) {
+  query RouterLogEntryListQuery($level: [LogLevel!], $ownerId: ID) {
+    viewer {
+      ...LogEntryListPage_viewer
+    }
     system {
-      ...LogEntryListPage_system @arguments(level: $level)
+      ...LogEntryListPage_system @arguments(level: $level, ownerId: $ownerId)
     }
   }
 `;
@@ -90,8 +93,8 @@ function prepareProcessGroupListVariables({ filters }: { filters: string }) {
   return { status: filters ? filters.split(",") : null };
 }
 
-function prepareLogEntryListVariables({ filters }: { filters: string }) {
-  return { level: filters ? filters.split(",") : null };
+function prepareLogEntryListVariables({ filters, ownerId }: { filters: string, ownerId?: string }) {
+  return { level: filters ? filters.split(",") : null, ownerId };
 }
 
 function render(args: RouteRenderArgs) {
@@ -166,7 +169,7 @@ export default createFarceRouter({
           render={render}
         />
         <Route
-          path=":filters"
+          path=":filters?;:ownerId?"
           Component={LogEntryListPage}
           query={logEntryListQuery}
           prepareVariables={prepareLogEntryListVariables}

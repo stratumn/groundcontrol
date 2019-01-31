@@ -123,11 +123,12 @@ func (s System) LogEntries(
 	var slice []LogEntry
 
 	for _, nodeID := range s.LogEntryIDs {
-		if ownerID != nil && *ownerID != nodeID {
+		node := nodes.MustLoadLogEntry(nodeID)
+
+		if ownerID != nil && *ownerID != node.OwnerID {
 			continue
 		}
 
-		node := nodes.MustLoadLogEntry(nodeID)
 		match := len(level) == 0
 
 		for _, v := range level {

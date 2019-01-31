@@ -245,8 +245,8 @@ func (p *ProcessManager) exec(id string) {
 			project.Branch,
 		)
 
-		stdout := CreateLineWriter(p.log.InfoWithOwner, id)
-		stderr := CreateLineWriter(p.log.WarningWithOwner, id)
+		stdout := CreateLineWriter(p.log.InfoWithOwner, project.ID)
+		stderr := CreateLineWriter(p.log.WarningWithOwner, project.ID)
 		cmd := exec.Command("bash", "-l", "-c", process.Command)
 		cmd.Dir = dir
 		cmd.Stdout = stdout
@@ -268,13 +268,13 @@ func (p *ProcessManager) exec(id string) {
 		p.publishMetrics()
 
 		if err != nil {
-			p.log.ErrorWithOwner(id, "process failed because %s", err.Error())
+			p.log.ErrorWithOwner(project.ID, "process failed because %s", err.Error())
 			stdout.Close()
 			stderr.Close()
 			return
 		}
 
-		p.log.InfoWithOwner(id, "process is running")
+		p.log.InfoWithOwner(project.ID, "process is running")
 		p.commands.Store(id, cmd)
 
 		go func() {
@@ -286,11 +286,11 @@ func (p *ProcessManager) exec(id string) {
 				if err == nil {
 					process.Status = ProcessStatusDone
 					atomic.AddInt64(&p.doneCounter, 1)
-					p.log.InfoWithOwner(id, "process done")
+					p.log.InfoWithOwner(project.ID, "process done")
 				} else {
 					process.Status = ProcessStatusFailed
 					atomic.AddInt64(&p.failedCounter, 1)
-					p.log.ErrorWithOwner(id, "process failed because %s", err.Error())
+					p.log.ErrorWithOwner(project.ID, "process failed because %s", err.Error())
 				}
 
 				atomic.AddInt64(&p.runningCounter, -1)

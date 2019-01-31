@@ -27,7 +27,7 @@ const subscription = graphql`
 
 // Compute all possible combinations of status in order to update filtered connection.
 const allStatusCombinations = permutationCombination(
-  ["QUEUED", "RUNNING", "STOPPING", "DONE", "FAILED"]
+  ["QUEUED", "RUNNING", "STOPPING", "DONE", "FAILED"],
 ).toArray() as string[][];
 
 // Since there are many combinations we keep a map of combinations that contains a status.

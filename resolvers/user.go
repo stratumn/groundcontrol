@@ -31,3 +31,7 @@ func (r *userResolver) Workspaces(ctx context.Context, obj *models.User) ([]mode
 func (r *userResolver) Workspace(ctx context.Context, obj *models.User, slug string) (*models.Workspace, error) {
 	return obj.Workspace(r.Nodes, slug), nil
 }
+
+func (r *userResolver) Projects(ctx context.Context, obj *models.User) ([]models.Project, error) {
+	return obj.Projects(r.Nodes), nil
+}

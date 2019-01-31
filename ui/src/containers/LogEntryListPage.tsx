@@ -20,6 +20,7 @@ import { Disposable } from "relay-runtime";
 import { Button } from "semantic-ui-react";
 
 import { LogEntryListPage_system } from "./__generated__/LogEntryListPage_system.graphql";
+import { LogEntryListPage_viewer } from "./__generated__/LogEntryListPage_viewer.graphql";
 
 import LogEntryFilter from "../components/LogEntryFilter";
 import LogEntryTable from "../components/LogEntryTable";
@@ -30,9 +31,11 @@ import { subscribe } from "../subscriptions/logEntryAdded";
 interface IProps {
   relay: RelayPaginationProp;
   router: Router;
+  viewer: LogEntryListPage_viewer;
   system: LogEntryListPage_system;
   params: {
     filters: string | undefined;
+    ownerId: string | undefined;
   };
 }
 
@@ -44,6 +47,8 @@ export class LogEntryListPage extends Component<IProps> {
     const items = this.props.system.logEntries.edges.map(({ node }) => node);
     const filters = this.props.params.filters === undefined ? undefined :
       this.props.params.filters.split(",");
+    const ownerId = this.props.params.ownerId;
+    const projects = this.props.viewer.projects;
 
     return (
       <Page
@@ -53,6 +58,8 @@ export class LogEntryListPage extends Component<IProps> {
       >
         <LogEntryFilter
           filters={filters}
+          projects={projects}
+          ownerId={ownerId}
           onChange={this.handleFiltersChange}
         />
         <LogEntryTable items={items} />
@@ -80,12 +87,12 @@ export class LogEntryListPage extends Component<IProps> {
     this.disposables = [];
   }
 
-  private handleFiltersChange = (filters: string[]) => {
-    if (filters.length < 1 || filters.length > 3) {
+  private handleFiltersChange = (filters: string[], ownerId?: string) => {
+    if ((filters.length < 1 || filters.length > 3) && !ownerId) {
       return this.props.router.replace("/logs");
     }
 
-    this.props.router.replace(`/logs/${filters.join(",")}`);
+    this.props.router.replace(`/logs/${filters.join(",")};${ownerId || ""}`);
   }
 
   private handleLoadMore = () => {
@@ -112,15 +119,17 @@ export default createPaginationContainer(
         count: {type: "Int", defaultValue: 50},
         cursor: {type: "String"},
         level: { type: "[LogLevel!]", defaultValue: null },
+        ownerId: { type: "ID", defaultValue: null }
       ) {
       logEntries(
        first: $count,
        after: $cursor,
        level: $level,
+       ownerId: $ownerId,
       )
         @connection(
           key: "LogEntryListPage_logEntries",
-          filters: ["level"],
+          filters: ["level", "ownerId"],
         ) {
         edges {
           node {
@@ -128,6 +137,11 @@ export default createPaginationContainer(
             id
           }
         }
+      }
+    }
+    fragment LogEntryListPage_viewer on User {
+      projects {
+         ...LogEntryFilter_projects
       }
     }`,
   {

@@ -8,6 +8,7 @@ type User implements Node {
   id: ID!
   workspaces: [Workspace!]!
   workspace(slug: String!): Workspace
+  projects: [Project!]!
 }
 
 type Workspace implements Node {
@@ -104,7 +105,7 @@ type System implements Node {
     first: Int
     last: Int
     level: [LogLevel!]
-    ownerID: ID
+    ownerId: ID
   ): LogEntryConnection!
   logMetrics: LogMetrics!
 }

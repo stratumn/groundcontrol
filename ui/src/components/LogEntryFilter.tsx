@@ -12,47 +12,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
-import { Radio } from "semantic-ui-react";
+import { createFragmentContainer } from "react-relay";
 
-import "./LogEntryFilter.css";
+import { LogEntryFilter_projects } from "./__generated__/LogEntryFilter_projects.graphql";
+
+import LogEntryOwnerFilter from "./LogEntryOwnerFilter";
+import LogEntryStatusFilter from "./LogEntryStatusFilter";
 
 interface IProps {
-  filters: string[] | undefined;
-  onChange: (status: string[]) => any;
+  filters?: string[];
+  projects: LogEntryFilter_projects;
+  ownerId?: string;
+  onChange: (status: string[], ownerID?: string) => any;
 }
 
-const allFilters = ["DEBUG", "INFO", "WARNING", "ERROR"];
-
-// Note: we consider undefined filter to be the same as all status.
-export default class LogEntryFilter extends Component<IProps> {
+export class LogEntryFilter extends Component<IProps> {
 
   public render() {
-    const filters = this.props.filters;
-    const radios = allFilters.map((filter, i) => (
-      <Radio
-        key={i}
-        label={filter}
-        checked={!filters || filters.indexOf(filter) >= 0}
-        onClick={this.handleToggleFilter.bind(this, filter)}
-      />
-    ));
+    const { projects, ownerId, filters } = this.props;
 
-    return <div className="LogEntryFilter">{radios}</div>;
+    return (
+      <div>
+        <LogEntryOwnerFilter
+          items={projects}
+          ownerId={ownerId}
+          onChange={this.handleOwnerChange}
+        />
+        <LogEntryStatusFilter
+          filters={filters}
+          onChange={this.handleStatusChange}
+        />
+      </div>
+    );
   }
 
-  private handleToggleFilter(filter: string) {
-    const filters = this.props.filters ?
-      this.props.filters.slice() : allFilters.slice();
-    const index = filters.indexOf(filter);
+  private handleOwnerChange = (ownerId?: string) => {
+    this.props.onChange(this.props.filters || [], ownerId);
+  }
 
-    if (index >= 0) {
-      filters.splice(index, 1);
-    } else {
-      filters.push(filter);
-    }
-
-    this.props.onChange(filters);
+  private handleStatusChange = (status: string[]) => {
+    this.props.onChange(status, this.props.ownerId);
   }
 
 }
+
+export default createFragmentContainer(LogEntryFilter, graphql`
+  fragment LogEntryFilter_projects on Project @relay(plural: true) {
+    ...LogEntryOwnerFilter_items
+  }`,
+);
