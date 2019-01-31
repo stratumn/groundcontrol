@@ -15,7 +15,7 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
-import { Card } from "semantic-ui-react";
+import { Card, Segment } from "semantic-ui-react";
 
 import { ProcessGroupCardGroup_items } from "./__generated__/ProcessGroupCardGroup_items.graphql";
 
@@ -33,6 +33,11 @@ export class ProcessGroupCardGroup extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
+
+    if (items.length < 1) {
+      return <Segment>There are no processes at this time.</Segment>;
+    }
+
     const { onStartProcess, onStopProcess } = this.props;
     const cards = items.map((item) => (
       <ProcessGroupCard

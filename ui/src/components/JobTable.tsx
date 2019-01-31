@@ -16,6 +16,7 @@ import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
 import {
+  Segment,
   Table,
  } from "semantic-ui-react";
 
@@ -31,6 +32,11 @@ export class JobTable extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
+
+    if (items.length < 1) {
+      return <Segment>There are no jobs at this time.</Segment>;
+    }
+
     const rows = items.map((item) => (
       <JobTableRow
         key={item.id}
