@@ -31,5 +31,3 @@ models:
     model: github.com/stratumn/groundcontrol/models.Process
   LogEntry:
     model: github.com/stratumn/groundcontrol/models.LogEntry
-  PageInfo:
-    model: github.com/stratumn/groundcontrol/relay.PageInfo

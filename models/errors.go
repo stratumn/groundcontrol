@@ -20,8 +20,10 @@ import (
 
 // Errors.
 var (
-	ErrNotFound   = errors.New("not found")
-	ErrType       = errors.New("wrong type")
-	ErrNotRunning = errors.New("project isn't running")
-	ErrNotStopped = errors.New("project isn't stopped")
+	ErrNotFound      = errors.New("not found")
+	ErrType          = errors.New("wrong type")
+	ErrFirstNegative = errors.New("first cannot be negative")
+	ErrLastNegative  = errors.New("last cannot be negative")
+	ErrNotRunning    = errors.New("project isn't running")
+	ErrNotStopped    = errors.New("project isn't stopped")
 )
