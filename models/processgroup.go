@@ -17,7 +17,7 @@ package models
 // ProcessGroup represents a ProcessGroup in the app.
 type ProcessGroup struct {
 	ID         string   `json:"id"`
-	CreatedAt  string   `json:"createdAt"`
+	CreatedAt  DateTime `json:"createdAt"`
 	TaskID     string   `json:"taskID"`
 	ProcessIDs []string `json:"processIDs"`
 }

@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"log"
 	"sync/atomic"
+	"time"
 
-	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 )
@@ -85,7 +85,7 @@ func (l *Logger) Add(
 	}
 
 	id := atomic.AddUint64(&l.nextID, 1)
-	now := date.NowFormatted()
+	now := DateTime(time.Now())
 	logEntry := LogEntry{
 		ID:        relay.EncodeID(NodeTypeLogEntry, fmt.Sprint(id)),
 		Level:     level,

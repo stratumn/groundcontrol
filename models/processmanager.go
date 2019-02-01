@@ -25,7 +25,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 )
@@ -75,7 +74,7 @@ func (p *ProcessManager) CreateGroup(taskID string) string {
 
 	group := ProcessGroup{
 		ID:        id,
-		CreatedAt: date.NowFormatted(),
+		CreatedAt: DateTime(time.Now()),
 		TaskID:    taskID,
 	}
 

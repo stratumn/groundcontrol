@@ -11,6 +11,10 @@ resolver:
   package: resolvers
   type: Resolver
 models:
+  DateTime:
+    model: github.com/stratumn/groundcontrol/models.DateTime
+  Hash:
+    model: github.com/stratumn/groundcontrol/models.Hash
   User:
     model: github.com/stratumn/groundcontrol/models.User
   Workspace:

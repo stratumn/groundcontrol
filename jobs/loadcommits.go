@@ -20,7 +20,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
@@ -222,11 +221,11 @@ func getCommits(
 
 		commit := models.Commit{
 			ID:       relay.EncodeID(models.NodeTypeCommit, c.Hash.String()),
-			SHA:      c.Hash.String(),
+			Hash:     models.Hash(c.Hash.String()),
 			Headline: strings.Split(c.Message, "\n")[0],
 			Message:  c.Message,
 			Author:   c.Author.Name,
-			Date:     c.Author.When.Format(date.DateFormat),
+			Date:     models.DateTime(c.Author.When),
 		}
 
 		nodes.MustStoreCommit(commit)

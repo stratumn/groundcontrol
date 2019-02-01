@@ -1,4 +1,5 @@
 scalar DateTime
+scalar Hash
 
 enum JobStatus {
   QUEUED
@@ -232,7 +233,7 @@ type Project implements Node {
 
 type Commit implements Node {
   id: ID!
-  SHA: String!
+  hash: Hash!
   headline: String!
   message: String!
   author: String!

@@ -20,12 +20,11 @@ The Ground Control user interface allows you to perform operations across the pr
 
 You need:
 
-- Go
+- Go >= v1.11
 - Dep
 - Node
-- Yarn
 
-Clone to `$GOPATH/src/github.com/stratumn/groundcontrol` (no Go module support yet).
+Clone outside of `$GOPATH` since it's a Go module.
 
 Run:
 

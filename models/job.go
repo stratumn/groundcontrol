@@ -18,8 +18,8 @@ package models
 type Job struct {
 	ID        string      `json:"id"`
 	Name      string      `json:"name"`
-	CreatedAt string      `json:"createdAt"`
-	UpdatedAt string      `json:"updatedAt"`
+	CreatedAt DateTime    `json:"createdAt"`
+	UpdatedAt DateTime    `json:"updatedAt"`
 	Status    JobStatus   `json:"status"`
 	Priority  JobPriority `json:"priority"`
 	OwnerID   string      `json:"ownerID"`

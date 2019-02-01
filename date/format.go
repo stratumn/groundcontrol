@@ -14,12 +14,5 @@
 
 package date
 
-import "time"
-
 // DateFormat is the date format used throughout the app.
 const DateFormat = "2006-01-02T15:04:05-0700"
-
-// NowFormatted returns the current date and time formatted with DateFormat.
-func NowFormatted() string {
-	return time.Now().Format(DateFormat)
-}

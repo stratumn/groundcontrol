@@ -1,7 +1,6 @@
 all: deps build
 
 deps:
-	dep ensure
 	cd ui && yarn install
 
 build: clean_generated
@@ -19,7 +18,6 @@ clean_generated:
 
 clean: clean_generated
 	rm -f groundcontrol
-	rm -rf vendor
 	rm -rf ui/node_modules
 
 .PHONY: deps build install clean_generated clean

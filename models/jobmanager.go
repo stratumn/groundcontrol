@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
-	"github.com/stratumn/groundcontrol/date"
 	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/queue"
 	"github.com/stratumn/groundcontrol/relay"
@@ -75,7 +75,7 @@ func (j *JobManager) Add(
 ) string {
 
 	id := atomic.AddUint64(&j.nextID, 1)
-	now := date.NowFormatted()
+	now := DateTime(time.Now())
 	job := Job{
 		ID:        relay.EncodeID(NodeTypeJob, fmt.Sprint(id)),
 		Priority:  priority,
@@ -113,7 +113,7 @@ func (j *JobManager) Add(
 		defer j.cancels.Delete(job.ID)
 
 		job.Status = JobStatusRunning
-		job.UpdatedAt = date.NowFormatted()
+		job.UpdatedAt = DateTime(time.Now())
 		j.nodes.MustStoreJob(job)
 		j.subs.Publish(JobUpserted, job.ID)
 		atomic.AddInt64(&j.runningCounter, 1)
@@ -130,7 +130,7 @@ func (j *JobManager) Add(
 			atomic.AddInt64(&j.doneCounter, 1)
 		}
 
-		job.UpdatedAt = date.NowFormatted()
+		job.UpdatedAt = DateTime(time.Now())
 		j.nodes.MustStoreJob(job)
 
 		j.subs.Publish(JobUpserted, job.ID)
@@ -156,7 +156,7 @@ func (j *JobManager) Stop(id string) error {
 		}
 
 		job.Status = JobStatusStopping
-		job.UpdatedAt = date.NowFormatted()
+		job.UpdatedAt = DateTime(time.Now())
 		j.nodes.MustStoreJob(job)
 		j.subs.Publish(JobUpserted, id)
 

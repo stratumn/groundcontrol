@@ -18,7 +18,7 @@ package models
 type LogEntry struct {
 	ID        string   `json:"id"`
 	Level     LogLevel `json:"level"`
-	CreatedAt string   `json:"createdAt"`
+	CreatedAt DateTime `json:"createdAt"`
 	Message   string   `json:"message"`
 	OwnerID   string   `json:"ownerID"`
 }
