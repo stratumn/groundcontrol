@@ -95,6 +95,7 @@ func (c Config) CreateNodes(nodes *NodeManager, userID string) error {
 
 			for j, stepConfig := range taskConfig.Steps {
 				var projectIDs []string
+				var commandIDs []string
 
 				for _, slug := range stepConfig.Projects {
 					id, ok := projectSlugToID[slug]
@@ -102,6 +103,21 @@ func (c Config) CreateNodes(nodes *NodeManager, userID string) error {
 						return ErrNotFound
 					}
 					projectIDs = append(projectIDs, id)
+				}
+
+				for k, command := range stepConfig.Commands {
+					id := relay.EncodeID(
+						NodeTypeCommand,
+						workspace.Slug,
+						fmt.Sprint(i),
+						fmt.Sprint(j),
+						fmt.Sprint(k),
+					)
+					nodes.MustStoreCommand(Command{
+						ID:      id,
+						Command: command,
+					})
+					commandIDs = append(commandIDs, id)
 				}
 
 				step := Step{
@@ -112,7 +128,7 @@ func (c Config) CreateNodes(nodes *NodeManager, userID string) error {
 						fmt.Sprint(j),
 					),
 					ProjectIDs: projectIDs,
-					Commands:   stepConfig.Commands,
+					CommandIDs: commandIDs,
 					TaskID:     task.ID,
 				}
 

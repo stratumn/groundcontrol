@@ -48,7 +48,7 @@ export class LogEntryListPage extends Component<IProps> {
     const filters = this.props.params.filters === undefined ? undefined :
       this.props.params.filters.split(",");
     const ownerId = this.props.params.ownerId;
-    const projects = this.props.viewer.projects;
+    const projects = this.props.viewer.projects.edges.map(({ node }) => node);
 
     return (
       <Page
@@ -141,7 +141,11 @@ export default createPaginationContainer(
     }
     fragment LogEntryListPage_viewer on User {
       projects {
-         ...LogEntryFilter_projects
+        edges {
+          node {
+            ...LogEntryFilter_projects
+          }
+        }
       }
     }`,
   {

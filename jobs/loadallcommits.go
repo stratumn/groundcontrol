@@ -34,8 +34,12 @@ func LoadAllCommits(
 
 	var jobIDs []string
 
-	for _, workspace := range viewer.Workspaces(nodes) {
-		for _, project := range workspace.Projects(nodes) {
+	for _, workspaceID := range viewer.WorkspaceIDs {
+		workspace := nodes.MustLoadWorkspace(workspaceID)
+
+		for _, projectID := range workspace.ProjectIDs {
+			project := nodes.MustLoadProject(projectID)
+
 			if project.IsLoadingCommits {
 				continue
 			}

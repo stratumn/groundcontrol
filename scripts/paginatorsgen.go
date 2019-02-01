@@ -132,6 +132,17 @@ func Paginate{{$type}}Slice(slice []{{$type}}, after, before *string, first, las
 	}, nil
 }
 
+// Paginate{{$type}}IDSlice paginates a slice of {{$type}} given their IDs and query parameters.
+func Paginate{{$type}}IDSlice(nodes *NodeManager, ids []string, after, before *string, first, last *int) ({{$type}}Connection, error) {
+	var slice []{{$type}}
+
+	for _, id := range ids {
+		slice = append(slice, nodes.MustLoad{{$type}}(id))
+	}
+
+	return Paginate{{$type}}Slice(slice, after, before, first, last)
+}
+
 func applyCursorsTo{{$type}}Slice(slice []{{$type}}, after, before *string) ([]{{$type}}Edge, bool) {
 	var edges []{{$type}}Edge
 

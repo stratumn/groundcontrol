@@ -42,6 +42,7 @@ export class WorkspaceCard extends Component<IProps> {
     const item = this.props.item;
     const labels: JSX.Element[] = [];
     const buttons: JSX.Element[] = [];
+    const projects = this.props.item.projects.edges.map(({ node }) => node);
 
     let color: "grey" | "teal" | "pink" | "purple" = "grey";
 
@@ -139,7 +140,7 @@ export class WorkspaceCard extends Component<IProps> {
             <Header as="h6">Repositories</Header>
           </Divider>
           <Card.Description>
-            <ProjectList items={item.projects} />
+            <ProjectList items={projects} />
           </Card.Description>
         </Card.Content>
         <Card.Content extra={true}>
@@ -171,7 +172,11 @@ export default createFragmentContainer(WorkspaceCard, graphql`
     isBehind
     isAhead
     projects {
-      ...ProjectList_items
+      edges {
+        node {
+          ...ProjectList_items
+        }
+      }
     }
   }`,
 );

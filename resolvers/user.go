@@ -24,14 +24,14 @@ type userResolver struct {
 	*Resolver
 }
 
-func (r *userResolver) Workspaces(ctx context.Context, obj *models.User) ([]models.Workspace, error) {
-	return obj.Workspaces(r.Nodes), nil
+func (r *userResolver) Workspaces(ctx context.Context, obj *models.User, after, before *string, first, last *int) (models.WorkspaceConnection, error) {
+	return obj.Workspaces(r.Nodes, after, before, first, last)
 }
 
 func (r *userResolver) Workspace(ctx context.Context, obj *models.User, slug string) (*models.Workspace, error) {
 	return obj.Workspace(r.Nodes, slug), nil
 }
 
-func (r *userResolver) Projects(ctx context.Context, obj *models.User) ([]models.Project, error) {
-	return obj.Projects(r.Nodes), nil
+func (r *userResolver) Projects(ctx context.Context, obj *models.User, after, before *string, first, last *int) (models.ProjectConnection, error) {
+	return obj.Projects(r.Nodes, after, before, first, last)
 }

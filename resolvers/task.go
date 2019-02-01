@@ -24,8 +24,8 @@ type taskResolver struct {
 	*Resolver
 }
 
-func (r *taskResolver) Steps(ctx context.Context, obj *models.Task) ([]models.Step, error) {
-	return obj.Steps(r.Nodes), nil
+func (r *taskResolver) Steps(ctx context.Context, obj *models.Task, after, before *string, first, last *int) (models.StepConnection, error) {
+	return obj.Steps(r.Nodes, after, before, first, last)
 }
 
 func (r *taskResolver) Workspace(ctx context.Context, obj *models.Task) (models.Workspace, error) {

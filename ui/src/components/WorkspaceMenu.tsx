@@ -39,8 +39,8 @@ export class WorkspaceMenu extends Component<IProps> {
       isCloned,
       isPulling,
       isBehind,
-      tasks,
     } = this.props.workspace;
+    const tasks = this.props.workspace.tasks.edges.map(({ node }) => node);
     const { onClone, onPull, onRun } = this.props;
 
     return (
@@ -73,7 +73,11 @@ export class WorkspaceMenu extends Component<IProps> {
 export default createFragmentContainer(WorkspaceMenu, graphql`
   fragment WorkspaceMenu_workspace on Workspace {
     tasks {
-      ...WorkspaceTaskDropdown_items
+      edges {
+        node {
+          ...WorkspaceTaskDropdown_items
+        }
+      }
     }
     isCloning
     isCloned

@@ -24,12 +24,12 @@ type workspaceResolver struct {
 	*Resolver
 }
 
-func (r *workspaceResolver) Projects(ctx context.Context, obj *models.Workspace) ([]models.Project, error) {
-	return obj.Projects(r.Nodes), nil
+func (r *workspaceResolver) Projects(ctx context.Context, obj *models.Workspace, after, before *string, first, last *int) (models.ProjectConnection, error) {
+	return obj.Projects(r.Nodes, after, before, first, last)
 }
 
-func (r *workspaceResolver) Tasks(ctx context.Context, obj *models.Workspace) ([]models.Task, error) {
-	return obj.Tasks(r.Nodes), nil
+func (r *workspaceResolver) Tasks(ctx context.Context, obj *models.Workspace, after, before *string, first, last *int) (models.TaskConnection, error) {
+	return obj.Tasks(r.Nodes, after, before, first, last)
 }
 
 func (r *workspaceResolver) IsCloning(ctx context.Context, obj *models.Workspace) (bool, error) {

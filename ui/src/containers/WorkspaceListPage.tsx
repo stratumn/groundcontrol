@@ -45,7 +45,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 
   public render() {
     const query = this.state.query;
-    let items = this.props.viewer.workspaces;
+    let items = this.props.viewer.workspaces.edges.map(({ node }) => node);
 
     if (query) {
       items = items.filter((item) => item.name.toLowerCase().indexOf(query) >= 0);
@@ -95,8 +95,12 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 export default createFragmentContainer(WorkspaceListPage, graphql`
   fragment WorkspaceListPage_viewer on User {
     workspaces {
-      ...WorkspaceCardGroup_items
-      name
+      edges {
+        node {
+          ...WorkspaceCardGroup_items
+          name
+        }
+      }
     }
   }`,
 );

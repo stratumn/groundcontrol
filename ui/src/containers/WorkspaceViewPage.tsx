@@ -45,7 +45,7 @@ export class WorkspaceViewPage extends Component<IProps> {
 
   public render() {
     const workspace = this.props.viewer.workspace!;
-    const items = workspace.projects!;
+    const items = workspace.projects.edges.map(({ node }) => node);
     const notes = workspace.notes || "No notes";
 
     return (
@@ -127,7 +127,11 @@ export default createFragmentContainer(WorkspaceViewPage, graphql`
       notes
       ...WorkspaceMenu_workspace
       projects {
-        ...ProjectCardGroup_items @arguments(commitsLimit: $commitsLimit)
+        edges {
+          node {
+            ...ProjectCardGroup_items @arguments(commitsLimit: $commitsLimit)
+          }
+        }
       }
     }
   }`,

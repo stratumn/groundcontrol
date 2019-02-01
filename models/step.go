@@ -18,7 +18,7 @@ package models
 type Step struct {
 	ID         string   `json:"id"`
 	ProjectIDs []string `json:"projectIDs"`
-	Commands   []string `json:"commands"`
+	CommandIDs []string `json:"commandIDs"`
 	TaskID     string   `json:"taskID"`
 }
 
@@ -26,14 +26,25 @@ type Step struct {
 func (Step) IsNode() {}
 
 // Projects returns the step's projects.
-func (s Step) Projects(nodes *NodeManager) []Project {
-	var slice []Project
+func (s Step) Projects(
+	nodes *NodeManager,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (ProjectConnection, error) {
+	return PaginateProjectIDSlice(nodes, s.ProjectIDs, after, before, first, last)
+}
 
-	for _, nodeID := range s.ProjectIDs {
-		slice = append(slice, nodes.MustLoadProject(nodeID))
-	}
-
-	return slice
+// Commands returns the step's commands.
+func (s Step) Commands(
+	nodes *NodeManager,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (CommandConnection, error) {
+	return PaginateCommandIDSlice(nodes, s.ProjectIDs, after, before, first, last)
 }
 
 // Task returns the step's taks.

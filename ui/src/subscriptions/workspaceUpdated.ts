@@ -22,7 +22,11 @@ const subscription = graphql`
       ...WorkspaceCard_item
       ...WorkspaceMenu_workspace
       projects {
-        ...ProjectCard_item
+        edges {
+          node {
+            ...ProjectCard_item
+          }
+        }
       }
     }
   }

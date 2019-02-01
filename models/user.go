@@ -24,14 +24,14 @@ type User struct {
 func (User) IsNode() {}
 
 // Workspaces returns the user's workspaces.
-func (u User) Workspaces(nodes *NodeManager) []Workspace {
-	var slice []Workspace
-
-	for _, nodeID := range u.WorkspaceIDs {
-		slice = append(slice, nodes.MustLoadWorkspace(nodeID))
-	}
-
-	return slice
+func (u User) Workspaces(
+	nodes *NodeManager,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (WorkspaceConnection, error) {
+	return PaginateWorkspaceIDSlice(nodes, u.WorkspaceIDs, after, before, first, last)
 }
 
 // Workspace finds a workspace.
@@ -48,12 +48,19 @@ func (u User) Workspace(nodes *NodeManager, slug string) *Workspace {
 }
 
 // Projects returns the user's projects.
-func (u User) Projects(nodes *NodeManager) []Project {
-	var slice []Project
+func (u User) Projects(
+	nodes *NodeManager,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (ProjectConnection, error) {
+	var slice []string
 
-	for _, workspace := range u.Workspaces(nodes) {
-		slice = append(slice, workspace.Projects(nodes)...)
+	for _, workspaceID := range u.WorkspaceIDs {
+		workspace := nodes.MustLoadWorkspace(workspaceID)
+		slice = append(slice, workspace.ProjectIDs...)
 	}
 
-	return slice
+	return PaginateProjectIDSlice(nodes, slice, after, before, first, last)
 }

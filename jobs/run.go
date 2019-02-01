@@ -108,19 +108,25 @@ func doRun(
 	task := nodes.MustLoadTask(taskID)
 	processGroupID := ""
 
-	for _, step := range task.Steps(nodes) {
-		for _, command := range step.Commands {
-			for _, project := range step.Projects(nodes) {
+	for _, stepID := range task.StepIDs {
+		step := nodes.MustLoadStep(stepID)
+
+		for _, commandID := range step.CommandIDs {
+			command := nodes.MustLoadCommand(commandID)
+
+			for _, projectID := range step.ProjectIDs {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
 				default:
 				}
 
-				log.InfoWithOwner(project.ID, command)
+				project := nodes.MustLoadProject(projectID)
+
+				log.InfoWithOwner(project.ID, command.Command)
 
 				projectPath := getProjectPath(workspace.Slug, project.Repository, project.Branch)
-				parts := strings.Split(command, " ")
+				parts := strings.Split(command.Command, " ")
 
 				if len(parts) > 0 && parts[0] == "spawn" {
 					if processGroupID == "" {
@@ -135,7 +141,7 @@ func doRun(
 
 				stdout := models.CreateLineWriter(log.InfoWithOwner, project.ID)
 				stderr := models.CreateLineWriter(log.WarningWithOwner, project.ID)
-				err := run(ctx, command, projectPath, stdout, stderr)
+				err := run(ctx, command.Command, projectPath, stdout, stderr)
 
 				stdout.Close()
 				stderr.Close()

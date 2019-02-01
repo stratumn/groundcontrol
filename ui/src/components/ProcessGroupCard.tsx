@@ -47,8 +47,8 @@ export class ProcessGroupCard extends Component<IProps> {
       status,
       task,
       task: { workspace },
-      processes,
     } = this.props.item;
+    const processes = this.props.item.processes.edges.map(({ node }) => node);
     const {
       onStartGroup,
       onStopGroup,
@@ -130,7 +130,11 @@ export default createFragmentContainer(ProcessGroupCard, graphql`
       }
     }
     processes {
-      ...ProcessTable_items
+      edges {
+        node {
+          ...ProcessTable_items
+        }
+      }
     }
   }`,
 );

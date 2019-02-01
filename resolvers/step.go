@@ -24,8 +24,12 @@ type stepResolver struct {
 	*Resolver
 }
 
-func (r *stepResolver) Projects(ctx context.Context, obj *models.Step) ([]models.Project, error) {
-	return obj.Projects(r.Nodes), nil
+func (r *stepResolver) Projects(ctx context.Context, obj *models.Step, after, before *string, first, last *int) (models.ProjectConnection, error) {
+	return obj.Projects(r.Nodes, after, before, first, last)
+}
+
+func (r *stepResolver) Commands(ctx context.Context, obj *models.Step, after, before *string, first, last *int) (models.CommandConnection, error) {
+	return obj.Commands(r.Nodes, after, before, first, last)
 }
 
 func (r *stepResolver) Task(ctx context.Context, obj *models.Step) (models.Task, error) {

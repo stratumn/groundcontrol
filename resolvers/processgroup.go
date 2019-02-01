@@ -24,8 +24,8 @@ type processGroupResolver struct {
 	*Resolver
 }
 
-func (r *processGroupResolver) Processes(ctx context.Context, obj *models.ProcessGroup) ([]models.Process, error) {
-	return obj.Processes(r.Nodes), nil
+func (r *processGroupResolver) Processes(ctx context.Context, obj *models.ProcessGroup, after, before *string, first, last *int) (models.ProcessConnection, error) {
+	return obj.Processes(r.Nodes, after, before, first, last)
 }
 
 func (r *processGroupResolver) Task(ctx context.Context, obj *models.ProcessGroup) (models.Task, error) {

@@ -26,14 +26,14 @@ type ProcessGroup struct {
 func (ProcessGroup) IsNode() {}
 
 // Processes returns the ProcessGroup's processes.
-func (p ProcessGroup) Processes(nodes *NodeManager) []Process {
-	var slice []Process
-
-	for _, nodeID := range p.ProcessIDs {
-		slice = append(slice, nodes.MustLoadProcess(nodeID))
-	}
-
-	return slice
+func (p ProcessGroup) Processes(
+	nodes *NodeManager,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (ProcessConnection, error) {
+	return PaginateProcessIDSlice(nodes, p.ProcessIDs, after, before, first, last)
 }
 
 // Task returns the Task associated with the ProcessGroup.
@@ -45,7 +45,9 @@ func (p ProcessGroup) Task(nodes *NodeManager) Task {
 func (p ProcessGroup) Status(nodes *NodeManager) ProcessStatus {
 	status := ProcessStatusDone
 
-	for _, node := range p.Processes(nodes) {
+	for _, id := range p.ProcessIDs {
+		node := nodes.MustLoadProcess(id)
+
 		if node.Status == ProcessStatusFailed {
 			return ProcessStatusFailed
 		}

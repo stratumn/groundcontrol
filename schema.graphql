@@ -1,22 +1,205 @@
 scalar DateTime
 
+enum JobStatus {
+  QUEUED
+  RUNNING
+  STOPPING
+  DONE
+  FAILED
+}
+
+enum JobPriority {
+  NORMAL
+  HIGH
+}
+
+enum ProcessStatus {
+  RUNNING
+  STOPPING
+  DONE
+  FAILED
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARNING
+  ERROR
+}
+
 interface Node {
   id: ID!
 }
 
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  endCursor: String!
+  startCursor: String!
+}
+
+type WorkspaceConnection {
+  edges: [WorkspaceEdge!]!
+  pageInfo: PageInfo!
+}
+
+type WorkspaceEdge {
+  cursor: String!
+  node: Workspace!
+}
+
+type ProjectConnection {
+  edges: [ProjectEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProjectEdge {
+  cursor: String!
+  node: Project!
+}
+
+type CommitConnection {
+  edges: [CommitEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CommitEdge {
+  cursor: String!
+  node: Commit!
+}
+
+type TaskConnection {
+  edges: [TaskEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TaskEdge {
+  cursor: String!
+  node: Task!
+}
+
+type StepConnection {
+  edges: [StepEdge!]!
+  pageInfo: PageInfo!
+}
+
+type StepEdge {
+  cursor: String!
+  node: Step!
+}
+
+type CommandConnection {
+  edges: [CommandEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CommandEdge {
+  cursor: String!
+  node: Command!
+}
+
+type JobConnection {
+  edges: [JobEdge!]!
+  pageInfo: PageInfo!
+}
+
+type JobEdge {
+  cursor: String!
+  node: Job!
+}
+
+type ProcessGroupConnection {
+  edges: [ProcessGroupEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessGroupEdge {
+  cursor: String!
+  node: ProcessGroup!
+}
+
+type ProcessConnection {
+  edges: [ProcessEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessEdge {
+  cursor: String!
+  node: Process!
+}
+
+type LogEntryConnection {
+  edges: [LogEntryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type LogEntryEdge {
+  cursor: String!
+  node: LogEntry!
+}
+
 type User implements Node {
   id: ID!
-  workspaces: [Workspace!]!
+  workspaces(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): WorkspaceConnection!
   workspace(slug: String!): Workspace
-  projects: [Project!]!
+  projects(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): ProjectConnection!
+}
+
+type System implements Node {
+  id: ID!
+  jobs(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    status: [JobStatus!]
+  ): JobConnection!
+  processGroups(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    status: [ProcessStatus!]
+  ): ProcessGroupConnection!
+  logEntries(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    level: [LogLevel!]
+    ownerId: ID
+  ): LogEntryConnection!
+  jobMetrics: JobMetrics!
+  processMetrics: ProcessMetrics!
+  logMetrics: LogMetrics!
 }
 
 type Workspace implements Node {
   id: ID!
   slug: String!
   name: String!
-  projects: [Project!]!
-  tasks: [Task!]!
+  projects(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): ProjectConnection!
+  tasks(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): TaskConnection!
   description: String
   notes: String
   isCloning: Boolean!
@@ -47,21 +230,6 @@ type Project implements Node {
   isAhead: Boolean!
 }
 
-type Task implements Node {
-  id: ID!
-  name: String!
-  steps: [Step!]!
-  workspace: Workspace!
-  isRunning: Boolean!
-}
-
-type Step implements Node {
-  id: ID!
-  projects: [Project!]!
-  commands: [String!]!
-  task: Task!
-}
-
 type Commit implements Node {
   id: ID!
   SHA: String!
@@ -71,43 +239,39 @@ type Commit implements Node {
   date: DateTime!
 }
 
-type CommitConnection {
-  edges: [CommitEdge!]!
-  pageInfo: PageInfo!
-}
-
-type CommitEdge {
-  cursor: String!
-  node: Commit!
-}
-
-type System implements Node {
+type Task implements Node {
   id: ID!
-  jobs(
+  name: String!
+  steps(
     after: String
     before: String
     first: Int
     last: Int
-    status: [JobStatus!]
-  ): JobConnection!
-  jobMetrics: JobMetrics!
-  processGroups(
+  ): StepConnection!
+  workspace: Workspace!
+  isRunning: Boolean!
+}
+
+type Step implements Node {
+  id: ID!
+  projects(
     after: String
     before: String
     first: Int
     last: Int
-    status: [ProcessStatus!]
-  ): ProcessGroupConnection!
-  processMetrics: ProcessMetrics!
-  logEntries(
+  ): ProjectConnection!
+  commands(
     after: String
     before: String
     first: Int
     last: Int
-    level: [LogLevel!]
-    ownerId: ID
-  ): LogEntryConnection!
-  logMetrics: LogMetrics!
+  ): CommandConnection!
+  task: Task!
+}
+
+type Command implements Node {
+  id: ID!
+  command: String!
 }
 
 type Job implements Node {
@@ -120,67 +284,17 @@ type Job implements Node {
   owner: Node!
 }
 
-enum JobStatus {
-  QUEUED
-  RUNNING
-  STOPPING
-  DONE
-  FAILED
-}
-
-enum JobPriority {
-  NORMAL
-  HIGH
-}
-
-type JobConnection {
-  edges: [JobEdge!]!
-  pageInfo: PageInfo!
-}
-
-type JobEdge {
-  cursor: String!
-  node: Job!
-}
-
-type JobMetrics implements Node {
-  id: ID!
-  queued: Int!
-  running: Int!
-  done: Int!
-  failed: Int!
-}
-
 type ProcessGroup implements Node {
   id: ID!
   createdAt: DateTime!
   status: ProcessStatus!
   task: Task!
-  processes: [Process!]!
-}
-
-enum ProcessStatus {
-  RUNNING
-  STOPPING
-  DONE
-  FAILED
-}
-
-type ProcessGroupConnection {
-  edges: [ProcessGroupEdge!]!
-  pageInfo: PageInfo!
-}
-
-type ProcessGroupEdge {
-  cursor: String!
-  node: ProcessGroup!
-}
-
-type ProcessMetrics implements Node {
-  id: ID!
-  running: Int!
-  done: Int!
-  failed: Int!
+  processes(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): ProcessConnection!
 }
 
 type Process implements Node {
@@ -199,21 +313,19 @@ type LogEntry implements Node {
   owner: Node
 }
 
-enum LogLevel {
-  DEBUG
-  INFO
-  WARNING
-  ERROR
+type JobMetrics implements Node {
+  id: ID!
+  queued: Int!
+  running: Int!
+  done: Int!
+  failed: Int!
 }
 
-type LogEntryConnection {
-  edges: [LogEntryEdge!]!
-  pageInfo: PageInfo!
-}
-
-type LogEntryEdge {
-  cursor: String!
-  node: LogEntry!
+type ProcessMetrics implements Node {
+  id: ID!
+  running: Int!
+  done: Int!
+  failed: Int!
 }
 
 type LogMetrics implements Node {
@@ -222,13 +334,6 @@ type LogMetrics implements Node {
   info: Int!
   warning: Int!
   error: Int!
-}
-
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  endCursor: String!
-  startCursor: String!
 }
 
 type Query {

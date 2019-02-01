@@ -50,7 +50,9 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 
 	var slice []models.Job
 
-	for _, project := range workspace.Projects(r.Nodes) {
+	for _, projectID := range workspace.ProjectIDs {
+		project := r.Nodes.MustLoadProject(projectID)
+
 		if project.IsLoadingCommits || len(project.CommitIDs) > 0 {
 			continue
 		}
@@ -98,7 +100,9 @@ func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]mod
 
 	var slice []models.Job
 
-	for _, project := range workspace.Projects(r.Nodes) {
+	for _, projectID := range workspace.ProjectIDs {
+		project := r.Nodes.MustLoadProject(projectID)
+
 		if project.IsCloning || project.IsCloned(r.Nodes, r.GetProjectPath) {
 			continue
 		}
@@ -145,7 +149,9 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 
 	var slice []models.Job
 
-	for _, project := range workspace.Projects(r.Nodes) {
+	for _, projectID := range workspace.ProjectIDs {
+		project := r.Nodes.MustLoadProject(projectID)
+
 		if project.IsPulling || !project.IsCloned(r.Nodes, r.GetProjectPath) || !project.IsBehind {
 			continue
 		}
@@ -201,7 +207,9 @@ func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (mo
 		return models.ProcessGroup{}, err
 	}
 
-	for _, process := range processGroup.Processes(r.Nodes) {
+	for _, processID := range processGroup.ProcessIDs {
+		process := r.Nodes.MustLoadProcess(processID)
+
 		if process.Status == models.ProcessStatusRunning {
 			continue
 		}
@@ -220,7 +228,9 @@ func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) (mod
 		return models.ProcessGroup{}, err
 	}
 
-	for _, process := range processGroup.Processes(r.Nodes) {
+	for _, processID := range processGroup.ProcessIDs {
+		process := r.Nodes.MustLoadProcess(processID)
+
 		if process.Status != models.ProcessStatusRunning {
 			continue
 		}

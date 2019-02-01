@@ -27,14 +27,14 @@ type Task struct {
 func (Task) IsNode() {}
 
 // Steps returns the task's steps.
-func (t Task) Steps(nodes *NodeManager) []Step {
-	var slice []Step
-
-	for _, nodeID := range t.StepIDs {
-		slice = append(slice, nodes.MustLoadStep(nodeID))
-	}
-
-	return slice
+func (t Task) Steps(
+	nodes *NodeManager,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (StepConnection, error) {
+	return PaginateStepIDSlice(nodes, t.StepIDs, after, before, first, last)
 }
 
 // Workspace returns the task's workspace.
