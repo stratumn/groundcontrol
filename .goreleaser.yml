@@ -4,10 +4,12 @@ before:
     - cd ui && yarn gen
     - cd ui && yarn build
     - go mod download
-    - go generate -tags "release" ./...
+    - go generate -tags=release ./...
 builds:
 - env:
   - CGO_ENABLED=0
+  flags:
+  - -tags=release
 archive:
   replacements:
     darwin: Darwin
