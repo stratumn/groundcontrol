@@ -13,7 +13,7 @@
 // limitations under the License.
 
 //go:generate go run scripts/nodesgen.go -t User,Workspace,Project,Commit,System,Job,JobMetrics,ProcessGroup,Process,ProcessMetrics,LogEntry,LogMetrics,Task,Step -o models/auto_nodes.go
-//go:generate go run scripts/paginatorsgen.go -t Commit,Job,LogEntry,ProcessGroup -o models/auto_paginators.go
+//go:generate go run scripts/paginatorsgen.go -t Commit,Job,LogEntry,ProcessGroup -o models/auto_paginators.go -O models/auto_paginators_test.go
 //go:generate go run scripts/gqlgen.go
 
 package main
