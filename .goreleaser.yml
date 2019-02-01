@@ -1,0 +1,26 @@
+before:
+  hooks:
+    - cd ui && yarn install
+    - cd ui && yarn gen
+    - cd ui && yarn build
+    - go mod download
+    - go generate -tags "release" ./...
+builds:
+- env:
+  - CGO_ENABLED=0
+archive:
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    386: i386
+    amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
