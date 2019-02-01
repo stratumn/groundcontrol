@@ -24,3 +24,7 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
+brew:
+  github:
+    owner: stratumn
+    name: homebrew-groundcontrol
