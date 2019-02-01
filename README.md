@@ -32,6 +32,10 @@ Once installed, you can update to latest version by running:
 brew upgrade groundcontrol
 ```
 
+### Prebuilt binaries
+
+Head over to the [latest release](https://github.com/stratumn/groundcontrol/releases/latest) and download the binary for your platform.
+
 ### From source
 
 You need:
