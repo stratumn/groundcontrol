@@ -155,18 +155,21 @@ export default createPaginationContainer(
       count,
       cursor,
       level: fragmentVariables.level,
+      ownerId: fragmentVariables.ownerId,
     }),
     query: graphql`
       query LogEntryListPagePaginationQuery(
         $count: Int!,
         $cursor: String,
         $level: [LogLevel!],
+        $ownerId: ID,
       ) {
         system {
           ...LogEntryListPage_system @arguments(
             count: $count,
             cursor: $cursor,
             level: $level,
+            ownerId: $ownerId,
           )
         }
       }
