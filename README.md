@@ -18,6 +18,22 @@ The Ground Control user interface allows you to perform operations across the pr
 
 ## Installation
 
+### macOS (homebrew)
+
+Simply run:
+
+```
+brew install stratumn/groundcontrol/groundcontrol
+```
+
+Once installed, you can update to latest version by running:
+
+```
+brew upgrade groundcontrol
+```
+
+### From source
+
 You need:
 
 - Go >= v1.11
