@@ -90,6 +90,15 @@ yarn dev
 
 UI runs on `http://localhost:3000` during development.
 
+### Releasing
+
+```
+brew install goreleaser/tap/goreleaser
+git tag -a vX.X.X -m "New release"
+git push origin vX.X.X
+goreleaser
+```
+
 ### Notes
 
 #### General

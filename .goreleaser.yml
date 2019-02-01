@@ -1,10 +1,11 @@
 before:
   hooks:
-    - cd ui && yarn install
-    - cd ui && yarn gen
-    - cd ui && yarn build
-    - go mod download
-    - go generate -tags=release ./...
+    - make clean
+    - make deps
+    - make gen-ui
+    - make build-ui
+    - make gen-go
+    - make test
 builds:
 - env:
   - CGO_ENABLED=0

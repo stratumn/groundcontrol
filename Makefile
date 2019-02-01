@@ -2,22 +2,33 @@ all: deps build
 
 deps:
 	cd ui && yarn install
+	go mod download
 
-build: clean_generated
+gen-ui:
 	cd ui && yarn gen
+
+gen-go:
+	go generate -tags=release ./...
+
+build-ui:
 	cd ui && yarn build
-	go generate -tags "release" ./...
+
+build: gen-ui build-ui gen-go
 	go build -tags "release"
 
 install:
 	cp groundcontrol $$GOPATH/bin
 
-clean_generated:
+clean-generated:
 	rm -f $(shell find . -name "auto_*.go")
 	rm -rf $(shell find ui/src -name "__generated__")
 
-clean: clean_generated
+clean: clean-generated
 	rm -f groundcontrol
 	rm -rf ui/node_modules
+	rm -rf dist
 
-.PHONY: deps build install clean_generated clean
+test:
+	go test ./...
+
+.PHONY: deps gen-ui gen-go test build-ui build install clean-generated clean
