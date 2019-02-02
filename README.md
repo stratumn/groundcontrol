@@ -62,7 +62,7 @@ ssh-add # <---- to use your SSH key for accessing private repos
 groundcontrol [groundcontrol.yml] # <---- path to YAML file
 ```
 
-Navigate to `http://localhost:8080`.
+Navigate to `http://localhost:3333`.
 
 ## Development
 
@@ -79,7 +79,7 @@ go generate ./...
 go run main.go [groundcontrol.yml]
 ```
 
-Server runs on `http://localhost:8080` and serves GraphiQL instead of the UI during development.
+Server runs on `http://localhost:3333`.
 
 ### UI
 

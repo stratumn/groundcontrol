@@ -15,15 +15,10 @@
 package resolvers
 
 import (
-	"path"
-	"path/filepath"
-	"strings"
-
 	"github.com/stratumn/groundcontrol/gql"
 	"github.com/stratumn/groundcontrol/jobs"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
 )
 
 // Resolver is the root GraphQL resolver.
@@ -102,81 +97,4 @@ func (r *Resolver) Process() gql.ProcessResolver {
 // LogEntry returns the resolver for a log entry.
 func (r *Resolver) LogEntry() gql.LogEntryResolver {
 	return &logEntryResolver{r}
-}
-
-// CreateResolver creates a resolver from a config file.
-func CreateResolver(filenames ...string) (*Resolver, error) {
-	unique := strings.Join(filenames, ";")
-	nodes := &models.NodeManager{}
-	viewer := models.User{
-		ID: relay.EncodeID(models.NodeTypeUser, unique),
-	}
-	nodes.MustStoreUser(viewer)
-
-	for _, filename := range filenames {
-		config, err := models.LoadConfigYAML(filename)
-		if err != nil {
-			return nil, err
-		}
-
-		err = config.CreateNodes(nodes, viewer.ID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	logMetricsID := relay.EncodeID(models.NodeTypeLogMetrics, unique)
-	systemID := relay.EncodeID(models.NodeTypeSystem, unique)
-	jobMetricsID := relay.EncodeID(models.NodeTypeJobMetrics, unique)
-	processMetricsID := relay.EncodeID(models.NodeTypeProcessMetrics, unique)
-
-	nodes.MustStoreLogMetrics(models.LogMetrics{
-		ID: logMetricsID,
-	})
-
-	nodes.MustStoreJobMetrics(models.JobMetrics{
-		ID: jobMetricsID,
-	})
-
-	nodes.MustStoreProcessMetrics(models.ProcessMetrics{
-		ID: processMetricsID,
-	})
-
-	nodes.MustStoreSystem(models.System{
-		ID:               systemID,
-		JobMetricsID:     jobMetricsID,
-		LogMetricsID:     logMetricsID,
-		ProcessMetricsID: processMetricsID,
-	})
-
-	subs := pubsub.New()
-	log := models.NewLogger(nodes, subs, 10000, models.LogLevelDebug, systemID)
-	jobs := models.NewJobManager(nodes, log, subs, 2, systemID)
-	pm := models.NewProcessManager(nodes, log, subs, getProjectPath, systemID)
-
-	return &Resolver{
-		Nodes:               nodes,
-		Log:                 log,
-		Jobs:                jobs,
-		PM:                  pm,
-		Subs:                subs,
-		GetProjectPath:      getProjectPath,
-		GetProjectCachePath: getProjectCachePath,
-		ViewerID:            viewer.ID,
-		SystemID:            systemID,
-	}, nil
-}
-
-func getProjectPath(workspaceSlug, repo, branch string) string {
-	name := path.Base(repo)
-	ext := path.Ext(name)
-	name = name[:len(name)-len(ext)]
-	return filepath.Join("workspaces", workspaceSlug, name)
-}
-
-func getProjectCachePath(workspaceSlug, repo, branch string) string {
-	name := path.Base(repo)
-	ext := path.Ext(name)
-	name = name[:len(name)-len(ext)]
-	return filepath.Join("cache", workspaceSlug, name+".git")
 }

@@ -73,6 +73,9 @@ export class Menu extends Component<IProps> {
               {logMetrics.error}
             </Label>
           </Link>
+          <SemanticMenu.Item href="http://localhost:3333/graphql">
+            GraphQL
+          </SemanticMenu.Item>
         </Container>
       </SemanticMenu>
     );

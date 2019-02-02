@@ -20,175 +20,19 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
 
-	"github.com/stratumn/groundcontrol/jobs"
-	"github.com/stratumn/groundcontrol/pubsub"
-
-	"github.com/99designs/gqlgen/handler"
-	"github.com/go-chi/chi"
-	"github.com/gorilla/websocket"
-	"github.com/rs/cors"
-	"github.com/stratumn/groundcontrol/gql"
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/resolvers"
+	"github.com/stratumn/groundcontrol/app"
 )
-
-const defaultPort = "8080"
 
 var ui http.FileSystem
 
 func main() {
 	ctx := context.Background()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
-
-	filenames := os.Args[1:]
-	if len(filenames) < 1 {
-		filenames = []string{"groundcontrol.yml"}
-	}
-
-	for i, filename := range filenames {
-		filename, err := filepath.Abs(filename)
-		checkError(err)
-		filenames[i] = filename
-	}
-
-	resolver, err := resolvers.CreateResolver(filenames...)
-	checkError(err)
-
-	gqlConfig := gql.Config{
-		Resolvers: resolver,
-	}
-
-	c := cors.New(cors.Options{
-		AllowCredentials: true,
-		Debug:            false,
-	})
-
-	router := chi.NewRouter()
-	router.Use(logMiddleware(resolver.Log), c.Handler)
-
-	if ui != nil {
-		fileServer := http.FileServer(ui)
-		router.NotFound(func(w http.ResponseWriter, req *http.Request) {
-			if _, err := ui.Open(req.URL.Path); err != nil {
-				// Rewrite other URLs to index for pushstate.
-				req.URL.Path = ""
-			}
-			fileServer.ServeHTTP(w, req)
-		})
-	} else {
-		router.Handle("/", handler.Playground("GraphQL playground", "/query"))
-	}
-
-	router.Handle("/query", handler.GraphQL(
-		gql.NewExecutableSchema(gqlConfig),
-		handler.WebsocketUpgrader(websocket.Upgrader{
-			CheckOrigin: func(_ *http.Request) bool { return true },
-		}),
-	))
-
-	resolver.Log.Info("app ready")
-
-	if ui != nil {
-		resolver.Log.Info("user interface on http://localhost:%s", port)
-	} else {
-		resolver.Log.Info("GraphQL playground on http://localhost:%s", port)
-	}
-
-	go resolver.Jobs.Work(ctx)
-
-	startPeriodicJobs(
-		ctx,
-		resolver.Nodes,
-		resolver.Log,
-		resolver.Jobs,
-		resolver.Subs,
-		resolver.GetProjectPath,
-		resolver.GetProjectCachePath,
-		resolver.ViewerID,
+	app := app.New(
+		app.OptUI(ui),
 	)
 
-	go handleSignals(ctx, resolver.Log, resolver.PM)
-
-	if err := http.ListenAndServe(":"+port, router); err != nil {
-		resolver.Log.Error("app crashed because %s", err.Error())
-	}
-}
-
-func checkError(err error) {
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Debug("%s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
-			h.ServeHTTP(w, r)
-		})
-	}
-}
-
-func handleSignals(ctx context.Context, log *models.Logger, pm *models.ProcessManager) {
-	signalCh := make(chan os.Signal)
-	signal.Notify(signalCh, syscall.SIGTERM)
-	signal.Notify(signalCh, syscall.SIGINT)
-
-	log.Debug("received signal %d", <-signalCh)
-	log.Info("starting graceful shutdown")
-
-	shutdownCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
-	defer cancel()
-
-	pm.Clean(shutdownCtx)
-
-	if err := shutdownCtx.Err(); err != nil {
-		log.Error("graceful shutdown failed because %s", err.Error())
-		os.Exit(1)
-	}
-
-	log.Info("graceful shutdown complete, goodbye!")
-	os.Exit(0)
-}
-
-func startPeriodicJobs(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	log *models.Logger,
-	jobManager *models.JobManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	getProjectCachePath jobs.ProjectCachePathGetter,
-	viewerID string,
-) {
-	go jobs.StartPeriodic(
-		ctx,
-		nodes,
-		subs,
-		time.Minute,
-		func() []string {
-			return jobs.LoadAllCommits(
-				nodes,
-				log,
-				jobManager,
-				subs,
-				getProjectPath,
-				getProjectCachePath,
-				viewerID,
-			)
-		},
-	)
+	app.Start(ctx)
 }
