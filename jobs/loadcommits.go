@@ -24,7 +24,6 @@ import (
 	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
@@ -160,13 +159,10 @@ func cloneOrFetch(
 	cacheDir := getProjectCachePath(workspace.Slug, project.Repository, project.Branch)
 	force := false
 
-	var refSpec []config.RefSpec
-
 	if project.IsCloned(nodes, getProjectPath) {
 		repo, err = git.PlainOpen(projectDir)
 	} else if exists(cacheDir) {
 		repo, err = git.PlainOpen(cacheDir)
-		refSpec = []config.RefSpec{"+refs/heads/*:refs/heads/*"}
 		force = true
 	}
 
@@ -178,8 +174,7 @@ func cloneOrFetch(
 		err = repo.FetchContext(
 			ctx,
 			&git.FetchOptions{
-				RefSpecs: refSpec,
-				Force:    force,
+				Force: force,
 			},
 		)
 	} else {
