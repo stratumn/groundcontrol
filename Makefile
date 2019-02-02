@@ -13,8 +13,10 @@ gen-go:
 build-ui:
 	cd ui && yarn build
 
-build: gen-ui build-ui gen-go
+build-go:
 	go build -tags "release"
+
+build: gen-ui build-ui gen-go build-go
 
 install:
 	cp groundcontrol $$GOPATH/bin

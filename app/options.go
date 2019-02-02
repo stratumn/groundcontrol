@@ -15,12 +15,14 @@
 package app
 
 import (
+	"log"
 	"net/http"
 	"path"
 	"path/filepath"
 	"time"
 
-	"github.com/stratumn/groundcontrol/jobs"
+	homedir "github.com/mitchellh/go-homedir"
+
 	"github.com/stratumn/groundcontrol/models"
 )
 
@@ -49,6 +51,29 @@ const (
 	// DefaultOpenBrowser is whether to open the user interface in a browser by default.
 	DefaultOpenBrowser = true
 )
+
+var (
+	// DefaultSettingsFile is the default settings file.
+	DefaultSettingsFile = "settings.yml"
+
+	// DefaultWorkspacesDirectory is the default workspace directory.
+	DefaultWorkspacesDirectory = "workspaces"
+
+	// DefaultCacheDirectory is the default cache directory.
+	DefaultCacheDirectory = "cache"
+)
+
+func init() {
+	home, err := homedir.Dir()
+	if err != nil {
+		log.Printf("WARNING\tcould not resolve home directory because %s", err.Error())
+		return
+	}
+
+	DefaultSettingsFile = filepath.Join(home, "groundcontrol", "settings.yml")
+	DefaultWorkspacesDirectory = filepath.Join(home, "groundcontrol", "workspaces")
+	DefaultCacheDirectory = filepath.Join(home, "groundcontrol", "cache")
+}
 
 // DefaultProjectPathGetter is the default ProjectPathGetter.
 func DefaultProjectPathGetter(workspaceSlug, repo, branch string) string {
@@ -139,16 +164,16 @@ func OptOpenBrowser(open bool) Opt {
 	}
 }
 
-// OptProjectPathGetter sets the function to resolve the path of a project.
-func OptProjectPathGetter(getter models.ProjectPathGetter) Opt {
+// OptWorkspacesDirectory sets the directory for workspaces.
+func OptWorkspacesDirectory(dir string) Opt {
 	return func(app *App) {
-		app.projectPathGetter = getter
+		app.workspacesDirectory = dir
 	}
 }
 
-// OptProjectCachePathGetter sets the function to resolve the path of a project cache.
-func OptProjectCachePathGetter(getter jobs.ProjectCachePathGetter) Opt {
+// OptCacheDirectory sets the directory for the cache.
+func OptCacheDirectory(dir string) Opt {
 	return func(app *App) {
-		app.projectCachePathGetter = getter
+		app.cacheDirectory = dir
 	}
 }

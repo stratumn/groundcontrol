@@ -24,17 +24,16 @@ import (
 	"strings"
 	"time"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stratumn/groundcontrol/app"
 	"github.com/stratumn/groundcontrol/models"
 )
 
-var userInterface http.FileSystem
-var settingsFile string
-
 var (
+	userInterface http.FileSystem
+
+	settingsFile            string
 	listenAddress           string
 	jobConcurrency          int
 	logLevel                string
@@ -42,6 +41,8 @@ var (
 	checkProjectsInterval   time.Duration
 	gracefulShutdownTimeout time.Duration
 	openBrowser             bool
+	workspacesDirectory     string
+	cacheDirectory          string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -63,6 +64,8 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptCheckProjectsInterval(viper.GetDuration("check-projects-interval")),
 			app.OptGracefulShutdownTimeout(viper.GetDuration("graceful-shutdown-timeout")),
 			app.OptOpenBrowser(viper.GetBool("open-browser")),
+			app.OptWorkspacesDirectory(viper.GetString("workspaces-directory")),
+			app.OptCacheDirectory(viper.GetString("cache-directory")),
 			app.OptUI(userInterface),
 		)
 
@@ -84,7 +87,7 @@ func Execute(ui http.FileSystem) {
 func init() {
 	cobra.OnInitialize(initSettings)
 
-	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings", "", "settings file (default $HOME/.groundcontrol/settings.yml)")
+	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings", app.DefaultSettingsFile, "settings file")
 	rootCmd.PersistentFlags().StringVar(&listenAddress, "listen-address", app.DefaultListenAddress, "address the server should listen on")
 	rootCmd.PersistentFlags().IntVar(&jobConcurrency, "job-concurrency", app.DefaultJobConcurrency, "how many jobs can run concurrency")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
@@ -92,6 +95,8 @@ func init() {
 	rootCmd.PersistentFlags().DurationVar(&checkProjectsInterval, "check-projects-interval", app.DefaultCheckProjectsInterval, "how often to check if projects have changed")
 	rootCmd.PersistentFlags().DurationVar(&gracefulShutdownTimeout, "graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
 	rootCmd.PersistentFlags().BoolVar(&openBrowser, "open-browser", app.DefaultOpenBrowser, "open the user interface in a browser")
+	rootCmd.PersistentFlags().StringVar(&workspacesDirectory, "workspaces-directory", app.DefaultWorkspacesDirectory, "directory for workspaces")
+	rootCmd.PersistentFlags().StringVar(&cacheDirectory, "cache-directory", app.DefaultCacheDirectory, "directory for the cache")
 
 	for _, flagName := range []string{
 		"listen-address",
@@ -101,6 +106,8 @@ func init() {
 		"check-projects-interval",
 		"graceful-shutdown-timeout",
 		"open-browser",
+		"workspaces-directory",
+		"cache-directory",
 	} {
 		viper.BindPFlag(flagName, rootCmd.PersistentFlags().Lookup(flagName))
 	}
@@ -112,17 +119,10 @@ func initSettings() {
 		// Use settings file from the flag.
 		viper.SetConfigFile(settingsFile)
 	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
 		// Search settings in home directory with name ".test" (without extension).
-		viper.AddConfigPath(filepath.Join(home, ".groundcontrol"))
-		viper.SetConfigName("settings")
-		viper.SetConfigType("yml")
+		viper.AddConfigPath(filepath.Dir(app.DefaultSettingsFile))
+		viper.SetConfigName(filepath.Base(app.DefaultSettingsFile))
+		viper.SetConfigType(filepath.Ext(app.DefaultSettingsFile))
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

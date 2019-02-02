@@ -15,10 +15,10 @@
 package cmd
 
 import (
-	"os"
-	"path/filepath"
+	"fmt"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/stratumn/groundcontrol/app"
+
 	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
@@ -26,7 +26,7 @@ import (
 
 // createSettingsFileCmd represents the createSettingsFile command.
 var createSettingsFileCmd = &cobra.Command{
-	Use:   "create-settings-file [$HOME/.groundcontrol/settings.yml]",
+	Use:   fmt.Sprintf("create-settings-file [%s]", app.DefaultSettingsFile),
 	Short: "Create a settings file",
 	Long: `Create a settings file to avoid having to specify flags when groundcontrol is launched.
 
@@ -37,19 +37,7 @@ It will overwrite the file if it exists.`,
 			return viper.WriteConfigAs(args[0])
 		}
 
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			return err
-		}
-
-		dir := filepath.Join(home, ".groundcontrol")
-		if err := os.MkdirAll(dir, 0744); err != nil {
-			return err
-		}
-
-		filename := filepath.Join(dir, "settings.yml")
-		return viper.WriteConfigAs(filename)
+		return viper.WriteConfigAs(app.DefaultSettingsFile)
 	},
 }
 

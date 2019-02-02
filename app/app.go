@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -52,8 +54,8 @@ type App struct {
 	gracefulShutdownTimeout time.Duration
 	ui                      http.FileSystem
 	openBrowser             bool
-	projectPathGetter       models.ProjectPathGetter
-	projectCachePathGetter  jobs.ProjectCachePathGetter
+	workspacesDirectory     string
+	cacheDirectory          string
 }
 
 // New creates a new App.
@@ -66,8 +68,8 @@ func New(opts ...Opt) *App {
 		checkProjectsInterval:   DefaultCheckProjectsInterval,
 		gracefulShutdownTimeout: DefaultGracefulShutdownTimeout,
 		openBrowser:             DefaultOpenBrowser,
-		projectPathGetter:       DefaultProjectPathGetter,
-		projectCachePathGetter:  DefaultProjectCachePathGetter,
+		workspacesDirectory:     DefaultWorkspacesDirectory,
+		cacheDirectory:          DefaultCacheDirectory,
 	}
 
 	for _, opt := range opts {
@@ -90,7 +92,7 @@ func (a *App) Start(ctx context.Context) error {
 	subs := pubsub.New()
 	log := models.NewLogger(nodes, subs, a.logCap, a.logLevel, systemID)
 	jobs := models.NewJobManager(nodes, log, subs, a.jobConcurrency, systemID)
-	pm := models.NewProcessManager(nodes, log, subs, a.projectPathGetter, systemID)
+	pm := models.NewProcessManager(nodes, log, subs, a.getProjectPath, systemID)
 
 	if err := a.loadConfigs(nodes, viewerID); err != nil {
 		return err
@@ -128,8 +130,8 @@ func (a *App) Start(ctx context.Context) error {
 		Jobs:                jobs,
 		PM:                  pm,
 		Subs:                subs,
-		GetProjectPath:      a.projectPathGetter,
-		GetProjectCachePath: a.projectCachePathGetter,
+		GetProjectPath:      a.getProjectPath,
+		GetProjectCachePath: a.getProjectCachePath,
 		ViewerID:            viewerID,
 		SystemID:            systemID,
 	}
@@ -248,8 +250,8 @@ func (a *App) startPeriodicJobs(
 				log,
 				jobManager,
 				subs,
-				a.projectPathGetter,
-				a.projectCachePathGetter,
+				a.getProjectPath,
+				a.getProjectCachePath,
 				viewerID,
 			)
 		},
@@ -305,15 +307,6 @@ func (a *App) shutdownGracefully(
 	os.Exit(0)
 }
 
-func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Debug("%s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
-			h.ServeHTTP(w, r)
-		})
-	}
-}
-
 func (a *App) openAddressInBrowser(log *models.Logger) {
 	addr, err := net.ResolveTCPAddr("tcp", a.listenAddress)
 	if err != nil {
@@ -331,5 +324,28 @@ func (a *App) openAddressInBrowser(log *models.Logger) {
 		if err := browser.OpenURL(url); err != nil {
 			log.Warning("could not resolve address because %s", err.Error())
 		}
+	}
+}
+
+func (a *App) getProjectPath(workspaceSlug, repo, branch string) string {
+	name := path.Base(repo)
+	ext := path.Ext(name)
+	name = name[:len(name)-len(ext)]
+	return filepath.Join(a.workspacesDirectory, workspaceSlug, name)
+}
+
+func (a *App) getProjectCachePath(workspaceSlug, repo, branch string) string {
+	name := path.Base(repo)
+	ext := path.Ext(name)
+	name = name[:len(name)-len(ext)]
+	return filepath.Join(a.cacheDirectory, workspaceSlug, name+".git")
+}
+
+func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Debug("%s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
+			h.ServeHTTP(w, r)
+		})
 	}
 }
