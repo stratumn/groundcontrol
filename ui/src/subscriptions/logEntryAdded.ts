@@ -64,7 +64,6 @@ export function subscribe(environment: Environment) {
           const owner = record.getLinkedRecord("owner");
 
           if (owner) {
-            console.log("OWNER");
             const ownerId = owner.getValue("id");
             connections.push(
               ConnectionHandler.getConnection(

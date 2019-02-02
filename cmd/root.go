@@ -55,12 +55,12 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 
 		app := app.New(
 			app.OptConfigFilenames(args...),
-			app.OptListenAddress(listenAddress),
-			app.OptJobConcurrency(jobConcurrency),
-			app.OptLogLevel(models.LogLevel(strings.ToUpper(logLevel))),
-			app.OptLogCap(logCap),
-			app.OptCheckProjectsInterval(checkProjectsInterval),
-			app.OptGracefulShutdownTimeout(gracefulShutdownTimeout),
+			app.OptListenAddress(viper.GetString("listen-address")),
+			app.OptJobConcurrency(viper.GetInt("job-concurrency")),
+			app.OptLogLevel(models.LogLevel(strings.ToUpper(viper.GetString("log-level")))),
+			app.OptLogCap(viper.GetInt("log-cap")),
+			app.OptCheckProjectsInterval(viper.GetDuration("check-projects-interval")),
+			app.OptGracefulShutdownTimeout(viper.GetDuration("graceful-shutdown-timeout")),
 			app.OptUI(userInterface),
 		)
 
@@ -82,13 +82,24 @@ func Execute(ui http.FileSystem) {
 func init() {
 	cobra.OnInitialize(initSettings)
 
-	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings", "", "settings file (default is $HOME/.groundcontrol/settings.yml)")
+	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings", "", "settings file (default $HOME/.groundcontrol/settings.yml)")
 	rootCmd.PersistentFlags().StringVar(&listenAddress, "listen-address", app.DefaultListenAddress, "address the server should listen on")
 	rootCmd.PersistentFlags().IntVar(&jobConcurrency, "job-concurrency", app.DefaultJobConcurrency, "how many jobs can run concurrency")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
 	rootCmd.PersistentFlags().IntVar(&logCap, "log-cap", app.DefaultLogCap, "maximum number of messages the logger will keep")
 	rootCmd.PersistentFlags().DurationVar(&checkProjectsInterval, "check-projects-interval", app.DefaultCheckProjectsInterval, "how often to check if projects have changed")
 	rootCmd.PersistentFlags().DurationVar(&gracefulShutdownTimeout, "graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
+
+	for _, flagName := range []string{
+		"listen-address",
+		"job-concurrency",
+		"log-level",
+		"log-cap",
+		"check-projects-interval",
+		"graceful-shutdown-timeout",
+	} {
+		viper.BindPFlag(flagName, rootCmd.PersistentFlags().Lookup(flagName))
+	}
 }
 
 // initSettings reads in settings file and ENV variables if set.
@@ -105,7 +116,7 @@ func initSettings() {
 		}
 
 		// Search settings in home directory with name ".test" (without extension).
-		viper.AddConfigPath(filepath.Join(home, "groundcontrol"))
+		viper.AddConfigPath(filepath.Join(home, ".groundcontrol"))
 		viper.SetConfigName("settings")
 		viper.SetConfigType("yml")
 	}

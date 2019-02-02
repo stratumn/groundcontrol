@@ -62,6 +62,7 @@ func NewLogger(
 		nodes:        nodes,
 		subs:         subs,
 		cap:          cap,
+		level:        level,
 		systemID:     systemID,
 		logEntryIDs:  make([]string, cap*2),
 		logEntryHead: cap * 2,
