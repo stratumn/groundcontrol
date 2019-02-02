@@ -16,6 +16,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -27,6 +29,7 @@ import (
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/browser"
 	"github.com/rs/cors"
 
 	"github.com/stratumn/groundcontrol/gql"
@@ -48,6 +51,7 @@ type App struct {
 	disableSignalHandling   bool
 	gracefulShutdownTimeout time.Duration
 	ui                      http.FileSystem
+	openBrowser             bool
 	projectPathGetter       models.ProjectPathGetter
 	projectCachePathGetter  jobs.ProjectCachePathGetter
 }
@@ -61,6 +65,7 @@ func New(opts ...Opt) *App {
 		logCap:                  DefaultLogCap,
 		checkProjectsInterval:   DefaultCheckProjectsInterval,
 		gracefulShutdownTimeout: DefaultGracefulShutdownTimeout,
+		openBrowser:             DefaultOpenBrowser,
 		projectPathGetter:       DefaultProjectPathGetter,
 		projectCachePathGetter:  DefaultProjectCachePathGetter,
 	}
@@ -161,6 +166,10 @@ func (a *App) Start(ctx context.Context) error {
 			log.Error("app crashed because %s", err.Error())
 		}
 	}()
+
+	if a.openBrowser && a.ui != nil {
+		a.openAddressInBrowser(log)
+	}
 
 	<-ctx.Done()
 
@@ -302,5 +311,25 @@ func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
 			log.Debug("%s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
 			h.ServeHTTP(w, r)
 		})
+	}
+}
+
+func (a *App) openAddressInBrowser(log *models.Logger) {
+	addr, err := net.ResolveTCPAddr("tcp", a.listenAddress)
+	if err != nil {
+		log.Warning("could not resolve address because %s", err.Error())
+	} else {
+		url := "http://"
+		if addr.IP == nil {
+			url += "localhost"
+		} else {
+			url += addr.IP.String()
+		}
+		if addr.Port != 0 {
+			url += fmt.Sprintf(":%d", addr.Port)
+		}
+		if err := browser.OpenURL(url); err != nil {
+			log.Warning("could not resolve address because %s", err.Error())
+		}
 	}
 }

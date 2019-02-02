@@ -41,6 +41,7 @@ var (
 	logCap                  int
 	checkProjectsInterval   time.Duration
 	gracefulShutdownTimeout time.Duration
+	openBrowser             bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -61,6 +62,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptLogCap(viper.GetInt("log-cap")),
 			app.OptCheckProjectsInterval(viper.GetDuration("check-projects-interval")),
 			app.OptGracefulShutdownTimeout(viper.GetDuration("graceful-shutdown-timeout")),
+			app.OptOpenBrowser(viper.GetBool("open-browser")),
 			app.OptUI(userInterface),
 		)
 
@@ -89,6 +91,7 @@ func init() {
 	rootCmd.PersistentFlags().IntVar(&logCap, "log-cap", app.DefaultLogCap, "maximum number of messages the logger will keep")
 	rootCmd.PersistentFlags().DurationVar(&checkProjectsInterval, "check-projects-interval", app.DefaultCheckProjectsInterval, "how often to check if projects have changed")
 	rootCmd.PersistentFlags().DurationVar(&gracefulShutdownTimeout, "graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
+	rootCmd.PersistentFlags().BoolVar(&openBrowser, "open-browser", app.DefaultOpenBrowser, "open the user interface in a browser")
 
 	for _, flagName := range []string{
 		"listen-address",
@@ -97,6 +100,7 @@ func init() {
 		"log-cap",
 		"check-projects-interval",
 		"graceful-shutdown-timeout",
+		"open-browser",
 	} {
 		viper.BindPFlag(flagName, rootCmd.PersistentFlags().Lookup(flagName))
 	}

@@ -45,6 +45,9 @@ const (
 
 	// DefaultGracefulShutdownTimeout is the default graceful shutdown timeout.
 	DefaultGracefulShutdownTimeout = 20 * time.Second
+
+	// DefaultOpenBrowser is whether to open the user interface in a browser by default.
+	DefaultOpenBrowser = true
 )
 
 // DefaultProjectPathGetter is the default ProjectPathGetter.
@@ -126,6 +129,13 @@ func OptGracefulShutdownTimeout(timeout time.Duration) Opt {
 func OptUI(fs http.FileSystem) Opt {
 	return func(app *App) {
 		app.ui = fs
+	}
+}
+
+// OptOpenBrowser tells the app whether to open the user interface in a browser.
+func OptOpenBrowser(open bool) Opt {
+	return func(app *App) {
+		app.openBrowser = open
 	}
 }
 

@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/websocket v1.2.0
 	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
 	github.com/mitchellh/go-homedir v1.0.0
+	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/rs/cors v1.6.0
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.1

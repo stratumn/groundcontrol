@@ -62,8 +62,6 @@ ssh-add # <---- to use your SSH key for accessing private repos
 groundcontrol [groundcontrol.yml] # <---- path to YAML file
 ```
 
-Navigate to `http://localhost:3333`.
-
 ## Development
 
 If you didn't run `make`, do:
