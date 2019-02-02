@@ -25,8 +25,9 @@ clean-generated:
 
 clean: clean-generated
 	rm -f groundcontrol
-	rm -rf ui/node_modules
 	rm -rf dist
+	rm -rf ui/node_modules
+	rm -rf ui/build
 
 test:
 	go test ./...
