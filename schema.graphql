@@ -1,6 +1,16 @@
+"""
+A date and time serialized as a string using the format `2006-01-02T15:04:05-0700`.
+"""
 scalar DateTime
+
+"""
+A hash, usually from Git, serialized as a string using base64 encoding.
+"""
 scalar Hash
 
+"""
+The status of a job.
+"""
 enum JobStatus {
   QUEUED
   RUNNING
@@ -9,11 +19,17 @@ enum JobStatus {
   FAILED
 }
 
+"""
+The priority of a job.
+"""
 enum JobPriority {
   NORMAL
   HIGH
 }
 
+"""
+The status of a process.
+"""
 enum ProcessStatus {
   RUNNING
   STOPPING
@@ -21,6 +37,9 @@ enum ProcessStatus {
   FAILED
 }
 
+"""
+The level of a log entry.
+"""
 enum LogLevel {
   DEBUG
   INFO
@@ -28,126 +47,342 @@ enum LogLevel {
   ERROR
 }
 
+"""
+A Relay node.
+"""
 interface Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
 }
 
+"""
+A Relay pagination info.
+"""
 type PageInfo {
+  """
+  Whether there is a next page.
+  """
   hasNextPage: Boolean!
+  """
+  Whether there is a previous page.
+  """
   hasPreviousPage: Boolean!
+  """
+  A cursor pointing to the last edge.
+  """
   endCursor: String!
+  """
+  A cursor pointing to the first edge.
+  """
   startCursor: String!
 }
 
+"""
+A Relay connection for workspaces.
+"""
 type WorkspaceConnection {
+  """
+  The edges for the current page.
+  """
   edges: [WorkspaceEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a workspace.
+"""
 type WorkspaceEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: Workspace!
 }
 
+"""
+A Relay connection for projects.
+"""
 type ProjectConnection {
+  """
+  The edges for the current page.
+  """
   edges: [ProjectEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a project.
+"""
 type ProjectEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: Project!
 }
 
+"""
+A Relay connection for commits.
+"""
 type CommitConnection {
+  """
+  The edges for the current page.
+  """
   edges: [CommitEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a commit.
+"""
 type CommitEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: Commit!
 }
 
+"""
+A Relay connection for tasks.
+"""
 type TaskConnection {
+  """
+  The edges for the current page.
+  """
   edges: [TaskEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a task.
+"""
 type TaskEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: Task!
 }
 
+"""
+A Relay connection for steps.
+"""
 type StepConnection {
+  """
+  The edges for the current page.
+  """
   edges: [StepEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a step.
+"""
 type StepEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: Step!
 }
 
+"""
+A Relay connection for commands.
+"""
 type CommandConnection {
+  """
+  The edges for the current page.
+  """
   edges: [CommandEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a commit.
+"""
 type CommandEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: Command!
 }
 
+"""
+A Relay connection for jobs.
+"""
 type JobConnection {
+  """
+  The edges for the current page.
+  """
   edges: [JobEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a job.
+"""
 type JobEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: Job!
 }
 
+"""
+A Relay connection for process groups.
+"""
 type ProcessGroupConnection {
+  """
+  The edges for the current page.
+  """
   edges: [ProcessGroupEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a process group.
+"""
 type ProcessGroupEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: ProcessGroup!
 }
 
+"""
+A Relay connection for processes.
+"""
 type ProcessConnection {
+  """
+  The edges for the current page.
+  """
   edges: [ProcessEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a process.
+"""
 type ProcessEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: Process!
 }
 
+"""
+A Relay connection for log entries.
+"""
 type LogEntryConnection {
+  """
+  The edges for the current page.
+  """
   edges: [LogEntryEdge!]!
+  """
+  The pagination info.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+A Relay edge for a log entry.
+"""
 type LogEntryEdge {
+  """
+  The cursor pointing to the edge.
+  """
   cursor: String!
+  """
+  The target node.
+  """
   node: LogEntry!
 }
 
+"""
+A person using the app.
+"""
 type User implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The workspaces using Relay pagination.
+  """
   workspaces(
     after: String
     before: String
     first: Int
     last: Int
   ): WorkspaceConnection!
+  """
+  The workspace with the given slug.
+  """
   workspace(slug: String!): Workspace
+  """
+  The projects using Relay pagination.
+  """
   projects(
     after: String
     before: String
@@ -156,8 +391,17 @@ type User implements Node {
   ): ProjectConnection!
 }
 
+"""
+Information about the running app.
+"""
 type System implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The jobs using Relay pagination optionally filtered by status.
+  """
   jobs(
     after: String
     before: String
@@ -165,6 +409,9 @@ type System implements Node {
     last: Int
     status: [JobStatus!]
   ): JobConnection!
+  """
+  The process groups using Relay pagination optionally filtered by status.
+  """
   processGroups(
     after: String
     before: String
@@ -172,6 +419,9 @@ type System implements Node {
     last: Int
     status: [ProcessStatus!]
   ): ProcessGroupConnection!
+  """
+  The log entries using Relay pagination optionally filtered by level and/or owner ID.
+  """
   logEntries(
     after: String
     before: String
@@ -180,116 +430,311 @@ type System implements Node {
     level: [LogLevel!]
     ownerId: ID
   ): LogEntryConnection!
+  """
+  The job metrics.
+  """
   jobMetrics: JobMetrics!
+  """
+  The process metrics.
+  """
   processMetrics: ProcessMetrics!
+  """
+  The log metrics.
+  """
   logMetrics: LogMetrics!
 }
 
+"""
+A collection of projects and tasks.
+"""
 type Workspace implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The unique, URL friendly identifier.
+  """
   slug: String!
+  """
+  The human friendly name.
+  """
   name: String!
+  """
+  The projects using Relay pagination.
+  """
   projects(
     after: String
     before: String
     first: Int
     last: Int
   ): ProjectConnection!
+  """
+  The tasks using Relay pagination.
+  """
   tasks(
     after: String
     before: String
     first: Int
     last: Int
   ): TaskConnection!
+  """
+  The optional description.
+  """
   description: String
+  """
+  The optional notes.
+  """
   notes: String
+  """
+  Whether any of the projects is currently cloning.
+  """
   isCloning: Boolean!
+  """
+  Whether all projects are cloned.
+  """
   isCloned: Boolean!
+  """
+  Whether any of the projects is currently pulling.
+  """
   isPulling: Boolean!
+  """
+  Whether any of the projects is behind (see Project).
+  """
   isBehind: Boolean!
+  """
+  Whether any of the projects is ahead (see Project).
+  """
   isAhead: Boolean!
 }
 
+"""
+A Git repository and branch.
+"""
 type Project implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The unique, URL friendly identifier within the workspace.
+  """
   slug: String!
+  """
+  The Git repository.
+  """
   repository: String!
+  """
+  The Git branch.
+  """
   branch: String!
+  """
+  The optional description.
+  """
   description: String
+  """
+  The commits using Relay pagination.
+  """
   commits(
     after: String
     before: String
     first: Int
     last: Int
   ): CommitConnection!
+  """
+  The parent workspace.
+  """
   workspace: Workspace!
+  """
+  Whether currently loading commits.
+  """
   isLoadingCommits: Boolean!
+  """
+  Whether currently cloning.
+  """
   isCloning: Boolean!
+  """
+  Whether cloned.
+  """
   isCloned: Boolean!
+  """
+  Whether currently pulling.
+  """
   isPulling: Boolean!
+  """
+  Whether the remote Git head has parent commits the local head doesn't.
+  """
   isBehind: Boolean!
+  """
+  Whether the local Git head has parent commits the remote head doesn't.
+  """
   isAhead: Boolean!
 }
 
+"""
+A Git commit.
+"""
 type Commit implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The Git hash.
+  """
   hash: Hash!
+  """
+  The first line of the message.
+  """
   headline: String!
+  """
+  The message.
+  """
   message: String!
+  """
+  The committer's name.
+  """
   author: String!
+  """
+  The date committed.
+  """
   date: DateTime!
 }
 
+"""
+A sequence of steps.
+"""
 type Task implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The human friendly name.
+  """
   name: String!
+  """
+  The steps using Relay pagination.
+  """
   steps(
     after: String
     before: String
     first: Int
     last: Int
   ): StepConnection!
+  """
+  The parent workspace.
+  """
   workspace: Workspace!
+  """
+  Whether currently running.
+  """
   isRunning: Boolean!
 }
 
+"""
+A sequence of commands to execute on projects.
+"""
 type Step implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The projects using Relay pagination.
+  """
   projects(
     after: String
     before: String
     first: Int
     last: Int
   ): ProjectConnection!
+  """
+  The commands using Relay pagination.
+  """
   commands(
     after: String
     before: String
     first: Int
     last: Int
   ): CommandConnection!
+  """
+  The parent task.
+  """
   task: Task!
 }
 
+"""
+A command to execute.
+"""
 type Command implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The command that will be executed by Bash.
+  """
   command: String!
 }
 
+"""
+Work that takes too long to respond immediately.
+"""
 type Job implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  A human frienly name.
+  """
   name: String!
+  """
+  When it was created.
+  """
   createdAt: DateTime!
+  """
+  When it was updated.
+  """
   updatedAt: DateTime!
+  """
+  The current status.
+  """
   status: JobStatus!
+  """
+  The priority in the queue.
+  """
   priority: JobPriority!
+  """
+  The node it belongs to.
+  """
   owner: Node!
 }
 
+"""
+A group of processes launched by a task.
+"""
 type ProcessGroup implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  When it was created.
+  """
   createdAt: DateTime!
+  """
+  The current status.
+  """
   status: ProcessStatus!
+  """
+  The parent task.
+  """
   task: Task!
+  """
+  The processes using Relay pagination.
+  """
   processes(
     after: String
     before: String
@@ -298,75 +743,246 @@ type ProcessGroup implements Node {
   ): ProcessConnection!
 }
 
+"""
+A command running in the background.
+"""
 type Process implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The command to execute.
+  """
   command: String!
+  """
+  The current status.
+  """
   status: ProcessStatus!
+  """
+  The parent process group.
+  """
   processGroup: ProcessGroup!
+  """
+  The parent project.
+  """
   project: Project!
 }
 
+"""
+An entry in the logs.
+"""
 type LogEntry implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  The level.
+  """
   level: LogLevel!
+  """
+  When it was created.
+  """
   createdAt: DateTime!
+  """
+  The message.
+  """
   message: String!
+  """
+  The node it belongs to.
+  """
   owner: Node
 }
 
+"""
+Metrics about jobs.
+"""
 type JobMetrics implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  How many are queued.
+  """
   queued: Int!
+  """
+  How many are running.
+  """
   running: Int!
+  """
+  How many are done.
+  """
   done: Int!
+  """
+  How many failed.
+  """
   failed: Int!
 }
 
+"""
+Metrics about processes.
+"""
 type ProcessMetrics implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  How many are running.
+  """
   running: Int!
+  """
+  How many are done.
+  """
   done: Int!
+  """
+  How many failed.
+  """
   failed: Int!
 }
 
+"""
+Metrics about logs.
+"""
 type LogMetrics implements Node {
+  """
+  The global ID of the node.
+  """
   id: ID!
+  """
+  How many are debug messages.
+  """
   debug: Int!
+  """
+  How many are info messages.
+  """
   info: Int!
+  """
+  How many are warning messages.
+  """
   warning: Int!
+  """
+  How many are error messages.
+  """
   error: Int!
 }
 
+"""
+The root query resolver.
+"""
 type Query {
+  """
+  A node given its global ID.
+  """
   node(id: ID!): Node
+  """
+  The person using the app.
+  """
   viewer: User!
+  """
+  Information about the running app.
+  """
   system: System!
 }
 
+"""
+The root mutation resolver.
+"""
 type Mutation {
+  """
+  Queue a job to load the commits of a project.
+  """
   loadProjectCommits(id: String!): Job!
+  """
+  Queue a job to load the commits of all the projects of a workspace.
+  """
   loadWorkspaceCommits(id: String!): [Job!]!
+  """
+  Queue a job to clone a project.
+  """
   cloneProject(id: String!): Job!
+  """
+  Queue a job to clone all the projects of a workspace.
+  """
   cloneWorkspace(id: String!): [Job!]!
+  """
+  Queue a job to pull a project.
+  """
   pullProject(id: String!): Job!
+  """
+  Queue a job to pull all the projects of a workspace.
+  """
   pullWorkspace(id: String!): [Job!]!
+  """
+  Queue a job to run a task.
+  """
   run(id: String!): Job!
+  """
+  Queue a job to stop a running job.
+  """
   stopJob(id: String!): Job!
+  """
+  Start all the processes of a group.
+  """
   startProcessGroup(id: String!): ProcessGroup!
+  """
+  Stop all the processes of a group.
+  """
   stopProcessGroup(id: String!): ProcessGroup!
+  """
+  Start a process.
+  """
   startProcess(id: String!): Process!
+  """
+  Stop a process.
+  """
   stopProcess(id: String!): Process!
 }
 
+"""
+The root subscription resolver.
+"""
 type Subscription {
+  """
+  Receive a workspace when updated including child nodes.
+  """
   workspaceUpdated(id: ID): Workspace!
+  """
+  Receive a project when updated including child nodes.
+  """
   projectUpdated(id: ID): Project!
+  """
+  Receive a task when updated including child nodes.
+  """
   taskUpdated(id: ID): Task!
+  """
+  Receive a job when added or updated.
+  """
   jobUpserted(id: ID): Job!
-  jobMetricsUpdated(id: ID): JobMetrics!
+  """
+  Receive a process group when added or updated including child nodes.
+  """
   processGroupUpserted(id: ID): ProcessGroup!
+  """
+  Receive a process when added or updated.
+  """
   processUpserted(id: ID): Process!
-  processMetricsUpdated(id: ID): ProcessMetrics!
+  """
+  Receive a log entry when added.
+  """
   logEntryAdded: LogEntry!
+  """
+  Receive metrics when jobs are updated.
+  """
+  jobMetricsUpdated(id: ID): JobMetrics!
+  """
+  Receive metrics when processes are updated.
+  """
+  processMetricsUpdated(id: ID): ProcessMetrics!
+  """
+  Receive metrics when logs are updated.
+  """
   logMetricsUpdated(id: ID): LogMetrics!
 }
