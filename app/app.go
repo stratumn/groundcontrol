@@ -25,16 +25,16 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/handler"
+	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
+	"github.com/rs/cors"
+
 	"github.com/stratumn/groundcontrol/gql"
 	"github.com/stratumn/groundcontrol/jobs"
 	"github.com/stratumn/groundcontrol/models"
 	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 	"github.com/stratumn/groundcontrol/resolvers"
-
-	"github.com/go-chi/chi"
-	"github.com/rs/cors"
 )
 
 // App contains data about the app.
@@ -232,7 +232,7 @@ func (a *App) startPeriodicJobs(
 		ctx,
 		nodes,
 		subs,
-		time.Minute,
+		a.checkProjectsInterval,
 		func() []string {
 			return jobs.LoadAllCommits(
 				nodes,
