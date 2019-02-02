@@ -41,8 +41,8 @@ Head over to the [latest release](https://github.com/stratumn/groundcontrol/rele
 You need:
 
 - Go >= v1.11
-- Dep
 - Node
+- Yarn
 
 Clone outside of `$GOPATH` since it's a Go module.
 
