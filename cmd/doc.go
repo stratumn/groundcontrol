@@ -12,20 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run scripts/nodesgen.go -t User,System,Workspace,Project,Commit,Task,Step,Command,Job,ProcessGroup,Process,LogEntry,JobMetrics,ProcessMetrics,LogMetrics -o models/auto_nodes.go
-//go:generate go run scripts/paginatorsgen.go -t Workspace,Project,Commit,Task,Step,Command,Job,ProcessGroup,Process,LogEntry -o models/auto_paginators.go -O models/auto_paginators_test.go
-//go:generate go run scripts/gqlgen.go
-
-package main
-
-import (
-	"net/http"
-
-	"github.com/stratumn/groundcontrol/cmd"
-)
-
-var ui http.FileSystem
-
-func main() {
-	cmd.Execute(ui)
-}
+// Package cmd contains the commands for the app.
+package cmd

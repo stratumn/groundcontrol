@@ -66,10 +66,10 @@ func DefaultProjectCachePathGetter(workspaceSlug, repo, branch string) string {
 // Opt represents an app option.
 type Opt func(*App)
 
-// OptConfigFilename adds a config file. This option can be added multiple times.
-func OptConfigFilename(filename string) Opt {
+// OptConfigFilenames adds config files. This option can be added multiple times.
+func OptConfigFilenames(filenames ...string) Opt {
 	return func(app *App) {
-		app.configFilenames = append(app.configFilenames, filename)
+		app.configFilenames = append(app.configFilenames, filenames...)
 	}
 }
 

@@ -157,7 +157,7 @@ func (a *App) Start(ctx context.Context) error {
 		}
 		log.Info("GraphQL playground on %s/graphql", a.listenAddress)
 
-		if err := server.ListenAndServe(); err != nil {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error("app crashed because %s", err.Error())
 		}
 	}()
