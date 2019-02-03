@@ -9,6 +9,7 @@ gen-ui:
 
 gen-go:
 	go generate -tags=release ./...
+	gofmt -w $(shell find . -name "auto_*.go")
 
 build-ui:
 	cd ui && yarn build
