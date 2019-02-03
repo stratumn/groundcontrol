@@ -105,7 +105,7 @@ func (a *App) Start(ctx context.Context) error {
 	router := chi.NewRouter()
 
 	if a.logLevel <= models.LogLevelDebug {
-		router.Use(logMiddleware(log))
+		router.Use(logHTTPRequestMiddleware(log))
 	}
 
 	corsHandler := cors.New(cors.Options{
@@ -155,6 +155,13 @@ func (a *App) Start(ctx context.Context) error {
 			gqlOptions,
 			handler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
 			handler.Tracer(gqlapollotracing.NewTracer()),
+		)
+	}
+
+	if a.logLevel <= models.LogLevelDebug {
+		gqlOptions = append(
+			gqlOptions,
+			handler.RequestMiddleware(logGQLRequestMiddleware(log)),
 		)
 	}
 
@@ -355,13 +362,4 @@ func (a *App) getProjectCachePath(workspaceSlug, repo, branch string) string {
 	ext := path.Ext(name)
 	name = name[:len(name)-len(ext)]
 	return filepath.Join(a.cacheDirectory, workspaceSlug, name+".git")
-}
-
-func logMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Debug("%s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
-			h.ServeHTTP(w, r)
-		})
-	}
 }
