@@ -50,6 +50,9 @@ const (
 
 	// DefaultOpenBrowser is whether to open the user interface in a browser by default.
 	DefaultOpenBrowser = true
+
+	// DefaultEnableApolloTracing is whether to enable Apollo tracing by default.
+	DefaultEnableApolloTracing = false
 )
 
 var (
@@ -70,9 +73,9 @@ func init() {
 		return
 	}
 
-	DefaultSettingsFile = filepath.Join(home, "groundcontrol", "settings.yml")
-	DefaultWorkspacesDirectory = filepath.Join(home, "groundcontrol", "workspaces")
-	DefaultCacheDirectory = filepath.Join(home, "groundcontrol", "cache")
+	DefaultSettingsFile = filepath.Join(home, "groundcontrol", DefaultSettingsFile)
+	DefaultWorkspacesDirectory = filepath.Join(home, "groundcontrol", DefaultWorkspacesDirectory)
+	DefaultCacheDirectory = filepath.Join(home, "groundcontrol", DefaultCacheDirectory)
 }
 
 // DefaultProjectPathGetter is the default ProjectPathGetter.
@@ -175,5 +178,12 @@ func OptWorkspacesDirectory(dir string) Opt {
 func OptCacheDirectory(dir string) Opt {
 	return func(app *App) {
 		app.cacheDirectory = dir
+	}
+}
+
+// OptEnableApolloTracing tells the app whether to enable the Apollo tracing middleware.
+func OptEnableApolloTracing(enable bool) Opt {
+	return func(app *App) {
+		app.enableApolloTracing = enable
 	}
 }

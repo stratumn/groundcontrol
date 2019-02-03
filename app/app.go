@@ -28,6 +28,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/99designs/gqlgen-contrib/gqlapollotracing"
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
@@ -56,6 +57,7 @@ type App struct {
 	openBrowser             bool
 	workspacesDirectory     string
 	cacheDirectory          string
+	enableApolloTracing     bool
 }
 
 // New creates a new App.
@@ -70,6 +72,7 @@ func New(opts ...Opt) *App {
 		openBrowser:             DefaultOpenBrowser,
 		workspacesDirectory:     DefaultWorkspacesDirectory,
 		cacheDirectory:          DefaultCacheDirectory,
+		enableApolloTracing:     DefaultEnableApolloTracing,
 	}
 
 	for _, opt := range opts {
@@ -140,11 +143,23 @@ func (a *App) Start(ctx context.Context) error {
 		Resolvers: resolver,
 	}
 
-	router.Handle("/query", handler.GraphQL(
-		gql.NewExecutableSchema(gqlConfig),
+	gqlOptions := []handler.Option{
 		handler.WebsocketUpgrader(websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		}),
+	}
+
+	if a.enableApolloTracing {
+		gqlOptions = append(
+			gqlOptions,
+			handler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
+			handler.Tracer(gqlapollotracing.NewTracer()),
+		)
+	}
+
+	router.Handle("/query", handler.GraphQL(
+		gql.NewExecutableSchema(gqlConfig),
+		gqlOptions...,
 	))
 
 	server := &http.Server{

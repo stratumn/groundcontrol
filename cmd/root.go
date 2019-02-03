@@ -43,6 +43,7 @@ var (
 	openBrowser             bool
 	workspacesDirectory     string
 	cacheDirectory          string
+	enableApolloTracing     bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -66,6 +67,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptOpenBrowser(viper.GetBool("open-browser")),
 			app.OptWorkspacesDirectory(viper.GetString("workspaces-directory")),
 			app.OptCacheDirectory(viper.GetString("cache-directory")),
+			app.OptEnableApolloTracing(viper.GetBool("enable-apollo-tracing")),
 			app.OptUI(userInterface),
 		)
 
@@ -97,6 +99,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&openBrowser, "open-browser", app.DefaultOpenBrowser, "open the user interface in a browser")
 	rootCmd.PersistentFlags().StringVar(&workspacesDirectory, "workspaces-directory", app.DefaultWorkspacesDirectory, "directory for workspaces")
 	rootCmd.PersistentFlags().StringVar(&cacheDirectory, "cache-directory", app.DefaultCacheDirectory, "directory for the cache")
+	rootCmd.PersistentFlags().BoolVar(&enableApolloTracing, "enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
 
 	for _, flagName := range []string{
 		"listen-address",
@@ -108,6 +111,7 @@ func init() {
 		"open-browser",
 		"workspaces-directory",
 		"cache-directory",
+		"enable-apollo-tracing",
 	} {
 		viper.BindPFlag(flagName, rootCmd.PersistentFlags().Lookup(flagName))
 	}

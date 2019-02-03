@@ -2,6 +2,7 @@ module github.com/stratumn/groundcontrol
 
 require (
 	github.com/99designs/gqlgen v0.4.5-0.20190127090136-055fb4bc9a6a
+	github.com/99designs/gqlgen-contrib v0.0.0-20181214005309-52113d2e3f08
 	github.com/aws/aws-lambda-go v1.8.2
 	github.com/fnproject/fdk-go v0.0.0-20190102214815-bd24a5aa63cf
 	github.com/go-chi/chi v3.3.2+incompatible
