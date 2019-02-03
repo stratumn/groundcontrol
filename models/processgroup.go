@@ -35,8 +35,7 @@ func (p ProcessGroup) Processes(
 	first *int,
 	last *int,
 ) (ProcessConnection, error) {
-	nodes := GetModelContext(ctx).Nodes
-	return PaginateProcessIDSlice(nodes, p.ProcessIDs, after, before, first, last)
+	return PaginateProcessIDSliceContext(ctx, p.ProcessIDs, after, before, first, last)
 }
 
 // Task returns the Task associated with the ProcessGroup.

@@ -38,8 +38,7 @@ func (w Workspace) Projects(
 	first *int,
 	last *int,
 ) (ProjectConnection, error) {
-	nodes := GetModelContext(ctx).Nodes
-	return PaginateProjectIDSlice(nodes, w.ProjectIDs, after, before, first, last)
+	return PaginateProjectIDSliceContext(ctx, w.ProjectIDs, after, before, first, last)
 }
 
 // Tasks returns the workspace's tasks.
@@ -50,8 +49,7 @@ func (w Workspace) Tasks(
 	first *int,
 	last *int,
 ) (TaskConnection, error) {
-	nodes := GetModelContext(ctx).Nodes
-	return PaginateTaskIDSlice(nodes, w.TaskIDs, after, before, first, last)
+	return PaginateTaskIDSliceContext(ctx, w.TaskIDs, after, before, first, last)
 }
 
 // IsCloning returns true if any of the projects is cloning.

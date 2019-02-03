@@ -36,8 +36,7 @@ func (t Task) Steps(
 	first *int,
 	last *int,
 ) (StepConnection, error) {
-	nodes := GetModelContext(ctx).Nodes
-	return PaginateStepIDSlice(nodes, t.StepIDs, after, before, first, last)
+	return PaginateStepIDSliceContext(ctx, t.StepIDs, after, before, first, last)
 }
 
 // Workspace returns the task's workspace.

@@ -35,8 +35,7 @@ func (s Step) Projects(
 	first *int,
 	last *int,
 ) (ProjectConnection, error) {
-	nodes := GetModelContext(ctx).Nodes
-	return PaginateProjectIDSlice(nodes, s.ProjectIDs, after, before, first, last)
+	return PaginateProjectIDSliceContext(ctx, s.ProjectIDs, after, before, first, last)
 }
 
 // Commands returns the step's commands.
@@ -47,8 +46,7 @@ func (s Step) Commands(
 	first *int,
 	last *int,
 ) (CommandConnection, error) {
-	nodes := GetModelContext(ctx).Nodes
-	return PaginateCommandIDSlice(nodes, s.ProjectIDs, after, before, first, last)
+	return PaginateCommandIDSliceContext(ctx, s.ProjectIDs, after, before, first, last)
 }
 
 // Task returns the step's taks.

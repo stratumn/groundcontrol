@@ -65,16 +65,9 @@ func (p Project) Commits(
 	first *int,
 	last *int,
 ) (CommitConnection, error) {
-	var slice []Commit
-
-	nodes := GetModelContext(ctx).Nodes
-
-	for _, nodeID := range p.CommitIDs {
-		slice = append(slice, nodes.MustLoadCommit(nodeID))
-	}
-
-	return PaginateCommitSlice(
-		slice,
+	return PaginateCommitIDSliceContext(
+		ctx,
+		p.CommitIDs,
 		after,
 		before,
 		first,

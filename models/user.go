@@ -33,8 +33,7 @@ func (u User) Workspaces(
 	first *int,
 	last *int,
 ) (WorkspaceConnection, error) {
-	nodes := GetModelContext(ctx).Nodes
-	return PaginateWorkspaceIDSlice(nodes, u.WorkspaceIDs, after, before, first, last)
+	return PaginateWorkspaceIDSliceContext(ctx, u.WorkspaceIDs, after, before, first, last)
 }
 
 // Workspace finds a workspace.

@@ -28,8 +28,7 @@ type subscriptionResolver struct {
 	*Resolver
 }
 
-// We defined custom subscriptions for the log because we don't want to log them to
-// avoid infinite loops.
+// Define custom subscriptions for the log because we don't want to log them to avoid infinite loops.
 
 func (r *subscriptionResolver) LogEntryAdded(
 	ctx context.Context,
