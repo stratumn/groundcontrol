@@ -49,7 +49,7 @@ Clone outside of `$GOPATH` since it's a Go module.
 Run:
 
 ```
-make # <---- builds `./groundcontrols`
+make # <---- builds `./groundcontrol`
 make install # <---- copies it to `$GOPATH/bin`
 ```
 
