@@ -51,13 +51,13 @@ type App struct {
 	logLevel                models.LogLevel
 	logCap                  int
 	checkProjectsInterval   time.Duration
-	disableSignalHandling   bool
 	gracefulShutdownTimeout time.Duration
 	ui                      http.FileSystem
 	openBrowser             bool
 	workspacesDirectory     string
 	cacheDirectory          string
 	enableApolloTracing     bool
+	enableSignalHandling    bool
 }
 
 // New creates a new App.
@@ -73,6 +73,7 @@ func New(opts ...Opt) *App {
 		workspacesDirectory:     DefaultWorkspacesDirectory,
 		cacheDirectory:          DefaultCacheDirectory,
 		enableApolloTracing:     DefaultEnableApolloTracing,
+		enableSignalHandling:    DefaultEnableSignalHandling,
 	}
 
 	for _, opt := range opts {
@@ -169,7 +170,7 @@ func (a *App) Start(ctx context.Context) error {
 
 	go resolver.Jobs.Work(ctx)
 	go a.startPeriodicJobs(ctx, nodes, log, jobs, subs, viewerID)
-	if !a.disableSignalHandling {
+	if a.enableSignalHandling {
 		go a.handleSignals(ctx, log, pm, server)
 	}
 	go func() {

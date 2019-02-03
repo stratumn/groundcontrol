@@ -53,6 +53,9 @@ const (
 
 	// DefaultEnableApolloTracing is whether to enable Apollo tracing by default.
 	DefaultEnableApolloTracing = false
+
+	// DefaultEnableSignalHandling is whether to enable signal handling by default.
+	DefaultEnableSignalHandling = true
 )
 
 var (
@@ -139,13 +142,6 @@ func OptCheckProjectsInterval(interval time.Duration) Opt {
 	}
 }
 
-// OptDisableSignalHandling tells the app not to listen to exit signals.
-func OptDisableSignalHandling() Opt {
-	return func(app *App) {
-		app.disableSignalHandling = true
-	}
-}
-
 // OptGracefulShutdownTimeout sets the maximum duration for a graceful shutdown.
 func OptGracefulShutdownTimeout(timeout time.Duration) Opt {
 	return func(app *App) {
@@ -185,5 +181,12 @@ func OptCacheDirectory(dir string) Opt {
 func OptEnableApolloTracing(enable bool) Opt {
 	return func(app *App) {
 		app.enableApolloTracing = enable
+	}
+}
+
+// OptEnableSignalHandling tells the app whether to handle exit signals.
+func OptEnableSignalHandling(enable bool) Opt {
+	return func(app *App) {
+		app.enableSignalHandling = enable
 	}
 }
