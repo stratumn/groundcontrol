@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
 )
 
 // StartPeriodic is used to run jobs periodically.
@@ -28,13 +27,9 @@ import (
 // The addJobs argument should be a function that creates jobs and returns their IDs.
 // The first round of jobs will be created immediately upon calling this function.
 // This function blocks until the context is canceled.
-func StartPeriodic(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	subs *pubsub.PubSub,
-	waitTime time.Duration,
-	addJobs func() []string,
-) error {
+func StartPeriodic(ctx context.Context, waitTime time.Duration, addJobs func() []string) error {
+	modelCtx := models.GetModelContext(ctx)
+
 	round := func() {
 		jobIDs := addJobs()
 		if len(jobIDs) < 1 {
@@ -52,14 +47,14 @@ func StartPeriodic(
 
 		subsCtx, cancel := context.WithCancel(context.Background())
 
-		subs.Subscribe(subsCtx, models.JobUpserted, func(msg interface{}) {
+		modelCtx.Subs.Subscribe(subsCtx, models.JobUpserted, func(msg interface{}) {
 			id := msg.(string)
 			_, ok := jobMap.Load(id)
 			if !ok {
 				return
 			}
 
-			switch nodes.MustLoadJob(id).Status {
+			switch modelCtx.Nodes.MustLoadJob(id).Status {
 			case models.JobStatusDone, models.JobStatusFailed:
 				waitGroup.Done()
 			}

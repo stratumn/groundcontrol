@@ -21,25 +21,18 @@ import (
 	"strings"
 
 	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
 )
 
 // Run runs a task.
-func Run(
-	nodes *models.NodeManager,
-	log *models.Logger,
-	jobs *models.JobManager,
-	pm *models.ProcessManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	taskID string,
-	systemID string,
-	priority models.JobPriority,
-) (string, error) {
+func Run(ctx context.Context, taskID string, priority models.JobPriority) (string, error) {
 	var (
 		taskError   error
 		workspaceID string
 	)
+
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
 
 	err := nodes.LockTask(taskID, func(task models.Task) {
 		if task.IsRunning {
@@ -61,39 +54,26 @@ func Run(
 	subs.Publish(models.TaskUpdated, taskID)
 	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(
+	jobID := modelCtx.Jobs.Add(
+		models.GetModelContext(ctx),
 		RunJob,
 		workspaceID,
 		priority,
 		func(ctx context.Context) error {
-			return doRun(
-				ctx,
-				nodes,
-				log,
-				pm,
-				subs,
-				getProjectPath,
-				taskID,
-				workspaceID,
-				systemID,
-			)
+			return doRun(ctx, taskID, workspaceID, modelCtx.SystemID)
 		},
 	)
 
 	return jobID, nil
 }
 
-func doRun(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	log *models.Logger,
-	pm *models.ProcessManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	taskID string,
-	workspaceID string,
-	systemID string,
-) error {
+func doRun(ctx context.Context, taskID string, workspaceID string, systemID string) error {
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
+	log := modelCtx.Log
+	pm := modelCtx.PM
+
 	defer func() {
 		nodes.MustLockTask(taskID, func(task models.Task) {
 			task.IsRunning = false
@@ -125,16 +105,16 @@ func doRun(
 
 				log.InfoWithOwner(project.ID, command.Command)
 
-				projectPath := getProjectPath(workspace.Slug, project.Repository, project.Branch)
+				projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Repository, project.Branch)
 				parts := strings.Split(command.Command, " ")
 
 				if len(parts) > 0 && parts[0] == "spawn" {
 					if processGroupID == "" {
-						processGroupID = pm.CreateGroup(taskID)
+						processGroupID = pm.CreateGroup(ctx, taskID)
 					}
 
 					rest := strings.Join(parts[1:], " ")
-					pm.Run(rest, processGroupID, project.ID)
+					pm.Run(ctx, rest, processGroupID, project.ID)
 
 					continue
 				}

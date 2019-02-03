@@ -25,22 +25,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 )
 
 // ProcessManager manages creating and running jobs.
 type ProcessManager struct {
-	nodes *NodeManager
-	log   *Logger
-	subs  *pubsub.PubSub
-
-	getProjectPath ProjectPathGetter
-
-	systemID string
-
-	nextID   uint64
 	commands sync.Map
+	nextID   uint64
 
 	runningCounter int64
 	doneCounter    int64
@@ -48,25 +39,14 @@ type ProcessManager struct {
 }
 
 // NewProcessManager creates a ProcessManager.
-// TODO: Add Clean() method to terminate all processes on shutdown.
-func NewProcessManager(
-	nodes *NodeManager,
-	log *Logger,
-	subs *pubsub.PubSub,
-	getProjectPath ProjectPathGetter,
-	systemID string,
-) *ProcessManager {
-	return &ProcessManager{
-		nodes:          nodes,
-		log:            log,
-		subs:           subs,
-		getProjectPath: getProjectPath,
-		systemID:       systemID,
-	}
+func NewProcessManager() *ProcessManager {
+	return &ProcessManager{}
 }
 
 // CreateGroup creates a new ProcessGroup and returns its ID.
-func (p *ProcessManager) CreateGroup(taskID string) string {
+func (p *ProcessManager) CreateGroup(ctx context.Context, taskID string) string {
+	modelCtx := GetModelContext(ctx)
+
 	id := relay.EncodeID(
 		NodeTypeProcessGroup,
 		fmt.Sprint(atomic.AddUint64(&p.nextID, 1)),
@@ -78,16 +58,16 @@ func (p *ProcessManager) CreateGroup(taskID string) string {
 		TaskID:    taskID,
 	}
 
-	p.nodes.MustStoreProcessGroup(group)
-	p.subs.Publish(ProcessGroupUpserted, id)
+	modelCtx.Nodes.MustStoreProcessGroup(group)
+	modelCtx.Subs.Publish(ProcessGroupUpserted, id)
 
-	p.nodes.MustLockSystem(p.systemID, func(system System) {
+	modelCtx.Nodes.MustLockSystem(modelCtx.SystemID, func(system System) {
 		system.ProcessGroupIDs = append(
 			[]string{id},
 			system.ProcessGroupIDs...,
 		)
 
-		p.nodes.MustStoreSystem(system)
+		modelCtx.Nodes.MustStoreSystem(system)
 	})
 
 	return id
@@ -95,10 +75,13 @@ func (p *ProcessManager) CreateGroup(taskID string) string {
 
 // Run launches a new Process and adds it to a ProcessGroup.
 func (p *ProcessManager) Run(
+	ctx context.Context,
 	command string,
 	processGroupID string,
 	projectID string,
 ) string {
+	modelCtx := GetModelContext(ctx)
+
 	id := relay.EncodeID(
 		NodeTypeProcess,
 		fmt.Sprint(atomic.AddUint64(&p.nextID, 1)),
@@ -111,22 +94,24 @@ func (p *ProcessManager) Run(
 		ProjectID:      projectID,
 	}
 
-	p.nodes.MustStoreProcess(process)
-	p.nodes.MustLockProcessGroup(processGroupID, func(processGroup ProcessGroup) {
+	modelCtx.Nodes.MustStoreProcess(process)
+	modelCtx.Nodes.MustLockProcessGroup(processGroupID, func(processGroup ProcessGroup) {
 		processGroup.ProcessIDs = append([]string{id}, processGroup.ProcessIDs...)
-		p.nodes.MustStoreProcessGroup(processGroup)
+		modelCtx.Nodes.MustStoreProcessGroup(processGroup)
 	})
 
-	p.exec(id)
+	p.exec(ctx, id)
 
 	return id
 }
 
 // Start starts a process that was stopped.
-func (p *ProcessManager) Start(processID string) error {
+func (p *ProcessManager) Start(ctx context.Context, processID string) error {
 	var processError error
 
-	err := p.nodes.LockProcess(processID, func(process Process) {
+	modelCtx := GetModelContext(ctx)
+
+	err := modelCtx.Nodes.LockProcess(processID, func(process Process) {
 		switch process.Status {
 		case ProcessStatusRunning, ProcessStatusStopping:
 			processError = ErrNotStopped
@@ -145,26 +130,28 @@ func (p *ProcessManager) Start(processID string) error {
 		return processError
 	}
 
-	p.exec(processID) // will publish metrics
+	p.exec(ctx, processID) // will publish metrics
 
 	return nil
 }
 
 // Stop stops a running process.
-func (p *ProcessManager) Stop(processID string) error {
+func (p *ProcessManager) Stop(ctx context.Context, processID string) error {
 	var processError error
 
-	err := p.nodes.LockProcess(processID, func(process Process) {
+	modelCtx := GetModelContext(ctx)
+
+	err := modelCtx.Nodes.LockProcess(processID, func(process Process) {
 		if process.Status != ProcessStatusRunning {
 			processError = ErrNotRunning
 			return
 		}
 
 		process.Status = ProcessStatusStopping
-		p.nodes.MustStoreProcess(process)
+		modelCtx.Nodes.MustStoreProcess(process)
 
-		p.subs.Publish(ProcessUpserted, processID)
-		p.subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
+		modelCtx.Subs.Publish(ProcessUpserted, processID)
+		modelCtx.Subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
 
 		actual, ok := p.commands.Load(processID)
 		if !ok {
@@ -191,15 +178,16 @@ func (p *ProcessManager) Stop(processID string) error {
 
 // Clean terminates all running processes.
 func (p *ProcessManager) Clean(ctx context.Context) {
+	modelCtx := GetModelContext(ctx)
 	waitGroup := sync.WaitGroup{}
 
 	p.commands.Range(func(k, _ interface{}) bool {
 		processID := k.(string)
 
-		p.log.InfoWithOwner(processID, "stopping process")
+		modelCtx.Log.InfoWithOwner(processID, "stopping process")
 
-		if err := p.Stop(processID); err != nil {
-			p.log.ErrorWithOwner(processID, "failed to stop process because %s", err.Error())
+		if err := p.Stop(ctx, processID); err != nil {
+			modelCtx.Log.ErrorWithOwner(processID, "failed to stop process because %s", err.Error())
 			return true
 		}
 
@@ -212,17 +200,17 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 			waitGroup.Done()
 		}()
 
-		p.subs.Subscribe(processCtx, ProcessUpserted, func(msg interface{}) {
+		modelCtx.Subs.Subscribe(processCtx, ProcessUpserted, func(msg interface{}) {
 			id := msg.(string)
 			if id != processID {
 				return
 			}
 
-			process := p.nodes.MustLoadProcess(id)
+			process := modelCtx.Nodes.MustLoadProcess(id)
 
 			switch process.Status {
 			case ProcessStatusDone, ProcessStatusFailed:
-				p.log.InfoWithOwner(processID, "process stopped")
+				modelCtx.Log.InfoWithOwner(processID, "process stopped")
 				cancel()
 			}
 		})
@@ -233,19 +221,21 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 	waitGroup.Wait()
 }
 
-func (p *ProcessManager) exec(id string) {
-	p.nodes.MustLockProcess(id, func(process Process) {
-		project := process.Project(p.nodes)
-		workspace := project.Workspace(p.nodes)
+func (p *ProcessManager) exec(ctx context.Context, id string) {
+	modelCtx := GetModelContext(ctx)
 
-		dir := p.getProjectPath(
+	modelCtx.Nodes.MustLockProcess(id, func(process Process) {
+		project := process.Project(ctx)
+		workspace := project.Workspace(ctx)
+
+		dir := modelCtx.GetProjectPath(
 			workspace.Slug,
 			project.Repository,
 			project.Branch,
 		)
 
-		stdout := CreateLineWriter(p.log.InfoWithOwner, project.ID)
-		stderr := CreateLineWriter(p.log.WarningWithOwner, project.ID)
+		stdout := CreateLineWriter(modelCtx.Log.InfoWithOwner, project.ID)
+		stderr := CreateLineWriter(modelCtx.Log.WarningWithOwner, project.ID)
 		cmd := exec.Command("bash", "-l", "-c", process.Command)
 		cmd.Dir = dir
 		cmd.Stdout = stdout
@@ -261,44 +251,44 @@ func (p *ProcessManager) exec(id string) {
 			atomic.AddInt64(&p.failedCounter, 1)
 		}
 
-		p.nodes.MustStoreProcess(process)
-		p.subs.Publish(ProcessUpserted, id)
-		p.subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
-		p.publishMetrics()
+		modelCtx.Nodes.MustStoreProcess(process)
+		modelCtx.Subs.Publish(ProcessUpserted, id)
+		modelCtx.Subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
+		p.publishMetrics(ctx)
 
 		if err != nil {
-			p.log.ErrorWithOwner(project.ID, "process failed because %s", err.Error())
+			modelCtx.Log.ErrorWithOwner(project.ID, "process failed because %s", err.Error())
 			stdout.Close()
 			stderr.Close()
 			return
 		}
 
-		p.log.InfoWithOwner(project.ID, "process is running")
+		modelCtx.Log.InfoWithOwner(project.ID, "process is running")
 		p.commands.Store(id, cmd)
 
 		go func() {
 			err := cmd.Wait()
 
-			p.nodes.MustLockProcess(id, func(process Process) {
+			modelCtx.Nodes.MustLockProcess(id, func(process Process) {
 				p.commands.Delete(id)
 
 				if err == nil {
 					process.Status = ProcessStatusDone
 					atomic.AddInt64(&p.doneCounter, 1)
-					p.log.InfoWithOwner(project.ID, "process done")
+					modelCtx.Log.InfoWithOwner(project.ID, "process done")
 				} else {
 					process.Status = ProcessStatusFailed
 					atomic.AddInt64(&p.failedCounter, 1)
-					p.log.ErrorWithOwner(project.ID, "process failed because %s", err.Error())
+					modelCtx.Log.ErrorWithOwner(project.ID, "process failed because %s", err.Error())
 				}
 
 				atomic.AddInt64(&p.runningCounter, -1)
-				p.nodes.MustStoreProcess(process)
+				modelCtx.Nodes.MustStoreProcess(process)
 			})
 
-			p.subs.Publish(ProcessUpserted, id)
-			p.subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
-			p.publishMetrics()
+			modelCtx.Subs.Publish(ProcessUpserted, id)
+			modelCtx.Subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
+			p.publishMetrics(ctx)
 
 			stdout.Close()
 			stderr.Close()
@@ -306,17 +296,18 @@ func (p *ProcessManager) exec(id string) {
 	})
 }
 
-func (p *ProcessManager) publishMetrics() {
-	system := p.nodes.MustLoadSystem(p.systemID)
+func (p *ProcessManager) publishMetrics(ctx context.Context) {
+	modelCtx := GetModelContext(ctx)
+	system := modelCtx.Nodes.MustLoadSystem(modelCtx.SystemID)
 
-	p.nodes.MustLockProcessMetrics(system.ProcessMetricsID, func(metrics ProcessMetrics) {
+	modelCtx.Nodes.MustLockProcessMetrics(system.ProcessMetricsID, func(metrics ProcessMetrics) {
 		metrics.Running = int(atomic.LoadInt64(&p.runningCounter))
 		metrics.Done = int(atomic.LoadInt64(&p.doneCounter))
 		metrics.Failed = int(atomic.LoadInt64(&p.failedCounter))
-		p.nodes.MustStoreProcessMetrics(metrics)
+		modelCtx.Nodes.MustStoreProcessMetrics(metrics)
 	})
 
-	p.subs.Publish(ProcessMetricsUpdated, system.ProcessMetricsID)
+	modelCtx.Subs.Publish(ProcessMetricsUpdated, system.ProcessMetricsID)
 }
 
 // CreateLineWriter creates a writer with a line splitter.

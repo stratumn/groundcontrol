@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // LogEntry represents a log entry in the app.
 type LogEntry struct {
 	ID        string   `json:"id"`
@@ -27,10 +29,10 @@ type LogEntry struct {
 func (LogEntry) IsNode() {}
 
 // Owner returns the node associated with the LogEntry.
-func (l LogEntry) Owner(nodes *NodeManager) Node {
+func (l LogEntry) Owner(ctx context.Context) Node {
 	if l.OwnerID == "" {
 		return nil
 	}
 
-	return nodes.MustLoad(l.OwnerID)
+	return GetModelContext(ctx).Nodes.MustLoad(l.OwnerID)
 }

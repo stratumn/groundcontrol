@@ -26,24 +26,20 @@ type mutationResolver struct {
 }
 
 func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.LoadCommits(
-		r.Nodes,
-		r.Jobs,
-		r.Subs,
-		r.GetProjectPath,
-		r.GetProjectCachePath,
-		id,
-		models.JobPriorityHigh,
-	)
+	nodes := models.GetModelContext(ctx).Nodes
+
+	jobID, err := jobs.LoadCommits(ctx, id, models.JobPriorityHigh)
 	if err != nil {
 		return models.Job{}, err
 	}
 
-	return r.Nodes.MustLoadJob(jobID), nil
+	return nodes.MustLoadJob(jobID), nil
 }
 
 func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) ([]models.Job, error) {
-	workspace, err := r.Nodes.LoadWorkspace(id)
+	nodes := models.GetModelContext(ctx).Nodes
+
+	workspace, err := nodes.LoadWorkspace(id)
 	if err != nil {
 		return nil, err
 	}
@@ -51,49 +47,38 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 	var slice []models.Job
 
 	for _, projectID := range workspace.ProjectIDs {
-		project := r.Nodes.MustLoadProject(projectID)
+		project := nodes.MustLoadProject(projectID)
 
 		if project.IsLoadingCommits || len(project.CommitIDs) > 0 {
 			continue
 		}
 
-		jobID, err := jobs.LoadCommits(
-			r.Nodes,
-			r.Jobs,
-			r.Subs,
-			r.GetProjectPath,
-			r.GetProjectCachePath,
-			project.ID,
-			models.JobPriorityHigh,
-		)
+		jobID, err := jobs.LoadCommits(ctx, project.ID, models.JobPriorityHigh)
 		if err != nil {
 			return nil, err
 		}
 
-		slice = append(slice, r.Nodes.MustLoadJob(jobID))
+		slice = append(slice, nodes.MustLoadJob(jobID))
 	}
 
 	return slice, nil
 }
 
 func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.Clone(
-		r.Nodes,
-		r.Jobs,
-		r.Subs,
-		r.GetProjectPath,
-		id,
-		models.JobPriorityHigh,
-	)
+	nodes := models.GetModelContext(ctx).Nodes
+
+	jobID, err := jobs.Clone(ctx, id, models.JobPriorityHigh)
 	if err != nil {
 		return models.Job{}, err
 	}
 
-	return r.Nodes.MustLoadJob(jobID), nil
+	return nodes.MustLoadJob(jobID), nil
 }
 
 func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]models.Job, error) {
-	workspace, err := r.Nodes.LoadWorkspace(id)
+	nodes := models.GetModelContext(ctx).Nodes
+
+	workspace, err := nodes.LoadWorkspace(id)
 	if err != nil {
 		return nil, err
 	}
@@ -101,48 +86,38 @@ func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]mod
 	var slice []models.Job
 
 	for _, projectID := range workspace.ProjectIDs {
-		project := r.Nodes.MustLoadProject(projectID)
+		project := nodes.MustLoadProject(projectID)
 
-		if project.IsCloning || project.IsCloned(r.Nodes, r.GetProjectPath) {
+		if project.IsCloning || project.IsCloned(ctx) {
 			continue
 		}
 
-		jobID, err := jobs.Clone(
-			r.Nodes,
-			r.Jobs,
-			r.Subs,
-			r.GetProjectPath,
-			project.ID,
-			models.JobPriorityHigh,
-		)
+		jobID, err := jobs.Clone(ctx, project.ID, models.JobPriorityHigh)
 		if err != nil {
 			return nil, err
 		}
 
-		slice = append(slice, r.Nodes.MustLoadJob(jobID))
+		slice = append(slice, nodes.MustLoadJob(jobID))
 	}
 
 	return slice, nil
 }
 
 func (r *mutationResolver) PullProject(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.Pull(
-		r.Nodes,
-		r.Jobs,
-		r.Subs,
-		r.GetProjectPath,
-		id,
-		models.JobPriorityHigh,
-	)
+	nodes := models.GetModelContext(ctx).Nodes
+
+	jobID, err := jobs.Pull(ctx, id, models.JobPriorityHigh)
 	if err != nil {
 		return models.Job{}, err
 	}
 
-	return r.Nodes.MustLoadJob(jobID), nil
+	return nodes.MustLoadJob(jobID), nil
 }
 
 func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]models.Job, error) {
-	workspace, err := r.Nodes.LoadWorkspace(id)
+	nodes := models.GetModelContext(ctx).Nodes
+
+	workspace, err := nodes.LoadWorkspace(id)
 	if err != nil {
 		return nil, err
 	}
@@ -150,71 +125,64 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 	var slice []models.Job
 
 	for _, projectID := range workspace.ProjectIDs {
-		project := r.Nodes.MustLoadProject(projectID)
+		project := nodes.MustLoadProject(projectID)
 
-		if project.IsPulling || !project.IsCloned(r.Nodes, r.GetProjectPath) || !project.IsBehind {
+		if project.IsPulling || !project.IsCloned(ctx) || !project.IsBehind {
 			continue
 		}
 
-		jobID, err := jobs.Pull(
-			r.Nodes,
-			r.Jobs,
-			r.Subs,
-			r.GetProjectPath,
-			project.ID,
-			models.JobPriorityHigh,
-		)
+		jobID, err := jobs.Pull(ctx, project.ID, models.JobPriorityHigh)
 		if err != nil {
 			return nil, err
 		}
 
-		slice = append(slice, r.Nodes.MustLoadJob(jobID))
+		slice = append(slice, nodes.MustLoadJob(jobID))
 	}
 
 	return slice, nil
 }
 
 func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, error) {
-	jobID, err := jobs.Run(
-		r.Nodes,
-		r.Log,
-		r.Jobs,
-		r.PM,
-		r.Subs,
-		r.GetProjectPath,
-		id,
-		r.SystemID,
-		models.JobPriorityHigh,
-	)
+	nodes := models.GetModelContext(ctx).Nodes
+
+	jobID, err := jobs.Run(ctx, id, models.JobPriorityHigh)
 	if err != nil {
 		return models.Job{}, err
 	}
 
-	return r.Nodes.MustLoadJob(jobID), nil
+	return nodes.MustLoadJob(jobID), nil
 }
 
 func (r *mutationResolver) StopJob(ctx context.Context, id string) (models.Job, error) {
-	if err := r.Jobs.Stop(id); err != nil {
+	modelCtx := models.GetModelContext(ctx)
+	jobs := modelCtx.Jobs
+	nodes := modelCtx.Nodes
+
+	if err := jobs.Stop(modelCtx, id); err != nil {
 		return models.Job{}, nil
 	}
 
-	return r.Nodes.MustLoadJob(id), nil
+	return nodes.MustLoadJob(id), nil
 }
 
 func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (models.ProcessGroup, error) {
-	processGroup, err := r.Nodes.LoadProcessGroup(id)
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	pm := modelCtx.PM
+
+	processGroup, err := nodes.LoadProcessGroup(id)
 	if err != nil {
 		return models.ProcessGroup{}, err
 	}
 
 	for _, processID := range processGroup.ProcessIDs {
-		process := r.Nodes.MustLoadProcess(processID)
+		process := nodes.MustLoadProcess(processID)
 
 		if process.Status == models.ProcessStatusRunning {
 			continue
 		}
 
-		if err := r.PM.Start(process.ID); err != nil {
+		if err := pm.Start(ctx, process.ID); err != nil {
 			return models.ProcessGroup{}, err
 		}
 	}
@@ -223,19 +191,23 @@ func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (mo
 }
 
 func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) (models.ProcessGroup, error) {
-	processGroup, err := r.Nodes.LoadProcessGroup(id)
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	pm := modelCtx.PM
+
+	processGroup, err := nodes.LoadProcessGroup(id)
 	if err != nil {
 		return models.ProcessGroup{}, err
 	}
 
 	for _, processID := range processGroup.ProcessIDs {
-		process := r.Nodes.MustLoadProcess(processID)
+		process := nodes.MustLoadProcess(processID)
 
 		if process.Status != models.ProcessStatusRunning {
 			continue
 		}
 
-		if err := r.PM.Stop(process.ID); err != nil {
+		if err := pm.Stop(ctx, process.ID); err != nil {
 			return models.ProcessGroup{}, err
 		}
 	}
@@ -244,19 +216,27 @@ func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) (mod
 }
 
 func (r *mutationResolver) StartProcess(ctx context.Context, id string) (models.Process, error) {
-	err := r.PM.Start(id)
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	pm := modelCtx.PM
+
+	err := pm.Start(ctx, id)
 	if err != nil {
 		return models.Process{}, err
 	}
 
-	return r.Nodes.MustLoadProcess(id), nil
+	return nodes.MustLoadProcess(id), nil
 }
 
 func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.Process, error) {
-	err := r.PM.Stop(id)
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	pm := modelCtx.PM
+
+	err := pm.Stop(ctx, id)
 	if err != nil {
 		return models.Process{}, err
 	}
 
-	return r.Nodes.MustLoadProcess(id), nil
+	return nodes.MustLoadProcess(id), nil
 }

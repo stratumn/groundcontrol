@@ -15,10 +15,19 @@
 package app
 
 import (
+	"context"
 	"net/http"
+
+	"github.com/99designs/gqlgen/graphql"
 
 	"github.com/stratumn/groundcontrol/models"
 )
+
+func modelContextResolverMiddleware(modelCtx *models.ModelContext) graphql.FieldMiddleware {
+	return func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
+		return next(models.WithModelContext(ctx, modelCtx))
+	}
+}
 
 func logHTTPRequestMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {

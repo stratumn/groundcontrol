@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // Process represents a process in the app.
 type Process struct {
 	ID             string        `json:"id"`
@@ -27,11 +29,11 @@ type Process struct {
 func (Process) IsNode() {}
 
 // ProcessGroup returns the ProcessGroup associated with the Process.
-func (p Process) ProcessGroup(nodes *NodeManager) ProcessGroup {
-	return nodes.MustLoadProcessGroup(p.ProcessGroupID)
+func (p Process) ProcessGroup(ctx context.Context) ProcessGroup {
+	return GetModelContext(ctx).Nodes.MustLoadProcessGroup(p.ProcessGroupID)
 }
 
 // Project returns the Project associated with the Process.
-func (p Process) Project(nodes *NodeManager) Project {
-	return nodes.MustLoadProject(p.ProjectID)
+func (p Process) Project(ctx context.Context) Project {
+	return GetModelContext(ctx).Nodes.MustLoadProject(p.ProjectID)
 }

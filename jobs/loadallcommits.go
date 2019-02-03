@@ -15,22 +15,17 @@
 package jobs
 
 import (
+	"context"
+
 	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
 )
 
 // LoadAllCommits creates jobs to load the commits of every project.
 // It doesn't return errors but will output a log message when errors happen.
-func LoadAllCommits(
-	nodes *models.NodeManager,
-	log *models.Logger,
-	jobManager *models.JobManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	getProjectCachePath ProjectCachePathGetter,
-	viewerID string,
-) []string {
-	viewer := nodes.MustLoadUser(viewerID)
+func LoadAllCommits(ctx context.Context) []string {
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	viewer := nodes.MustLoadUser(modelCtx.ViewerID)
 
 	var jobIDs []string
 
@@ -44,18 +39,9 @@ func LoadAllCommits(
 				continue
 			}
 
-			jobID, err := LoadCommits(
-				nodes,
-				jobManager,
-				subs,
-				getProjectPath,
-				getProjectCachePath,
-				project.ID,
-				models.JobPriorityNormal,
-			)
-
+			jobID, err := LoadCommits(ctx, project.ID, models.JobPriorityNormal)
 			if err != nil {
-				log.ErrorWithOwner(project.ID, "LoadCommits failed because %s", err.Error())
+				modelCtx.Log.ErrorWithOwner(project.ID, "LoadCommits failed because %s", err.Error())
 				continue
 			}
 

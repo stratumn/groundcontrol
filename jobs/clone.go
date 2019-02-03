@@ -17,25 +17,22 @@ package jobs
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+
+	"github.com/stratumn/groundcontrol/models"
 )
 
 // Clone clones a remote repository locally.
-func Clone(
-	nodes *models.NodeManager,
-	jobs *models.JobManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	projectID string,
-	priority models.JobPriority,
-) (string, error) {
+func Clone(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
 	var (
 		projectError error
 		workspaceID  string
 	)
+
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
 
 	err := nodes.LockProject(projectID, func(project models.Project) {
 		if project.IsCloning {
@@ -57,36 +54,26 @@ func Clone(
 	subs.Publish(models.ProjectUpdated, projectID)
 	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(
+	jobID := modelCtx.Jobs.Add(
+		models.GetModelContext(ctx),
 		CloneJob,
 		projectID,
 		priority,
 		func(ctx context.Context) error {
-			return doClone(
-				ctx,
-				nodes,
-				subs,
-				getProjectPath,
-				projectID,
-				workspaceID,
-			)
+			return doClone(ctx, projectID, workspaceID)
 		},
 	)
 
 	return jobID, nil
 }
 
-func doClone(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	projectID string,
-	workspaceID string,
-) error {
+func doClone(ctx context.Context, projectID string, workspaceID string) error {
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
 	project := nodes.MustLoadProject(projectID)
 
-	if project.IsCloned(nodes, getProjectPath) {
+	if project.IsCloned(ctx) {
 		return ErrCloned
 	}
 
@@ -100,8 +87,8 @@ func doClone(
 		subs.Publish(models.WorkspaceUpdated, workspaceID)
 	}()
 
-	workspace := project.Workspace(nodes)
-	directory := getProjectPath(workspace.Slug, project.Repository, project.Branch)
+	workspace := project.Workspace(ctx)
+	directory := modelCtx.GetProjectPath(workspace.Slug, project.Repository, project.Branch)
 
 	_, err := git.PlainCloneContext(
 		ctx,

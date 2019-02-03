@@ -20,32 +20,25 @@ import (
 	"os"
 	"strings"
 
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
+
+	"github.com/stratumn/groundcontrol/models"
+	"github.com/stratumn/groundcontrol/relay"
 )
 
-// ProjectCachePathGetter is a function that returns the path to a project's cache.
-type ProjectCachePathGetter func(workspaceSlug, repo, branch string) string
-
 // LoadCommits loads the commits of a project from a remote repo and updates the project.
-func LoadCommits(
-	nodes *models.NodeManager,
-	jobs *models.JobManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	getProjectCachePath ProjectCachePathGetter,
-	projectID string,
-	priority models.JobPriority,
-) (string, error) {
+func LoadCommits(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
 	var (
 		projectError error
 		workspaceID  string
 	)
+
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
 
 	err := nodes.LockProject(projectID, func(project models.Project) {
 		if project.IsLoadingCommits {
@@ -67,39 +60,28 @@ func LoadCommits(
 	subs.Publish(models.ProjectUpdated, projectID)
 	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(
+	jobID := modelCtx.Jobs.Add(
+		models.GetModelContext(ctx),
 		LoadCommitsJob,
 		projectID,
 		priority,
 		func(ctx context.Context) error {
-			return doLoadCommits(
-				ctx,
-				nodes,
-				subs,
-				getProjectPath,
-				getProjectCachePath,
-				projectID,
-				workspaceID,
-			)
+			return doLoadCommits(ctx, projectID, workspaceID)
 		},
 	)
 
 	return jobID, nil
 }
 
-func doLoadCommits(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	getProjectCachePath ProjectCachePathGetter,
-	projectID string,
-	workspaceID string,
-) error {
+func doLoadCommits(ctx context.Context, projectID string, workspaceID string) error {
 	var (
 		commitIDs []string
 		err       error
 	)
+
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
 
 	defer func() {
 		nodes.MustLockProject(projectID, func(project models.Project) {
@@ -117,13 +99,7 @@ func doLoadCommits(
 
 	project := nodes.MustLoadProject(projectID)
 
-	repo, err := cloneOrFetch(
-		ctx,
-		nodes,
-		getProjectPath,
-		getProjectCachePath,
-		projectID,
-	)
+	repo, err := cloneOrFetch(ctx, projectID)
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return err
 	}
@@ -134,32 +110,27 @@ func doLoadCommits(
 		return err
 	}
 
-	commitIDs, err = getCommits(ctx, nodes, repo, ref)
+	commitIDs, err = getCommits(ctx, repo, ref)
 	if err != nil {
 		return err
 	}
 
-	if project.IsCloned(nodes, getProjectPath) {
-		return updateStatus(ctx, nodes, repo, projectID)
+	if project.IsCloned(ctx) {
+		return updateStatus(ctx, repo, projectID)
 	}
 
 	return nil
 }
 
-func cloneOrFetch(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	getProjectPath models.ProjectPathGetter,
-	getProjectCachePath ProjectCachePathGetter,
-	projectID string,
-) (repo *git.Repository, err error) {
-	project := nodes.MustLoadProject(projectID)
-	workspace := project.Workspace(nodes)
-	projectDir := getProjectPath(workspace.Slug, project.Repository, project.Branch)
-	cacheDir := getProjectCachePath(workspace.Slug, project.Repository, project.Branch)
+func cloneOrFetch(ctx context.Context, projectID string) (repo *git.Repository, err error) {
+	modelCtx := models.GetModelContext(ctx)
+	project := modelCtx.Nodes.MustLoadProject(projectID)
+	workspace := project.Workspace(ctx)
+	projectDir := modelCtx.GetProjectPath(workspace.Slug, project.Repository, project.Branch)
+	cacheDir := modelCtx.GetProjectCachePath(workspace.Slug, project.Repository, project.Branch)
 	force := false
 
-	if project.IsCloned(nodes, getProjectPath) {
+	if project.IsCloned(ctx) {
 		repo, err = git.PlainOpen(projectDir)
 	} else if exists(cacheDir) {
 		repo, err = git.PlainOpen(cacheDir)
@@ -191,13 +162,10 @@ func cloneOrFetch(
 	return
 }
 
-func getCommits(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	repo *git.Repository,
-	ref *plumbing.Reference,
-) ([]string, error) {
+func getCommits(ctx context.Context, repo *git.Repository, ref *plumbing.Reference) ([]string, error) {
 	var commitIDs []string
+
+	modelCtx := models.GetModelContext(ctx)
 
 	iter, err := repo.Log(&git.LogOptions{
 		From:  ref.Hash(),
@@ -223,19 +191,17 @@ func getCommits(
 			Date:     models.DateTime(c.Author.When),
 		}
 
-		nodes.MustStoreCommit(commit)
+		modelCtx.Nodes.MustStoreCommit(commit)
 		commitIDs = append(commitIDs, commit.ID)
 
 		return nil
 	})
 }
 
-func updateStatus(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	repo *git.Repository,
-	projectID string,
-) (projectError error) {
+func updateStatus(ctx context.Context, repo *git.Repository, projectID string) (projectError error) {
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+
 	nodes.MustLockProject(projectID, func(project models.Project) {
 		refName := plumbing.NewBranchReferenceName(project.Branch)
 		ref, err := repo.Reference(refName, true)

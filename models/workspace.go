@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // Workspace represents a workspace in the app.
 type Workspace struct {
 	ID          string   `json:"id"`
@@ -30,28 +32,32 @@ func (Workspace) IsNode() {}
 
 // Projects returns the workspace's projects.
 func (w Workspace) Projects(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (ProjectConnection, error) {
+	nodes := GetModelContext(ctx).Nodes
 	return PaginateProjectIDSlice(nodes, w.ProjectIDs, after, before, first, last)
 }
 
 // Tasks returns the workspace's tasks.
 func (w Workspace) Tasks(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (TaskConnection, error) {
+	nodes := GetModelContext(ctx).Nodes
 	return PaginateTaskIDSlice(nodes, w.TaskIDs, after, before, first, last)
 }
 
 // IsCloning returns true if any of the projects is cloning.
-func (w Workspace) IsCloning(nodes *NodeManager) bool {
+func (w Workspace) IsCloning(ctx context.Context) bool {
+	nodes := GetModelContext(ctx).Nodes
+
 	for _, id := range w.ProjectIDs {
 		node := nodes.MustLoadProject(id)
 		if node.IsCloning {
@@ -63,10 +69,12 @@ func (w Workspace) IsCloning(nodes *NodeManager) bool {
 }
 
 // IsCloned returns true if all the projects are cloned.
-func (w Workspace) IsCloned(nodes *NodeManager, getProjectPath ProjectPathGetter) bool {
+func (w Workspace) IsCloned(ctx context.Context) bool {
+	nodes := GetModelContext(ctx).Nodes
+
 	for _, id := range w.ProjectIDs {
 		node := nodes.MustLoadProject(id)
-		if !node.IsCloned(nodes, getProjectPath) {
+		if !node.IsCloned(ctx) {
 			return false
 		}
 	}
@@ -75,7 +83,9 @@ func (w Workspace) IsCloned(nodes *NodeManager, getProjectPath ProjectPathGetter
 }
 
 // IsPulling returns true if any of the projects is pulling.
-func (w Workspace) IsPulling(nodes *NodeManager) bool {
+func (w Workspace) IsPulling(ctx context.Context) bool {
+	nodes := GetModelContext(ctx).Nodes
+
 	for _, id := range w.ProjectIDs {
 		node := nodes.MustLoadProject(id)
 		if node.IsPulling {
@@ -87,7 +97,9 @@ func (w Workspace) IsPulling(nodes *NodeManager) bool {
 }
 
 // IsBehind returns true if any of the projects is behind origin.
-func (w Workspace) IsBehind(nodes *NodeManager) bool {
+func (w Workspace) IsBehind(ctx context.Context) bool {
+	nodes := GetModelContext(ctx).Nodes
+
 	for _, id := range w.ProjectIDs {
 		node := nodes.MustLoadProject(id)
 		if node.IsBehind {
@@ -99,7 +111,9 @@ func (w Workspace) IsBehind(nodes *NodeManager) bool {
 }
 
 // IsAhead returns true if any of the projects is ahead origin.
-func (w Workspace) IsAhead(nodes *NodeManager) bool {
+func (w Workspace) IsAhead(ctx context.Context) bool {
+	nodes := GetModelContext(ctx).Nodes
+
 	for _, id := range w.ProjectIDs {
 		node := nodes.MustLoadProject(id)
 		if node.IsAhead {

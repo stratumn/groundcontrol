@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // ProcessGroup represents a ProcessGroup in the app.
 type ProcessGroup struct {
 	ID         string   `json:"id"`
@@ -27,22 +29,24 @@ func (ProcessGroup) IsNode() {}
 
 // Processes returns the ProcessGroup's processes.
 func (p ProcessGroup) Processes(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (ProcessConnection, error) {
+	nodes := GetModelContext(ctx).Nodes
 	return PaginateProcessIDSlice(nodes, p.ProcessIDs, after, before, first, last)
 }
 
 // Task returns the Task associated with the ProcessGroup.
-func (p ProcessGroup) Task(nodes *NodeManager) Task {
-	return nodes.MustLoadTask(p.TaskID)
+func (p ProcessGroup) Task(ctx context.Context) Task {
+	return GetModelContext(ctx).Nodes.MustLoadTask(p.TaskID)
 }
 
 // Status returns the status of the ProcessGroup.
-func (p ProcessGroup) Status(nodes *NodeManager) ProcessStatus {
+func (p ProcessGroup) Status(ctx context.Context) ProcessStatus {
+	nodes := GetModelContext(ctx).Nodes
 	status := ProcessStatusDone
 
 	for _, id := range p.ProcessIDs {

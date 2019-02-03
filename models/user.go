@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // User contains all the data of the person using the app.
 type User struct {
 	ID           string   `json:"id"`
@@ -25,17 +27,20 @@ func (User) IsNode() {}
 
 // Workspaces returns the user's workspaces.
 func (u User) Workspaces(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (WorkspaceConnection, error) {
+	nodes := GetModelContext(ctx).Nodes
 	return PaginateWorkspaceIDSlice(nodes, u.WorkspaceIDs, after, before, first, last)
 }
 
 // Workspace finds a workspace.
-func (u User) Workspace(nodes *NodeManager, slug string) *Workspace {
+func (u User) Workspace(ctx context.Context, slug string) *Workspace {
+	nodes := GetModelContext(ctx).Nodes
+
 	for _, id := range u.WorkspaceIDs {
 		node := nodes.MustLoadWorkspace(id)
 
@@ -49,13 +54,15 @@ func (u User) Workspace(nodes *NodeManager, slug string) *Workspace {
 
 // Projects returns the user's projects.
 func (u User) Projects(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (ProjectConnection, error) {
 	var slice []string
+
+	nodes := GetModelContext(ctx).Nodes
 
 	for _, workspaceID := range u.WorkspaceIDs {
 		workspace := nodes.MustLoadWorkspace(workspaceID)

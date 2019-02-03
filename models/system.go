@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // System contains information about the running app.
 type System struct {
 	ID               string   `json:"id"`
@@ -30,7 +32,7 @@ func (System) IsNode() {}
 
 // Jobs returns paginated jobs.
 func (s System) Jobs(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
@@ -38,6 +40,8 @@ func (s System) Jobs(
 	status []JobStatus,
 ) (JobConnection, error) {
 	var slice []Job
+
+	nodes := GetModelContext(ctx).Nodes
 
 	for _, nodeID := range s.JobIDs {
 		node := nodes.MustLoadJob(nodeID)
@@ -65,13 +69,13 @@ func (s System) Jobs(
 }
 
 // JobMetrics returns the JobMetrics node.
-func (s System) JobMetrics(nodes *NodeManager) JobMetrics {
-	return nodes.MustLoadJobMetrics(s.JobMetricsID)
+func (s System) JobMetrics(ctx context.Context) JobMetrics {
+	return GetModelContext(ctx).Nodes.MustLoadJobMetrics(s.JobMetricsID)
 }
 
 // ProcessGroups returns paginated process groups.
 func (s System) ProcessGroups(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
@@ -80,12 +84,14 @@ func (s System) ProcessGroups(
 ) (ProcessGroupConnection, error) {
 	var slice []ProcessGroup
 
+	nodes := GetModelContext(ctx).Nodes
+
 	for _, nodeID := range s.ProcessGroupIDs {
 		node := nodes.MustLoadProcessGroup(nodeID)
 		match := len(status) == 0
 
 		for _, v := range status {
-			if node.Status(nodes) == v {
+			if node.Status(ctx) == v {
 				match = true
 				break
 			}
@@ -106,13 +112,13 @@ func (s System) ProcessGroups(
 }
 
 // ProcessMetrics returns the ProcessMetrics node.
-func (s System) ProcessMetrics(nodes *NodeManager) ProcessMetrics {
-	return nodes.MustLoadProcessMetrics(s.ProcessMetricsID)
+func (s System) ProcessMetrics(ctx context.Context) ProcessMetrics {
+	return GetModelContext(ctx).Nodes.MustLoadProcessMetrics(s.ProcessMetricsID)
 }
 
 // LogEntries returns paginated log entries.
 func (s System) LogEntries(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
@@ -121,6 +127,8 @@ func (s System) LogEntries(
 	ownerID *string,
 ) (LogEntryConnection, error) {
 	var slice []LogEntry
+
+	nodes := GetModelContext(ctx).Nodes
 
 	for _, nodeID := range s.LogEntryIDs {
 		node := nodes.MustLoadLogEntry(nodeID)
@@ -153,6 +161,6 @@ func (s System) LogEntries(
 }
 
 // LogMetrics returns the LogMetrics node.
-func (s System) LogMetrics(nodes *NodeManager) LogMetrics {
-	return nodes.MustLoadLogMetrics(s.LogMetricsID)
+func (s System) LogMetrics(ctx context.Context) LogMetrics {
+	return GetModelContext(ctx).Nodes.MustLoadLogMetrics(s.LogMetricsID)
 }

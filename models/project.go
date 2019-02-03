@@ -15,11 +15,9 @@
 package models
 
 import (
+	"context"
 	"os"
 )
-
-// ProjectPathGetter is a function that returns the path to a project.
-type ProjectPathGetter func(workspaceSlug, repo, branch string) string
 
 // Project represents a project in the app.
 type Project struct {
@@ -42,16 +40,15 @@ type Project struct {
 func (Project) IsNode() {}
 
 // Workspace returns the workspace associated with the project.
-func (p Project) Workspace(nodes *NodeManager) Workspace {
-	return nodes.MustLoadWorkspace(p.WorkspaceID)
+func (p Project) Workspace(ctx context.Context) Workspace {
+	return GetModelContext(ctx).Nodes.MustLoadWorkspace(p.WorkspaceID)
 }
 
 // IsCloned checks if the project is cloned.
-func (p Project) IsCloned(
-	nodes *NodeManager,
-	getProjectPath ProjectPathGetter,
-) bool {
-	directory := getProjectPath(p.Workspace(nodes).Slug, p.Repository, p.Branch)
+func (p Project) IsCloned(ctx context.Context) bool {
+	getProjectPath := GetModelContext(ctx).GetProjectPath
+	directory := getProjectPath(p.Workspace(ctx).Slug, p.Repository, p.Branch)
+
 	return p.isCloned(directory)
 }
 
@@ -62,13 +59,15 @@ func (p Project) isCloned(directory string) bool {
 
 // Commits returns paginated commits.
 func (p Project) Commits(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (CommitConnection, error) {
 	var slice []Commit
+
+	nodes := GetModelContext(ctx).Nodes
 
 	for _, nodeID := range p.CommitIDs {
 		slice = append(slice, nodes.MustLoadCommit(nodeID))

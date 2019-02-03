@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // Job represents a job in the app.
 type Job struct {
 	ID        string      `json:"id"`
@@ -29,6 +31,6 @@ type Job struct {
 func (Job) IsNode() {}
 
 // Owner returns the node associated with the job.
-func (j Job) Owner(nodes *NodeManager) Node {
-	return nodes.MustLoad(j.OwnerID)
+func (j Job) Owner(ctx context.Context) Node {
+	return GetModelContext(ctx).Nodes.MustLoad(j.OwnerID)
 }

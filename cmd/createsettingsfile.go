@@ -19,9 +19,8 @@ import (
 
 	"github.com/stratumn/groundcontrol/app"
 
-	"github.com/spf13/viper"
-
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // createSettingsFileCmd represents the createSettingsFile command.

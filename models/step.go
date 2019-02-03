@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // Step represents a task step in the app.
 type Step struct {
 	ID         string   `json:"id"`
@@ -27,27 +29,29 @@ func (Step) IsNode() {}
 
 // Projects returns the step's projects.
 func (s Step) Projects(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (ProjectConnection, error) {
+	nodes := GetModelContext(ctx).Nodes
 	return PaginateProjectIDSlice(nodes, s.ProjectIDs, after, before, first, last)
 }
 
 // Commands returns the step's commands.
 func (s Step) Commands(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (CommandConnection, error) {
+	nodes := GetModelContext(ctx).Nodes
 	return PaginateCommandIDSlice(nodes, s.ProjectIDs, after, before, first, last)
 }
 
 // Task returns the step's taks.
-func (s Step) Task(nodes *NodeManager) Task {
-	return nodes.MustLoadTask(s.TaskID)
+func (s Step) Task(ctx context.Context) Task {
+	return GetModelContext(ctx).Nodes.MustLoadTask(s.TaskID)
 }

@@ -21,22 +21,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/queue"
 	"github.com/stratumn/groundcontrol/relay"
 )
 
 // JobManager manages creating and running jobs.
 type JobManager struct {
-	nodes *NodeManager
-	log   *Logger
-	subs  *pubsub.PubSub
-	queue *queue.Queue
-
-	systemID string
-	nextID   uint64
-
+	queue   *queue.Queue
 	cancels sync.Map
+
+	nextID uint64
 
 	queuedCounter  int64
 	runningCounter int64
@@ -45,19 +39,9 @@ type JobManager struct {
 }
 
 // NewJobManager creates a JobManager with given concurrency.
-func NewJobManager(
-	nodes *NodeManager,
-	log *Logger,
-	subs *pubsub.PubSub,
-	concurrency int,
-	systemID string,
-) *JobManager {
+func NewJobManager(concurrency int) *JobManager {
 	return &JobManager{
-		nodes:    nodes,
-		log:      log,
-		subs:     subs,
-		queue:    queue.New(concurrency),
-		systemID: systemID,
+		queue: queue.New(concurrency),
 	}
 }
 
@@ -68,12 +52,12 @@ func (j *JobManager) Work(ctx context.Context) error {
 
 // Add adds a job to the queue and returns the job's ID.
 func (j *JobManager) Add(
+	modelCtx *ModelContext,
 	name string,
 	ownerID string,
 	priority JobPriority,
 	fn func(ctx context.Context) error,
 ) string {
-
 	id := atomic.AddUint64(&j.nextID, 1)
 	now := DateTime(time.Now())
 	job := Job{
@@ -86,17 +70,17 @@ func (j *JobManager) Add(
 		OwnerID:   ownerID,
 	}
 
-	j.log.InfoWithOwner(job.ID, "job queued")
-	j.nodes.MustStoreJob(job)
-	j.subs.Publish(JobUpserted, job.ID)
+	modelCtx.Log.InfoWithOwner(job.ID, "job queued")
+	modelCtx.Nodes.MustStoreJob(job)
+	modelCtx.Subs.Publish(JobUpserted, job.ID)
 
-	j.nodes.MustLockSystem(j.systemID, func(system System) {
+	modelCtx.Nodes.MustLockSystem(modelCtx.SystemID, func(system System) {
 		system.JobIDs = append([]string{job.ID}, system.JobIDs...)
-		j.nodes.MustStoreSystem(system)
+		modelCtx.Nodes.MustStoreSystem(system)
 	})
 
 	atomic.AddInt64(&j.queuedCounter, 1)
-	j.publishMetrics()
+	j.publishMetrics(modelCtx)
 
 	do := j.queue.Do
 	if priority == JobPriorityHigh {
@@ -104,9 +88,9 @@ func (j *JobManager) Add(
 	}
 
 	go do(func() {
-		j.log.InfoWithOwner(job.ID, "job running")
+		modelCtx.Log.InfoWithOwner(job.ID, "job running")
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(WithModelContext(context.Background(), modelCtx))
 		defer cancel()
 
 		j.cancels.Store(job.ID, cancel)
@@ -114,38 +98,38 @@ func (j *JobManager) Add(
 
 		job.Status = JobStatusRunning
 		job.UpdatedAt = DateTime(time.Now())
-		j.nodes.MustStoreJob(job)
-		j.subs.Publish(JobUpserted, job.ID)
+		modelCtx.Nodes.MustStoreJob(job)
+		modelCtx.Subs.Publish(JobUpserted, job.ID)
 		atomic.AddInt64(&j.runningCounter, 1)
 		atomic.AddInt64(&j.queuedCounter, -1)
-		j.publishMetrics()
+		j.publishMetrics(modelCtx)
 
 		if err := fn(ctx); err != nil {
-			j.log.ErrorWithOwner(job.ID, "job failed because %s", err.Error())
+			modelCtx.Log.ErrorWithOwner(job.ID, "job failed because %s", err.Error())
 			job.Status = JobStatusFailed
 			atomic.AddInt64(&j.failedCounter, 1)
 		} else {
-			j.log.InfoWithOwner(job.ID, "job done")
+			modelCtx.Log.InfoWithOwner(job.ID, "job done")
 			job.Status = JobStatusDone
 			atomic.AddInt64(&j.doneCounter, 1)
 		}
 
 		job.UpdatedAt = DateTime(time.Now())
-		j.nodes.MustStoreJob(job)
+		modelCtx.Nodes.MustStoreJob(job)
 
-		j.subs.Publish(JobUpserted, job.ID)
+		modelCtx.Subs.Publish(JobUpserted, job.ID)
 		atomic.AddInt64(&j.runningCounter, -1)
-		j.publishMetrics()
+		j.publishMetrics(modelCtx)
 	})
 
 	return job.ID
 }
 
 // Stop cancels a running job.
-func (j *JobManager) Stop(id string) error {
+func (j *JobManager) Stop(modelCtx *ModelContext, id string) error {
 	var jobError error
 
-	err := j.nodes.LockJob(id, func(job Job) {
+	err := modelCtx.Nodes.LockJob(id, func(job Job) {
 		if job.Status != JobStatusRunning {
 			jobError = ErrNotRunning
 		}
@@ -157,8 +141,8 @@ func (j *JobManager) Stop(id string) error {
 
 		job.Status = JobStatusStopping
 		job.UpdatedAt = DateTime(time.Now())
-		j.nodes.MustStoreJob(job)
-		j.subs.Publish(JobUpserted, id)
+		modelCtx.Nodes.MustStoreJob(job)
+		modelCtx.Subs.Publish(JobUpserted, id)
 
 		cancel := actual.(context.CancelFunc)
 		cancel()
@@ -170,16 +154,16 @@ func (j *JobManager) Stop(id string) error {
 	return jobError
 }
 
-func (j *JobManager) publishMetrics() {
-	system := j.nodes.MustLoadSystem(j.systemID)
+func (j *JobManager) publishMetrics(modelCtx *ModelContext) {
+	system := modelCtx.Nodes.MustLoadSystem(modelCtx.SystemID)
 
-	j.nodes.MustLockJobMetrics(system.JobMetricsID, func(metrics JobMetrics) {
+	modelCtx.Nodes.MustLockJobMetrics(system.JobMetricsID, func(metrics JobMetrics) {
 		metrics.Queued = int(atomic.LoadInt64(&j.queuedCounter))
 		metrics.Running = int(atomic.LoadInt64(&j.runningCounter))
 		metrics.Done = int(atomic.LoadInt64(&j.doneCounter))
 		metrics.Failed = int(atomic.LoadInt64(&j.failedCounter))
-		j.nodes.MustStoreJobMetrics(metrics)
+		modelCtx.Nodes.MustStoreJobMetrics(metrics)
 	})
 
-	j.subs.Publish(JobMetricsUpdated, system.JobMetricsID)
+	modelCtx.Subs.Publish(JobMetricsUpdated, system.JobMetricsID)
 }

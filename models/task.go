@@ -14,6 +14,8 @@
 
 package models
 
+import "context"
+
 // Task represents a workspace task in the app.
 type Task struct {
 	ID          string   `json:"id"`
@@ -28,16 +30,17 @@ func (Task) IsNode() {}
 
 // Steps returns the task's steps.
 func (t Task) Steps(
-	nodes *NodeManager,
+	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
 ) (StepConnection, error) {
+	nodes := GetModelContext(ctx).Nodes
 	return PaginateStepIDSlice(nodes, t.StepIDs, after, before, first, last)
 }
 
 // Workspace returns the task's workspace.
-func (t Task) Workspace(nodes *NodeManager) Workspace {
-	return nodes.MustLoadWorkspace(t.WorkspaceID)
+func (t Task) Workspace(ctx context.Context) Workspace {
+	return GetModelContext(ctx).Nodes.MustLoadWorkspace(t.WorkspaceID)
 }

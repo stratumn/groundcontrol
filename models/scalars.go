@@ -19,9 +19,10 @@ import (
 	"io"
 	"strconv"
 	"time"
-
-	"github.com/stratumn/groundcontrol/date"
 )
+
+// DateFormat is the date format used throughout the app.
+const DateFormat = "2006-01-02T15:04:05-0700"
 
 // DateTime holds a date.
 type DateTime time.Time
@@ -38,7 +39,7 @@ func (d *DateTime) UnmarshalGQL(v interface{}) error {
 		return err
 	}
 
-	t, err := time.Parse(date.DateFormat, str)
+	t, err := time.Parse(DateFormat, str)
 	if err != nil {
 		return err
 	}
@@ -50,7 +51,7 @@ func (d *DateTime) UnmarshalGQL(v interface{}) error {
 
 // MarshalGQL implements the graphql.Marshaler interface.
 func (d DateTime) MarshalGQL(w io.Writer) {
-	w.Write([]byte(strconv.Quote(time.Time(d).Format(date.DateFormat))))
+	w.Write([]byte(strconv.Quote(time.Time(d).Format(DateFormat))))
 }
 
 // Hash holds a Git hash.

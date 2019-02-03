@@ -19,30 +19,27 @@ import (
 	"context"
 	"strings"
 
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+
+	"github.com/stratumn/groundcontrol/models"
+	"github.com/stratumn/groundcontrol/relay"
 )
 
 // Pull clones a remote repository locally and updates the project.
-func Pull(
-	nodes *models.NodeManager,
-	jobs *models.JobManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	projectID string,
-	priority models.JobPriority,
-) (string, error) {
+func Pull(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
 	var (
 		projectError error
 		workspaceID  string
 	)
 
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
+
 	err := nodes.LockProject(projectID, func(project models.Project) {
-		if !project.IsCloned(nodes, getProjectPath) {
+		if !project.IsCloned(ctx) {
 			projectError = ErrNotCloned
 			return
 		}
@@ -66,33 +63,24 @@ func Pull(
 	subs.Publish(models.ProjectUpdated, projectID)
 	subs.Publish(models.WorkspaceUpdated, workspaceID)
 
-	jobID := jobs.Add(
+	jobID := modelCtx.Jobs.Add(
+		models.GetModelContext(ctx),
 		PullJob,
 		projectID,
 		priority,
 		func(ctx context.Context) error {
-			return doPull(
-				ctx,
-				nodes,
-				subs,
-				getProjectPath,
-				projectID,
-				workspaceID,
-			)
+			return doPull(ctx, projectID, workspaceID)
 		},
 	)
 
 	return jobID, nil
 }
 
-func doPull(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	subs *pubsub.PubSub,
-	getProjectPath models.ProjectPathGetter,
-	projectID string,
-	workspaceID string,
-) error {
+func doPull(ctx context.Context, projectID string, workspaceID string) error {
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
+
 	defer func() {
 		nodes.MustLockProject(projectID, func(project models.Project) {
 			project.IsPulling = false
@@ -104,8 +92,8 @@ func doPull(
 	}()
 
 	project := nodes.MustLoadProject(projectID)
-	workspace := project.Workspace(nodes)
-	directory := getProjectPath(workspace.Slug, project.Repository, project.Branch)
+	workspace := project.Workspace(ctx)
+	directory := modelCtx.GetProjectPath(workspace.Slug, project.Repository, project.Branch)
 
 	repo, err := git.PlainOpen(directory)
 	if err != nil {

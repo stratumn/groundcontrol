@@ -90,13 +90,25 @@ func New(opts ...Opt) *App {
 // Start starts the app. It blocks until an error occurs or the app exits.
 func (a *App) Start(ctx context.Context) error {
 	nodes := &models.NodeManager{}
-
 	viewerID, systemID := a.createBaseNodes(nodes)
-
 	subs := pubsub.New()
 	log := models.NewLogger(nodes, subs, a.logCap, a.logLevel, systemID)
-	jobs := models.NewJobManager(nodes, log, subs, a.jobConcurrency, systemID)
-	pm := models.NewProcessManager(nodes, log, subs, a.getProjectPath, systemID)
+	jobs := models.NewJobManager(a.jobConcurrency)
+	pm := models.NewProcessManager()
+
+	modelCtx := &models.ModelContext{
+		Nodes:               nodes,
+		Log:                 log,
+		Jobs:                jobs,
+		PM:                  pm,
+		Subs:                subs,
+		GetProjectPath:      a.getProjectPath,
+		GetProjectCachePath: a.getProjectCachePath,
+		ViewerID:            viewerID,
+		SystemID:            systemID,
+	}
+
+	ctx = models.WithModelContext(ctx, modelCtx)
 
 	if err := a.loadConfigs(nodes, viewerID); err != nil {
 		return err
@@ -128,26 +140,18 @@ func (a *App) Start(ctx context.Context) error {
 		})
 	}
 
-	resolver := &resolvers.Resolver{
-		Nodes:               nodes,
-		Log:                 log,
-		Jobs:                jobs,
-		PM:                  pm,
-		Subs:                subs,
-		GetProjectPath:      a.getProjectPath,
-		GetProjectCachePath: a.getProjectCachePath,
-		ViewerID:            viewerID,
-		SystemID:            systemID,
-	}
-
 	gqlConfig := gql.Config{
-		Resolvers: resolver,
+		Resolvers: &resolvers.Resolver{
+			Nodes: nodes,
+			Subs:  subs,
+		},
 	}
 
 	gqlOptions := []handler.Option{
 		handler.WebsocketUpgrader(websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		}),
+		handler.ResolverMiddleware(modelContextResolverMiddleware(modelCtx)),
 	}
 
 	if a.enableApolloTracing {
@@ -168,8 +172,8 @@ func (a *App) Start(ctx context.Context) error {
 		Handler: router,
 	}
 
-	go resolver.Jobs.Work(ctx)
-	go a.startPeriodicJobs(ctx, nodes, log, jobs, subs, viewerID)
+	go jobs.Work(ctx)
+	go a.startPeriodicJobs(models.WithModelContext(ctx, modelCtx))
 	if a.enableSignalHandling {
 		go a.handleSignals(ctx, log, pm, server)
 	}
@@ -247,29 +251,12 @@ func (a *App) loadConfigs(nodes *models.NodeManager, viewerID string) error {
 	return nil
 }
 
-func (a *App) startPeriodicJobs(
-	ctx context.Context,
-	nodes *models.NodeManager,
-	log *models.Logger,
-	jobManager *models.JobManager,
-	subs *pubsub.PubSub,
-	viewerID string,
-) {
+func (a *App) startPeriodicJobs(ctx context.Context) {
 	jobs.StartPeriodic(
 		ctx,
-		nodes,
-		subs,
 		a.checkProjectsInterval,
 		func() []string {
-			return jobs.LoadAllCommits(
-				nodes,
-				log,
-				jobManager,
-				subs,
-				a.getProjectPath,
-				a.getProjectCachePath,
-				viewerID,
-			)
+			return jobs.LoadAllCommits(ctx)
 		},
 	)
 }

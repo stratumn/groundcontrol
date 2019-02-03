@@ -18,32 +18,22 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
 	"github.com/stratumn/groundcontrol/app"
 	"github.com/stratumn/groundcontrol/models"
 )
 
 var (
+	settingsFile  string
 	userInterface http.FileSystem
-
-	settingsFile            string
-	listenAddress           string
-	jobConcurrency          int
-	logLevel                string
-	logCap                  int
-	checkProjectsInterval   time.Duration
-	gracefulShutdownTimeout time.Duration
-	openBrowser             bool
-	workspacesDirectory     string
-	cacheDirectory          string
-	enableApolloTracing     bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -89,17 +79,17 @@ func Execute(ui http.FileSystem) {
 func init() {
 	cobra.OnInitialize(initSettings)
 
-	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings", app.DefaultSettingsFile, "settings file")
-	rootCmd.PersistentFlags().StringVar(&listenAddress, "listen-address", app.DefaultListenAddress, "address the server should listen on")
-	rootCmd.PersistentFlags().IntVar(&jobConcurrency, "job-concurrency", app.DefaultJobConcurrency, "how many jobs can run concurrency")
-	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
-	rootCmd.PersistentFlags().IntVar(&logCap, "log-cap", app.DefaultLogCap, "maximum number of messages the logger will keep")
-	rootCmd.PersistentFlags().DurationVar(&checkProjectsInterval, "check-projects-interval", app.DefaultCheckProjectsInterval, "how often to check if projects have changed")
-	rootCmd.PersistentFlags().DurationVar(&gracefulShutdownTimeout, "graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
-	rootCmd.PersistentFlags().BoolVar(&openBrowser, "open-browser", app.DefaultOpenBrowser, "open the user interface in a browser")
-	rootCmd.PersistentFlags().StringVar(&workspacesDirectory, "workspaces-directory", app.DefaultWorkspacesDirectory, "directory for workspaces")
-	rootCmd.PersistentFlags().StringVar(&cacheDirectory, "cache-directory", app.DefaultCacheDirectory, "directory for the cache")
-	rootCmd.PersistentFlags().BoolVar(&enableApolloTracing, "enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
+	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings-file", app.DefaultSettingsFile, "settings file")
+	rootCmd.PersistentFlags().String("listen-address", app.DefaultListenAddress, "address the server should listen on")
+	rootCmd.PersistentFlags().Int("job-concurrency", app.DefaultJobConcurrency, "how many jobs can run concurrency")
+	rootCmd.PersistentFlags().String("log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
+	rootCmd.PersistentFlags().Int("log-cap", app.DefaultLogCap, "maximum number of messages the logger will keep")
+	rootCmd.PersistentFlags().Duration("check-projects-interval", app.DefaultCheckProjectsInterval, "how often to check if projects have changed")
+	rootCmd.PersistentFlags().Duration("graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
+	rootCmd.PersistentFlags().Bool("open-browser", app.DefaultOpenBrowser, "open the user interface in a browser")
+	rootCmd.PersistentFlags().String("workspaces-directory", app.DefaultWorkspacesDirectory, "directory for workspaces")
+	rootCmd.PersistentFlags().String("cache-directory", app.DefaultCacheDirectory, "directory for the cache")
+	rootCmd.PersistentFlags().Bool("enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
 
 	for _, flagName := range []string{
 		"listen-address",
@@ -133,6 +123,6 @@ func initSettings() {
 
 	// If a settings file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using settings file:", viper.ConfigFileUsed())
+		log.Println("INFO\tusing settings file", viper.ConfigFileUsed())
 	}
 }
