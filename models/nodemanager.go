@@ -47,16 +47,8 @@ func (n *NodeManager) MustLoad(id string) Node {
 // Lock locks the given IDs.
 func (n *NodeManager) Lock(ids ...string) {
 	for _, id := range ids {
-		actual, _ := n.locks.LoadOrStore(id, &sync.RWMutex{})
-		actual.(*sync.RWMutex).Lock()
-	}
-}
-
-// RLock read-locks the given IDs.
-func (n *NodeManager) RLock(ids ...string) {
-	for _, id := range ids {
-		actual, _ := n.locks.LoadOrStore(id, &sync.RWMutex{})
-		actual.(*sync.RWMutex).RLock()
+		actual, _ := n.locks.LoadOrStore(id, &sync.Mutex{})
+		actual.(*sync.Mutex).Lock()
 	}
 }
 
@@ -68,18 +60,6 @@ func (n *NodeManager) Unlock(ids ...string) {
 			panic("attempted to unlock unlocked ID")
 		}
 
-		actual.(*sync.RWMutex).Unlock()
-	}
-}
-
-// RUnlock read-unlocks the given IDs.
-func (n *NodeManager) RUnlock(ids ...string) {
-	for _, id := range ids {
-		actual, ok := n.locks.Load(id)
-		if !ok {
-			panic("attempted to unlock unlocked ID")
-		}
-
-		actual.(*sync.RWMutex).RUnlock()
+		actual.(*sync.Mutex).Unlock()
 	}
 }
