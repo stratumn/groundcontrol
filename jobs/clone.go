@@ -25,30 +25,24 @@ import (
 
 // Clone clones a remote repository locally.
 func Clone(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
-	var (
-		projectError error
-		workspaceID  string
-	)
-
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
+	workspaceID := ""
 
-	err := nodes.LockProject(projectID, func(project models.Project) {
+	err := nodes.LockProjectE(projectID, func(project models.Project) error {
 		if project.IsCloning {
-			projectError = ErrDuplicate
-			return
+			return ErrDuplicate
 		}
 
 		workspaceID = project.WorkspaceID
 		project.IsCloning = true
 		nodes.MustStoreProject(project)
+
+		return nil
 	})
 	if err != nil {
 		return "", err
-	}
-	if projectError != nil {
-		return "", projectError
 	}
 
 	subs.Publish(models.ProjectUpdated, projectID)

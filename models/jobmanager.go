@@ -127,11 +127,9 @@ func (j *JobManager) Add(
 
 // Stop cancels a running job.
 func (j *JobManager) Stop(modelCtx *ModelContext, id string) error {
-	var jobError error
-
-	err := modelCtx.Nodes.LockJob(id, func(job Job) {
+	return modelCtx.Nodes.LockJobE(id, func(job Job) error {
 		if job.Status != JobStatusRunning {
-			jobError = ErrNotRunning
+			return ErrNotRunning
 		}
 
 		actual, ok := j.cancels.Load(id)
@@ -146,12 +144,9 @@ func (j *JobManager) Stop(modelCtx *ModelContext, id string) error {
 
 		cancel := actual.(context.CancelFunc)
 		cancel()
-	})
-	if err != nil {
-		return err
-	}
 
-	return jobError
+		return nil
+	})
 }
 
 func (j *JobManager) publishMetrics(modelCtx *ModelContext) {

@@ -25,30 +25,24 @@ import (
 
 // Run runs a task.
 func Run(ctx context.Context, taskID string, priority models.JobPriority) (string, error) {
-	var (
-		taskError   error
-		workspaceID string
-	)
-
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
+	workspaceID := ""
 
-	err := nodes.LockTask(taskID, func(task models.Task) {
+	err := nodes.LockTaskE(taskID, func(task models.Task) error {
 		if task.IsRunning {
-			taskError = ErrDuplicate
-			return
+			return ErrDuplicate
 		}
 
 		workspaceID = task.WorkspaceID
 		task.IsRunning = true
 		nodes.MustStoreTask(task)
+
+		return nil
 	})
 	if err != nil {
 		return "", err
-	}
-	if taskError != nil {
-		return "", taskError
 	}
 
 	subs.Publish(models.TaskUpdated, taskID)

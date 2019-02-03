@@ -107,27 +107,21 @@ func (p *ProcessManager) Run(
 
 // Start starts a process that was stopped.
 func (p *ProcessManager) Start(ctx context.Context, processID string) error {
-	var processError error
-
 	modelCtx := GetModelContext(ctx)
 
-	err := modelCtx.Nodes.LockProcess(processID, func(process Process) {
+	err := modelCtx.Nodes.LockProcessE(processID, func(process Process) error {
 		switch process.Status {
 		case ProcessStatusRunning, ProcessStatusStopping:
-			processError = ErrNotStopped
-			return
+			return ErrNotStopped
 		case ProcessStatusDone:
 			atomic.AddInt64(&p.doneCounter, -1)
 		case ProcessStatusFailed:
 			atomic.AddInt64(&p.failedCounter, -1)
 		}
-
+		return nil
 	})
 	if err != nil {
 		return err
-	}
-	if processError != nil {
-		return processError
 	}
 
 	p.exec(ctx, processID) // will publish metrics
@@ -137,14 +131,11 @@ func (p *ProcessManager) Start(ctx context.Context, processID string) error {
 
 // Stop stops a running process.
 func (p *ProcessManager) Stop(ctx context.Context, processID string) error {
-	var processError error
-
 	modelCtx := GetModelContext(ctx)
 
-	err := modelCtx.Nodes.LockProcess(processID, func(process Process) {
+	return modelCtx.Nodes.LockProcessE(processID, func(process Process) error {
 		if process.Status != ProcessStatusRunning {
-			processError = ErrNotRunning
-			return
+			return ErrNotRunning
 		}
 
 		process.Status = ProcessStatusStopping
@@ -159,21 +150,13 @@ func (p *ProcessManager) Stop(ctx context.Context, processID string) error {
 		}
 		cmd := actual.(*exec.Cmd)
 
-		pgid, processError := syscall.Getpgid(cmd.Process.Pid)
-		if processError != nil {
-			return
+		pgid, err := syscall.Getpgid(cmd.Process.Pid)
+		if err != nil {
+			return err
 		}
 
-		processError = syscall.Kill(-pgid, syscall.SIGINT)
-		if processError != nil {
-			return
-		}
+		return syscall.Kill(-pgid, syscall.SIGINT)
 	})
-	if err != nil {
-		return err
-	}
-
-	return processError
 }
 
 // Clean terminates all running processes.

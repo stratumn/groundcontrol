@@ -31,30 +31,24 @@ import (
 
 // LoadCommits loads the commits of a project from a remote repo and updates the project.
 func LoadCommits(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
-	var (
-		projectError error
-		workspaceID  string
-	)
-
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
+	workspaceID := ""
 
-	err := nodes.LockProject(projectID, func(project models.Project) {
+	err := nodes.LockProjectE(projectID, func(project models.Project) error {
 		if project.IsLoadingCommits {
-			projectError = ErrDuplicate
-			return
+			return ErrDuplicate
 		}
 
 		workspaceID = project.WorkspaceID
 		project.IsLoadingCommits = true
 		nodes.MustStoreProject(project)
+
+		return nil
 	})
 	if err != nil {
 		return "", err
-	}
-	if projectError != nil {
-		return "", projectError
 	}
 
 	subs.Publish(models.ProjectUpdated, projectID)
@@ -74,14 +68,10 @@ func LoadCommits(ctx context.Context, projectID string, priority models.JobPrior
 }
 
 func doLoadCommits(ctx context.Context, projectID string, workspaceID string) error {
-	var (
-		commitIDs []string
-		err       error
-	)
-
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
+	commitIDs := []string(nil)
 
 	defer func() {
 		nodes.MustLockProject(projectID, func(project models.Project) {

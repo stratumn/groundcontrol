@@ -64,9 +64,9 @@ import "github.com/stratumn/groundcontrol/relay"
 
 // Node types.
 const (
-{{range $index, $type := .}}
+{{- range $index, $type := .}}
 	NodeType{{$type}} = "{{$type}}"
-{{end}}
+{{- end}}
 )
 
 {{range $index, $type := .}}
@@ -158,6 +158,21 @@ func (n *NodeManager) Lock{{$type}}(id string, fn func({{$type}})) error {
 	return nil
 }
 
+// Lock{{$type}}E is like Lock{{$type}}, but the callback can return an error.
+func (n *NodeManager) Lock{{$type}}E(id string, fn func({{$type}}) error) error {
+	n.Lock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err != nil {
+		return err
+	}
+
+	err = fn(node)
+	n.Unlock(id)
+
+	return err
+}
+
 // MustLock{{$type}} loads a {{$type}} or panics on error and locks it until the callback returns.
 func (n *NodeManager) MustLock{{$type}}(id string, fn func({{$type}})) {
 	n.Lock(id)
@@ -168,8 +183,22 @@ func (n *NodeManager) MustLock{{$type}}(id string, fn func({{$type}})) {
 	}
 
 	fn(node)
-
 	n.Unlock(id)
+}
+
+// MustLock{{$type}}E is like MustLock{{$type}}, but the callback can return an error.
+func (n *NodeManager) MustLock{{$type}}E(id string, fn func({{$type}}) error) error {
+	n.Lock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err != nil {
+		panic(err)
+	}
+
+	err = fn(node)
+	n.Unlock(id)
+
+	return err
 }
 {{end}}
 `

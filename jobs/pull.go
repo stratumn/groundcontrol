@@ -29,35 +29,28 @@ import (
 
 // Pull clones a remote repository locally and updates the project.
 func Pull(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
-	var (
-		projectError error
-		workspaceID  string
-	)
-
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
+	workspaceID := ""
 
-	err := nodes.LockProject(projectID, func(project models.Project) {
+	err := nodes.LockProjectE(projectID, func(project models.Project) error {
 		if !project.IsCloned(ctx) {
-			projectError = ErrNotCloned
-			return
+			return ErrNotCloned
 		}
 
 		if project.IsPulling {
-			projectError = ErrDuplicate
-			return
+			return ErrDuplicate
 		}
 
 		workspaceID = project.WorkspaceID
 		project.IsPulling = true
 		nodes.MustStoreProject(project)
+
+		return nil
 	})
 	if err != nil {
 		return "", err
-	}
-	if projectError != nil {
-		return "", projectError
 	}
 
 	subs.Publish(models.ProjectUpdated, projectID)
