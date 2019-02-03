@@ -17,7 +17,6 @@ package app
 import (
 	"log"
 	"net/http"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -79,22 +78,6 @@ func init() {
 	DefaultSettingsFile = filepath.Join(home, "groundcontrol", DefaultSettingsFile)
 	DefaultWorkspacesDirectory = filepath.Join(home, "groundcontrol", DefaultWorkspacesDirectory)
 	DefaultCacheDirectory = filepath.Join(home, "groundcontrol", DefaultCacheDirectory)
-}
-
-// DefaultProjectPathGetter is the default ProjectPathGetter.
-func DefaultProjectPathGetter(workspaceSlug, repo, branch string) string {
-	name := path.Base(repo)
-	ext := path.Ext(name)
-	name = name[:len(name)-len(ext)]
-	return filepath.Join("workspaces", workspaceSlug, name)
-}
-
-// DefaultProjectCachePathGetter is the default ProjectCachePathGetter.
-func DefaultProjectCachePathGetter(workspaceSlug, repo, branch string) string {
-	name := path.Base(repo)
-	ext := path.Ext(name)
-	name = name[:len(name)-len(ext)]
-	return filepath.Join("cache", workspaceSlug, name+".git")
 }
 
 // Opt represents an app option.
