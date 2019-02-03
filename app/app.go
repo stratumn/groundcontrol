@@ -158,13 +158,6 @@ func (a *App) Start(ctx context.Context) error {
 		)
 	}
 
-	if a.logLevel <= models.LogLevelDebug {
-		gqlOptions = append(
-			gqlOptions,
-			handler.RequestMiddleware(logGQLRequestMiddleware(log)),
-		)
-	}
-
 	router.Handle("/query", handler.GraphQL(
 		gql.NewExecutableSchema(gqlConfig),
 		gqlOptions...,

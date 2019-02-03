@@ -15,11 +15,7 @@
 package app
 
 import (
-	"context"
 	"net/http"
-	"strings"
-
-	"github.com/99designs/gqlgen/graphql"
 
 	"github.com/stratumn/groundcontrol/models"
 )
@@ -30,20 +26,5 @@ func logHTTPRequestMiddleware(log *models.Logger) func(h http.Handler) http.Hand
 			log.Debug("HTTP request %s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
 			h.ServeHTTP(w, r)
 		})
-	}
-}
-
-func logGQLRequestMiddleware(log *models.Logger) graphql.RequestMiddleware {
-	return func(ctx context.Context, next func(ctx context.Context) []byte) []byte {
-		requestCtx := graphql.GetRequestContext(ctx)
-
-		lines := strings.Split(requestCtx.RawQuery, "\n")
-		for i, v := range lines {
-			lines[i] = strings.TrimSpace(v)
-		}
-
-		log.Debug("GraphQL request %s %v", strings.Join(lines, " "), requestCtx.Variables)
-
-		return next(ctx)
 	}
 }

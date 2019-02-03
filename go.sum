@@ -1,5 +1,6 @@
 github.com/99designs/gqlgen v0.4.5-0.20190127090136-055fb4bc9a6a h1:oTsAt8YXjEk1fo7uZR7gya1jrH48oPulx5oF6zWTHRw=
 github.com/99designs/gqlgen v0.4.5-0.20190127090136-055fb4bc9a6a/go.mod h1:st7qHA6ssU3uRZkmv+wzrzgX4srvIqEIdE5iuRW8GhE=
+github.com/99designs/gqlgen v0.7.1 h1:uRf7C+/33spvj24B5fKAExQcHbZkJHE5yjoSgSYBmiE=
 github.com/99designs/gqlgen-contrib v0.0.0-20181214005309-52113d2e3f08 h1:kRnszRxlWowfTznuBelSgbPKexNt5Fz18SbUHhRvj7A=
 github.com/99designs/gqlgen-contrib v0.0.0-20181214005309-52113d2e3f08/go.mod h1:YBpBdxshfUEBRQzGDvYsWGKUnbnh+aYyOKwtzJajAq4=
 github.com/agnivade/levenshtein v1.0.1 h1:3oJU7J3FGFmyhn8KHjmVaZCN5hxTr7GxgRue+sxIXdQ=
