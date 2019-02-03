@@ -21,8 +21,8 @@ type Workspace struct {
 	ID          string   `json:"id"`
 	Slug        string   `json:"slug"`
 	Name        string   `json:"name"`
-	ProjectIDs  []string `json:"projectIDs"`
-	TaskIDs     []string `json:"taskIDs"`
+	ProjectIDs  []string `json:"projectIds"`
+	TaskIDs     []string `json:"taskIds"`
 	Description string   `json:"description"`
 	Notes       *string  `json:"notes"`
 }

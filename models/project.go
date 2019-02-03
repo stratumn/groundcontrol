@@ -26,8 +26,8 @@ type Project struct {
 	Repository       string   `json:"repository"`
 	Branch           string   `json:"branch"`
 	Description      *string  `json:"description"`
-	WorkspaceID      string   `json:"workspaceID"`
-	CommitIDs        []string `json:"commitIDs"`
+	WorkspaceID      string   `json:"workspaceId"`
+	CommitIDs        []string `json:"commitIds"`
 	Tasks            []Task   `json:"projects"`
 	IsLoadingCommits bool     `json:"isLoadingCommits"`
 	IsCloning        bool     `json:"isCloning"`

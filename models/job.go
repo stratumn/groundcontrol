@@ -24,7 +24,7 @@ type Job struct {
 	UpdatedAt DateTime    `json:"updatedAt"`
 	Status    JobStatus   `json:"status"`
 	Priority  JobPriority `json:"priority"`
-	OwnerID   string      `json:"ownerID"`
+	OwnerID   string      `json:"ownerId"`
 }
 
 // IsNode tells gqlgen that it implements Node.

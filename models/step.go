@@ -19,9 +19,9 @@ import "context"
 // Step represents a task step in the app.
 type Step struct {
 	ID         string   `json:"id"`
-	ProjectIDs []string `json:"projectIDs"`
-	CommandIDs []string `json:"commandIDs"`
-	TaskID     string   `json:"taskID"`
+	ProjectIDs []string `json:"projectIds"`
+	CommandIDs []string `json:"commandIds"`
+	TaskID     string   `json:"taskId"`
 }
 
 // IsNode tells gqlgen that it implements Node.

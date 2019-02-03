@@ -19,7 +19,7 @@ import "context"
 // User contains all the data of the person using the app.
 type User struct {
 	ID           string   `json:"id"`
-	WorkspaceIDs []string `json:"workspaceIDs"`
+	WorkspaceIDs []string `json:"workspaceIds"`
 }
 
 // IsNode tells gqlgen that it implements Node.

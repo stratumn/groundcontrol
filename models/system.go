@@ -19,12 +19,12 @@ import "context"
 // System contains information about the running app.
 type System struct {
 	ID               string   `json:"id"`
-	JobIDs           []string `json:"jobsIDs"`
-	JobMetricsID     string   `json:"jobMetricsID"`
-	ProcessGroupIDs  []string `json:"processGroupIDs"`
-	ProcessMetricsID string   `json:"processMetricsID"`
-	LogEntryIDs      []string `json:"logEntryIDs"`
-	LogMetricsID     string   `json:"logMetricsID"`
+	JobIDs           []string `json:"jobsIds"`
+	JobMetricsID     string   `json:"jobMetricsId"`
+	ProcessGroupIDs  []string `json:"processGroupIds"`
+	ProcessMetricsID string   `json:"processMetricsId"`
+	LogEntryIDs      []string `json:"logEntryIds"`
+	LogMetricsID     string   `json:"logMetricsId"`
 }
 
 // IsNode tells gqlgen that it implements Node.

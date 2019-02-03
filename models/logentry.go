@@ -22,7 +22,7 @@ type LogEntry struct {
 	Level     LogLevel `json:"level"`
 	CreatedAt DateTime `json:"createdAt"`
 	Message   string   `json:"message"`
-	OwnerID   string   `json:"ownerID"`
+	OwnerID   string   `json:"ownerId"`
 }
 
 // IsNode tells gqlgen that it implements Node.

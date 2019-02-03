@@ -20,8 +20,8 @@ import "context"
 type Process struct {
 	ID             string        `json:"id"`
 	Command        string        `json:"command"`
-	ProcessGroupID string        `json:"processGroupID"`
-	ProjectID      string        `json:"projectID"`
+	ProcessGroupID string        `json:"processGroupId"`
+	ProjectID      string        `json:"projectId"`
 	Status         ProcessStatus `json:"status"`
 }
 

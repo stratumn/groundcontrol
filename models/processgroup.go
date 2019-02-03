@@ -20,8 +20,8 @@ import "context"
 type ProcessGroup struct {
 	ID         string   `json:"id"`
 	CreatedAt  DateTime `json:"createdAt"`
-	TaskID     string   `json:"taskID"`
-	ProcessIDs []string `json:"processIDs"`
+	TaskID     string   `json:"taskId"`
+	ProcessIDs []string `json:"processIds"`
 }
 
 // IsNode tells gqlgen that it implements Node.

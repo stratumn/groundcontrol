@@ -20,7 +20,7 @@ import "context"
 type Task struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
-	StepIDs     []string `json:"stepIDs"`
+	StepIDs     []string `json:"stepIds"`
 	WorkspaceID string   `json:"workspace"`
 	IsRunning   bool     `json:"isRunning"`
 }
