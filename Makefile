@@ -32,7 +32,12 @@ clean: clean-generated
 	rm -rf ui/node_modules
 	rm -rf ui/build
 
-test:
+test-ui:
+	cd ui && CI=1 yarn test
+
+test-go:
 	go test ./...
 
-.PHONY: deps gen-ui gen-go test build-ui build install clean-generated clean
+test: test-ui test-go
+
+.PHONY: deps gen-ui gen-go test-ui test-go test build-ui build install clean-generated clean
