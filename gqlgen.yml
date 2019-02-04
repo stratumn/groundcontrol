@@ -13,6 +13,10 @@ resolver:
 models:
   DateTime:
     model: github.com/stratumn/groundcontrol/models.DateTime
+  Node:
+    model: github.com/stratumn/groundcontrol/models.Node
+  Source:
+    model: github.com/stratumn/groundcontrol/models.Source
   Hash:
     model: github.com/stratumn/groundcontrol/models.Hash
   User:

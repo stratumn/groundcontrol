@@ -70,9 +70,16 @@ const (
 )
 
 {{range $index, $type := .}}
+// GetID returns the unique ID of the node.
+func (n {{$type}}) GetID() string {
+	return n.ID
+}
+{{end}}
+
+{{range $index, $type := .}}
 // Store{{$type}} stores a {{$type}}.
 func (n *NodeManager) Store{{$type}}(node {{$type}}) error {
-	identifiers, err := relay.DecodeID(node.ID)
+	identifiers, err := relay.DecodeID(node.GetID())
 	if err != nil {
 		return err
 	}
@@ -80,7 +87,7 @@ func (n *NodeManager) Store{{$type}}(node {{$type}}) error {
 		return ErrType
 	}
 
-	n.store.Store(node.ID, node)
+	n.store.Store(node.GetID(), node)
 
 	return nil
 }

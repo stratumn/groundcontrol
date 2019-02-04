@@ -31,10 +31,16 @@ func checkError(err error) {
 	}
 }
 
+type pair struct {
+	Type     string
+	Concrete string
+}
+
 func main() {
 	types := flag.String("t", "", "A comma separated list of types")
 	filename := flag.String("o", "", "A filename to output the generated code to")
 	testFilename := flag.String("O", "", "A filename to output the generated test code to")
+	concretes := flag.String("C", "", "If a type is an interface, specify a concrete type for tests (ex: Source:GitSource)")
 	flag.Parse()
 
 	w := os.Stdout
@@ -56,6 +62,31 @@ func main() {
 	checkError(err)
 
 	if *testFilename != "" {
+		concreteMap := map[string]string{}
+
+		for _, v := range strings.Split(*concretes, ",") {
+			parts := strings.Split(v, ":")
+			if len(parts) != 2 {
+				fmt.Println("concrete types should be of the form Interface:Concrete")
+				os.Exit(1)
+			}
+			concreteMap[parts[0]] = parts[1]
+		}
+
+		var vars []pair
+
+		for _, v := range strings.Split(*types, ",") {
+			concrete, ok := concreteMap[v]
+			if !ok {
+				concrete = v
+			}
+
+			vars = append(vars, pair{
+				Type:     v,
+				Concrete: concrete,
+			})
+		}
+
 		tf, err := os.OpenFile(*testFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		checkError(err)
 
@@ -65,7 +96,7 @@ func main() {
 		tt, err := template.New("testTmpl").Parse(strings.TrimSpace(testTmpl))
 		checkError(err)
 
-		err = tt.Execute(tf, strings.Split(*types, ","))
+		err = tt.Execute(tf, vars)
 		checkError(err)
 	}
 }
@@ -163,7 +194,7 @@ func applyCursorsTo{{$type}}Slice(slice []{{$type}}, after, before *string) ([]{
 		}
 		hadMore = index > 0
 		for _, node := range slice[index+1:] {
-			edges = append(edges, {{$type}}Edge{Cursor: node.ID, Node: node})
+			edges = append(edges, {{$type}}Edge{Cursor: node.GetID(), Node: node})
 		}
 		return edges, hadMore
 	}
@@ -175,20 +206,20 @@ func applyCursorsTo{{$type}}Slice(slice []{{$type}}, after, before *string) ([]{
 		}
 		hadMore = index < len(slice)-1
 		for _, node := range slice[:index] {
-			edges = append(edges, {{$type}}Edge{Cursor: node.ID, Node: node})
+			edges = append(edges, {{$type}}Edge{Cursor: node.GetID(), Node: node})
 		}
 		return edges, hadMore
 	}
 
 	for _, node := range slice {
-		edges = append(edges, {{$type}}Edge{Cursor: node.ID, Node: node})
+		edges = append(edges, {{$type}}Edge{Cursor: node.GetID(), Node: node})
 	}
 	return edges, hadMore
 }
 
 func indexOf{{$type}}InSlice(slice []{{$type}}, id string) int {
 	for i := range slice {
-		if slice[i].ID == id {
+		if slice[i].GetID() == id {
 			return i
 		}
 	}
@@ -209,27 +240,31 @@ import (
 	"testing"
 )
 
-{{range $index, $type := .}}
-func Test_Paginate{{$type}}Slice(t *testing.T) {
-	var nodes []{{$type}}
+{{range $index, $pair := .}}
+func Test_Paginate{{$pair.Type}}Slice(t *testing.T) {
+	var nodes []{{$pair.Type}}
 	for i := 0; i < 10; i++ {
-		nodes = append(nodes, {{$type}}{
+		nodes = append(nodes, {{$pair.Concrete}}{
 			ID:   fmt.Sprint(i),
 		})
 	}
 
-	var edges []{{$type}}Edge
+	var edges []{{$pair.Type}}Edge
 	for i := 0; i < 10; i++ {
-		edges = append(edges, {{$type}}Edge{
+		edges = append(edges, {{$pair.Type}}Edge{
 			Cursor: fmt.Sprint(i),
 			Node:   nodes[i],
 		})
 	}
 
+	twoStr := "2"
+	threeStr := "3"
+	sixStr := "6"
+	sevenStr := "7"
 	five := 5
 
 	type args struct {
-		slice  []{{$type}}
+		slice  []{{$pair.Type}}
 		after  *string
 		before *string
 		first  *int
@@ -238,21 +273,21 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    {{$type}}Connection
+		want    {{$pair.Type}}Connection
 		wantErr bool
 	}{
 		{
 			"nil",
 			args{nil, nil, nil, nil, nil},
-			{{$type}}Connection{
+			{{$pair.Type}}Connection{
 				Edges: nil,
 				PageInfo: PageInfo{},
 			},
 			false,
 		}, {
 			"empty",
-			args{[]{{$type}}{}, nil, nil, nil, nil},
-			{{$type}}Connection{
+			args{[]{{$pair.Type}}{}, nil, nil, nil, nil},
+			{{$pair.Type}}Connection{
 				Edges: nil,
 				PageInfo: PageInfo{},
 			},
@@ -260,7 +295,7 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 		}, {
 			"all",
 			args{nodes, nil, nil, nil, nil},
-			{{$type}}Connection{
+			{{$pair.Type}}Connection{
 				Edges: edges,
 				PageInfo: PageInfo{
 					HasPreviousPage: false,
@@ -272,8 +307,8 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 			false,
 		}, {
 			"after",
-			args{nodes, &nodes[6].ID, nil, nil, nil},
-			{{$type}}Connection{
+			args{nodes, &sixStr, nil, nil, nil},
+			{{$pair.Type}}Connection{
 				Edges: edges[7:],
 				PageInfo: PageInfo{
 					HasPreviousPage: true,
@@ -285,8 +320,8 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 			false,
 		}, {
 			"before",
-			args{nodes, nil, &nodes[3].ID, nil, nil},
-			{{$type}}Connection{
+			args{nodes, nil, &threeStr, nil, nil},
+			{{$pair.Type}}Connection{
 				Edges: edges[:3],
 				PageInfo: PageInfo{
 					HasPreviousPage: false,
@@ -299,7 +334,7 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 		}, {
 			"first",
 			args{nodes, nil, nil, &five, nil},
-			{{$type}}Connection{
+			{{$pair.Type}}Connection{
 				Edges: edges[:5],
 				PageInfo: PageInfo{
 					HasPreviousPage: false,
@@ -312,7 +347,7 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 		}, {
 			"last",
 			args{nodes, nil, nil, nil, &five},
-			{{$type}}Connection{
+			{{$pair.Type}}Connection{
 				Edges: edges[5:],
 				PageInfo: PageInfo{
 					HasPreviousPage: true,
@@ -324,8 +359,8 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 			false,
 		}, {
 			"after first",
-			args{nodes, &nodes[2].ID, nil, &five, nil},
-			{{$type}}Connection{
+			args{nodes, &twoStr, nil, &five, nil},
+			{{$pair.Type}}Connection{
 				Edges: edges[3:8],
 				PageInfo: PageInfo{
 					HasPreviousPage: true,
@@ -337,8 +372,8 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 			false,
 		}, {
 			"after last",
-			args{nodes, &nodes[2].ID, nil, nil, &five},
-			{{$type}}Connection{
+			args{nodes, &twoStr, nil, nil, &five},
+			{{$pair.Type}}Connection{
 				Edges: edges[5:10],
 				PageInfo: PageInfo{
 					HasPreviousPage: true,
@@ -350,8 +385,8 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 			false,
 		}, {
 			"before first",
-			args{nodes, nil, &nodes[7].ID, &five, nil},
-			{{$type}}Connection{
+			args{nodes, nil, &sevenStr, &five, nil},
+			{{$pair.Type}}Connection{
 				Edges: edges[0:5],
 				PageInfo: PageInfo{
 					HasPreviousPage: false,
@@ -363,8 +398,8 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 			false,
 		}, {
 			"before last",
-			args{nodes, nil, &nodes[7].ID, nil, &five},
-			{{$type}}Connection{
+			args{nodes, nil, &sevenStr, nil, &five},
+			{{$pair.Type}}Connection{
 				Edges: edges[2:7],
 				PageInfo: PageInfo{
 					HasPreviousPage: true,
@@ -378,13 +413,13 @@ func Test_Paginate{{$type}}Slice(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Paginate{{$type}}Slice(tt.args.slice, tt.args.after, tt.args.before, tt.args.first, tt.args.last)
+			got, err := Paginate{{$pair.Type}}Slice(tt.args.slice, tt.args.after, tt.args.before, tt.args.first, tt.args.last)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Paginate{{$type}}Slice() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Paginate{{$pair.Type}}Slice() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Paginate{{$type}}Slice() = %v, want %v", got, tt.want)
+				t.Errorf("Paginate{{$pair.Type}}Slice() = %v, want %v", got, tt.want)
 			}
 		})
 	}

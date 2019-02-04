@@ -58,6 +58,21 @@ interface Node {
 }
 
 """
+A collection of workspaces.
+"""
+interface Source {
+  """
+  The workspaces using Relay pagination.
+  """
+  workspaces(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): WorkspaceConnection!
+}
+
+"""
 A Relay pagination info.
 """
 type PageInfo {
@@ -77,6 +92,34 @@ type PageInfo {
   A cursor pointing to the first edge.
   """
   startCursor: String!
+}
+
+"""
+A Relay connection for sources.
+"""
+type SourceConnection {
+  """
+  The edges for the current page.
+  """
+  edges: [SourceEdge!]!
+  """
+  The pagination info.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+A Relay edge for a source.
+"""
+type SourceEdge {
+  """
+  The cursor pointing to the edge.
+  """
+  cursor: String!
+  """
+  The target node.
+  """
+  node: Source!
 }
 
 """
@@ -368,6 +411,15 @@ type User implements Node {
   """
   id: ID!
   """
+  The sources using Relay pagination.
+  """
+  sources(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): SourceConnection!
+  """
   The workspaces using Relay pagination.
   """
   workspaces(
@@ -442,6 +494,56 @@ type System implements Node {
   The log metrics.
   """
   logMetrics: LogMetrics!
+}
+
+"""
+A collection of workspaces in a directory.
+"""
+type DirectorySource implements Node & Source {
+  """
+  The global ID of the node.
+  """
+  id: ID!
+  """
+  The workspaces using Relay pagination.
+  """
+  workspaces(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): WorkspaceConnection!
+  """
+  The path to the directory containing the workspaces.
+  """
+  directory: String!
+}
+
+"""
+A collection of workspaces in a Git repository.
+"""
+type GitSource implements Node & Source {
+  """
+  The global ID of the node.
+  """
+  id: ID!
+  """
+  The workspaces using Relay pagination.
+  """
+  workspaces(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): WorkspaceConnection!
+  """
+  The Git repository.
+  """
+  repository: String!
+  """
+  The Git branch.
+  """
+  branch: String!
 }
 
 """

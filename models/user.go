@@ -19,11 +19,23 @@ import "context"
 // User contains all the data of the person using the app.
 type User struct {
 	ID           string   `json:"id"`
+	SourceIDs    []string `json:"sourceIds"`
 	WorkspaceIDs []string `json:"workspaceIds"`
 }
 
 // IsNode tells gqlgen that it implements Node.
 func (User) IsNode() {}
+
+// Sources returns the user's sources.
+func (u User) Sources(
+	ctx context.Context,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (SourceConnection, error) {
+	return PaginateSourceIDSliceContext(ctx, u.SourceIDs, after, before, first, last)
+}
 
 // Workspaces returns the user's workspaces.
 func (u User) Workspaces(
