@@ -20,7 +20,7 @@ import { Disposable } from "relay-runtime";
 import { WorkspaceListPage_viewer } from "./__generated__/WorkspaceListPage_viewer.graphql";
 
 import Page from "../components/Page";
-import WorkspacesCardGroup from "../components/WorkspaceCardGroup";
+import WorkspaceCardGroup from "../components/WorkspaceCardGroup";
 import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
 import { commit as pullWorkspace } from "../mutations/pullWorkspace";
@@ -58,7 +58,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
         icon="cubes"
       >
         <WorkspaceSearch onChange={this.handleSearchChange} />
-        <WorkspacesCardGroup
+        <WorkspaceCardGroup
           items={items}
           onClone={this.handleClone}
           onPull={this.handlePull}

@@ -31,6 +31,7 @@ import HttpErrorPage from "./containers/HttpErrorPage";
 import JobListPage from "./containers/JobListPage";
 import LogEntryListPage from "./containers/LogEntryListPage";
 import ProcessGroupListPage from "./containers/ProcessGroupListPage";
+import SourceListPage from "./containers/SourceListPage";
 import WorkspaceListPage from "./containers/WorkspaceListPage";
 import WorkspaceViewPage from "./containers/WorkspaceViewPage";
 
@@ -46,6 +47,14 @@ const workspaceListQuery = graphql`
   query RouterWorkspaceListQuery {
     viewer {
       ...WorkspaceListPage_viewer
+    }
+  }
+`;
+
+const sourceListQuery = graphql`
+  query RouterSourceListQuery {
+    viewer {
+      ...SourceListPage_viewer
     }
   }
 `;
@@ -134,6 +143,12 @@ export default createFarceRouter({
           render={render}
         />
       </Route>
+      <Route
+        path="sources"
+        Component={SourceListPage}
+        query={sourceListQuery}
+        render={render}
+      />
       <Route path="processes">
         <Route
           Component={ProcessGroupListPage}
