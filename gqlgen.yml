@@ -17,6 +17,10 @@ models:
     model: github.com/stratumn/groundcontrol/models.Node
   Source:
     model: github.com/stratumn/groundcontrol/models.Source
+  DirectorySource:
+    model: github.com/stratumn/groundcontrol/models.DirectorySource
+  GitSource:
+    model: github.com/stratumn/groundcontrol/models.GitSource
   Hash:
     model: github.com/stratumn/groundcontrol/models.Hash
   User:

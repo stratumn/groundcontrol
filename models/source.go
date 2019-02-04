@@ -14,12 +14,25 @@
 
 package models
 
-import "github.com/stratumn/groundcontrol/relay"
+import (
+	"context"
+
+	"github.com/stratumn/groundcontrol/relay"
+)
 
 // Source is a collection of workspaces.
 type Source interface {
 	Node
 	IsSource()
+
+	// Workspaces are the workspaces using Relay pagination.
+	Workspaces(
+		ctx context.Context,
+		after *string,
+		before *string,
+		first *int,
+		last *int,
+	) (WorkspaceConnection, error)
 }
 
 // MustLoadSource loads a Source or panics on failure.

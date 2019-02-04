@@ -70,6 +70,10 @@ interface Source {
     first: Int
     last: Int
   ): WorkspaceConnection!
+  """
+  Whether currently loading workspaces.
+  """
+  isLoading: Boolean!
 }
 
 """
@@ -514,6 +518,10 @@ type DirectorySource implements Node & Source {
     last: Int
   ): WorkspaceConnection!
   """
+  Whether currently loading workspaces.
+  """
+  isLoading: Boolean!
+  """
   The path to the directory containing the workspaces.
   """
   directory: String!
@@ -536,6 +544,10 @@ type GitSource implements Node & Source {
     first: Int
     last: Int
   ): WorkspaceConnection!
+  """
+  Whether currently loading workspaces.
+  """
+  isLoading: Boolean!
   """
   The Git repository.
   """
