@@ -68,13 +68,13 @@ If you didn't run `make`, do:
 
 ```
 make deps
-go generate ./...
+make gen-go
 ```
 
 ### Server
 
 ```
-go run main.go [groundcontrol.yml]
+go run . [groundcontrol.yml]
 ```
 
 Server runs on `http://localhost:3333`.
