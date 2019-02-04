@@ -16,27 +16,28 @@ package models
 
 import (
 	"io/ioutil"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/stratumn/groundcontrol/relay"
 )
 
-// SourceConfig contains all the data in a YAML source config file.
-type SourceConfig struct {
-	Filename         string `json:"filename"`
+// SourcesConfig contains all the data in a YAML sources config file.
+type SourcesConfig struct {
+	Filename         string `json:"-" yaml:"-"`
 	DirectorySources []struct {
 		Directory string `json:"directory"`
-	} `json:"directorySources"`
+	} `json:"directorySources" yaml:"directory-sources"`
 	GitSources []struct {
 		Repository string `json:"repository"`
 		Branch     string `json:"branch"`
-	} `json:"gitSources"`
+	} `json:"gitSources" yaml:"git-sources"`
 }
 
-// UpsertNodes upserts nodes for the content of the source config.
+// UpsertNodes upserts nodes for the content of the sources config.
 // The user node must already exists
-func (c SourceConfig) UpsertNodes(nodes *NodeManager, userID string) error {
+func (c SourcesConfig) UpsertNodes(nodes *NodeManager, userID string) error {
 	var sourceIDs []string
 
 	for _, sourceConfig := range c.DirectorySources {
@@ -72,13 +73,34 @@ func (c SourceConfig) UpsertNodes(nodes *NodeManager, userID string) error {
 	return nil
 }
 
-// LoadSourceConfigYAML loads a source config from a YAML file.
-func LoadSourceConfigYAML(filename string) (SourceConfig, error) {
-	config := SourceConfig{
+// Save saves the config to disk, overwriting the file if it exists.
+func (c SourcesConfig) Save() error {
+	bytes, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(c.Filename, bytes, 0644)
+}
+
+// LoadSourcesConfigYAML loads a source config from a YAML file.
+// It will create a file if it doesn't exist.
+func LoadSourcesConfigYAML(filename string) (SourcesConfig, error) {
+	config := SourcesConfig{
 		Filename: filename,
 	}
 
 	bytes, err := ioutil.ReadFile(filename)
+	if os.IsNotExist(err) {
+		config := SourcesConfig{
+			Filename: filename,
+		}
+		if err := config.Save(); err != nil {
+			return SourcesConfig{}, err
+		}
+
+		return LoadSourcesConfigYAML(filename)
+	}
 	if err != nil {
 		return config, err
 	}

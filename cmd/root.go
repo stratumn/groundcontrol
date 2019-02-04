@@ -38,7 +38,7 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "groundcontrol [groundcontrol.yml ...]",
+	Use:   "groundcontrol",
 	Short: "Ground Control is an app to manage multiple Git repositories",
 	Long: `Ground Control is an application to help deal with multi-repository development using a user friendly web interface.
 
@@ -47,7 +47,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 		ctx := context.Background()
 
 		app := app.New(
-			app.OptConfigFilenames(args...),
+			app.OptSourcesFile(viper.GetString("sources-file")),
 			app.OptListenAddress(viper.GetString("listen-address")),
 			app.OptJobConcurrency(viper.GetInt("job-concurrency")),
 			app.OptLogLevel(models.LogLevel(strings.ToUpper(viper.GetString("log-level")))),
@@ -81,6 +81,7 @@ func init() {
 	cobra.OnInitialize(initSettings)
 
 	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings-file", app.DefaultSettingsFile, "settings file")
+	rootCmd.PersistentFlags().String("sources-file", app.DefaultSourcesFile, "sources config file")
 	rootCmd.PersistentFlags().String("listen-address", app.DefaultListenAddress, "address the server should listen on")
 	rootCmd.PersistentFlags().Int("job-concurrency", app.DefaultJobConcurrency, "how many jobs can run concurrency")
 	rootCmd.PersistentFlags().String("log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
@@ -94,6 +95,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool("enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
 
 	for _, flagName := range []string{
+		"sources-file",
 		"listen-address",
 		"job-concurrency",
 		"log-level",

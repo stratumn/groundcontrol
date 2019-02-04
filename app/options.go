@@ -26,9 +26,6 @@ import (
 )
 
 const (
-	// DefaultConfigFilename is the default filename of the config file.
-	DefaultConfigFilename = "groundcontrol.yml"
-
 	// DefaultListenAddress is the default listen address.
 	DefaultListenAddress = ":3333"
 
@@ -64,6 +61,9 @@ var (
 	// DefaultSettingsFile is the default settings file.
 	DefaultSettingsFile = "settings.yml"
 
+	// DefaultSourcesFile is the default sources file.
+	DefaultSourcesFile = "sources.yml"
+
 	// DefaultWorkspacesDirectory is the default workspace directory.
 	DefaultWorkspacesDirectory = "workspaces"
 
@@ -79,6 +79,7 @@ func init() {
 	}
 
 	DefaultSettingsFile = filepath.Join(home, "groundcontrol", DefaultSettingsFile)
+	DefaultSourcesFile = filepath.Join(home, "groundcontrol", DefaultSourcesFile)
 	DefaultWorkspacesDirectory = filepath.Join(home, "groundcontrol", DefaultWorkspacesDirectory)
 	DefaultCacheDirectory = filepath.Join(home, "groundcontrol", DefaultCacheDirectory)
 }
@@ -86,10 +87,10 @@ func init() {
 // Opt represents an app option.
 type Opt func(*App)
 
-// OptConfigFilenames adds config files. This option can be added multiple times.
-func OptConfigFilenames(filenames ...string) Opt {
+// OptSourcesFile sets the sources file.
+func OptSourcesFile(filename string) Opt {
 	return func(app *App) {
-		app.configFilenames = append(app.configFilenames, filenames...)
+		app.sourcesFile = filename
 	}
 }
 

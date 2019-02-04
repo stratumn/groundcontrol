@@ -23,7 +23,6 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -45,7 +44,7 @@ import (
 
 // App contains data about the app.
 type App struct {
-	configFilenames         []string
+	sourcesFile             string
 	listenAddress           string
 	jobConcurrency          int
 	logLevel                models.LogLevel
@@ -64,6 +63,7 @@ type App struct {
 // New creates a new App.
 func New(opts ...Opt) *App {
 	app := &App{
+		sourcesFile:             DefaultSourcesFile,
 		listenAddress:           DefaultListenAddress,
 		jobConcurrency:          DefaultJobConcurrency,
 		logLevel:                DefaultLogLevel,
@@ -80,10 +80,6 @@ func New(opts ...Opt) *App {
 
 	for _, opt := range opts {
 		opt(app)
-	}
-
-	if len(app.configFilenames) < 1 {
-		app.configFilenames = []string{DefaultConfigFilename}
 	}
 
 	return app
@@ -112,7 +108,7 @@ func (a *App) Start(ctx context.Context) error {
 
 	ctx = models.WithModelContext(ctx, modelCtx)
 
-	if err := a.loadConfigs(nodes, viewerID); err != nil {
+	if err := a.loadSources(nodes, viewerID); err != nil {
 		return err
 	}
 
@@ -201,18 +197,16 @@ func (a *App) Start(ctx context.Context) error {
 }
 
 func (a *App) createBaseNodes(nodes *models.NodeManager) (string, string) {
-	unique := strings.Join(a.configFilenames, ";")
-
 	var (
-		viewerID         = relay.EncodeID(models.NodeTypeUser, unique)
-		systemID         = relay.EncodeID(models.NodeTypeSystem, unique)
-		jobMetricsID     = relay.EncodeID(models.NodeTypeJobMetrics, unique)
-		processMetricsID = relay.EncodeID(models.NodeTypeProcessMetrics, unique)
-		logMetricsID     = relay.EncodeID(models.NodeTypeLogMetrics, unique)
+		viewerID         = relay.EncodeID(models.NodeTypeUser)
+		systemID         = relay.EncodeID(models.NodeTypeSystem)
+		jobMetricsID     = relay.EncodeID(models.NodeTypeJobMetrics)
+		processMetricsID = relay.EncodeID(models.NodeTypeProcessMetrics)
+		logMetricsID     = relay.EncodeID(models.NodeTypeLogMetrics)
 	)
 
 	nodes.MustStoreUser(models.User{
-		ID: relay.EncodeID(models.NodeTypeUser, unique),
+		ID: viewerID,
 	})
 
 	nodes.MustStoreLogMetrics(models.LogMetrics{
@@ -237,17 +231,15 @@ func (a *App) createBaseNodes(nodes *models.NodeManager) (string, string) {
 	return viewerID, systemID
 }
 
-func (a *App) loadConfigs(nodes *models.NodeManager, viewerID string) error {
-	for _, filename := range a.configFilenames {
-		config, err := models.LoadConfigYAML(filename)
-		if err != nil {
-			return err
-		}
+func (a *App) loadSources(nodes *models.NodeManager, viewerID string) error {
+	config, err := models.LoadSourcesConfigYAML(a.sourcesFile)
+	if err != nil {
+		return err
+	}
 
-		err = config.CreateNodes(nodes, viewerID)
-		if err != nil {
-			return err
-		}
+	err = config.UpsertNodes(nodes, viewerID)
+	if err != nil {
+		return err
 	}
 
 	return nil

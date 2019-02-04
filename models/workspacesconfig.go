@@ -23,9 +23,9 @@ import (
 	"github.com/stratumn/groundcontrol/relay"
 )
 
-// Config contains all the data in a YAML config file.
-type Config struct {
-	Filename   string `json:"filename"`
+// WorkspacesConfig contains all the data in a YAML workspaces config file.
+type WorkspacesConfig struct {
+	Filename   string `json:"-" yaml:"-"`
 	Workspaces []struct {
 		Slug        string  `json:"slug"`
 		Name        string  `json:"name"`
@@ -36,7 +36,7 @@ type Config struct {
 			Repository  string  `json:"repository"`
 			Branch      string  `json:"branch"`
 			Description *string `json:"description"`
-		} `json:"projects"`
+		} `json:"projects" yaml:",flow"`
 		Tasks []struct {
 			Name  string `json:"name"`
 			Steps []struct {
@@ -49,7 +49,7 @@ type Config struct {
 
 // CreateNodes creates nodes for the content of the config.
 // The user node must already exists
-func (c Config) CreateNodes(nodes *NodeManager, userID string) error {
+func (c WorkspacesConfig) CreateNodes(nodes *NodeManager, userID string) error {
 	var workspaceIDs []string
 
 	for _, workspaceConfig := range c.Workspaces {
@@ -152,9 +152,9 @@ func (c Config) CreateNodes(nodes *NodeManager, userID string) error {
 	return nil
 }
 
-// LoadConfigYAML loads a config from a YAML file.
-func LoadConfigYAML(filename string) (Config, error) {
-	config := Config{
+// LoadWorkspacesConfigYAML loads a config from a YAML file.
+func LoadWorkspacesConfigYAML(filename string) (WorkspacesConfig, error) {
+	config := WorkspacesConfig{
 		Filename: filename,
 	}
 
