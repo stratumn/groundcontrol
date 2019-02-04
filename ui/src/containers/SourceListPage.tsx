@@ -19,6 +19,7 @@ import { Segment } from "semantic-ui-react";
 
 import { SourceListPage_viewer } from "./__generated__/SourceListPage_viewer.graphql";
 
+import AddSourceForm from "../components/AddSourceForm";
 import Page from "../components/Page";
 import SourceList from "../components/SourceList";
 
@@ -35,9 +36,14 @@ export class SourceListPage extends Component<IProps> {
       <Page
         header="Sources"
         subheader="A source is a collection of workspaces. It can either be a directory or a Git repository"
-        icon="cubes"
+        icon="folder open"
       >
         <Segment>
+          <h3>Add a new source</h3>
+          <AddSourceForm />
+        </Segment>
+        <Segment>
+          <h3>Current sources</h3>
           <SourceList items={items} />
         </Segment>
       </Page>
