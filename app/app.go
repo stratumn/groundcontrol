@@ -173,7 +173,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	go jobs.Work(ctx)
-	go a.startPeriodicJobs(models.WithModelContext(ctx, modelCtx))
+	go a.startPeriodicJobs(ctx)
 	if a.enableSignalHandling {
 		go a.handleSignals(ctx, log, pm, server)
 	}
