@@ -29,7 +29,7 @@ func LoadAllCommits(ctx context.Context) []string {
 
 	var jobIDs []string
 
-	for _, workspaceID := range viewer.WorkspaceIDs {
+	for _, workspaceID := range viewer.WorkspaceIDs(ctx) {
 		workspace := nodes.MustLoadWorkspace(workspaceID)
 
 		for _, projectID := range workspace.ProjectIDs {

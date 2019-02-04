@@ -36,6 +36,11 @@ func (GitSource) IsNode() {}
 // IsSource tells gqlgen that it implements Source.
 func (GitSource) IsSource() {}
 
+// GetWorkspaceIDs returns the IDs of the workspaces.
+func (n GitSource) GetWorkspaceIDs() []string {
+	return n.WorkspaceIDs
+}
+
 // Workspaces are the workspaces using Relay pagination.
 func (n GitSource) Workspaces(
 	ctx context.Context,

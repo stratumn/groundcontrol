@@ -47,9 +47,9 @@ type WorkspacesConfig struct {
 	} `json:"workspaces"`
 }
 
-// CreateNodes creates nodes for the content of the config.
-// The user node must already exists
-func (c WorkspacesConfig) CreateNodes(nodes *NodeManager, userID string) error {
+// UpsertNodes upserts nodes for the content of the config.
+// It returns the IDs of the workspaces creates.
+func (c WorkspacesConfig) UpsertNodes(nodes *NodeManager) ([]string, error) {
 	var workspaceIDs []string
 
 	for _, workspaceConfig := range c.Workspaces {
@@ -100,7 +100,7 @@ func (c WorkspacesConfig) CreateNodes(nodes *NodeManager, userID string) error {
 				for _, slug := range stepConfig.Projects {
 					id, ok := projectSlugToID[slug]
 					if !ok {
-						return ErrNotFound
+						return nil, ErrNotFound
 					}
 					projectIDs = append(projectIDs, id)
 				}
@@ -144,12 +144,7 @@ func (c WorkspacesConfig) CreateNodes(nodes *NodeManager, userID string) error {
 		workspaceIDs = append(workspaceIDs, workspace.ID)
 	}
 
-	nodes.MustLockUser(userID, func(user User) {
-		user.WorkspaceIDs = append(user.WorkspaceIDs, workspaceIDs...)
-		nodes.MustStoreUser(user)
-	})
-
-	return nil
+	return workspaceIDs, nil
 }
 
 // LoadWorkspacesConfigYAML loads a config from a YAML file.

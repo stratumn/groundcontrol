@@ -25,6 +25,9 @@ type Source interface {
 	Node
 	IsSource()
 
+	// GetWorkspaceIDs returns the IDs of the workspaces.
+	GetWorkspaceIDs() []string
+
 	// Workspaces are the workspaces using Relay pagination.
 	Workspaces(
 		ctx context.Context,

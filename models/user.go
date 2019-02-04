@@ -18,9 +18,8 @@ import "context"
 
 // User contains all the data of the person using the app.
 type User struct {
-	ID           string   `json:"id"`
-	SourceIDs    []string `json:"sourceIds"`
-	WorkspaceIDs []string `json:"workspaceIds"`
+	ID        string   `json:"id"`
+	SourceIDs []string `json:"sourceIds"`
 }
 
 // IsNode tells gqlgen that it implements Node.
@@ -37,6 +36,20 @@ func (u User) Sources(
 	return PaginateSourceIDSliceContext(ctx, u.SourceIDs, after, before, first, last)
 }
 
+// WorkspaceIDs returns the user's workspace IDs.
+func (u User) WorkspaceIDs(ctx context.Context) []string {
+	var slice []string
+
+	nodes := GetModelContext(ctx).Nodes
+
+	for _, sourceID := range u.SourceIDs {
+		source := nodes.MustLoadSource(sourceID)
+		slice = append(slice, source.GetWorkspaceIDs()...)
+	}
+
+	return slice
+}
+
 // Workspaces returns the user's workspaces.
 func (u User) Workspaces(
 	ctx context.Context,
@@ -45,14 +58,21 @@ func (u User) Workspaces(
 	first *int,
 	last *int,
 ) (WorkspaceConnection, error) {
-	return PaginateWorkspaceIDSliceContext(ctx, u.WorkspaceIDs, after, before, first, last)
+	return PaginateWorkspaceIDSliceContext(
+		ctx,
+		u.WorkspaceIDs(ctx),
+		after,
+		before,
+		first,
+		last,
+	)
 }
 
 // Workspace finds a workspace.
 func (u User) Workspace(ctx context.Context, slug string) *Workspace {
 	nodes := GetModelContext(ctx).Nodes
 
-	for _, id := range u.WorkspaceIDs {
+	for _, id := range u.WorkspaceIDs(ctx) {
 		node := nodes.MustLoadWorkspace(id)
 
 		if node.Slug == slug {
@@ -75,7 +95,7 @@ func (u User) Projects(
 
 	nodes := GetModelContext(ctx).Nodes
 
-	for _, workspaceID := range u.WorkspaceIDs {
+	for _, workspaceID := range u.WorkspaceIDs(ctx) {
 		workspace := nodes.MustLoadWorkspace(workspaceID)
 		slice = append(slice, workspace.ProjectIDs...)
 	}

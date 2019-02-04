@@ -16,6 +16,8 @@ package jobs
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/stratumn/groundcontrol/models"
 )
@@ -56,12 +58,21 @@ func LoadDirectorySource(ctx context.Context, sourceID string, priority models.J
 }
 
 func doLoadDirectorySource(ctx context.Context, sourceID string) error {
+	var (
+		workspaceIDs []string
+		err          error
+	)
+
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 
 	defer func() {
 		nodes.MustLockDirectorySource(sourceID, func(source models.DirectorySource) {
+			if err == nil {
+				source.WorkspaceIDs = workspaceIDs
+			}
+
 			source.IsLoading = false
 			nodes.MustStoreDirectorySource(source)
 		})
@@ -69,5 +80,33 @@ func doLoadDirectorySource(ctx context.Context, sourceID string) error {
 		subs.Publish(models.SourceUpserted, sourceID)
 	}()
 
-	return nil
+	source := nodes.MustLoadDirectorySource(sourceID)
+
+	err = filepath.Walk(
+		source.Directory,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if filepath.Ext(path) != ".yml" {
+				return nil
+			}
+
+			config, err := models.LoadWorkspacesConfigYAML(path)
+			if err != nil {
+				return err
+			}
+
+			ids, err := config.UpsertNodes(nodes)
+			if err != nil {
+				return err
+			}
+
+			workspaceIDs = append(workspaceIDs, ids...)
+
+			return nil
+		},
+	)
+
+	return err
 }
