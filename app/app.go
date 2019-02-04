@@ -50,6 +50,7 @@ type App struct {
 	jobConcurrency          int
 	logLevel                models.LogLevel
 	logCap                  int
+	checkSourcesInterval    time.Duration
 	checkProjectsInterval   time.Duration
 	gracefulShutdownTimeout time.Duration
 	ui                      http.FileSystem
@@ -67,6 +68,7 @@ func New(opts ...Opt) *App {
 		jobConcurrency:          DefaultJobConcurrency,
 		logLevel:                DefaultLogLevel,
 		logCap:                  DefaultLogCap,
+		checkSourcesInterval:    DefaultCheckSourcesInterval,
 		checkProjectsInterval:   DefaultCheckProjectsInterval,
 		gracefulShutdownTimeout: DefaultGracefulShutdownTimeout,
 		openBrowser:             DefaultOpenBrowser,
@@ -173,7 +175,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	go jobs.Work(ctx)
-	go a.startPeriodicJobs(ctx)
+	a.startPeriodicJobs(ctx)
 	if a.enableSignalHandling {
 		go a.handleSignals(ctx, log, pm, server)
 	}
@@ -252,7 +254,14 @@ func (a *App) loadConfigs(nodes *models.NodeManager, viewerID string) error {
 }
 
 func (a *App) startPeriodicJobs(ctx context.Context) {
-	jobs.StartPeriodic(
+	go jobs.StartPeriodic(
+		ctx,
+		a.checkSourcesInterval,
+		func() []string {
+			return jobs.LoadAllSources(ctx)
+		},
+	)
+	go jobs.StartPeriodic(
 		ctx,
 		a.checkProjectsInterval,
 		func() []string {

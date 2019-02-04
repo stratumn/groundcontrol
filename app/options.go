@@ -41,6 +41,9 @@ const (
 	// DefaultLogCap is the default capacity of the logger.
 	DefaultLogCap = 10000
 
+	// DefaultCheckSourcesInterval is the default check sources interval.
+	DefaultCheckSourcesInterval = time.Minute
+
 	// DefaultCheckProjectsInterval is the default check projects interval.
 	DefaultCheckProjectsInterval = time.Minute
 
@@ -115,6 +118,13 @@ func OptLogLevel(level models.LogLevel) Opt {
 func OptLogCap(cap int) Opt {
 	return func(app *App) {
 		app.logCap = cap
+	}
+}
+
+// OptCheckSourcesInterval sets the time to wait between periodic jobs used to check the state of sources.
+func OptCheckSourcesInterval(interval time.Duration) Opt {
+	return func(app *App) {
+		app.checkSourcesInterval = interval
 	}
 }
 
