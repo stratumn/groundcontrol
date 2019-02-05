@@ -56,6 +56,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptCheckProjectsInterval(viper.GetDuration("check-projects-interval")),
 			app.OptGracefulShutdownTimeout(viper.GetDuration("graceful-shutdown-timeout")),
 			app.OptOpenBrowser(viper.GetBool("open-browser")),
+			app.OptGitSourcesDirectory(viper.GetString("git-sources-directory")),
 			app.OptWorkspacesDirectory(viper.GetString("workspaces-directory")),
 			app.OptCacheDirectory(viper.GetString("cache-directory")),
 			app.OptEnableApolloTracing(viper.GetBool("enable-apollo-tracing")),
@@ -90,6 +91,7 @@ func init() {
 	rootCmd.PersistentFlags().Duration("check-projects-interval", app.DefaultCheckProjectsInterval, "how often to check if projects have changed")
 	rootCmd.PersistentFlags().Duration("graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
 	rootCmd.PersistentFlags().Bool("open-browser", app.DefaultOpenBrowser, "open the user interface in a browser")
+	rootCmd.PersistentFlags().String("git-sources-directory", app.DefaultGitSourcesDirectory, "directory for Git sources")
 	rootCmd.PersistentFlags().String("workspaces-directory", app.DefaultWorkspacesDirectory, "directory for workspaces")
 	rootCmd.PersistentFlags().String("cache-directory", app.DefaultCacheDirectory, "directory for the cache")
 	rootCmd.PersistentFlags().Bool("enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
@@ -104,6 +106,7 @@ func init() {
 		"check-projects-interval",
 		"graceful-shutdown-timeout",
 		"open-browser",
+		"git-sources-directory",
 		"workspaces-directory",
 		"cache-directory",
 		"enable-apollo-tracing",

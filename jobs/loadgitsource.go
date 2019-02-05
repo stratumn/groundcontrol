@@ -18,6 +18,8 @@ import (
 	"context"
 
 	"github.com/stratumn/groundcontrol/models"
+	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 // LoadGitSource loads the workspaces of the source and updates it.
@@ -56,12 +58,21 @@ func LoadGitSource(ctx context.Context, sourceID string, priority models.JobPrio
 }
 
 func doLoadGitSource(ctx context.Context, sourceID string) error {
+	var (
+		workspaceIDs []string
+		err          error
+	)
+
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 
 	defer func() {
 		nodes.MustLockGitSource(sourceID, func(source models.GitSource) {
+			if err == nil {
+				source.WorkspaceIDs = workspaceIDs
+			}
+
 			source.IsLoading = false
 			nodes.MustStoreGitSource(source)
 		})
@@ -69,5 +80,53 @@ func doLoadGitSource(ctx context.Context, sourceID string) error {
 		subs.Publish(models.SourceUpserted, sourceID)
 	}()
 
-	return nil
+	directory, err := cloneOrFetchSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
+	workspaceIDs, err = walkSourceDirectory(ctx, directory)
+
+	return err
+}
+
+func cloneOrFetchSource(ctx context.Context, sourceID string) (string, error) {
+	var (
+		repo *git.Repository
+		err  error
+	)
+
+	modelCtx := models.GetModelContext(ctx)
+	source := modelCtx.Nodes.MustLoadGitSource(sourceID)
+	directory := modelCtx.GetGitSourcePath(source.Repository, source.Branch)
+
+	if source.IsCloned(ctx) {
+		repo, err = git.PlainOpen(directory)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if repo != nil {
+		err = repo.FetchContext(
+			ctx,
+			&git.FetchOptions{},
+		)
+	} else {
+		repo, err = git.PlainCloneContext(
+			ctx,
+			directory,
+			false,
+			&git.CloneOptions{
+				URL:           source.Repository,
+				ReferenceName: plumbing.NewBranchReferenceName(source.Branch),
+			},
+		)
+	}
+
+	if err != nil && err != git.NoErrAlreadyUpToDate {
+		return "", err
+	}
+
+	return directory, nil
 }

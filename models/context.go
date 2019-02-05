@@ -24,6 +24,9 @@ type contextKey string
 
 const modelContextKey contextKey = "model_context"
 
+// ProjectGitSourcePathGetter is a function that returns the path to a Git source.
+type ProjectGitSourcePathGetter func(repo, branch string) string
+
 // ProjectPathGetter is a function that returns the path to a project.
 type ProjectPathGetter func(workspaceSlug, repo, branch string) string
 
@@ -38,6 +41,7 @@ type ModelContext struct {
 	PM                  *ProcessManager
 	Subs                *pubsub.PubSub
 	Sources             *SourcesConfig
+	GetGitSourcePath    ProjectGitSourcePathGetter
 	GetProjectPath      ProjectPathGetter
 	GetProjectCachePath ProjectCachePathGetter
 	ViewerID            string

@@ -575,6 +575,10 @@ type GitSource implements Node & Source {
   The Git branch.
   """
   branch: String!
+  """
+  Whether cloned.
+  """
+  isCloned: Boolean!
 }
 
 """

@@ -14,7 +14,10 @@
 
 package models
 
-import "context"
+import (
+	"context"
+	"os"
+)
 
 // GitSource is a collection of workspaces in a Git repository.
 type GitSource struct {
@@ -57,4 +60,17 @@ func (n GitSource) Workspaces(
 		first,
 		last,
 	)
+}
+
+// IsCloned checks if the project is cloned.
+func (n GitSource) IsCloned(ctx context.Context) bool {
+	getGitSourcePath := GetModelContext(ctx).GetGitSourcePath
+	directory := getGitSourcePath(n.Repository, n.Branch)
+
+	return n.isCloned(directory)
+}
+
+func (n GitSource) isCloned(directory string) bool {
+	_, err := os.Stat(directory)
+	return !os.IsNotExist(err)
 }

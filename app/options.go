@@ -64,6 +64,9 @@ var (
 	// DefaultSourcesFile is the default sources file.
 	DefaultSourcesFile = "sources.yml"
 
+	// DefaultGitSourcesDirectory is the default Git sources directory.
+	DefaultGitSourcesDirectory = "git-sources"
+
 	// DefaultWorkspacesDirectory is the default workspace directory.
 	DefaultWorkspacesDirectory = "workspaces"
 
@@ -80,6 +83,7 @@ func init() {
 
 	DefaultSettingsFile = filepath.Join(home, "groundcontrol", DefaultSettingsFile)
 	DefaultSourcesFile = filepath.Join(home, "groundcontrol", DefaultSourcesFile)
+	DefaultGitSourcesDirectory = filepath.Join(home, "groundcontrol", DefaultGitSourcesDirectory)
 	DefaultWorkspacesDirectory = filepath.Join(home, "groundcontrol", DefaultWorkspacesDirectory)
 	DefaultCacheDirectory = filepath.Join(home, "groundcontrol", DefaultCacheDirectory)
 }
@@ -154,6 +158,13 @@ func OptUI(fs http.FileSystem) Opt {
 func OptOpenBrowser(open bool) Opt {
 	return func(app *App) {
 		app.openBrowser = open
+	}
+}
+
+// OptGitSourcesDirectory sets the directory for Git sources.
+func OptGitSourcesDirectory(dir string) Opt {
+	return func(app *App) {
+		app.gitSourcesDirectory = dir
 	}
 }
 

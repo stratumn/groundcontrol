@@ -141,7 +141,8 @@ func cloneOrFetch(ctx context.Context, projectID string) (repo *git.Repository, 
 	} else {
 		repo, err = git.PlainCloneContext(
 			ctx,
-			cacheDir, true,
+			cacheDir,
+			true,
 			&git.CloneOptions{
 				URL:           project.Repository,
 				ReferenceName: plumbing.NewBranchReferenceName(project.Branch),

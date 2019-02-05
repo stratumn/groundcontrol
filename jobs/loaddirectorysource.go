@@ -82,12 +82,27 @@ func doLoadDirectorySource(ctx context.Context, sourceID string) error {
 
 	source := nodes.MustLoadDirectorySource(sourceID)
 
+	workspaceIDs, err = walkSourceDirectory(ctx, source.Directory)
+
+	return err
+}
+
+func walkSourceDirectory(ctx context.Context, directory string) (workspaceIDs []string, err error) {
+	modelCtx := models.GetModelContext(ctx)
+
 	err = filepath.Walk(
-		source.Directory,
+		directory,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
 			if filepath.Ext(path) != ".yml" {
 				return nil
 			}
@@ -97,7 +112,7 @@ func doLoadDirectorySource(ctx context.Context, sourceID string) error {
 				return err
 			}
 
-			ids, err := config.UpsertNodes(nodes)
+			ids, err := config.UpsertNodes(modelCtx.Nodes)
 			if err != nil {
 				return err
 			}
@@ -108,5 +123,5 @@ func doLoadDirectorySource(ctx context.Context, sourceID string) error {
 		},
 	)
 
-	return err
+	return
 }

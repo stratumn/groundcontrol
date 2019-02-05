@@ -54,6 +54,7 @@ type App struct {
 	gracefulShutdownTimeout time.Duration
 	ui                      http.FileSystem
 	openBrowser             bool
+	gitSourcesDirectory     string
 	workspacesDirectory     string
 	cacheDirectory          string
 	enableApolloTracing     bool
@@ -72,6 +73,7 @@ func New(opts ...Opt) *App {
 		checkProjectsInterval:   DefaultCheckProjectsInterval,
 		gracefulShutdownTimeout: DefaultGracefulShutdownTimeout,
 		openBrowser:             DefaultOpenBrowser,
+		gitSourcesDirectory:     DefaultGitSourcesDirectory,
 		workspacesDirectory:     DefaultWorkspacesDirectory,
 		cacheDirectory:          DefaultCacheDirectory,
 		enableApolloTracing:     DefaultEnableApolloTracing,
@@ -106,6 +108,7 @@ func (a *App) Start(ctx context.Context) error {
 		PM:                  pm,
 		Subs:                subs,
 		Sources:             sources,
+		GetGitSourcePath:    a.getGitSourcePath,
 		GetProjectPath:      a.getProjectPath,
 		GetProjectCachePath: a.getProjectCachePath,
 		ViewerID:            viewerID,
@@ -335,6 +338,13 @@ func (a *App) openAddressInBrowser(log *models.Logger) {
 			log.Warning("could not resolve address because %s", err.Error())
 		}
 	}
+}
+
+func (a *App) getGitSourcePath(repo, branch string) string {
+	name := path.Base(repo)
+	ext := path.Ext(name)
+	name = name[:len(name)-len(ext)]
+	return filepath.Join(a.gitSourcesDirectory, name, branch)
 }
 
 func (a *App) getProjectPath(workspaceSlug, repo, branch string) string {
