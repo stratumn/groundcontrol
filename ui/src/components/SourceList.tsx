@@ -15,10 +15,7 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
-import {
-  List,
-  Segment,
- } from "semantic-ui-react";
+import { List } from "semantic-ui-react";
 
 import { SourceList_items } from "./__generated__/SourceList_items.graphql";
 
@@ -35,7 +32,7 @@ export class SourceList extends Component<IProps> {
     const items = this.props.items;
 
     if (items.length < 1) {
-      return <Segment>There are no sources at this time.</Segment>;
+      return <p>There are no sources at this time.</p>;
     }
 
     const listItems = items.map((item) => {

@@ -20,6 +20,7 @@ import { Disposable } from "relay-runtime";
 import { WorkspaceListPage_viewer } from "./__generated__/WorkspaceListPage_viewer.graphql";
 
 import Page from "../components/Page";
+import Welcome from "../components/Welcome";
 import WorkspaceCardGroup from "../components/WorkspaceCardGroup";
 import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
@@ -44,6 +45,10 @@ export class WorkspaceListPage extends Component<IProps, IState> {
   private disposables: Disposable[] = [];
 
   public render() {
+    if (this.props.viewer.sources.edges.length < 1) {
+      return <Welcome />;
+    }
+ 
     const query = this.state.query;
     let items = this.props.viewer.workspaces.edges.map(({ node }) => node);
 
@@ -94,6 +99,13 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 
 export default createFragmentContainer(WorkspaceListPage, graphql`
   fragment WorkspaceListPage_viewer on User {
+    sources(first: 1) {
+      edges {
+        node {
+          id
+        }
+      }
+    }
     workspaces {
       edges {
         node {
