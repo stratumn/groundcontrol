@@ -34,17 +34,19 @@ type SourcesConfig struct {
 // DirectorySourceConfig contains all the data in a YAML directory source config file.
 type DirectorySourceConfig struct {
 	Directory string `json:"directory"`
+	ID        string `json:"-" yaml:"-"`
 }
 
 // GitSourceConfig contains all the data in a YAML Git source config file.
 type GitSourceConfig struct {
 	Repository string `json:"repository"`
 	Branch     string `json:"branch"`
+	ID         string `json:"-" yaml:"-"`
 }
 
 // UpsertNodes upserts nodes for the content of the sources config.
 // The user node must already exists.
-func (c SourcesConfig) UpsertNodes(
+func (c *SourcesConfig) UpsertNodes(
 	nodes *NodeManager,
 	subs *pubsub.PubSub,
 	userID string,
@@ -52,18 +54,19 @@ func (c SourcesConfig) UpsertNodes(
 	return nodes.MustLockUserE(userID, func(user User) error {
 		var sourceIDs []string
 
-		for _, sourceConfig := range c.DirectorySources {
+		for i, sourceConfig := range c.DirectorySources {
 			source := DirectorySource{
 				ID:        relay.EncodeID(NodeTypeDirectorySource, sourceConfig.Directory),
 				Directory: sourceConfig.Directory,
 			}
 
+			c.DirectorySources[i].ID = source.ID
 			sourceIDs = append(sourceIDs, source.ID)
 			nodes.MustStoreDirectorySource(source)
 			subs.Publish(SourceUpserted, source.ID)
 		}
 
-		for _, sourceConfig := range c.GitSources {
+		for i, sourceConfig := range c.GitSources {
 			source := GitSource{
 				ID: relay.EncodeID(
 					NodeTypeGitSource,
@@ -74,6 +77,7 @@ func (c SourcesConfig) UpsertNodes(
 				Branch:     sourceConfig.Branch,
 			}
 
+			c.GitSources[i].ID = source.ID
 			sourceIDs = append(sourceIDs, source.ID)
 			nodes.MustStoreGitSource(source)
 			subs.Publish(SourceUpserted, source.ID)
@@ -118,6 +122,7 @@ func (c *SourcesConfig) UpsertDirectorySource(
 			c.DirectorySources,
 			DirectorySourceConfig{
 				Directory: input.Directory,
+				ID:        source.ID,
 			},
 		)
 
@@ -162,6 +167,7 @@ func (c *SourcesConfig) UpsertGitSource(
 			GitSourceConfig{
 				Repository: input.Repository,
 				Branch:     input.Branch,
+				ID:         source.ID,
 			},
 		)
 
@@ -169,6 +175,67 @@ func (c *SourcesConfig) UpsertGitSource(
 	})
 
 	return source.ID
+}
+
+// DeleteSource deletes a source.
+func (c *SourcesConfig) DeleteSource(
+	nodes *NodeManager,
+	subs *pubsub.PubSub,
+	userID string,
+	id string,
+) error {
+	return nodes.MustLockUserE(userID, func(user User) error {
+		parts, err := relay.DecodeID(id)
+		if err != nil {
+			return err
+		}
+
+		for i, v := range user.SourceIDs {
+			if v == id {
+				user.SourceIDs = append(
+					user.SourceIDs[:i],
+					user.SourceIDs[i+1:]...,
+				)
+				break
+			}
+		}
+
+		switch parts[0] {
+		case NodeTypeDirectorySource:
+			if err := nodes.DeleteDirectorySource(id); err != nil {
+				return err
+			}
+			for i, v := range c.DirectorySources {
+				if v.ID == id {
+					c.DirectorySources = append(
+						c.DirectorySources[:i],
+						c.DirectorySources[i+1:]...,
+					)
+					break
+				}
+			}
+		case NodeTypeGitSource:
+			if err := nodes.DeleteGitSource(id); err != nil {
+				return err
+			}
+			for i, v := range c.GitSources {
+				if v.ID == id {
+					c.GitSources = append(
+						c.GitSources[:i],
+						c.GitSources[i+1:]...,
+					)
+					break
+				}
+			}
+		default:
+			return ErrType
+		}
+
+		nodes.MustStoreUser(user)
+		subs.Publish(SourceDeleted, id)
+
+		return nil
+	})
 }
 
 // Save saves the config to disk, overwriting the file if it exists.

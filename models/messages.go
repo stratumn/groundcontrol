@@ -17,6 +17,7 @@ package models
 // Message types.
 const (
 	SourceUpserted        = "SOURCE_UPSERTED"
+	SourceDeleted         = "SOURCE_DELETED"
 	WorkspaceUpdated      = "WORKSPACE_UPDATED"
 	ProjectUpdated        = "PROJECT_UPDATED"
 	TaskUpdated           = "TASK_UPDATED"

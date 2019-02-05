@@ -28,6 +28,27 @@ type subscriptionResolver struct {
 	*Resolver
 }
 
+func (r *subscriptionResolver) SourceDeleted(
+	ctx context.Context,
+	id *string,
+) (<-chan string, error) {
+	ch := make(chan string, SubscriptionChannelSize)
+
+	r.Subs.Subscribe(ctx, models.SourceDeleted, func(msg interface{}) {
+		sourceID := msg.(string)
+		if id != nil && *id != sourceID {
+			return
+		}
+
+		select {
+		case ch <- sourceID:
+		default:
+		}
+	})
+
+	return ch, nil
+}
+
 // Define custom subscriptions for the log because we don't want to log them to avoid infinite loops.
 
 func (r *subscriptionResolver) LogEntryAdded(
