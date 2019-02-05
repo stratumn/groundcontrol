@@ -37,6 +37,7 @@ type ModelContext struct {
 	Jobs                *JobManager
 	PM                  *ProcessManager
 	Subs                *pubsub.PubSub
+	Sources             *SourcesConfig
 	GetProjectPath      ProjectPathGetter
 	GetProjectCachePath ProjectCachePathGetter
 	ViewerID            string

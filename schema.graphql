@@ -48,6 +48,21 @@ enum LogLevel {
 }
 
 """
+An input for a repository source.
+"""
+input DirectorySourceInput {
+  directory: String!
+}
+
+"""
+An input for a Git source.
+"""
+input GitSourceInput {
+  repository: String!
+  branch: String!
+}
+
+"""
 A Relay node.
 """
 interface Node {
@@ -1009,6 +1024,14 @@ type Query {
 The root mutation resolver.
 """
 type Mutation {
+  """
+  Add a directory source.
+  """
+  addDirectorySource(input: DirectorySourceInput!): DirectorySource!
+  """
+  Add a Git source.
+  """
+  addGitSource(input: GitSourceInput!): GitSource!
   """
   Queue a job to load the commits of a project.
   """

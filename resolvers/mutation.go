@@ -25,6 +25,38 @@ type mutationResolver struct {
 	*Resolver
 }
 
+func (r *mutationResolver) AddDirectorySource(
+	ctx context.Context,
+	input models.DirectorySourceInput,
+) (models.DirectorySource, error) {
+	modelCtx := models.GetModelContext(ctx)
+
+	id := modelCtx.Sources.UpsertDirectorySource(
+		modelCtx.Nodes,
+		modelCtx.Subs,
+		modelCtx.ViewerID,
+		input,
+	)
+
+	return modelCtx.Nodes.MustLoadDirectorySource(id), nil
+}
+
+func (r *mutationResolver) AddGitSource(
+	ctx context.Context,
+	input models.GitSourceInput,
+) (models.GitSource, error) {
+	modelCtx := models.GetModelContext(ctx)
+
+	id := modelCtx.Sources.UpsertGitSource(
+		modelCtx.Nodes,
+		modelCtx.Subs,
+		modelCtx.ViewerID,
+		input,
+	)
+
+	return modelCtx.Nodes.MustLoadGitSource(id), nil
+}
+
 func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (models.Job, error) {
 	nodes := models.GetModelContext(ctx).Nodes
 

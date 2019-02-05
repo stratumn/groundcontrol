@@ -105,8 +105,8 @@ goreleaser
 
 #### Server
 
-- All models must be *pure*. Mutations must create a new copy of the model. Avoid pointer accessors for models.
-- Reference models by ID. Do not keep pointers. Do not pass models around.
+- GraphQL models should be *pure*. Mutations should create a new copy of the model. Avoid pointer accessors for models.
+- Reference GraphQL models by ID. Do not keep pointers. Do not pass models around.
 - Models should only store GraphQL fields and IDs of nodes they reference. They must not store a mutex. Use `NodeManager.Lock()`.
 - Queries must have no side effects (except appending the log). This may require more mutations triggered by the client.
 

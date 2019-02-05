@@ -94,12 +94,18 @@ func (a *App) Start(ctx context.Context) error {
 	jobs := models.NewJobManager(a.jobConcurrency)
 	pm := models.NewProcessManager()
 
+	sources, err := a.loadSources(nodes, subs, viewerID)
+	if err != nil {
+		return err
+	}
+
 	modelCtx := &models.ModelContext{
 		Nodes:               nodes,
 		Log:                 log,
 		Jobs:                jobs,
 		PM:                  pm,
 		Subs:                subs,
+		Sources:             sources,
 		GetProjectPath:      a.getProjectPath,
 		GetProjectCachePath: a.getProjectCachePath,
 		ViewerID:            viewerID,
@@ -107,10 +113,6 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	ctx = models.WithModelContext(ctx, modelCtx)
-
-	if err := a.loadSources(nodes, viewerID); err != nil {
-		return err
-	}
 
 	router := chi.NewRouter()
 
@@ -231,18 +233,22 @@ func (a *App) createBaseNodes(nodes *models.NodeManager) (string, string) {
 	return viewerID, systemID
 }
 
-func (a *App) loadSources(nodes *models.NodeManager, viewerID string) error {
+func (a *App) loadSources(
+	nodes *models.NodeManager,
+	subs *pubsub.PubSub,
+	viewerID string,
+) (*models.SourcesConfig, error) {
 	config, err := models.LoadSourcesConfigYAML(a.sourcesFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = config.UpsertNodes(nodes, viewerID)
+	err = config.UpsertNodes(nodes, subs, viewerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return config, nil
 }
 
 func (a *App) startPeriodicJobs(ctx context.Context) {
