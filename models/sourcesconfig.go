@@ -17,6 +17,7 @@ package models
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -238,6 +239,10 @@ func (c *SourcesConfig) DeleteSource(
 func (c SourcesConfig) Save() error {
 	bytes, err := yaml.Marshal(c)
 	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(c.Filename), 0755); err != nil {
 		return err
 	}
 
