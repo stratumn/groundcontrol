@@ -45,8 +45,8 @@ func Clone(ctx context.Context, projectID string, priority models.JobPriority) (
 		return "", err
 	}
 
-	subs.Publish(models.ProjectUpdated, projectID)
-	subs.Publish(models.WorkspaceUpdated, workspaceID)
+	subs.Publish(models.ProjectUpserted, projectID)
+	subs.Publish(models.WorkspaceUpserted, workspaceID)
 
 	jobID := modelCtx.Jobs.Add(
 		models.GetModelContext(ctx),
@@ -77,8 +77,8 @@ func doClone(ctx context.Context, projectID string, workspaceID string) error {
 			nodes.MustStoreProject(project)
 		})
 
-		subs.Publish(models.ProjectUpdated, projectID)
-		subs.Publish(models.WorkspaceUpdated, workspaceID)
+		subs.Publish(models.ProjectUpserted, projectID)
+		subs.Publish(models.WorkspaceUpserted, workspaceID)
 	}()
 
 	workspace := project.Workspace(ctx)

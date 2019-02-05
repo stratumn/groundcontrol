@@ -14,11 +14,11 @@
 
 import graphql from "babel-plugin-relay/macro";
 import { requestSubscription } from "react-relay";
-import { Environment } from "relay-runtime";
+import { ConnectionHandler, Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription workspaceUpdatedSubscription($id: ID) {
-    workspaceUpdated(id: $id) {
+  subscription workspaceUpsertedSubscription($id: ID) {
+    workspaceUpserted(id: $id) {
       ...WorkspaceCard_item
       ...WorkspaceMenu_workspace
       projects {
@@ -38,6 +38,42 @@ export function subscribe(environment: Environment, id?: string) {
     {
       onError: (error) => console.error(error),
       subscription,
+      updater: (store) => {
+        const record = store.getRootField("workspaceUpserted")!;
+        const recordId = record.getValue("id");
+        const viewer = store.getRoot().getLinkedRecord("viewer");
+
+        const connection = ConnectionHandler.getConnection(
+          viewer,
+          "WorkspaceListPage_workspaces",
+        );
+
+        if (connection) {
+          const edges = connection.getLinkedRecords("edges");
+          let exists = false;
+
+          for (const e of edges) {
+            const id = e.getLinkedRecord("node")!.getValue("id");
+
+            if (recordId === id) {
+              exists = true;
+              break;
+            }
+          }
+
+          if (exists) {
+            return;
+          }
+
+          const edge = ConnectionHandler.createEdge(
+            store,
+            connection,
+            record,
+            "WorkspacesConnection",
+          );
+          ConnectionHandler.insertEdgeBefore(connection, edge);
+        }
+    },
       variables: { id },
     },
   );

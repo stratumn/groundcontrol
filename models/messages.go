@@ -18,9 +18,9 @@ package models
 const (
 	SourceUpserted        = "SOURCE_UPSERTED"
 	SourceDeleted         = "SOURCE_DELETED"
-	WorkspaceUpdated      = "WORKSPACE_UPDATED"
-	ProjectUpdated        = "PROJECT_UPDATED"
-	TaskUpdated           = "TASK_UPDATED"
+	WorkspaceUpserted     = "WORKSPACE_UPSERTED"
+	ProjectUpserted       = "PROJECT_UPSERTED"
+	TaskUpserted          = "TASK_UPSERTED"
 	JobUpserted           = "JOB_UPSERTED"
 	JobMetricsUpdated     = "JOB_METRICS_UPDATED"
 	ProcessGroupUpserted  = "PROCESS_GROUP_UPSERTED"

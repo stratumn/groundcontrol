@@ -53,8 +53,8 @@ func Pull(ctx context.Context, projectID string, priority models.JobPriority) (s
 		return "", err
 	}
 
-	subs.Publish(models.ProjectUpdated, projectID)
-	subs.Publish(models.WorkspaceUpdated, workspaceID)
+	subs.Publish(models.ProjectUpserted, projectID)
+	subs.Publish(models.WorkspaceUpserted, workspaceID)
 
 	jobID := modelCtx.Jobs.Add(
 		models.GetModelContext(ctx),
@@ -80,8 +80,8 @@ func doPull(ctx context.Context, projectID string, workspaceID string) error {
 			nodes.MustStoreProject(project)
 		})
 
-		subs.Publish(models.ProjectUpdated, projectID)
-		subs.Publish(models.WorkspaceUpdated, workspaceID)
+		subs.Publish(models.ProjectUpserted, projectID)
+		subs.Publish(models.WorkspaceUpserted, workspaceID)
 	}()
 
 	project := nodes.MustLoadProject(projectID)
@@ -168,8 +168,8 @@ func doPull(ctx context.Context, projectID string, workspaceID string) error {
 		nodes.MustStoreProject(project)
 	})
 
-	subs.Publish(models.ProjectUpdated, projectID)
-	subs.Publish(models.WorkspaceUpdated, workspaceID)
+	subs.Publish(models.ProjectUpserted, projectID)
+	subs.Publish(models.WorkspaceUpserted, workspaceID)
 
 	return nil
 }

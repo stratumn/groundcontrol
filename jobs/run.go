@@ -45,8 +45,8 @@ func Run(ctx context.Context, taskID string, priority models.JobPriority) (strin
 		return "", err
 	}
 
-	subs.Publish(models.TaskUpdated, taskID)
-	subs.Publish(models.WorkspaceUpdated, workspaceID)
+	subs.Publish(models.TaskUpserted, taskID)
+	subs.Publish(models.WorkspaceUpserted, workspaceID)
 
 	jobID := modelCtx.Jobs.Add(
 		models.GetModelContext(ctx),
@@ -74,8 +74,8 @@ func doRun(ctx context.Context, taskID string, workspaceID string, systemID stri
 			nodes.MustStoreTask(task)
 		})
 
-		subs.Publish(models.TaskUpdated, taskID)
-		subs.Publish(models.WorkspaceUpdated, workspaceID)
+		subs.Publish(models.TaskUpserted, taskID)
+		subs.Publish(models.WorkspaceUpserted, workspaceID)
 	}()
 
 	workspace := nodes.MustLoadWorkspace(workspaceID)

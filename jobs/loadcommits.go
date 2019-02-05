@@ -51,8 +51,8 @@ func LoadCommits(ctx context.Context, projectID string, priority models.JobPrior
 		return "", err
 	}
 
-	subs.Publish(models.ProjectUpdated, projectID)
-	subs.Publish(models.WorkspaceUpdated, workspaceID)
+	subs.Publish(models.ProjectUpserted, projectID)
+	subs.Publish(models.WorkspaceUpserted, workspaceID)
 
 	jobID := modelCtx.Jobs.Add(
 		models.GetModelContext(ctx),
@@ -83,8 +83,8 @@ func doLoadCommits(ctx context.Context, projectID string, workspaceID string) er
 			nodes.MustStoreProject(project)
 		})
 
-		subs.Publish(models.ProjectUpdated, projectID)
-		subs.Publish(models.WorkspaceUpdated, workspaceID)
+		subs.Publish(models.ProjectUpserted, projectID)
+		subs.Publish(models.WorkspaceUpserted, workspaceID)
 	}()
 
 	project := nodes.MustLoadProject(projectID)

@@ -1110,17 +1110,17 @@ type Subscription {
   """
   sourceDeleted(id: ID): DeletedNode!
   """
-  Receive a workspace when updated including child nodes.
+  Receive a workspace when added updated including child nodes.
   """
-  workspaceUpdated(id: ID): Workspace!
+  workspaceUpserted(id: ID): Workspace!
   """
-  Receive a project when updated including child nodes.
+  Receive a project when added or updated including child nodes.
   """
-  projectUpdated(id: ID): Project!
+  projectUpserted(id: ID): Project!
   """
-  Receive a task when updated including child nodes.
+  Receive a task when added or updated including child nodes.
   """
-  taskUpdated(id: ID): Task!
+  taskUpserted(id: ID): Task!
   """
   Receive a job when added or updated.
   """

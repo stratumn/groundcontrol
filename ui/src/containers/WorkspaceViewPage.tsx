@@ -30,7 +30,7 @@ import { commit as loadWorkspaceCommits } from "../mutations/loadWorkspaceCommit
 import { commit as pullProject } from "../mutations/pullProject";
 import { commit as pullWorkspace } from "../mutations/pullWorkspace";
 import { commit as run } from "../mutations/run";
-import { subscribe } from "../subscriptions/workspaceUpdated";
+import { subscribe } from "../subscriptions/workspaceUpserted";
 
 import "./WorkspaceViewPage.css";
 

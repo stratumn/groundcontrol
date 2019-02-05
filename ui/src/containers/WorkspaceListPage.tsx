@@ -25,7 +25,7 @@ import WorkspaceCardGroup from "../components/WorkspaceCardGroup";
 import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
 import { commit as pullWorkspace } from "../mutations/pullWorkspace";
-import { subscribe } from "../subscriptions/workspaceUpdated";
+import { subscribe } from "../subscriptions/workspaceUpserted";
 
 interface IProps {
   relay: RelayProp;
@@ -106,7 +106,7 @@ export default createFragmentContainer(WorkspaceListPage, graphql`
         }
       }
     }
-    workspaces {
+    workspaces(first: 10000) @connection(key: "WorkspaceListPage_workspaces") {
       edges {
         node {
           ...WorkspaceCardGroup_items
