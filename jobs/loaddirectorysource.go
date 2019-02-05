@@ -103,6 +103,10 @@ func walkSourceDirectory(ctx context.Context, directory string) (workspaceIDs []
 			default:
 			}
 
+			if info.IsDir() && info.Name() == ".git" {
+				return filepath.SkipDir
+			}
+
 			if filepath.Ext(path) != ".yml" {
 				return nil
 			}
