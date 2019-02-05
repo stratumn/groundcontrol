@@ -31,8 +31,8 @@ type subscriptionResolver struct {
 func (r *subscriptionResolver) SourceDeleted(
 	ctx context.Context,
 	id *string,
-) (<-chan string, error) {
-	ch := make(chan string, SubscriptionChannelSize)
+) (<-chan models.DeletedNode, error) {
+	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
 
 	r.Subs.Subscribe(ctx, models.SourceDeleted, func(msg interface{}) {
 		sourceID := msg.(string)
@@ -41,7 +41,7 @@ func (r *subscriptionResolver) SourceDeleted(
 		}
 
 		select {
-		case ch <- sourceID:
+		case ch <- models.DeletedNode{ID: sourceID}:
 		default:
 		}
 	})

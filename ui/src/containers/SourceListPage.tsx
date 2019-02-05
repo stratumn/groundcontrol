@@ -25,7 +25,9 @@ import Page from "../components/Page";
 import SourceList from "../components/SourceList";
 import { commit as addDirectorySource } from "../mutations/addDirectorySource";
 import { commit as addGitSource } from "../mutations/addGitSource";
-import { subscribe } from "../subscriptions/sourceUpserted";
+import { commit as deleteSource } from "../mutations/deleteSource";
+import { subscribe as subscribeSourceDeleted } from "../subscriptions/sourceDeleted";
+import { subscribe as subscribeSourceUpserted } from "../subscriptions/sourceUpserted";
 
 interface IProps {
   relay: RelayProp;
@@ -54,14 +56,18 @@ export class SourceListPage extends Component<IProps> {
         </Segment>
         <Segment>
           <h3>Current Sources</h3>
-          <SourceList items={items} />
+          <SourceList
+            items={items}
+            onDelete={this.handleDeleteSource}
+          />
         </Segment>
       </Page>
     );
   }
 
   public componentDidMount() {
-    this.disposables.push(subscribe(this.props.relay.environment));
+    this.disposables.push(subscribeSourceUpserted(this.props.relay.environment));
+    this.disposables.push(subscribeSourceDeleted(this.props.relay.environment));
   }
 
   public componentWillUnmount() {
@@ -83,6 +89,10 @@ export class SourceListPage extends Component<IProps> {
       branch,
       repository,
     });
+  }
+
+  private handleDeleteSource = (id: string) => {
+    deleteSource(this.props.relay.environment, id);
   }
 
 }

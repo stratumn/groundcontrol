@@ -75,7 +75,7 @@ func (r *mutationResolver) AddGitSource(
 	return modelCtx.Nodes.MustLoadGitSource(id), nil
 }
 
-func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (string, error) {
+func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (models.DeletedNode, error) {
 	modelCtx := models.GetModelContext(ctx)
 
 	err := modelCtx.Sources.DeleteSource(
@@ -85,10 +85,10 @@ func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (string,
 		id,
 	)
 	if err != nil {
-		return "", nil
+		return models.DeletedNode{}, nil
 	}
 
-	return id, nil
+	return models.DeletedNode{ID: id}, nil
 }
 
 func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (models.Job, error) {

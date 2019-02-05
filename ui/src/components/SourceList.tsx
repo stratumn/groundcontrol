@@ -24,12 +24,14 @@ import GitSourceListItem from "./GitSourceListItem";
 
 interface IProps {
   items: SourceList_items;
+  onDelete: (id: string) => any;
 }
 
 export class SourceList extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
+    const onDelete = this.props.onDelete;
 
     if (items.length < 1) {
       return <p>There are no sources at this time.</p>;
@@ -42,6 +44,7 @@ export class SourceList extends Component<IProps> {
           <DirectorySourceListItem
             key={item.id}
             item={item}
+            onDelete={onDelete.bind(null, item.id)}
           />
         );
       case "GitSource":
@@ -49,6 +52,7 @@ export class SourceList extends Component<IProps> {
           <GitSourceListItem
             key={item.id}
             item={item}
+            onDelete={onDelete.bind(null, item.id)}
           />
         );
       }

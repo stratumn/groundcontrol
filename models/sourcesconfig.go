@@ -184,7 +184,7 @@ func (c *SourcesConfig) DeleteSource(
 	userID string,
 	id string,
 ) error {
-	return nodes.MustLockUserE(userID, func(user User) error {
+	return nodes.LockUserE(userID, func(user User) error {
 		parts, err := relay.DecodeID(id)
 		if err != nil {
 			return err

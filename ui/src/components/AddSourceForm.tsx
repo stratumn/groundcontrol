@@ -59,7 +59,7 @@ export default class AddSourceForm extends Component<IProps, IState> {
     if (type === "directory") {
       typeFields = (
         <Form.Field width="13">
-          <label>Directory</label>
+          <label>Directory (absolute path)</label>
           <Form.Input
             name="directory"
             value={directory}

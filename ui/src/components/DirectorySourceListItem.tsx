@@ -14,7 +14,7 @@
 
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
-import { List } from "semantic-ui-react";
+import { Button, List } from "semantic-ui-react";
 
 import { createFragmentContainer } from "react-relay";
 
@@ -22,16 +22,25 @@ import { DirectorySourceListItem_item } from "./__generated__/DirectorySourceLis
 
 interface IProps {
   item: DirectorySourceListItem_item;
+  onDelete: () => any;
 }
 
 export class DirectorySourceListItem extends Component<IProps> {
 
   public render() {
     const { directory } = this.props.item;
+    const onDelete = this.props.onDelete;
 
     return (
       <List.Item>
         <List.Content>
+          <Button
+            floated="right"
+            icon="delete"
+            color="pink"
+            size="small"
+            onClick={onDelete}
+          />
           <List.Header>{directory}</List.Header>
           <List.Description>Directory</List.Description>
         </List.Content>

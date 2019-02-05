@@ -1007,6 +1007,13 @@ type LogMetrics implements Node {
 }
 
 """
+A deleted node.
+"""
+type DeletedNode {
+  id: ID!
+}
+
+"""
 The root query resolver.
 """
 type Query {
@@ -1039,7 +1046,7 @@ type Mutation {
   """
   Delete a source.
   """
-  deleteSource(id: ID!): ID!
+  deleteSource(id: ID!): DeletedNode!
   """
   Queue a job to load the commits of a project.
   """
@@ -1101,7 +1108,7 @@ type Subscription {
   """
   Receive a message when a source is deleted.
   """
-  sourceDeleted(id: ID): ID!
+  sourceDeleted(id: ID): DeletedNode!
   """
   Receive a workspace when updated including child nodes.
   """
