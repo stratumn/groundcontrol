@@ -14,7 +14,7 @@
 
 import graphql from "babel-plugin-relay/macro";
 import { Link } from "found";
-import React, { Component } from "react";
+import React, { Component, Fragment } from "react";
 import {
   Button,
   Icon,
@@ -62,6 +62,18 @@ export class JobTableRow extends Component<IProps> {
       break;
     }
 
+    let workspaceEl: JSX.Element;
+
+    if (workspaceName === "-") {
+      workspaceEl = <Fragment>{workspaceName}</Fragment>;
+    } else {
+      workspaceEl = (
+        <Link to={`/workspaces/${workspaceSlug}`}>
+          {workspaceName}
+        </Link>
+      );
+    }
+
     if (item.status === "RUNNING") {
       buttons.push((
         <Button
@@ -81,9 +93,7 @@ export class JobTableRow extends Component<IProps> {
       <Table.Row className="JobTableRow">
         <Table.Cell>{item.name}</Table.Cell>
         <Table.Cell>
-          <Link to={`/workspaces/${workspaceSlug}`}>
-            {workspaceName}
-          </Link>
+          {workspaceEl}
         </Table.Cell>
         <Table.Cell>
           <RepositoryShortName repository={projectRepository} />

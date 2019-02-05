@@ -24,6 +24,8 @@ import {
 import "./Page.css";
 
 interface IProps {
+  onAddDirectorySource: (directory: string) => any;
+  onAddGitSource: (repository: string, branch: string) => any;
 }
 
 interface IState {
@@ -31,6 +33,7 @@ interface IState {
   directory: string;
   repository: string;
   branch: string;
+  error: boolean;
 }
 
 export default class AddSourceForm extends Component<IProps, IState> {
@@ -38,26 +41,28 @@ export default class AddSourceForm extends Component<IProps, IState> {
   public state: IState = {
     branch: "",
     directory: "",
+    error: false,
     repository: "",
     type: "directory",
   };
 
   public render() {
-    const { directory, repository, branch } = this.state;
+    const { type, directory, repository, branch } = this.state;
     const options = [
       { key: "directory", text: "Directory", value: "directory" },
       { key: "git", text: "Git", value: "git" },
     ];
+    const disabled = type === "directory" && !directory || type === "git" && !repository;
 
     let typeFields: JSX.Element;
 
-    if (this.state.type === "directory") {
+    if (type === "directory") {
       typeFields = (
         <Form.Field width="13">
           <label>Directory</label>
           <Form.Input
             name="directory"
-            defaultValue={directory}
+            value={directory}
             onChange={this.handleChangeInput}
           />
         </Form.Field>
@@ -69,7 +74,7 @@ export default class AddSourceForm extends Component<IProps, IState> {
             <label>Repository</label>
             <Form.Input
               name="repository"
-              defaultValue={repository}
+              value={repository}
               onChange={this.handleChangeInput}
             />
           </Form.Field>
@@ -78,7 +83,7 @@ export default class AddSourceForm extends Component<IProps, IState> {
             <Form.Input
               name="branch"
               placeholder="master"
-              defaultValue={branch}
+              value={branch}
               onChange={this.handleChangeInput}
             />
           </Form.Field>
@@ -103,6 +108,7 @@ export default class AddSourceForm extends Component<IProps, IState> {
           color="teal"
           icon="add"
           content="Add"
+          disabled={disabled}
         />
       </Form>
     );
@@ -121,7 +127,13 @@ export default class AddSourceForm extends Component<IProps, IState> {
   }
 
   private handleSubmit = () => {
-    console.log(this.state);
+    if (this.state.type === "directory") {
+      this.props.onAddDirectorySource(this.state.directory);
+      this.setState({ directory: "" });
+    } else {
+      this.props.onAddGitSource(this.state.repository, this.state.branch || "master");
+      this.setState({ repository: "", branch: "" });
+    }
   }
 
 }

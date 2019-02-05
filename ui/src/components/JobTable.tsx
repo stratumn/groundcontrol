@@ -58,7 +58,7 @@ export class JobTable extends Component<IProps> {
             <Table.HeaderCell>Updated At</Table.HeaderCell>
             <Table.HeaderCell>Priority</Table.HeaderCell>
             <Table.HeaderCell>Status</Table.HeaderCell>
-            <Table.HeaderCell />
+            <Table.HeaderCell width="2" />
           </Table.Row>
         </Table.Header>
         <Table.Body>{rows}</Table.Body>

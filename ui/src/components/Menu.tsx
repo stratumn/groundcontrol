@@ -50,39 +50,41 @@ export class Menu extends Component<IProps> {
           >
             Sources
           </Link>
-          <Link
-            to="/jobs"
-            Component={SemanticMenu.Item}
-            activePropName="active"
-          >
-            Jobs
-            <Label color="blue">
-              {jobMetrics.queued + jobMetrics.running}
-            </Label>
-          </Link>
-          <Link
-            to="/processes"
-            Component={SemanticMenu.Item}
-            activePropName="active"
-          >
-            Processes
-            <Label color="blue">
-              {processMetrics.running}
-            </Label>
-          </Link>
-          <Link
-            to="/logs"
-            Component={SemanticMenu.Item}
-            activePropName="active"
-          >
-            Logs
-            <Label color="pink">
-              {logMetrics.error}
-            </Label>
-          </Link>
+          <SemanticMenu.Menu position="right">
+            <Link
+              to="/jobs"
+              Component={SemanticMenu.Item}
+              activePropName="active"
+            >
+              Jobs
+              <Label color="blue">
+                {jobMetrics.queued + jobMetrics.running}
+              </Label>
+            </Link>
+            <Link
+              to="/processes"
+              Component={SemanticMenu.Item}
+              activePropName="active"
+            >
+              Processes
+              <Label color="blue">
+                {processMetrics.running}
+              </Label>
+            </Link>
+            <Link
+              to="/logs"
+              Component={SemanticMenu.Item}
+              activePropName="active"
+            >
+              Logs
+              <Label color="pink">
+                {logMetrics.error}
+              </Label>
+            </Link>
           <SemanticMenu.Item href="http://localhost:3333/graphql">
             GraphQL
           </SemanticMenu.Item>
+          </SemanticMenu.Menu>
         </Container>
       </SemanticMenu>
     );

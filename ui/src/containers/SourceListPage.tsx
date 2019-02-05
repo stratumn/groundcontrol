@@ -39,15 +39,26 @@ export class SourceListPage extends Component<IProps> {
         icon="folder open"
       >
         <Segment>
-          <h3>Add a new source</h3>
-          <AddSourceForm />
+          <h3>Add a New Source</h3>
+          <AddSourceForm
+            onAddDirectorySource={this.handleAddDirectorySource}
+            onAddGitSource={this.handleAddGitSource}
+          />
         </Segment>
         <Segment>
-          <h3>Current sources</h3>
+          <h3>Current Sources</h3>
           <SourceList items={items} />
         </Segment>
       </Page>
     );
+  }
+
+  private handleAddDirectorySource(directory: string) {
+    console.log(directory);
+  }
+
+  private handleAddGitSource(repository: string, branch: string) {
+    console.log(repository, branch);
   }
 
 }
