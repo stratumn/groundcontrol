@@ -15,6 +15,7 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer, RelayProp } from "react-relay";
+import { Disposable } from "relay-runtime";
 import { Segment } from "semantic-ui-react";
 
 import { SourceListPage_viewer } from "./__generated__/SourceListPage_viewer.graphql";
@@ -24,6 +25,7 @@ import Page from "../components/Page";
 import SourceList from "../components/SourceList";
 import { commit as addDirectorySource } from "../mutations/addDirectorySource";
 import { commit as addGitSource } from "../mutations/addGitSource";
+import { subscribe } from "../subscriptions/sourceUpserted";
 
 interface IProps {
   relay: RelayProp;
@@ -31,6 +33,8 @@ interface IProps {
 }
 
 export class SourceListPage extends Component<IProps> {
+
+  private disposables: Disposable[] = [];
 
   public render() {
     const items = this.props.viewer.sources.edges.map(({ node }) => node);
@@ -56,6 +60,18 @@ export class SourceListPage extends Component<IProps> {
     );
   }
 
+  public componentDidMount() {
+    this.disposables.push(subscribe(this.props.relay.environment));
+  }
+
+  public componentWillUnmount() {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+
+    this.disposables = [];
+  }
+
   private handleAddDirectorySource = (directory: string) => {
     addDirectorySource(this.props.relay.environment, {
       directory,
@@ -73,7 +89,7 @@ export class SourceListPage extends Component<IProps> {
 
 export default createFragmentContainer(SourceListPage, graphql`
   fragment SourceListPage_viewer on User {
-    sources {
+    sources(first: 1000) @connection(key: "SourceListPage_sources") {
       edges {
         node {
           ...SourceList_items

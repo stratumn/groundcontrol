@@ -1087,6 +1087,10 @@ The root subscription resolver.
 """
 type Subscription {
   """
+  Receive a job when a source is added or updated.
+  """
+  sourceUpserted(id: ID): Source!
+  """
   Receive a workspace when updated including child nodes.
   """
   workspaceUpdated(id: ID): Workspace!
