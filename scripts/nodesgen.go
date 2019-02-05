@@ -207,5 +207,80 @@ func (n *NodeManager) MustLock{{$type}}E(id string, fn func({{$type}}) error) er
 
 	return err
 }
+
+// LockOrNew{{$type}} loads or initializes a {{$type}} and locks it until the callback returns.
+func (n *NodeManager) LockOrNew{{$type}}(id string, fn func({{$type}})) error {
+	n.Lock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err == ErrNotFound {
+		node = {{$type}}{
+			ID: id,
+		}
+	} else if err != nil {
+		return err
+	}
+
+	fn(node)
+	n.Unlock(id)
+
+	return nil
+}
+
+// LockOrNew{{$type}}E is like LockOrNew{{$type}}, but the callback can return an error.
+func (n *NodeManager) LockOrNew{{$type}}E(id string, fn func({{$type}}) error) error {
+	n.Lock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err == ErrNotFound {
+		node = {{$type}}{
+			ID: id,
+		}
+	} else if err != nil {
+		return err
+	}
+
+	err = fn(node)
+	n.Unlock(id)
+
+	return err
+}
+
+// MustLockOrNew{{$type}} loads or initializes a {{$type}} or panics on error and locks it until the callback returns.
+func (n *NodeManager) MustLockOrNew{{$type}}(id string, fn func({{$type}})) {
+	n.Lock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err == ErrNotFound {
+		node = {{$type}}{
+			ID: id,
+		}
+	} else if err != nil {
+		panic(err)
+	}
+
+	fn(node)
+	n.Unlock(id)
+}
+
+// MustLockOrNew{{$type}}E is like MustLockOrNew{{$type}}, but the callback can return an error.
+func (n *NodeManager) MustLockOrNew{{$type}}E(id string, fn func({{$type}}) error) error {
+	n.Lock(id)
+
+	node, err := n.Load{{$type}}(id)
+	if err == ErrNotFound {
+		node = {{$type}}{
+			ID: id,
+		}
+	} else if err != nil {
+		panic(err)
+	}
+
+	err = fn(node)
+	n.Unlock(id)
+
+	return err
+}
+
 {{end}}
 `

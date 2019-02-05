@@ -25,126 +25,219 @@ import (
 
 // WorkspacesConfig contains all the data in a YAML workspaces config file.
 type WorkspacesConfig struct {
-	Filename   string `json:"-" yaml:"-"`
-	Workspaces []struct {
-		Slug        string  `json:"slug"`
-		Name        string  `json:"name"`
-		Description string  `json:"description"`
-		Notes       *string `json:"notes"`
-		Projects    []struct {
-			Slug        string  `json:"slug"`
-			Repository  string  `json:"repository"`
-			Branch      string  `json:"branch"`
-			Description *string `json:"description"`
-		} `json:"projects" yaml:",flow"`
-		Tasks []struct {
-			Name  string `json:"name"`
-			Steps []struct {
-				Projects []string `json:"projects"`
-				Commands []string `json:"commands"`
-			} `json:"tasks"`
-		} `json:"tasks"`
-	} `json:"workspaces"`
+	Filename   string            `json:"-" yaml:"-"`
+	Workspaces []WorkspaceConfig `json:"workspaces"`
+}
+
+// WorkspaceConfig contains all the data in a YAML workspace config file.
+type WorkspaceConfig struct {
+	Slug        string          `json:"slug"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Notes       *string         `json:"notes"`
+	Projects    []ProjectConfig `json:"projects" yaml:",flow"`
+	Tasks       []TaskConfig    `json:"tasks"`
+}
+
+// ProjectConfig contains all the data in a YAML project config file.
+type ProjectConfig struct {
+	Slug        string  `json:"slug"`
+	Repository  string  `json:"repository"`
+	Branch      string  `json:"branch"`
+	Description *string `json:"description"`
+}
+
+// TaskConfig contains all the data in a YAML task config file.
+type TaskConfig struct {
+	Name  string       `json:"name"`
+	Steps []StepConfig `json:"tasks"`
+}
+
+// StepConfig contains all the data in a YAML step config file.
+type StepConfig struct {
+	Projects []string `json:"projects"`
+	Commands []string `json:"commands"`
 }
 
 // UpsertNodes upserts nodes for the content of the config.
-// It returns the IDs of the workspaces creates.
+// It returns the IDs of the workspaces upserted.
 func (c WorkspacesConfig) UpsertNodes(nodes *NodeManager) ([]string, error) {
 	var workspaceIDs []string
 
 	for _, workspaceConfig := range c.Workspaces {
-		workspace := Workspace{
-			ID:          relay.EncodeID(NodeTypeWorkspace, workspaceConfig.Slug),
-			Slug:        workspaceConfig.Slug,
-			Name:        workspaceConfig.Name,
-			Description: workspaceConfig.Description,
-			Notes:       workspaceConfig.Notes,
+		id, err := workspaceConfig.UpsertNodes(nodes)
+		if err != nil {
+			return nil, err
 		}
 
-		projectSlugToID := map[string]string{}
-
-		for _, projectConfig := range workspaceConfig.Projects {
-			project := Project{
-				ID: relay.EncodeID(
-					NodeTypeProject,
-					workspace.Slug,
-					projectConfig.Slug,
-				),
-				Slug:        projectConfig.Slug,
-				Repository:  projectConfig.Repository,
-				Branch:      projectConfig.Branch,
-				Description: projectConfig.Description,
-				WorkspaceID: workspace.ID,
-			}
-
-			nodes.MustStoreProject(project)
-			workspace.ProjectIDs = append(workspace.ProjectIDs, project.ID)
-			projectSlugToID[project.Slug] = project.ID
-		}
-
-		for i, taskConfig := range workspaceConfig.Tasks {
-			task := Task{
-				ID: relay.EncodeID(
-					NodeTypeTask,
-					workspace.Slug,
-					fmt.Sprint(i),
-				),
-				Name:        taskConfig.Name,
-				WorkspaceID: workspace.ID,
-			}
-
-			for j, stepConfig := range taskConfig.Steps {
-				var projectIDs []string
-				var commandIDs []string
-
-				for _, slug := range stepConfig.Projects {
-					id, ok := projectSlugToID[slug]
-					if !ok {
-						return nil, ErrNotFound
-					}
-					projectIDs = append(projectIDs, id)
-				}
-
-				for k, command := range stepConfig.Commands {
-					id := relay.EncodeID(
-						NodeTypeCommand,
-						workspace.Slug,
-						fmt.Sprint(i),
-						fmt.Sprint(j),
-						fmt.Sprint(k),
-					)
-					nodes.MustStoreCommand(Command{
-						ID:      id,
-						Command: command,
-					})
-					commandIDs = append(commandIDs, id)
-				}
-
-				step := Step{
-					ID: relay.EncodeID(
-						NodeTypeStep,
-						workspace.Slug,
-						fmt.Sprint(i),
-						fmt.Sprint(j),
-					),
-					ProjectIDs: projectIDs,
-					CommandIDs: commandIDs,
-					TaskID:     task.ID,
-				}
-
-				nodes.MustStoreStep(step)
-				task.StepIDs = append(task.StepIDs, step.ID)
-			}
-
-			nodes.MustStoreTask(task)
-			workspace.TaskIDs = append(workspace.TaskIDs, task.ID)
-		}
-
-		nodes.MustStoreWorkspace(workspace)
-		workspaceIDs = append(workspaceIDs, workspace.ID)
+		workspaceIDs = append(workspaceIDs, id)
 	}
 
 	return workspaceIDs, nil
+}
+
+// UpsertNodes upserts nodes for the content of the config.
+// It returns the ID of the workspace upserted.
+func (c WorkspaceConfig) UpsertNodes(nodes *NodeManager) (string, error) {
+	id := relay.EncodeID(NodeTypeWorkspace, c.Slug)
+
+	err := nodes.MustLockOrNewWorkspaceE(id, func(workspace Workspace) error {
+		workspace.Slug = c.Slug
+		workspace.Name = c.Name
+		workspace.Description = c.Description
+		workspace.Notes = c.Notes
+		workspace.ProjectIDs = nil
+		workspace.TaskIDs = nil
+		projectSlugToID := map[string]string{}
+
+		for _, projectConfig := range c.Projects {
+			projectID := projectConfig.UpsertNodes(nodes, id, c.Slug)
+			workspace.ProjectIDs = append(workspace.ProjectIDs, projectID)
+			projectSlugToID[projectConfig.Slug] = projectID
+		}
+
+		for _, taskConfig := range c.Tasks {
+			taskID, err := taskConfig.UpsertNodes(nodes, id, workspace.Slug, projectSlugToID)
+			if err != nil {
+				return err
+			}
+
+			workspace.TaskIDs = append(workspace.TaskIDs, taskID)
+		}
+
+		nodes.MustStoreWorkspace(workspace)
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
+// UpsertNodes upserts nodes for the content of the config.
+// It returns the ID of the project upserted.
+func (c ProjectConfig) UpsertNodes(nodes *NodeManager, workspaceID, workspaceSlug string) string {
+	id := relay.EncodeID(
+		NodeTypeProject,
+		workspaceSlug,
+		c.Slug,
+	)
+
+	nodes.MustLockOrNewProject(id, func(project Project) {
+		project.Slug = c.Slug
+		project.Repository = c.Repository
+		project.Branch = c.Branch
+		project.Description = c.Description
+		project.WorkspaceID = workspaceID
+
+		nodes.MustStoreProject(project)
+	})
+
+	return id
+}
+
+// UpsertNodes upserts nodes for the content of the config.
+// It returns the ID of the task upserted.
+func (c TaskConfig) UpsertNodes(
+	nodes *NodeManager,
+	workspaceID string,
+	workspaceSlug string,
+	projectSlugToID map[string]string,
+) (string, error) {
+	id := relay.EncodeID(
+		NodeTypeTask,
+		workspaceSlug,
+		c.Name,
+	)
+
+	err := nodes.MustLockOrNewTaskE(id, func(task Task) error {
+		task.Name = c.Name
+		task.WorkspaceID = workspaceID
+		task.StepIDs = nil
+
+		for stepIndex, stepConfig := range c.Steps {
+			stepID, err := stepConfig.UpsertNodes(
+				nodes,
+				workspaceSlug,
+				id,
+				c.Name,
+				stepIndex,
+				projectSlugToID,
+			)
+			if err != nil {
+				return err
+			}
+
+			task.StepIDs = append(task.StepIDs, stepID)
+		}
+
+		nodes.MustStoreTask(task)
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
+// UpsertNodes upserts nodes for the content of the config.
+// It returns the ID of the step upserted.
+func (c StepConfig) UpsertNodes(
+	nodes *NodeManager,
+	workspaceSlug string,
+	taskID string,
+	taskName string,
+	stepIndex int,
+	projectSlugToID map[string]string,
+) (string, error) {
+	id := relay.EncodeID(
+		NodeTypeStep,
+		workspaceSlug,
+		taskName,
+		fmt.Sprint(stepIndex),
+	)
+
+	err := nodes.MustLockOrNewStepE(id, func(step Step) error {
+		step.TaskID = taskID
+		step.ProjectIDs = nil
+		step.CommandIDs = nil
+
+		for _, slug := range c.Projects {
+			id, ok := projectSlugToID[slug]
+			if !ok {
+				return ErrNotFound
+			}
+			step.ProjectIDs = append(step.ProjectIDs, id)
+		}
+
+		for commandIndex, command := range c.Commands {
+			id := relay.EncodeID(
+				NodeTypeCommand,
+				workspaceSlug,
+				taskName,
+				fmt.Sprint(stepIndex),
+				fmt.Sprint(commandIndex),
+			)
+			nodes.MustStoreCommand(Command{
+				ID:      id,
+				Command: command,
+			})
+			step.CommandIDs = append(step.CommandIDs, id)
+		}
+
+		nodes.MustStoreStep(step)
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
 // LoadWorkspacesConfigYAML loads a config from a YAML file.
