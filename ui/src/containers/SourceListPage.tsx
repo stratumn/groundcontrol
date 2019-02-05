@@ -14,7 +14,7 @@
 
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
-import { createFragmentContainer } from "react-relay";
+import { createFragmentContainer, RelayProp } from "react-relay";
 import { Segment } from "semantic-ui-react";
 
 import { SourceListPage_viewer } from "./__generated__/SourceListPage_viewer.graphql";
@@ -22,8 +22,11 @@ import { SourceListPage_viewer } from "./__generated__/SourceListPage_viewer.gra
 import AddSourceForm from "../components/AddSourceForm";
 import Page from "../components/Page";
 import SourceList from "../components/SourceList";
+import { commit as addDirectorySource } from "../mutations/addDirectorySource";
+import { commit as addGitSource } from "../mutations/addGitSource";
 
 interface IProps {
+  relay: RelayProp;
   viewer: SourceListPage_viewer;
 }
 
@@ -53,12 +56,17 @@ export class SourceListPage extends Component<IProps> {
     );
   }
 
-  private handleAddDirectorySource(directory: string) {
-    console.log(directory);
+  private handleAddDirectorySource = (directory: string) => {
+    addDirectorySource(this.props.relay.environment, {
+      directory,
+    });
   }
 
-  private handleAddGitSource(repository: string, branch: string) {
-    console.log(repository, branch);
+  private handleAddGitSource = (repository: string, branch: string) => {
+    addGitSource(this.props.relay.environment, {
+      branch,
+      repository,
+    });
   }
 
 }
