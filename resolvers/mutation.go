@@ -88,6 +88,10 @@ func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (models.
 		return models.DeletedNode{}, nil
 	}
 
+	if err := modelCtx.Sources.Save(); err != nil {
+		return models.DeletedNode{}, err
+	}
+
 	return models.DeletedNode{ID: id}, nil
 }
 

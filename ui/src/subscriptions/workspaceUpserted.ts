@@ -53,9 +53,9 @@ export function subscribe(environment: Environment, id?: string) {
           let exists = false;
 
           for (const e of edges) {
-            const id = e.getLinkedRecord("node")!.getValue("id");
+            const nodeId = e.getLinkedRecord("node")!.getValue("id");
 
-            if (recordId === id) {
+            if (recordId === nodeId) {
               exists = true;
               break;
             }

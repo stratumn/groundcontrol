@@ -48,7 +48,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
     if (this.props.viewer.sources.edges.length < 1) {
       return <Welcome />;
     }
- 
+
     const query = this.state.query;
     let items = this.props.viewer.workspaces.edges.map(({ node }) => node);
 

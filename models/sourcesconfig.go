@@ -202,9 +202,7 @@ func (c *SourcesConfig) DeleteSource(
 
 		switch parts[0] {
 		case NodeTypeDirectorySource:
-			if err := nodes.DeleteDirectorySource(id); err != nil {
-				return err
-			}
+			// We can't delete the actual node because other node might reference it.
 			for i, v := range c.DirectorySources {
 				if v.ID == id {
 					c.DirectorySources = append(
@@ -215,9 +213,7 @@ func (c *SourcesConfig) DeleteSource(
 				}
 			}
 		case NodeTypeGitSource:
-			if err := nodes.DeleteGitSource(id); err != nil {
-				return err
-			}
+			// We can't delete the actual node because other node might reference it.
 			for i, v := range c.GitSources {
 				if v.ID == id {
 					c.GitSources = append(
