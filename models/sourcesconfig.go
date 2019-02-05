@@ -18,23 +18,28 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/stratumn/groundcontrol/pubsub"
-
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 )
 
 // SourcesConfig contains all the data in a YAML sources config file.
 type SourcesConfig struct {
-	Filename         string `json:"-" yaml:"-"`
-	DirectorySources []struct {
-		Directory string `json:"directory"`
-	} `json:"directorySources" yaml:"directory-sources"`
-	GitSources []struct {
-		Repository string `json:"repository"`
-		Branch     string `json:"branch"`
-	} `json:"gitSources" yaml:"git-sources"`
+	Filename         string                  `json:"-" yaml:"-"`
+	DirectorySources []DirectorySourceConfig `json:"directorySources" yaml:"directory-sources"`
+	GitSources       []GitSourceConfig       `json:"gitSources" yaml:"git-sources"`
+}
+
+// DirectorySourceConfig contains all the data in a YAML directory source config file.
+type DirectorySourceConfig struct {
+	Directory string `json:"directory"`
+}
+
+// GitSourceConfig contains all the data in a YAML Git source config file.
+type GitSourceConfig struct {
+	Repository string `json:"repository"`
+	Branch     string `json:"branch"`
 }
 
 // UpsertNodes upserts nodes for the content of the sources config.
@@ -61,7 +66,7 @@ func (c SourcesConfig) UpsertNodes(
 		for _, sourceConfig := range c.GitSources {
 			source := GitSource{
 				ID: relay.EncodeID(
-					NodeTypeDirectorySource,
+					NodeTypeGitSource,
 					sourceConfig.Repository,
 					sourceConfig.Branch,
 				),
@@ -109,6 +114,13 @@ func (c *SourcesConfig) UpsertDirectorySource(
 		user.SourceIDs = append(user.SourceIDs, source.ID)
 		nodes.MustStoreUser(user)
 
+		c.DirectorySources = append(
+			c.DirectorySources,
+			DirectorySourceConfig{
+				Directory: input.Directory,
+			},
+		)
+
 		subs.Publish(SourceUpserted, source.ID)
 	})
 
@@ -144,6 +156,14 @@ func (c *SourcesConfig) UpsertGitSource(
 
 		user.SourceIDs = append(user.SourceIDs, source.ID)
 		nodes.MustStoreUser(user)
+
+		c.GitSources = append(
+			c.GitSources,
+			GitSourceConfig{
+				Repository: input.Repository,
+				Branch:     input.Branch,
+			},
+		)
 
 		subs.Publish(SourceUpserted, source.ID)
 	})

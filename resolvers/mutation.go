@@ -38,6 +38,10 @@ func (r *mutationResolver) AddDirectorySource(
 		input,
 	)
 
+	if err := modelCtx.Sources.Save(); err != nil {
+		return models.DirectorySource{}, err
+	}
+
 	_, err := jobs.LoadDirectorySource(ctx, id, models.JobPriorityHigh)
 	if err != nil {
 		return models.DirectorySource{}, err
@@ -58,6 +62,10 @@ func (r *mutationResolver) AddGitSource(
 		modelCtx.ViewerID,
 		input,
 	)
+
+	if err := modelCtx.Sources.Save(); err != nil {
+		return models.GitSource{}, err
+	}
 
 	_, err := jobs.LoadGitSource(ctx, id, models.JobPriorityHigh)
 	if err != nil {
