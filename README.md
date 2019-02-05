@@ -59,7 +59,7 @@ After installing, run:
 
 ```
 ssh-add # <---- to use your SSH key for accessing private repos
-groundcontrol [groundcontrol.yml] # <---- path to YAML file
+groundcontrol
 ```
 
 ## Development
@@ -74,7 +74,7 @@ make gen-go
 ### Server
 
 ```
-go run . [groundcontrol.yml]
+go run .
 ```
 
 Server runs on `http://localhost:3333`.
