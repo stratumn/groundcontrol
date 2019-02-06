@@ -19,6 +19,7 @@ import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
 import { Segment } from "semantic-ui-react";
 
+import { WorkspaceViewPage_system } from "./__generated__/WorkspaceViewPage_system.graphql";
 import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_viewer.graphql";
 
 import Page from "../components/Page";
@@ -36,6 +37,7 @@ import "./WorkspaceViewPage.css";
 
 interface IProps {
   relay: RelayProp;
+  system: WorkspaceViewPage_system;
   viewer: WorkspaceViewPage_viewer;
 }
 
@@ -77,12 +79,10 @@ export class WorkspaceViewPage extends Component<IProps> {
   }
 
   public componentDidMount() {
-    this.disposables.push(subscribe(this.props.relay.environment, this.props.viewer.workspace!.id));
-    // The timeout is to give subscriptions a chance to connect before something happens.
-    setTimeout(
-      () => loadWorkspaceCommits(this.props.relay.environment, this.props.viewer.workspace!.id),
-      1000,
-    );
+    const environment = this.props.relay.environment;
+    const lastMessageId = this.props.system.lastMessageId;
+    const id = this.props.viewer.workspace!.id;
+    this.disposables.push(subscribe(environment, lastMessageId, id));
   }
 
   public componentWillUnmount() {
@@ -115,6 +115,9 @@ export class WorkspaceViewPage extends Component<IProps> {
 }
 
 export default createFragmentContainer(WorkspaceViewPage, graphql`
+  fragment WorkspaceViewPage_system on System {
+    lastMessageId
+  }
   fragment WorkspaceViewPage_viewer on User
     @argumentDefinitions(
       slug: { type: "String!" },

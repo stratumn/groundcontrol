@@ -73,7 +73,9 @@ export class JobListPage extends Component<IProps> {
   }
 
   public componentDidMount() {
-    this.disposables.push(subscribe(this.props.relay.environment));
+    const environment = this.props.relay.environment;
+    const lastMessageId = this.props.system.lastMessageId;
+    this.disposables.push(subscribe(environment, lastMessageId));
   }
 
   public componentWillUnmount() {
@@ -121,6 +123,7 @@ export default createPaginationContainer(
         cursor: {type: "String"},
         status: { type: "[JobStatus!]", defaultValue: null },
       ) {
+      lastMessageId
       jobs(
        first: $count,
        after: $cursor,

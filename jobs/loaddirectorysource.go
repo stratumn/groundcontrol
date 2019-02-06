@@ -116,7 +116,7 @@ func walkSourceDirectory(ctx context.Context, directory string) (workspaceIDs []
 				return err
 			}
 
-			ids, err := config.UpsertNodes(modelCtx.Nodes)
+			ids, err := config.UpsertNodes(modelCtx.Nodes, modelCtx.Subs)
 			if err != nil {
 				return err
 			}

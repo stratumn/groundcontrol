@@ -51,9 +51,10 @@ export class App extends Component<IProps> {
 
   public componentDidMount() {
     const environment = this.props.relay.environment;
-    this.disposables.push(subscribeJobMetrics(environment));
-    this.disposables.push(subscribeProcessMetrics(environment));
-    this.disposables.push(subscribeLogMetrics(environment));
+    const lastMessageId = this.props.system.lastMessageId;
+    this.disposables.push(subscribeJobMetrics(environment, lastMessageId));
+    this.disposables.push(subscribeProcessMetrics(environment, lastMessageId));
+    this.disposables.push(subscribeLogMetrics(environment, lastMessageId));
   }
 
   public componentWillUnmount() {
@@ -67,6 +68,7 @@ export class App extends Component<IProps> {
 
 export default createFragmentContainer(App, graphql`
   fragment App_system on System {
+    lastMessageId
     ...Menu_system
   }`,
 );

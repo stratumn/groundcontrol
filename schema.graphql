@@ -517,6 +517,10 @@ type System implements Node {
   The log metrics.
   """
   logMetrics: LogMetrics!
+  """
+  The ID of the last message which can be used for subscriptions.
+  """
+  lastMessageId: ID!
 }
 
 """
@@ -1104,49 +1108,49 @@ type Subscription {
   """
   Receive a source when added or updated.
   """
-  sourceUpserted(id: ID): Source!
+  sourceUpserted(id: ID, lastMessageId: ID): Source!
   """
   Receive a message when a source is deleted.
   """
-  sourceDeleted(id: ID): DeletedNode!
+  sourceDeleted(id: ID, lastMessageId: ID): DeletedNode!
   """
   Receive a workspace when added updated including child nodes.
   """
-  workspaceUpserted(id: ID): Workspace!
+  workspaceUpserted(id: ID, lastMessageId: ID): Workspace!
   """
   Receive a project when added or updated including child nodes.
   """
-  projectUpserted(id: ID): Project!
+  projectUpserted(id: ID, lastMessageId: ID): Project!
   """
   Receive a task when added or updated including child nodes.
   """
-  taskUpserted(id: ID): Task!
+  taskUpserted(id: ID, lastMessageId: ID): Task!
   """
   Receive a job when added or updated.
   """
-  jobUpserted(id: ID): Job!
+  jobUpserted(id: ID, lastMessageId: ID): Job!
   """
   Receive a process group when added or updated including child nodes.
   """
-  processGroupUpserted(id: ID): ProcessGroup!
+  processGroupUpserted(id: ID, lastMessageId: ID): ProcessGroup!
   """
   Receive a process when added or updated.
   """
-  processUpserted(id: ID): Process!
+  processUpserted(id: ID, lastMessageId: ID): Process!
   """
   Receive a log entry when added.
   """
-  logEntryAdded: LogEntry!
+  logEntryAdded(lastMessageId: ID): LogEntry!
   """
   Receive metrics when jobs are updated.
   """
-  jobMetricsUpdated(id: ID): JobMetrics!
+  jobMetricsUpdated(id: ID, lastMessageId: ID): JobMetrics!
   """
   Receive metrics when processes are updated.
   """
-  processMetricsUpdated(id: ID): ProcessMetrics!
+  processMetricsUpdated(id: ID, lastMessageId: ID): ProcessMetrics!
   """
   Receive metrics when logs are updated.
   """
-  logMetricsUpdated(id: ID): LogMetrics!
+  logMetricsUpdated(id: ID, lastMessageId: ID): LogMetrics!
 }

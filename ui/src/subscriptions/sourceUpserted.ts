@@ -17,8 +17,8 @@ import { requestSubscription } from "react-relay";
 import { ConnectionHandler, Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription sourceUpsertedSubscription {
-    sourceUpserted {
+  subscription sourceUpsertedSubscription($lastMessageId: ID) {
+    sourceUpserted(lastMessageId: $lastMessageId) {
       ... on DirectorySource {
         ...DirectorySourceListItem_item
       }
@@ -29,7 +29,7 @@ const subscription = graphql`
   }
 `;
 
-export function subscribe(environment: Environment) {
+export function subscribe(environment: Environment, lastMessageId?: string) {
   return requestSubscription(
     environment,
     {
@@ -71,7 +71,9 @@ export function subscribe(environment: Environment) {
           ConnectionHandler.insertEdgeBefore(connection, edge);
         }
     },
-      variables: {},
+      variables: {
+        lastMessageId,
+      },
     },
   );
 }

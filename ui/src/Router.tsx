@@ -45,6 +45,9 @@ const appQuery = graphql`
 
 const workspaceListQuery = graphql`
   query RouterWorkspaceListQuery {
+    system {
+      ...WorkspaceListPage_system
+    }
     viewer {
       ...WorkspaceListPage_viewer
     }
@@ -53,6 +56,9 @@ const workspaceListQuery = graphql`
 
 const sourceListQuery = graphql`
   query RouterSourceListQuery {
+    system {
+      ...SourceListPage_system
+    }
     viewer {
       ...SourceListPage_viewer
     }
@@ -61,6 +67,9 @@ const sourceListQuery = graphql`
 
 const workspaceViewQuery = graphql`
   query RouterWorkspaceViewQuery($slug: String!) {
+    system {
+      ...WorkspaceViewPage_system
+    }
     viewer {
       ...WorkspaceViewPage_viewer @arguments(slug: $slug)
     }
@@ -85,11 +94,11 @@ const processGroupListQuery = graphql`
 
 const logEntryListQuery = graphql`
   query RouterLogEntryListQuery($level: [LogLevel!], $ownerId: ID) {
-    viewer {
-      ...LogEntryListPage_viewer
-    }
     system {
       ...LogEntryListPage_system @arguments(level: $level, ownerId: $ownerId)
+    }
+    viewer {
+      ...LogEntryListPage_viewer
     }
   }
 `;

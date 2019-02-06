@@ -18,8 +18,8 @@ import { requestSubscription } from "react-relay";
 import { ConnectionHandler, Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription processGroupUpsertedSubscription {
-    processGroupUpserted {
+  subscription processGroupUpsertedSubscription($lastMessageId: ID) {
+    processGroupUpserted(lastMessageId: $lastMessageId) {
       ...ProcessGroupCardGroup_items
     }
   }
@@ -45,7 +45,7 @@ const notStatusCombinations: { [s: string]: string[][] } = {
   RUNNING: allStatusCombinations.filter((perm: string[]) => perm.indexOf("RUNNING") < 0),
 };
 
-export function subscribe(environment: Environment) {
+export function subscribe(environment: Environment, lastMessageId?: string) {
   return requestSubscription(
     environment,
     {
@@ -105,7 +105,9 @@ export function subscribe(environment: Environment) {
           }
         }
     },
-      variables: {},
+      variables: {
+        lastMessageId,
+      },
     },
   );
 }

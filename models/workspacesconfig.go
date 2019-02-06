@@ -20,6 +20,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/stratumn/groundcontrol/pubsub"
 	"github.com/stratumn/groundcontrol/relay"
 )
 
@@ -61,11 +62,14 @@ type StepConfig struct {
 
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the IDs of the workspaces upserted.
-func (c WorkspacesConfig) UpsertNodes(nodes *NodeManager) ([]string, error) {
+func (c WorkspacesConfig) UpsertNodes(
+	nodes *NodeManager,
+	subs *pubsub.PubSub,
+) ([]string, error) {
 	var workspaceIDs []string
 
 	for _, workspaceConfig := range c.Workspaces {
-		id, err := workspaceConfig.UpsertNodes(nodes)
+		id, err := workspaceConfig.UpsertNodes(nodes, subs)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +82,10 @@ func (c WorkspacesConfig) UpsertNodes(nodes *NodeManager) ([]string, error) {
 
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the ID of the workspace upserted.
-func (c WorkspaceConfig) UpsertNodes(nodes *NodeManager) (string, error) {
+func (c WorkspaceConfig) UpsertNodes(
+	nodes *NodeManager,
+	subs *pubsub.PubSub,
+) (string, error) {
 	id := relay.EncodeID(NodeTypeWorkspace, c.Slug)
 
 	err := nodes.MustLockOrNewWorkspaceE(id, func(workspace Workspace) error {
@@ -91,13 +98,13 @@ func (c WorkspaceConfig) UpsertNodes(nodes *NodeManager) (string, error) {
 		projectSlugToID := map[string]string{}
 
 		for _, projectConfig := range c.Projects {
-			projectID := projectConfig.UpsertNodes(nodes, id, c.Slug)
+			projectID := projectConfig.UpsertNodes(nodes, subs, id, c.Slug)
 			workspace.ProjectIDs = append(workspace.ProjectIDs, projectID)
 			projectSlugToID[projectConfig.Slug] = projectID
 		}
 
 		for _, taskConfig := range c.Tasks {
-			taskID, err := taskConfig.UpsertNodes(nodes, id, workspace.Slug, projectSlugToID)
+			taskID, err := taskConfig.UpsertNodes(nodes, subs, id, workspace.Slug, projectSlugToID)
 			if err != nil {
 				return err
 			}
@@ -106,6 +113,7 @@ func (c WorkspaceConfig) UpsertNodes(nodes *NodeManager) (string, error) {
 		}
 
 		nodes.MustStoreWorkspace(workspace)
+		subs.Publish(WorkspaceUpserted, id)
 
 		return nil
 	})
@@ -118,7 +126,12 @@ func (c WorkspaceConfig) UpsertNodes(nodes *NodeManager) (string, error) {
 
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the ID of the project upserted.
-func (c ProjectConfig) UpsertNodes(nodes *NodeManager, workspaceID, workspaceSlug string) string {
+func (c ProjectConfig) UpsertNodes(
+	nodes *NodeManager,
+	subs *pubsub.PubSub,
+	workspaceID string,
+	workspaceSlug string,
+) string {
 	id := relay.EncodeID(
 		NodeTypeProject,
 		workspaceSlug,
@@ -133,6 +146,7 @@ func (c ProjectConfig) UpsertNodes(nodes *NodeManager, workspaceID, workspaceSlu
 		project.WorkspaceID = workspaceID
 
 		nodes.MustStoreProject(project)
+		subs.Publish(ProjectUpserted, id)
 	})
 
 	return id
@@ -142,6 +156,7 @@ func (c ProjectConfig) UpsertNodes(nodes *NodeManager, workspaceID, workspaceSlu
 // It returns the ID of the task upserted.
 func (c TaskConfig) UpsertNodes(
 	nodes *NodeManager,
+	subs *pubsub.PubSub,
 	workspaceID string,
 	workspaceSlug string,
 	projectSlugToID map[string]string,
@@ -174,6 +189,7 @@ func (c TaskConfig) UpsertNodes(
 		}
 
 		nodes.MustStoreTask(task)
+		subs.Publish(TaskUpserted, id)
 
 		return nil
 	})

@@ -49,6 +49,7 @@ type App struct {
 	jobConcurrency          int
 	logLevel                models.LogLevel
 	logCap                  int
+	pubSubHistoryCap        int
 	checkSourcesInterval    time.Duration
 	checkProjectsInterval   time.Duration
 	gracefulShutdownTimeout time.Duration
@@ -69,6 +70,7 @@ func New(opts ...Opt) *App {
 		jobConcurrency:          DefaultJobConcurrency,
 		logLevel:                DefaultLogLevel,
 		logCap:                  DefaultLogCap,
+		pubSubHistoryCap:        DefaultPubSubHistoryCap,
 		checkSourcesInterval:    DefaultCheckSourcesInterval,
 		checkProjectsInterval:   DefaultCheckProjectsInterval,
 		gracefulShutdownTimeout: DefaultGracefulShutdownTimeout,
@@ -91,7 +93,7 @@ func New(opts ...Opt) *App {
 func (a *App) Start(ctx context.Context) error {
 	nodes := &models.NodeManager{}
 	viewerID, systemID := a.createBaseNodes(nodes)
-	subs := pubsub.New()
+	subs := pubsub.New(a.pubSubHistoryCap)
 	log := models.NewLogger(nodes, subs, a.logCap, a.logLevel, systemID)
 	jobs := models.NewJobManager(a.jobConcurrency)
 	pm := models.NewProcessManager()

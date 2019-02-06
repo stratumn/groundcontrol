@@ -31,10 +31,20 @@ type subscriptionResolver struct {
 func (r *subscriptionResolver) SourceDeleted(
 	ctx context.Context,
 	id *string,
+	lastMessageID *string,
 ) (<-chan models.DeletedNode, error) {
 	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
 
-	r.Subs.Subscribe(ctx, models.SourceDeleted, func(msg interface{}) {
+	last := uint64(0)
+	if lastMessageID != nil {
+		var err error
+		last, err = decodeBase64Uint64(*lastMessageID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Subs.Subscribe(ctx, models.SourceDeleted, last, func(msg interface{}) {
 		sourceID := msg.(string)
 		if id != nil && *id != sourceID {
 			return
@@ -53,10 +63,20 @@ func (r *subscriptionResolver) SourceDeleted(
 
 func (r *subscriptionResolver) LogEntryAdded(
 	ctx context.Context,
+	lastMessageID *string,
 ) (<-chan models.LogEntry, error) {
 	ch := make(chan models.LogEntry, SubscriptionChannelSize)
 
-	r.Subs.Subscribe(ctx, models.LogEntryAdded, func(msg interface{}) {
+	last := uint64(0)
+	if lastMessageID != nil {
+		var err error
+		last, err = decodeBase64Uint64(*lastMessageID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Subs.Subscribe(ctx, models.LogEntryAdded, last, func(msg interface{}) {
 		select {
 		case ch <- r.Nodes.MustLoadLogEntry(msg.(string)):
 		default:
@@ -69,10 +89,20 @@ func (r *subscriptionResolver) LogEntryAdded(
 func (r *subscriptionResolver) LogMetricsUpdated(
 	ctx context.Context,
 	id *string,
+	lastMessageID *string,
 ) (<-chan models.LogMetrics, error) {
 	ch := make(chan models.LogMetrics, SubscriptionChannelSize)
 
-	r.Subs.Subscribe(ctx, models.LogMetricsUpdated, func(msg interface{}) {
+	last := uint64(0)
+	if lastMessageID != nil {
+		var err error
+		last, err = decodeBase64Uint64(*lastMessageID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Subs.Subscribe(ctx, models.LogMetricsUpdated, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return

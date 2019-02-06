@@ -30,7 +30,7 @@ type JobManager struct {
 	queue   *queue.Queue
 	cancels sync.Map
 
-	nextID uint64
+	lastID uint64
 
 	queuedCounter  int64
 	runningCounter int64
@@ -58,7 +58,7 @@ func (j *JobManager) Add(
 	priority JobPriority,
 	fn func(ctx context.Context) error,
 ) string {
-	id := atomic.AddUint64(&j.nextID, 1)
+	id := atomic.AddUint64(&j.lastID, 1)
 	now := DateTime(time.Now())
 	job := Job{
 		ID:        relay.EncodeID(NodeTypeJob, fmt.Sprint(id)),

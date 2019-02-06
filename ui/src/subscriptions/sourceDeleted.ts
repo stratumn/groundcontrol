@@ -17,14 +17,14 @@ import { requestSubscription } from "react-relay";
 import { ConnectionHandler, Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription sourceDeletedSubscription {
-    sourceDeleted {
+  subscription sourceDeletedSubscription($lastMessageId: ID) {
+    sourceDeleted(lastMessageId: $lastMessageId) {
       id
     }
   }
 `;
 
-export function subscribe(environment: Environment) {
+export function subscribe(environment: Environment, lastMessageId?: string) {
   return requestSubscription(
     environment,
     {
@@ -44,7 +44,9 @@ export function subscribe(environment: Environment) {
           ConnectionHandler.deleteNode(connection, recordId);
         }
     },
-      variables: {},
+      variables: {
+        lastMessageId,
+      },
     },
   );
 }

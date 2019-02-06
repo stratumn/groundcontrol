@@ -18,8 +18,8 @@ import { requestSubscription } from "react-relay";
 import { ConnectionHandler, Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription logEntryAddedSubscription {
-    logEntryAdded {
+  subscription logEntryAddedSubscription($lastMessageId: ID) {
+    logEntryAdded(lastMessageId: $lastMessageId) {
       ...LogEntryTable_items
     }
   }
@@ -39,7 +39,7 @@ const levelCombinations: { [s: string]: string[][] } = {
   WARNING: allLevelCombinations.filter((perm: string[]) => perm.indexOf("WARNING") >= 0),
 };
 
-export function subscribe(environment: Environment) {
+export function subscribe(environment: Environment, lastMessageId?: string) {
   return requestSubscription(
     environment,
     {
@@ -103,7 +103,9 @@ export function subscribe(environment: Environment) {
           }
         }
     },
-      variables: {},
+      variables: {
+        lastMessageId,
+      },
     },
   );
 }

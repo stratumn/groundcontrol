@@ -47,7 +47,7 @@ func StartPeriodic(ctx context.Context, waitTime time.Duration, addJobs func() [
 
 		subsCtx, cancel := context.WithCancel(context.Background())
 
-		modelCtx.Subs.Subscribe(subsCtx, models.JobUpserted, func(msg interface{}) {
+		modelCtx.Subs.Subscribe(subsCtx, models.JobUpserted, 0, func(msg interface{}) {
 			id := msg.(string)
 			_, ok := jobMap.Load(id)
 			if !ok {

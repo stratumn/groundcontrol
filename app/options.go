@@ -38,6 +38,9 @@ const (
 	// DefaultLogCap is the default capacity of the logger.
 	DefaultLogCap = 10000
 
+	// DefaultPubSubHistoryCap is the default capacity of the PubSub history.
+	DefaultPubSubHistoryCap = 1000
+
 	// DefaultCheckSourcesInterval is the default check sources interval.
 	DefaultCheckSourcesInterval = time.Minute
 
@@ -116,6 +119,13 @@ func OptJobConcurrency(concurrency int) Opt {
 func OptLogLevel(level models.LogLevel) Opt {
 	return func(app *App) {
 		app.logLevel = level
+	}
+}
+
+// OptPubSubHistoryCap sets the capacity of the PubSub history cap.
+func OptPubSubHistoryCap(cap int) Opt {
+	return func(app *App) {
+		app.pubSubHistoryCap = cap
 	}
 }
 

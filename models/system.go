@@ -14,7 +14,11 @@
 
 package models
 
-import "context"
+import (
+	"context"
+	"encoding/base64"
+	"fmt"
+)
 
 // System contains information about the running app.
 type System struct {
@@ -163,4 +167,11 @@ func (s System) LogEntries(
 // LogMetrics returns the LogMetrics node.
 func (s System) LogMetrics(ctx context.Context) LogMetrics {
 	return GetModelContext(ctx).Nodes.MustLoadLogMetrics(s.LogMetricsID)
+}
+
+// LastMessageID is the ID of the last message which can be used for subscriptions.
+func (s System) LastMessageID(ctx context.Context) string {
+	modelCtx := GetModelContext(ctx)
+	lastMessageID := modelCtx.Subs.LastMessageID()
+	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprint(lastMessageID)))
 }

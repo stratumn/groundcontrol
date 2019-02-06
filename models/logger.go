@@ -40,7 +40,7 @@ type Logger struct {
 	level    LogLevel
 	systemID string
 
-	nextID       uint64
+	lastID       uint64
 	logEntryIDs  []string
 	logEntryHead int
 
@@ -85,7 +85,7 @@ func (l *Logger) Add(
 		log.Printf("%s\t%s", level, message)
 	}
 
-	id := atomic.AddUint64(&l.nextID, 1)
+	id := atomic.AddUint64(&l.lastID, 1)
 	now := DateTime(time.Now())
 	logEntry := LogEntry{
 		ID:        relay.EncodeID(NodeTypeLogEntry, fmt.Sprint(id)),

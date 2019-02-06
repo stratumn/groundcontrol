@@ -76,7 +76,9 @@ export class LogEntryListPage extends Component<IProps> {
   }
 
   public componentDidMount() {
-    this.disposables.push(subscribe(this.props.relay.environment));
+    const environment = this.props.relay.environment;
+    const lastMessageId = this.props.system.lastMessageId;
+    this.disposables.push(subscribe(environment, lastMessageId));
   }
 
   public componentWillUnmount() {
@@ -121,6 +123,7 @@ export default createPaginationContainer(
         level: { type: "[LogLevel!]", defaultValue: null },
         ownerId: { type: "ID", defaultValue: null }
       ) {
+      lastMessageId
       logEntries(
        first: $count,
        after: $cursor,

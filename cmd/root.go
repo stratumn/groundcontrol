@@ -52,6 +52,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptJobConcurrency(viper.GetInt("job-concurrency")),
 			app.OptLogLevel(models.LogLevel(strings.ToUpper(viper.GetString("log-level")))),
 			app.OptLogCap(viper.GetInt("log-cap")),
+			app.OptPubSubHistoryCap(viper.GetInt("pubsub-history-cap")),
 			app.OptCheckSourcesInterval(viper.GetDuration("check-sources-interval")),
 			app.OptCheckProjectsInterval(viper.GetDuration("check-projects-interval")),
 			app.OptGracefulShutdownTimeout(viper.GetDuration("graceful-shutdown-timeout")),
@@ -87,6 +88,7 @@ func init() {
 	rootCmd.PersistentFlags().Int("job-concurrency", app.DefaultJobConcurrency, "how many jobs can run concurrency")
 	rootCmd.PersistentFlags().String("log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
 	rootCmd.PersistentFlags().Int("log-cap", app.DefaultLogCap, "maximum number of messages the logger will keep")
+	rootCmd.PersistentFlags().Int("pubsub-history-cap", app.DefaultLogCap, "maximum number of messages the subscription manager will keep")
 	rootCmd.PersistentFlags().Duration("check-sources-interval", app.DefaultCheckSourcesInterval, "how often to check if sources have changed")
 	rootCmd.PersistentFlags().Duration("check-projects-interval", app.DefaultCheckProjectsInterval, "how often to check if projects have changed")
 	rootCmd.PersistentFlags().Duration("graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
@@ -102,6 +104,7 @@ func init() {
 		"job-concurrency",
 		"log-level",
 		"log-cap",
+		"pubsub-history-cap",
 		"check-sources-interval",
 		"check-projects-interval",
 		"graceful-shutdown-timeout",

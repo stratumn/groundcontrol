@@ -18,6 +18,7 @@ import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
 import { Segment } from "semantic-ui-react";
 
+import { SourceListPage_system } from "./__generated__/SourceListPage_system.graphql";
 import { SourceListPage_viewer } from "./__generated__/SourceListPage_viewer.graphql";
 
 import AddSourceForm from "../components/AddSourceForm";
@@ -31,6 +32,7 @@ import { subscribe as subscribeSourceUpserted } from "../subscriptions/sourceUps
 
 interface IProps {
   relay: RelayProp;
+  system: SourceListPage_system;
   viewer: SourceListPage_viewer;
 }
 
@@ -66,8 +68,10 @@ export class SourceListPage extends Component<IProps> {
   }
 
   public componentDidMount() {
-    this.disposables.push(subscribeSourceUpserted(this.props.relay.environment));
-    this.disposables.push(subscribeSourceDeleted(this.props.relay.environment));
+    const environment = this.props.relay.environment;
+    const lastMessageId = this.props.system.lastMessageId;
+    this.disposables.push(subscribeSourceUpserted(environment, lastMessageId));
+    this.disposables.push(subscribeSourceDeleted(environment, lastMessageId));
   }
 
   public componentWillUnmount() {
@@ -98,6 +102,9 @@ export class SourceListPage extends Component<IProps> {
 }
 
 export default createFragmentContainer(SourceListPage, graphql`
+  fragment SourceListPage_system on System {
+    lastMessageId
+  }
   fragment SourceListPage_viewer on User {
     sources(first: 1000) @connection(key: "SourceListPage_sources") {
       edges {

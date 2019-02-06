@@ -31,7 +31,7 @@ import (
 // ProcessManager manages creating and running jobs.
 type ProcessManager struct {
 	commands sync.Map
-	nextID   uint64
+	lastID   uint64
 
 	runningCounter int64
 	doneCounter    int64
@@ -49,7 +49,7 @@ func (p *ProcessManager) CreateGroup(ctx context.Context, taskID string) string 
 
 	id := relay.EncodeID(
 		NodeTypeProcessGroup,
-		fmt.Sprint(atomic.AddUint64(&p.nextID, 1)),
+		fmt.Sprint(atomic.AddUint64(&p.lastID, 1)),
 	)
 
 	group := ProcessGroup{
@@ -84,7 +84,7 @@ func (p *ProcessManager) Run(
 
 	id := relay.EncodeID(
 		NodeTypeProcess,
-		fmt.Sprint(atomic.AddUint64(&p.nextID, 1)),
+		fmt.Sprint(atomic.AddUint64(&p.lastID, 1)),
 	)
 
 	process := Process{
@@ -183,7 +183,7 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 			waitGroup.Done()
 		}()
 
-		modelCtx.Subs.Subscribe(processCtx, ProcessUpserted, func(msg interface{}) {
+		modelCtx.Subs.Subscribe(processCtx, ProcessUpserted, 0, func(msg interface{}) {
 			id := msg.(string)
 			if id != processID {
 				return

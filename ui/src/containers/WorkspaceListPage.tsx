@@ -17,6 +17,7 @@ import React, { Component } from "react";
 import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
 
+import { WorkspaceListPage_system } from "./__generated__/WorkspaceListPage_system.graphql";
 import { WorkspaceListPage_viewer } from "./__generated__/WorkspaceListPage_viewer.graphql";
 
 import Page from "../components/Page";
@@ -29,6 +30,7 @@ import { subscribe } from "../subscriptions/workspaceUpserted";
 
 interface IProps {
   relay: RelayProp;
+  system: WorkspaceListPage_system;
   viewer: WorkspaceListPage_viewer;
 }
 
@@ -73,7 +75,9 @@ export class WorkspaceListPage extends Component<IProps, IState> {
   }
 
   public componentDidMount() {
-    this.disposables.push(subscribe(this.props.relay.environment));
+    const environment = this.props.relay.environment;
+    const lastMessageId = this.props.system.lastMessageId;
+    this.disposables.push(subscribe(environment, lastMessageId));
   }
 
   public componentWillUnmount() {
@@ -98,6 +102,9 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 }
 
 export default createFragmentContainer(WorkspaceListPage, graphql`
+  fragment WorkspaceListPage_system on System {
+    lastMessageId
+  }
   fragment WorkspaceListPage_viewer on User {
     sources(first: 1) {
       edges {

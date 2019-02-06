@@ -82,19 +82,30 @@ package resolvers
 
 import (
 	"context"
+	"encoding/base64"
+	"strconv"
 	
 	"github.com/stratumn/groundcontrol/models"
 )
 
 {{range $index, $type := .Added}}
-func (r *subscriptionResolver) {{$type}}Added(ctx context.Context) (<-chan models.{{$type}}, error) {
+func (r *subscriptionResolver) {{$type}}Added(ctx context.Contextlast, lastMessageID *string) (<-chan models.{{$type}}, error) {
 	go func() {
 		<-ctx.Done()
 	}()
 
 	ch := make(chan models.{{$type}}, SubscriptionChannelSize)
 
-	r.Subs.Subscribe(ctx, models.{{$type}}Added, func(msg interface{}) {
+	last := uint64(0)
+	if lastMessageID != nil {
+		var err error
+		last, err = decodeBase64Uint64(*lastMessageID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Subs.Subscribe(ctx, models.{{$type}}Added, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		select {
 		case ch <- r.Nodes.MustLoad{{$type}}(nodeID):
@@ -107,14 +118,23 @@ func (r *subscriptionResolver) {{$type}}Added(ctx context.Context) (<-chan model
 {{end}}
 
 {{range $index, $type := .Updated}}
-func (r *subscriptionResolver) {{$type}}Updated(ctx context.Context, id *string) (<-chan models.{{$type}}, error) {
+func (r *subscriptionResolver) {{$type}}Updated(ctx context.Context, id *string, lastMessageID *string) (<-chan models.{{$type}}, error) {
 	go func() {
 		<-ctx.Done()
 	}()
 
 	ch := make(chan models.{{$type}}, SubscriptionChannelSize)
 
-	r.Subs.Subscribe(ctx, models.{{$type}}Updated, func(msg interface{}) {
+	last := uint64(0)
+	if lastMessageID != nil {
+		var err error
+		last, err = decodeBase64Uint64(*lastMessageID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Subs.Subscribe(ctx, models.{{$type}}Updated, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
@@ -130,14 +150,23 @@ func (r *subscriptionResolver) {{$type}}Updated(ctx context.Context, id *string)
 {{end}}
 
 {{range $index, $type := .Upserted}}
-func (r *subscriptionResolver) {{$type}}Upserted(ctx context.Context, id *string) (<-chan models.{{$type}}, error) {
+func (r *subscriptionResolver) {{$type}}Upserted(ctx context.Context, id *string, lastMessageID *string) (<-chan models.{{$type}}, error) {
 	go func() {
 		<-ctx.Done()
 	}()
 
 	ch := make(chan models.{{$type}}, SubscriptionChannelSize)
 
-	r.Subs.Subscribe(ctx, models.{{$type}}Upserted, func(msg interface{}) {
+	last := uint64(0)
+	if lastMessageID != nil {
+		var err error
+		last, err = decodeBase64Uint64(*lastMessageID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Subs.Subscribe(ctx, models.{{$type}}Upserted, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
@@ -151,4 +180,13 @@ func (r *subscriptionResolver) {{$type}}Upserted(ctx context.Context, id *string
 	return ch, nil
 }
 {{end}}
+
+func decodeBase64Uint64(str string) (uint64, error) {
+	data, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseUint(string(data), 10, 64)
+}
 `

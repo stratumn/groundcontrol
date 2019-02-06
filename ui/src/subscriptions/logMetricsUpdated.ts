@@ -17,20 +17,22 @@ import { requestSubscription } from "react-relay";
 import { Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription logMetricsUpdatedSubscription {
-    logMetricsUpdated {
+  subscription logMetricsUpdatedSubscription($lastMessageId: ID) {
+    logMetricsUpdated(lastMessageId: $lastMessageId) {
       ...Menu_logMetrics
     }
   }
 `;
 
-export function subscribe(environment: Environment) {
+export function subscribe(environment: Environment, lastMessageId?: string) {
   return requestSubscription(
     environment,
     {
       onError: (error) => console.error(error),
       subscription,
-      variables: {},
+      variables: {
+        lastMessageId,
+      },
     },
   );
 }
