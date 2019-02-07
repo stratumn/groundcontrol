@@ -83,6 +83,7 @@ export class WorkspaceViewPage extends Component<IProps> {
     const lastMessageId = this.props.system.lastMessageId;
     const id = this.props.viewer.workspace!.id;
     this.disposables.push(subscribe(environment, lastMessageId, id));
+    loadWorkspaceCommits(environment, id);
   }
 
   public componentWillUnmount() {
