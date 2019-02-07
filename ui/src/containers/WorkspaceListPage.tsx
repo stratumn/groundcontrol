@@ -113,10 +113,13 @@ export class WorkspaceListPage extends Component<IProps, IState> {
   }
 }
 
-export default createFragmentContainer(WorkspaceListPage, graphql`
+export const fragments = graphql`
   fragment WorkspaceListPage_source on Source {
     isLoading
   }
+`;
+
+export default createFragmentContainer(WorkspaceListPage, graphql`
   fragment WorkspaceListPage_system on System {
     lastMessageId
   }

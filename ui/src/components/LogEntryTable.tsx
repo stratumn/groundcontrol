@@ -50,6 +50,7 @@ export class LogEntryTable extends Component<IProps> {
           <Table.Row>
             <Table.HeaderCell>Created At</Table.HeaderCell>
             <Table.HeaderCell>Level</Table.HeaderCell>
+            <Table.HeaderCell>Owner</Table.HeaderCell>
             <Table.HeaderCell>Message</Table.HeaderCell>
           </Table.Row>
         </Table.Header>

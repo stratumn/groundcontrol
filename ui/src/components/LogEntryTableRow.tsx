@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import graphql from "babel-plugin-relay/macro";
-import React, { Component } from "react";
+import { Link } from "found";
+import React, { Component, Fragment } from "react";
 import {
   Accordion,
   Table,
@@ -36,11 +37,33 @@ export class LogEntryTableRow extends Component<IProps> {
 
   public render() {
     const item = this.props.item;
+    const owner = item.owner;
     const panels = [{
       content: JSON.stringify(item.owner, null, 2),
       key: "details",
       title: item.message,
     }];
+
+    let ownerEl: JSX.Element | null = null;
+
+    if (owner) {
+      switch (owner.__typename) {
+      case "Project":
+        const workspaceSlug = owner.workspace!.slug;
+        const projectSlug = owner.slug;
+        ownerEl = (
+          <Fragment>
+            <Link to={`/workspaces/${workspaceSlug}`}>
+              {workspaceSlug}
+            </Link>
+            &#47;
+            {projectSlug}
+          </Fragment>
+        );
+        break;
+      }
+    }
+
 
     return (
       <Table.Row
@@ -60,6 +83,9 @@ export class LogEntryTableRow extends Component<IProps> {
           collapsing={true}
         >
           {item.level}
+        </Table.Cell>
+        <Table.Cell collapsing={true}>
+          {ownerEl}
         </Table.Cell>
         <Table.Cell>
           <Accordion panels={panels} />
@@ -82,7 +108,7 @@ export default createFragmentContainer(LogEntryTableRow, graphql`
         slug
         workspace {
           id
-          name
+          slug
         }
       }
       ... on Job {

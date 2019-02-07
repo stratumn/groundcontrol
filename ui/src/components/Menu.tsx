@@ -91,7 +91,7 @@ export class Menu extends Component<IProps> {
   }
 }
 
-export default createFragmentContainer(Menu, graphql`
+export const fragments = graphql`
   fragment Menu_jobMetrics on JobMetrics {
     queued
     running
@@ -102,6 +102,9 @@ export default createFragmentContainer(Menu, graphql`
   fragment Menu_logMetrics on LogMetrics {
     error
   }
+`;
+
+export default createFragmentContainer(Menu, graphql`
   fragment Menu_system on System {
     jobMetrics {
       ...Menu_jobMetrics @relay(mask: false)
