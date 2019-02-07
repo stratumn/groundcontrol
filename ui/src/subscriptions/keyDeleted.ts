@@ -17,15 +17,9 @@ import { requestSubscription } from "react-relay";
 import { ConnectionHandler, Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription sourceUpsertedSubscription($lastMessageId: ID) {
-    sourceUpserted(lastMessageId: $lastMessageId) {
-      ...WorkspaceListPage_source
-      ... on DirectorySource {
-        ...DirectorySourceListItem_item
-      }
-      ... on GitSource {
-        ...GitSourceListItem_item
-      }
+  subscription keyDeletedSubscription($lastMessageId: ID) {
+    keyDeleted(lastMessageId: $lastMessageId) {
+      id
     }
   }
 `;
@@ -37,39 +31,17 @@ export function subscribe(environment: Environment, lastMessageId?: string) {
       onError: (error) => console.error(error),
       subscription,
       updater: (store) => {
-        const record = store.getRootField("sourceUpserted")!;
+        const record = store.getRootField("keyDeleted")!;
         const recordId = record.getValue("id");
         const viewer = store.getRoot().getLinkedRecord("viewer");
 
         const connection = ConnectionHandler.getConnection(
           viewer,
-          "SourceListPage_sources",
+          "KeyListPage_keys",
         );
 
         if (connection) {
-          const edges = connection.getLinkedRecords("edges");
-          let exists = false;
-
-          for (const e of edges) {
-            const id = e.getLinkedRecord("node")!.getValue("id");
-
-            if (recordId === id) {
-              exists = true;
-              break;
-            }
-          }
-
-          if (exists) {
-            return;
-          }
-
-          const edge = ConnectionHandler.createEdge(
-            store,
-            connection,
-            record,
-            "SourcesConnection",
-          );
-          ConnectionHandler.insertEdgeBefore(connection, edge);
+          ConnectionHandler.deleteNode(connection, recordId);
         }
     },
       variables: {

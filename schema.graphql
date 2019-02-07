@@ -1252,6 +1252,14 @@ type Subscription {
   """
   taskUpserted(id: ID, lastMessageId: ID): Task!
   """
+  Receive a key when added or updated.
+  """
+  keyUpserted(id: ID, lastMessageId: ID): Key!
+  """
+  Receive a message when a key is deleted.
+  """
+  keyDeleted(id: ID, lastMessageId: ID): DeletedNode!
+  """
   Receive a job when added or updated.
   """
   jobUpserted(id: ID, lastMessageId: ID): Job!

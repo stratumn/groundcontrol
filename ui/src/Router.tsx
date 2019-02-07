@@ -29,6 +29,7 @@ import App from "./containers/App";
 import ErrorPage from "./containers/ErrorPage";
 import HttpErrorPage from "./containers/HttpErrorPage";
 import JobListPage from "./containers/JobListPage";
+import KeyListPage from "./containers/KeyListPage";
 import LogEntryListPage from "./containers/LogEntryListPage";
 import ProcessGroupListPage from "./containers/ProcessGroupListPage";
 import SourceListPage from "./containers/SourceListPage";
@@ -61,6 +62,17 @@ const sourceListQuery = graphql`
     }
     viewer {
       ...SourceListPage_viewer
+    }
+  }
+`;
+
+const keyListQuery = graphql`
+  query RouterKeyListQuery {
+    system {
+      ...KeyListPage_system
+    }
+    viewer {
+      ...KeyListPage_viewer
     }
   }
 `;
@@ -156,6 +168,12 @@ export default createFarceRouter({
         path="sources"
         Component={SourceListPage}
         query={sourceListQuery}
+        render={render}
+      />
+      <Route
+        path="keys"
+        Component={KeyListPage}
+        query={keyListQuery}
         render={render}
       />
       <Route path="processes">

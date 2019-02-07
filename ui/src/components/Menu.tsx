@@ -50,6 +50,13 @@ export class Menu extends Component<IProps> {
           >
             Sources
           </Link>
+          <Link
+            to="/keys"
+            Component={SemanticMenu.Item}
+            activePropName="active"
+          >
+            Keys
+          </Link>
           <SemanticMenu.Menu position="right">
             <Link
               to="/jobs"

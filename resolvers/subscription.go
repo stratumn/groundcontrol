@@ -59,6 +59,37 @@ func (r *subscriptionResolver) SourceDeleted(
 	return ch, nil
 }
 
+func (r *subscriptionResolver) KeyDeleted(
+	ctx context.Context,
+	id *string,
+	lastMessageID *string,
+) (<-chan models.DeletedNode, error) {
+	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
+
+	last := uint64(0)
+	if lastMessageID != nil {
+		var err error
+		last, err = decodeBase64Uint64(*lastMessageID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Subs.Subscribe(ctx, models.KeyDeleted, last, func(msg interface{}) {
+		keyID := msg.(string)
+		if id != nil && *id != keyID {
+			return
+		}
+
+		select {
+		case ch <- models.DeletedNode{ID: keyID}:
+		default:
+		}
+	})
+
+	return ch, nil
+}
+
 // Define custom subscriptions for the log because we don't want to log them to avoid infinite loops.
 
 func (r *subscriptionResolver) LogEntryAdded(

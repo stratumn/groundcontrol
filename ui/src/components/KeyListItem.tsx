@@ -1,0 +1,58 @@
+// Copyright 2019 Stratumn
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import graphql from "babel-plugin-relay/macro";
+import React, { Component } from "react";
+import { Button, List } from "semantic-ui-react";
+
+import { createFragmentContainer } from "react-relay";
+
+import { KeyListItem_item } from "./__generated__/KeyListItem_item.graphql";
+
+interface IProps {
+  item: KeyListItem_item;
+  onDelete: () => any;
+}
+
+export class KeyListItem extends Component<IProps> {
+
+  public render() {
+    const { name, value } = this.props.item;
+    const onDelete = this.props.onDelete;
+
+    return (
+      <List.Item>
+        <List.Content>
+          <Button
+            floated="right"
+            icon="delete"
+            color="pink"
+            size="small"
+            onClick={onDelete}
+          />
+          <List.Header>{name}</List.Header>
+          <List.Description>{value}</List.Description>
+        </List.Content>
+      </List.Item>
+    );
+  }
+
+}
+
+export default createFragmentContainer(KeyListItem, graphql`
+  fragment KeyListItem_item on Key {
+    name
+    value
+  }`,
+);

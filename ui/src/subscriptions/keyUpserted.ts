@@ -17,15 +17,9 @@ import { requestSubscription } from "react-relay";
 import { ConnectionHandler, Environment } from "relay-runtime";
 
 const subscription = graphql`
-  subscription sourceUpsertedSubscription($lastMessageId: ID) {
-    sourceUpserted(lastMessageId: $lastMessageId) {
-      ...WorkspaceListPage_source
-      ... on DirectorySource {
-        ...DirectorySourceListItem_item
-      }
-      ... on GitSource {
-        ...GitSourceListItem_item
-      }
+  subscription keyUpsertedSubscription($lastMessageId: ID) {
+    keyUpserted(lastMessageId: $lastMessageId) {
+      ...KeyListItem_item
     }
   }
 `;
@@ -37,13 +31,13 @@ export function subscribe(environment: Environment, lastMessageId?: string) {
       onError: (error) => console.error(error),
       subscription,
       updater: (store) => {
-        const record = store.getRootField("sourceUpserted")!;
+        const record = store.getRootField("keyUpserted")!;
         const recordId = record.getValue("id");
         const viewer = store.getRoot().getLinkedRecord("viewer");
 
         const connection = ConnectionHandler.getConnection(
           viewer,
-          "SourceListPage_sources",
+          "KeyListPage_keys",
         );
 
         if (connection) {
@@ -67,7 +61,7 @@ export function subscribe(environment: Environment, lastMessageId?: string) {
             store,
             connection,
             record,
-            "SourcesConnection",
+            "KeysConnection",
           );
           ConnectionHandler.insertEdgeBefore(connection, edge);
         }
