@@ -41,6 +41,7 @@ type ModelContext struct {
 	PM                  *ProcessManager
 	Subs                *pubsub.PubSub
 	Sources             *SourcesConfig
+	Keys                *KeysConfig
 	GetGitSourcePath    ProjectGitSourcePathGetter
 	GetProjectPath      ProjectPathGetter
 	GetProjectCachePath ProjectCachePathGetter

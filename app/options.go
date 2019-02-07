@@ -64,6 +64,9 @@ var (
 	// DefaultSourcesFile is the default sources file.
 	DefaultSourcesFile = "sources.yml"
 
+	// DefaultKeysFile is the default keys file.
+	DefaultKeysFile = "keys.yml"
+
 	// DefaultGitSourcesDirectory is the default Git sources directory.
 	DefaultGitSourcesDirectory = "git-sources"
 
@@ -83,6 +86,7 @@ func init() {
 
 	DefaultSettingsFile = filepath.Join(home, "groundcontrol", DefaultSettingsFile)
 	DefaultSourcesFile = filepath.Join(home, "groundcontrol", DefaultSourcesFile)
+	DefaultKeysFile = filepath.Join(home, "groundcontrol", DefaultKeysFile)
 	DefaultGitSourcesDirectory = filepath.Join(home, "groundcontrol", DefaultGitSourcesDirectory)
 	DefaultWorkspacesDirectory = filepath.Join(home, "groundcontrol", DefaultWorkspacesDirectory)
 	DefaultCacheDirectory = filepath.Join(home, "groundcontrol", DefaultCacheDirectory)
@@ -95,6 +99,13 @@ type Opt func(*App)
 func OptSourcesFile(filename string) Opt {
 	return func(app *App) {
 		app.sourcesFile = filename
+	}
+}
+
+// OptKeysFile sets the keys file.
+func OptKeysFile(filename string) Opt {
+	return func(app *App) {
+		app.keysFile = filename
 	}
 }
 

@@ -63,6 +63,14 @@ input GitSourceInput {
 }
 
 """
+An input for a key.
+"""
+input KeyInput {
+  name: String!
+  value: String!
+}
+
+"""
 A Relay node.
 """
 interface Node {
@@ -1189,6 +1197,14 @@ type Mutation {
   Queue a job to run a task.
   """
   run(id: String!): Job!
+  """
+  Add key.
+  """
+  addKey(input: KeyInput!): Key!
+  """
+  Delete a key.
+  """
+  deleteKey(id: ID!): DeletedNode!
   """
   Queue a job to stop a running job.
   """

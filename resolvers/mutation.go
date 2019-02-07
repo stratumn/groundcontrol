@@ -223,6 +223,46 @@ func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, erro
 	return nodes.MustLoadJob(jobID), nil
 }
 
+func (r *mutationResolver) AddKey(
+	ctx context.Context,
+	input models.KeyInput,
+) (models.Key, error) {
+	modelCtx := models.GetModelContext(ctx)
+
+	id := modelCtx.Keys.UpsertKey(
+		modelCtx.Nodes,
+		modelCtx.Subs,
+		modelCtx.ViewerID,
+		input,
+	)
+
+	if err := modelCtx.Keys.Save(); err != nil {
+		return models.Key{}, err
+	}
+
+	return modelCtx.Nodes.MustLoadKey(id), nil
+}
+
+func (r *mutationResolver) DeleteKey(ctx context.Context, id string) (models.DeletedNode, error) {
+	modelCtx := models.GetModelContext(ctx)
+
+	err := modelCtx.Keys.DeleteKey(
+		modelCtx.Nodes,
+		modelCtx.Subs,
+		modelCtx.ViewerID,
+		id,
+	)
+	if err != nil {
+		return models.DeletedNode{}, nil
+	}
+
+	if err := modelCtx.Keys.Save(); err != nil {
+		return models.DeletedNode{}, err
+	}
+
+	return models.DeletedNode{ID: id}, nil
+}
+
 func (r *mutationResolver) StopJob(ctx context.Context, id string) (models.Job, error) {
 	modelCtx := models.GetModelContext(ctx)
 	jobs := modelCtx.Jobs

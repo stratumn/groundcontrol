@@ -45,6 +45,7 @@ import (
 // App contains data about the app.
 type App struct {
 	sourcesFile             string
+	keysFile                string
 	listenAddress           string
 	jobConcurrency          int
 	logLevel                models.LogLevel
@@ -65,6 +66,7 @@ type App struct {
 func New(opts ...Opt) *App {
 	app := &App{
 		sourcesFile:             DefaultSourcesFile,
+		keysFile:                DefaultKeysFile,
 		listenAddress:           DefaultListenAddress,
 		jobConcurrency:          DefaultJobConcurrency,
 		logLevel:                DefaultLogLevel,
@@ -101,6 +103,11 @@ func (a *App) Start(ctx context.Context) error {
 		return err
 	}
 
+	keys, err := a.loadKeys(nodes, subs, viewerID)
+	if err != nil {
+		return err
+	}
+
 	modelCtx := &models.ModelContext{
 		Nodes:               nodes,
 		Log:                 log,
@@ -108,6 +115,7 @@ func (a *App) Start(ctx context.Context) error {
 		PM:                  pm,
 		Subs:                subs,
 		Sources:             sources,
+		Keys:                keys,
 		GetGitSourcePath:    a.getGitSourcePath,
 		GetProjectPath:      a.getProjectPath,
 		GetProjectCachePath: a.getProjectCachePath,
@@ -242,6 +250,24 @@ func (a *App) loadSources(
 	viewerID string,
 ) (*models.SourcesConfig, error) {
 	config, err := models.LoadSourcesConfigYAML(a.sourcesFile)
+	if err != nil {
+		return nil, err
+	}
+
+	err = config.UpsertNodes(nodes, subs, viewerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (a *App) loadKeys(
+	nodes *models.NodeManager,
+	subs *pubsub.PubSub,
+	viewerID string,
+) (*models.KeysConfig, error) {
+	config, err := models.LoadKeysConfigYAML(a.keysFile)
 	if err != nil {
 		return nil, err
 	}

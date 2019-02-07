@@ -48,6 +48,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 
 		app := app.New(
 			app.OptSourcesFile(viper.GetString("sources-file")),
+			app.OptKeysFile(viper.GetString("keys-file")),
 			app.OptListenAddress(viper.GetString("listen-address")),
 			app.OptJobConcurrency(viper.GetInt("job-concurrency")),
 			app.OptLogLevel(models.LogLevel(strings.ToUpper(viper.GetString("log-level")))),
@@ -83,6 +84,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings-file", app.DefaultSettingsFile, "settings file")
 	rootCmd.PersistentFlags().String("sources-file", app.DefaultSourcesFile, "sources config file")
+	rootCmd.PersistentFlags().String("keys-file", app.DefaultKeysFile, "keys config file")
 	rootCmd.PersistentFlags().String("listen-address", app.DefaultListenAddress, "address the server should listen on")
 	rootCmd.PersistentFlags().Int("job-concurrency", app.DefaultJobConcurrency, "how many jobs can run concurrency")
 	rootCmd.PersistentFlags().String("log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
@@ -98,6 +100,7 @@ func init() {
 
 	for _, flagName := range []string{
 		"sources-file",
+		"keys-file",
 		"listen-address",
 		"job-concurrency",
 		"log-level",
