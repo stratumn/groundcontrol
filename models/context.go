@@ -55,10 +55,9 @@ func WithModelContext(ctx context.Context, mc *ModelContext) context.Context {
 
 // GetModelContext retrieves the model context from a Go context.
 func GetModelContext(ctx context.Context) *ModelContext {
-	val := ctx.Value(modelContextKey)
-	if val == nil {
-		return nil
+	if val, ok := ctx.Value(modelContextKey).(*ModelContext); ok {
+		return val
 	}
 
-	return val.(*ModelContext)
+	return nil
 }

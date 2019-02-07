@@ -19,6 +19,7 @@ import { ConnectionHandler, Environment } from "relay-runtime";
 const subscription = graphql`
   subscription sourceUpsertedSubscription($lastMessageId: ID) {
     sourceUpserted(lastMessageId: $lastMessageId) {
+      ... WorkspaceListPage_source
       ... on DirectorySource {
         ...DirectorySourceListItem_item
       }

@@ -16,6 +16,7 @@ import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
+import { Loader } from "semantic-ui-react";
 
 import { WorkspaceListPage_system } from "./__generated__/WorkspaceListPage_system.graphql";
 import { WorkspaceListPage_viewer } from "./__generated__/WorkspaceListPage_viewer.graphql";
@@ -26,7 +27,8 @@ import WorkspaceCardGroup from "../components/WorkspaceCardGroup";
 import WorkspaceSearch from "../components/WorkspaceSearch";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
 import { commit as pullWorkspace } from "../mutations/pullWorkspace";
-import { subscribe } from "../subscriptions/workspaceUpserted";
+import { subscribe as subscribeSourceUpserted } from "../subscriptions/sourceUpserted";
+import { subscribe as subscribeWorkspaceUpserted } from "../subscriptions/workspaceUpserted";
 
 interface IProps {
   relay: RelayProp;
@@ -53,6 +55,14 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 
     const query = this.state.query;
     let items = this.props.viewer.workspaces.edges.map(({ node }) => node);
+    let isLoading = false;
+
+    for (const { node } of this.props.viewer.sources.edges) {
+      if (node.isLoading) {
+        isLoading = true;
+        break;
+      }
+    }
 
     if (query) {
       items = items.filter((item) => item.name.toLowerCase().indexOf(query) >= 0);
@@ -70,6 +80,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
           onClone={this.handleClone}
           onPull={this.handlePull}
         />
+        <Loader active={isLoading} />
       </Page>
     );
   }
@@ -77,7 +88,8 @@ export class WorkspaceListPage extends Component<IProps, IState> {
   public componentDidMount() {
     const environment = this.props.relay.environment;
     const lastMessageId = this.props.system.lastMessageId;
-    this.disposables.push(subscribe(environment, lastMessageId));
+    this.disposables.push(subscribeSourceUpserted(environment, lastMessageId));
+    this.disposables.push(subscribeWorkspaceUpserted(environment, lastMessageId));
   }
 
   public componentWillUnmount() {
@@ -102,14 +114,17 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 }
 
 export default createFragmentContainer(WorkspaceListPage, graphql`
+  fragment WorkspaceListPage_source on Source {
+    isLoading
+  }
   fragment WorkspaceListPage_system on System {
     lastMessageId
   }
   fragment WorkspaceListPage_viewer on User {
-    sources(first: 1) {
+    sources(first: 10000) {
       edges {
         node {
-          id
+          ...WorkspaceListPage_source @relay(mask: false)
         }
       }
     }
