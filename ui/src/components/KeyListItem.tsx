@@ -22,6 +22,7 @@ import { KeyListItem_item } from "./__generated__/KeyListItem_item.graphql";
 
 interface IProps {
   item: KeyListItem_item;
+  onEdit: () => any;
   onDelete: () => any;
 }
 
@@ -29,7 +30,7 @@ export class KeyListItem extends Component<IProps> {
 
   public render() {
     const { name, value } = this.props.item;
-    const onDelete = this.props.onDelete;
+    const { onEdit, onDelete } = this.props;
 
     return (
       <List.Item>
@@ -40,6 +41,13 @@ export class KeyListItem extends Component<IProps> {
             color="pink"
             size="small"
             onClick={onDelete}
+          />
+          <Button
+            floated="right"
+            icon="edit"
+            color="teal"
+            size="small"
+            onClick={onEdit}
           />
           <List.Header>{name}</List.Header>
           <List.Description>{value}</List.Description>

@@ -23,19 +23,17 @@ import {
 import "./Page.css";
 
 interface IProps {
-  onAdd: (name: string, value: string) => any;
+  onSet: (name: string, value: string) => any;
 }
 
 interface IState {
   name: string;
   value: string;
-  error: boolean;
 }
 
-export default class AddKeyForm extends Component<IProps, IState> {
+export default class SetKeyForm extends Component<IProps, IState> {
 
   public state: IState = {
-    error: false,
     name: "",
     value: "",
   };
@@ -67,8 +65,8 @@ export default class AddKeyForm extends Component<IProps, IState> {
         <Button
           type="submit"
           color="teal"
-          icon="add"
-          content="Add"
+          icon="edit"
+          content="Set"
           disabled={disabled}
         />
       </Form>
@@ -83,7 +81,7 @@ export default class AddKeyForm extends Component<IProps, IState> {
   }
 
   private handleSubmit = () => {
-    this.props.onAdd(this.state.name, this.state.value);
+    this.props.onSet(this.state.name, this.state.value);
     this.setState({ name: "", value: "" });
   }
 

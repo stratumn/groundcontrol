@@ -223,7 +223,7 @@ func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, erro
 	return nodes.MustLoadJob(jobID), nil
 }
 
-func (r *mutationResolver) AddKey(
+func (r *mutationResolver) SetKey(
 	ctx context.Context,
 	input models.KeyInput,
 ) (models.Key, error) {

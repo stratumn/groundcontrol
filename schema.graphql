@@ -1198,9 +1198,9 @@ type Mutation {
   """
   run(id: String!): Job!
   """
-  Add key.
+  Set a key.
   """
-  addKey(input: KeyInput!): Key!
+  setKey(input: KeyInput!): Key!
   """
   Delete a key.
   """

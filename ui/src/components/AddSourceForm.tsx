@@ -33,7 +33,6 @@ interface IState {
   directory: string;
   repository: string;
   branch: string;
-  error: boolean;
 }
 
 export default class AddSourceForm extends Component<IProps, IState> {
@@ -41,7 +40,6 @@ export default class AddSourceForm extends Component<IProps, IState> {
   public state: IState = {
     branch: "",
     directory: "",
-    error: false,
     repository: "",
     type: "directory",
   };

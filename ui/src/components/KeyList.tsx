@@ -23,6 +23,7 @@ import KeyListItem from "./KeyListItem";
 
 interface IProps {
   items: KeyList_items;
+  onEdit: (id: string) => any;
   onDelete: (id: string) => any;
 }
 
@@ -30,7 +31,7 @@ export class KeyList extends Component<IProps> {
 
   public render() {
     const items = this.props.items;
-    const onDelete = this.props.onDelete;
+    const { onEdit, onDelete } = this.props;
 
     if (items.length < 1) {
       return <p>There are no keys at this time.</p>;
@@ -40,6 +41,7 @@ export class KeyList extends Component<IProps> {
       <KeyListItem
         key={item.id}
         item={item}
+        onEdit={onEdit.bind(null, item.id)}
         onDelete={onDelete.bind(null, item.id)}
       />
     ));

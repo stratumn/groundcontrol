@@ -80,13 +80,16 @@ func (c *KeysConfig) UpsertKey(
 	nodes.MustLockUser(userID, func(user User) {
 		c.Keys[input.Name] = input.Value
 
+		exists := false
 		for _, keyID := range user.KeyIDs {
 			if keyID == key.ID {
-				return
+				exists = true
 			}
 		}
 
-		user.KeyIDs = append(user.KeyIDs, key.ID)
+		if !exists {
+			user.KeyIDs = append(user.KeyIDs, key.ID)
+		}
 
 		nodes.MustStoreKey(key)
 		nodes.MustStoreUser(user)

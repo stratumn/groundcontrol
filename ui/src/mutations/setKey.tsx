@@ -16,11 +16,11 @@ import graphql from "babel-plugin-relay/macro";
 import { commitMutation } from "react-relay";
 import { Environment } from "relay-runtime";
 
-import { KeyInput } from "../mutations/__generated__/addKeyMutation.graphql";
+import { KeyInput } from "../mutations/__generated__/setKeyMutation.graphql";
 
 const mutation = graphql`
-  mutation addKeyMutation($input: KeyInput!) {
-    addKey(input: $input) {
+  mutation setKeyMutation($input: KeyInput!) {
+    setKey(input: $input) {
       id
     }
   }

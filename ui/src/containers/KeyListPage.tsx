@@ -21,10 +21,10 @@ import { Segment } from "semantic-ui-react";
 import { KeyListPage_system } from "./__generated__/KeyListPage_system.graphql";
 import { KeyListPage_viewer } from "./__generated__/KeyListPage_viewer.graphql";
 
-import AddKeyForm from "../components/AddKeyForm";
 import KeyList from "../components/KeyList";
 import Page from "../components/Page";
-import { commit as addKey } from "../mutations/addKey";
+import SetKeyForm from "../components/SetKeyForm";
+import { commit as setKey } from "../mutations/setKey";
 import { commit as deleteKey } from "../mutations/deleteKey";
 import { subscribe as subscribeKeyDeleted } from "../subscriptions/keyDeleted";
 import { subscribe as subscribeKeyUpserted } from "../subscriptions/keyUpserted";
@@ -50,14 +50,15 @@ export class KeyListPage extends Component<IProps> {
       >
         <Segment>
           <h3>Add or Replace a Key</h3>
-          <AddKeyForm
-            onAdd={this.handleAdd}
+          <SetKeyForm
+            onSet={this.handleSet}
           />
         </Segment>
         <Segment>
           <h3>Current Keys</h3>
           <KeyList
             items={items}
+            onEdit={this.handleEdit}
             onDelete={this.handleDelete}
           />
         </Segment>
@@ -80,11 +81,15 @@ export class KeyListPage extends Component<IProps> {
     this.disposables = [];
   }
 
-  private handleAdd = (name: string, value: string) => {
-    addKey(this.props.relay.environment, {
+  private handleSet = (name: string, value: string) => {
+    setKey(this.props.relay.environment, {
       name,
       value,
     });
+  }
+
+  private handleEdit = (id: string) => {
+    alert(id);
   }
 
   private handleDelete = (id: string) => {
