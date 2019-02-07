@@ -27,11 +27,15 @@ import (
 // The addJobs argument should be a function that creates jobs and returns their IDs.
 // The first round of jobs will be created immediately upon calling this function.
 // This function blocks until the context is canceled.
-func StartPeriodic(ctx context.Context, waitTime time.Duration, addJobs func() []string) error {
+func StartPeriodic(
+	ctx context.Context,
+	waitTime time.Duration,
+	chain ...func(context.Context) []string,
+) error {
 	modelCtx := models.GetModelContext(ctx)
 
-	round := func() {
-		jobIDs := addJobs()
+	round := func(fn func(context.Context) []string) {
+		jobIDs := fn(ctx)
 		if len(jobIDs) < 1 {
 			return
 		}
@@ -64,14 +68,18 @@ func StartPeriodic(ctx context.Context, waitTime time.Duration, addJobs func() [
 		cancel()
 	}
 
-	round()
+	for _, fn := range chain {
+		round(fn)
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-time.After(waitTime):
-			round()
+			for _, fn := range chain {
+				round(fn)
+			}
 		}
 	}
 }

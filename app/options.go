@@ -41,11 +41,8 @@ const (
 	// DefaultPubSubHistoryCap is the default capacity of the PubSub history.
 	DefaultPubSubHistoryCap = 1000
 
-	// DefaultCheckSourcesInterval is the default check sources interval.
-	DefaultCheckSourcesInterval = time.Minute
-
-	// DefaultCheckProjectsInterval is the default check projects interval.
-	DefaultCheckProjectsInterval = time.Minute
+	// DefaultPeriodicJobsInterval is the default periodic jobs interval.
+	DefaultPeriodicJobsInterval = time.Minute
 
 	// DefaultGracefulShutdownTimeout is the default graceful shutdown timeout.
 	DefaultGracefulShutdownTimeout = 20 * time.Second
@@ -136,17 +133,10 @@ func OptLogCap(cap int) Opt {
 	}
 }
 
-// OptCheckSourcesInterval sets the time to wait between periodic jobs used to check the state of sources.
-func OptCheckSourcesInterval(interval time.Duration) Opt {
+// OptPeriodicJobsInterval sets the time to wait between periodic jobs.
+func OptPeriodicJobsInterval(interval time.Duration) Opt {
 	return func(app *App) {
-		app.checkSourcesInterval = interval
-	}
-}
-
-// OptCheckProjectsInterval sets the time to wait between periodic jobs used to check the state of projects.
-func OptCheckProjectsInterval(interval time.Duration) Opt {
-	return func(app *App) {
-		app.checkProjectsInterval = interval
+		app.periodicJobsInterval = interval
 	}
 }
 

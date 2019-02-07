@@ -50,8 +50,7 @@ type App struct {
 	logLevel                models.LogLevel
 	logCap                  int
 	pubSubHistoryCap        int
-	checkSourcesInterval    time.Duration
-	checkProjectsInterval   time.Duration
+	periodicJobsInterval    time.Duration
 	gracefulShutdownTimeout time.Duration
 	ui                      http.FileSystem
 	openBrowser             bool
@@ -71,8 +70,7 @@ func New(opts ...Opt) *App {
 		logLevel:                DefaultLogLevel,
 		logCap:                  DefaultLogCap,
 		pubSubHistoryCap:        DefaultPubSubHistoryCap,
-		checkSourcesInterval:    DefaultCheckSourcesInterval,
-		checkProjectsInterval:   DefaultCheckProjectsInterval,
+		periodicJobsInterval:    DefaultPeriodicJobsInterval,
 		gracefulShutdownTimeout: DefaultGracefulShutdownTimeout,
 		openBrowser:             DefaultOpenBrowser,
 		gitSourcesDirectory:     DefaultGitSourcesDirectory,
@@ -259,17 +257,9 @@ func (a *App) loadSources(
 func (a *App) startPeriodicJobs(ctx context.Context) {
 	go jobs.StartPeriodic(
 		ctx,
-		a.checkSourcesInterval,
-		func() []string {
-			return jobs.LoadAllSources(ctx)
-		},
-	)
-	go jobs.StartPeriodic(
-		ctx,
-		a.checkProjectsInterval,
-		func() []string {
-			return jobs.LoadAllCommits(ctx)
-		},
+		a.periodicJobsInterval,
+		jobs.LoadAllSources,
+		jobs.LoadAllCommits,
 	)
 }
 

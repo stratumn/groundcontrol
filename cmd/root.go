@@ -53,8 +53,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptLogLevel(models.LogLevel(strings.ToUpper(viper.GetString("log-level")))),
 			app.OptLogCap(viper.GetInt("log-cap")),
 			app.OptPubSubHistoryCap(viper.GetInt("pubsub-history-cap")),
-			app.OptCheckSourcesInterval(viper.GetDuration("check-sources-interval")),
-			app.OptCheckProjectsInterval(viper.GetDuration("check-projects-interval")),
+			app.OptPeriodicJobsInterval(viper.GetDuration("periodic-jobs-interval")),
 			app.OptGracefulShutdownTimeout(viper.GetDuration("graceful-shutdown-timeout")),
 			app.OptOpenBrowser(viper.GetBool("open-browser")),
 			app.OptGitSourcesDirectory(viper.GetString("git-sources-directory")),
@@ -89,8 +88,7 @@ func init() {
 	rootCmd.PersistentFlags().String("log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
 	rootCmd.PersistentFlags().Int("log-cap", app.DefaultLogCap, "maximum number of messages the logger will keep")
 	rootCmd.PersistentFlags().Int("pubsub-history-cap", app.DefaultLogCap, "maximum number of messages the subscription manager will keep")
-	rootCmd.PersistentFlags().Duration("check-sources-interval", app.DefaultCheckSourcesInterval, "how often to check if sources have changed")
-	rootCmd.PersistentFlags().Duration("check-projects-interval", app.DefaultCheckProjectsInterval, "how often to check if projects have changed")
+	rootCmd.PersistentFlags().Duration("periodic-jobs-interval", app.DefaultPeriodicJobsInterval, "how long to wait between rounds of periodic jobs")
 	rootCmd.PersistentFlags().Duration("graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
 	rootCmd.PersistentFlags().Bool("open-browser", app.DefaultOpenBrowser, "open the user interface in a browser")
 	rootCmd.PersistentFlags().String("git-sources-directory", app.DefaultGitSourcesDirectory, "directory for Git sources")
@@ -105,8 +103,7 @@ func init() {
 		"log-level",
 		"log-cap",
 		"pubsub-history-cap",
-		"check-sources-interval",
-		"check-projects-interval",
+		"periodic-jobs-interval",
 		"graceful-shutdown-timeout",
 		"open-browser",
 		"git-sources-directory",
