@@ -20,6 +20,7 @@ import "context"
 type User struct {
 	ID        string   `json:"id"`
 	SourceIDs []string `json:"sourceIds"`
+	KeyIDs    []string `json:"keyIds"`
 }
 
 // IsNode tells gqlgen that it implements Node.
@@ -101,4 +102,22 @@ func (u User) Projects(
 	}
 
 	return PaginateProjectIDSlice(nodes, slice, after, before, first, last)
+}
+
+// Keys returns the user's keys.
+func (u User) Keys(
+	ctx context.Context,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (KeyConnection, error) {
+	return PaginateKeyIDSliceContext(
+		ctx,
+		u.KeyIDs,
+		after,
+		before,
+		first,
+		last,
+	)
 }

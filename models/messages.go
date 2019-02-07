@@ -21,6 +21,8 @@ const (
 	WorkspaceUpserted     = "WORKSPACE_UPSERTED"
 	ProjectUpserted       = "PROJECT_UPSERTED"
 	TaskUpserted          = "TASK_UPSERTED"
+	KeyUpserted           = "KEY_UPSERTED"
+	KeyDeleted            = "KEY_DELETED"
 	JobUpserted           = "JOB_UPSERTED"
 	JobMetricsUpdated     = "JOB_METRICS_UPDATED"
 	ProcessGroupUpserted  = "PROCESS_GROUP_UPSERTED"

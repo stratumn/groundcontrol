@@ -20,6 +20,7 @@ import "context"
 type Task struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
+	VariableIDs []string `json:"variableIds"`
 	StepIDs     []string `json:"stepIds"`
 	WorkspaceID string   `json:"workspace"`
 	IsRunning   bool     `json:"isRunning"`
@@ -27,6 +28,17 @@ type Task struct {
 
 // IsNode tells gqlgen that it implements Node.
 func (Task) IsNode() {}
+
+// Variables returns the task's variables.
+func (t Task) Variables(
+	ctx context.Context,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+) (VariableConnection, error) {
+	return PaginateVariableIDSliceContext(ctx, t.VariableIDs, after, before, first, last)
+}
 
 // Steps returns the task's steps.
 func (t Task) Steps(

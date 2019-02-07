@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run scripts/nodesgen.go -t User,System,DirectorySource,GitSource,Workspace,Project,Commit,Task,Step,Command,Job,ProcessGroup,Process,LogEntry,JobMetrics,ProcessMetrics,LogMetrics -o models/auto_nodes.go
-//go:generate go run scripts/paginatorsgen.go -t Source,Workspace,Project,Commit,Task,Step,Command,Job,ProcessGroup,Process,LogEntry -o models/auto_paginators.go -O models/auto_paginators_test.go -C Source:GitSource
-//go:generate go run scripts/subscriptionsgen.go -s SourceUpserted,WorkspaceUpserted,ProjectUpserted,TaskUpserted,JobUpserted,ProcessGroupUpserted,ProcessUpserted,JobMetricsUpdated,ProcessMetricsUpdated -o resolvers/auto_subscriptions.go
+//go:generate go run scripts/nodesgen.go -t User,System,DirectorySource,GitSource,Workspace,Project,Commit,Task,Variable,Step,Command,Key,Job,ProcessGroup,Process,LogEntry,JobMetrics,ProcessMetrics,LogMetrics -o models/auto_nodes.go
+//go:generate go run scripts/paginatorsgen.go -t Source,Workspace,Project,Commit,Task,Variable,Step,Command,Key,Job,ProcessGroup,Process,LogEntry -o models/auto_paginators.go -O models/auto_paginators_test.go -C Source:GitSource
+//go:generate go run scripts/subscriptionsgen.go -s SourceUpserted,WorkspaceUpserted,ProjectUpserted,TaskUpserted,KeyUpserted,JobUpserted,ProcessGroupUpserted,ProcessUpserted,JobMetricsUpdated,ProcessMetricsUpdated -o resolvers/auto_subscriptions.go
 //go:generate go run scripts/gqlgen.go
 
 package main

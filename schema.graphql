@@ -258,6 +258,34 @@ type TaskEdge {
 }
 
 """
+A Relay connection for variables.
+"""
+type VariableConnection {
+  """
+  The edges for the current page.
+  """
+  edges: [VariableEdge!]!
+  """
+  The pagination info.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+A Relay edge for a variable.
+"""
+type VariableEdge {
+  """
+  The cursor pointing to the edge.
+  """
+  cursor: String!
+  """
+  The target node.
+  """
+  node: Variable!
+}
+
+"""
 A Relay connection for steps.
 """
 type StepConnection {
@@ -300,7 +328,7 @@ type CommandConnection {
 }
 
 """
-A Relay edge for a commit.
+A Relay edge for a command.
 """
 type CommandEdge {
   """
@@ -311,6 +339,34 @@ type CommandEdge {
   The target node.
   """
   node: Command!
+}
+
+"""
+A Relay connection for keys.
+"""
+type KeyConnection {
+  """
+  The edges for the current page.
+  """
+  edges: [KeyEdge!]!
+  """
+  The pagination info.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+A Relay edge for a key.
+"""
+type KeyEdge {
+  """
+  The cursor pointing to the edge.
+  """
+  cursor: String!
+  """
+  The target node.
+  """
+  node: Key!
 }
 
 """
@@ -464,6 +520,15 @@ type User implements Node {
     first: Int
     last: Int
   ): ProjectConnection!
+  """
+  The keys using Relay pagination.
+  """
+  keys(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): KeyConnection!
 }
 
 """
@@ -755,6 +820,15 @@ type Task implements Node {
   """
   name: String!
   """
+  The variables using Relay pagination.
+  """
+  variables(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): VariableConnection!
+  """
   The steps using Relay pagination.
   """
   steps(
@@ -771,6 +845,24 @@ type Task implements Node {
   Whether currently running.
   """
   isRunning: Boolean!
+}
+
+"""
+A variable.
+"""
+type Variable implements Node {
+  """
+  The global ID of the node.
+  """
+  id: ID!
+  """
+  The name of the variable.
+  """
+  name: String!
+  """
+  The default value of the variable.
+  """
+  default: String
 }
 
 """
@@ -817,6 +909,24 @@ type Command implements Node {
   The command that will be executed by Bash.
   """
   command: String!
+}
+
+"""
+A key to set task variables.
+"""
+type Key implements Node {
+  """
+  The global ID of the node.
+  """
+  id: ID!
+  """
+  The unique name of the key.
+  """
+  name: String!
+  """
+  The value of the key.
+  """
+  value: String!
 }
 
 """
