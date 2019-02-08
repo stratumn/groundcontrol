@@ -3,7 +3,8 @@ module github.com/stratumn/groundcontrol
 require (
 	github.com/99designs/gqlgen v0.4.5-0.20190205003947-a7c8abe6d899
 	github.com/99designs/gqlgen-contrib v0.0.0-20181214005309-52113d2e3f08
-	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/asticode/go-astiamqp v1.0.0 // indirect
+	github.com/asticode/go-astilectron v0.8.0
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/go-chi/chi v4.0.1+incompatible
 	github.com/gorilla/websocket v1.4.0
