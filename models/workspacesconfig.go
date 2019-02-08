@@ -50,8 +50,15 @@ type ProjectConfig struct {
 
 // TaskConfig contains all the data in a YAML task config file.
 type TaskConfig struct {
-	Name  string       `json:"name"`
-	Steps []StepConfig `json:"tasks"`
+	Name      string           `json:"name"`
+	Variables []VariableConfig `json:"variables"`
+	Steps     []StepConfig     `json:"tasks"`
+}
+
+// VariableConfig contains all the data in a YAML variable config file.
+type VariableConfig struct {
+	Name    string  `json:"name"`
+	Default *string `json:"default"`
 }
 
 // StepConfig contains all the data in a YAML step config file.
@@ -170,7 +177,20 @@ func (c TaskConfig) UpsertNodes(
 	err := nodes.MustLockOrNewTaskE(id, func(task Task) error {
 		task.Name = c.Name
 		task.WorkspaceID = workspaceID
+		task.VariableIDs = nil
 		task.StepIDs = nil
+
+		for variableIndex, variableConfig := range c.Variables {
+			variableID := variableConfig.UpsertNodes(
+				nodes,
+				workspaceSlug,
+				id,
+				c.Name,
+				variableIndex,
+			)
+
+			task.VariableIDs = append(task.VariableIDs, variableID)
+		}
 
 		for stepIndex, stepConfig := range c.Steps {
 			stepID, err := stepConfig.UpsertNodes(
@@ -198,6 +218,32 @@ func (c TaskConfig) UpsertNodes(
 	}
 
 	return id, nil
+}
+
+// UpsertNodes upserts nodes for the content of the config.
+// It returns the ID of the variable upserted.
+func (c VariableConfig) UpsertNodes(
+	nodes *NodeManager,
+	workspaceSlug string,
+	taskID string,
+	taskName string,
+	stepIndex int,
+) string {
+	id := relay.EncodeID(
+		NodeTypeVariable,
+		workspaceSlug,
+		taskName,
+		fmt.Sprint(stepIndex),
+	)
+
+	nodes.MustLockOrNewVariable(id, func(variable Variable) {
+		variable.Name = c.Name
+		variable.Default = c.Default
+
+		nodes.MustStoreVariable(variable)
+	})
+
+	return id
 }
 
 // UpsertNodes upserts nodes for the content of the config.

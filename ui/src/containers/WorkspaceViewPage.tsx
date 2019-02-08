@@ -130,7 +130,23 @@ export class WorkspaceViewPage extends Component<IProps, IState> {
   }
 
   private handleRun = (id: string) => {
-    run(this.props.relay.environment, id);
+    if (!this.doesTaskHaveVariables(id)) {
+      run(this.props.relay.environment, id);
+    }
+
+    // TODO: show modal for variables.
+  }
+
+  private doesTaskHaveVariables(id: string) {
+    const task = this.props.viewer.workspace!.tasks.edges.find((value) => {
+      return value.node.id === id;
+    });
+
+    if (task) {
+      return task.node.variables.edges.length > 0;
+    }
+
+    return false;
   }
 
   private setItemsPerRow = () => {
@@ -154,12 +170,33 @@ export default createFragmentContainer(WorkspaceViewPage, graphql`
       name
       description
       notes
-      ...WorkspaceMenu_workspace
+      tasks {
+        edges {
+          node {
+            id
+            variables {
+              edges {
+                node {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
       projects {
         edges {
           node {
             ...ProjectCardGroup_items @arguments(commitsLimit: $commitsLimit)
           }
+        }
+      }
+      ...WorkspaceMenu_workspace
+    }
+    keys {
+      edges {
+        node {
+          name
         }
       }
     }
