@@ -35,7 +35,7 @@ export class Menu extends Component<IProps> {
         color="teal"
         inverted={true}
       >
-        <Container>
+        <Container fluid={true}>
           <Link
             to="/workspaces"
             Component={SemanticMenu.Item}

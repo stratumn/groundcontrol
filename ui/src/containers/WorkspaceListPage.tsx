@@ -16,7 +16,7 @@ import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
-import { Loader } from "semantic-ui-react";
+import { Loader, SemanticWIDTHS } from "semantic-ui-react";
 
 import { WorkspaceListPage_system } from "./__generated__/WorkspaceListPage_system.graphql";
 import { WorkspaceListPage_viewer } from "./__generated__/WorkspaceListPage_viewer.graphql";
@@ -38,11 +38,13 @@ interface IProps {
 
 interface IState {
   query: string;
+  itemsPerRow: SemanticWIDTHS;
 }
 
 export class WorkspaceListPage extends Component<IProps, IState> {
 
   public state: IState = {
+    itemsPerRow: 3,
     query: "",
   };
 
@@ -54,6 +56,7 @@ export class WorkspaceListPage extends Component<IProps, IState> {
     }
 
     const query = this.state.query;
+    const itemsPerRow = this.state.itemsPerRow;
     let items = this.props.viewer.workspaces.edges.map(({ node }) => node);
     let isLoading = false;
 
@@ -77,10 +80,13 @@ export class WorkspaceListPage extends Component<IProps, IState> {
         <WorkspaceSearch onChange={this.handleSearchChange} />
         <WorkspaceCardGroup
           items={items}
+          itemsPerRow={itemsPerRow}
           onClone={this.handleClone}
           onPull={this.handlePull}
         />
-        <Loader active={isLoading} />
+        <Loader
+          active={isLoading && items.length < 1}
+        />
       </Page>
     );
   }
@@ -90,6 +96,14 @@ export class WorkspaceListPage extends Component<IProps, IState> {
     const lastMessageId = this.props.system.lastMessageId;
     this.disposables.push(subscribeSourceUpserted(environment, lastMessageId));
     this.disposables.push(subscribeWorkspaceUpserted(environment, lastMessageId));
+
+    this.setItemsPerRow();
+    window.addEventListener("resize", this.setItemsPerRow);
+    this.disposables.push({
+      dispose: () => {
+        window.removeEventListener("resize", this.setItemsPerRow);
+      },
+    });
   }
 
   public componentWillUnmount() {
@@ -110,6 +124,12 @@ export class WorkspaceListPage extends Component<IProps, IState> {
 
   private handlePull = (id: string) => {
     pullWorkspace(this.props.relay.environment, id);
+  }
+
+  private setItemsPerRow = () => {
+    let itemsPerRow = Math.floor(window.innerWidth / 400);
+    itemsPerRow = Math.min(Math.max(itemsPerRow, 1), 16);
+    this.setState({itemsPerRow: itemsPerRow as SemanticWIDTHS});
   }
 }
 

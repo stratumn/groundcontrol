@@ -17,7 +17,6 @@ import { Link } from "found";
 import React, { Component, Fragment } from "react";
 import {
   Button,
-  Icon,
   Table,
  } from "semantic-ui-react";
 
@@ -79,13 +78,9 @@ export class JobTableRow extends Component<IProps> {
         <Button
           key="stop"
           size="tiny"
-          icon={true}
-          labelPosition="left"
+          icon="stop"
           onClick={onStop}
-        >
-          <Icon name="pause" />
-          Stop
-        </Button>
+        />
       ));
     }
 

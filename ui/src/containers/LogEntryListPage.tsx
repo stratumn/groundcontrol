@@ -17,16 +17,17 @@ import { Router } from "found";
 import React, { Component } from "react";
 import { createPaginationContainer, RelayPaginationProp } from "react-relay";
 import { Disposable } from "relay-runtime";
-import { Button } from "semantic-ui-react";
+import { Container, Loader } from "semantic-ui-react";
 
 import { LogEntryListPage_system } from "./__generated__/LogEntryListPage_system.graphql";
 import { LogEntryListPage_viewer } from "./__generated__/LogEntryListPage_viewer.graphql";
 
 import LogEntryFilter from "../components/LogEntryFilter";
 import LogEntryTable from "../components/LogEntryTable";
-import Page from "../components/Page";
 
 import { subscribe } from "../subscriptions/logEntryAdded";
+
+import "./LogEntryListPage.css";
 
 interface IProps {
   relay: RelayPaginationProp;
@@ -43,19 +44,27 @@ export class LogEntryListPage extends Component<IProps> {
 
   private disposables: Disposable[] = [];
 
+  private prevScrollY = 0;
+  private previousScrollHeight = 0;
+  private shouldScrollDown = false;
+
   public render() {
     const items = this.props.system.logEntries.edges.map(({ node }) => node);
     const filters = this.props.params.filters === undefined ? undefined :
       this.props.params.filters.split(",");
     const ownerId = this.props.params.ownerId;
     const projects = this.props.viewer.projects.edges.map(({ node }) => node);
+    const isLoading = this.props.relay.isLoading();
 
     return (
-      <Page
-        header="Logs"
-        subheader="Logs are short messages emitted after events of various levels."
-        icon="book"
+      <Container
+        className="LogEntryListPage"
+        fluid={true}
       >
+        <Loader
+          inverted={true}
+          active={isLoading}
+        />
         <LogEntryFilter
           filters={filters}
           projects={projects}
@@ -63,15 +72,7 @@ export class LogEntryListPage extends Component<IProps> {
           onChange={this.handleFiltersChange}
         />
         <LogEntryTable items={items} />
-        <Button
-          disabled={!this.props.relay.hasMore() || this.props.relay.isLoading()}
-          loading={this.props.relay.isLoading()}
-          color="grey"
-          onClick={this.handleLoadMore}
-        >
-          Load Older Entries
-        </Button>
-      </Page>
+      </Container>
     );
   }
 
@@ -79,6 +80,25 @@ export class LogEntryListPage extends Component<IProps> {
     const environment = this.props.relay.environment;
     const lastMessageId = this.props.system.lastMessageId;
     this.disposables.push(subscribe(environment, lastMessageId));
+
+    window.scrollTo(0, document.body.scrollHeight);
+
+    document.addEventListener("scroll", this.handleScroll);
+    this.disposables.push({
+      dispose: () => {
+        document.removeEventListener("scroll", this.handleScroll);
+      },
+    });
+
+    this.previousScrollHeight = document.body.scrollHeight;
+  }
+
+  public componentDidUpdate() {
+    if (this.shouldScrollDown) {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    this.previousScrollHeight = document.body.scrollHeight;
   }
 
   public componentWillUnmount() {
@@ -97,18 +117,53 @@ export class LogEntryListPage extends Component<IProps> {
     this.props.router.replace(`/logs/${filters.join(",")};${ownerId || ""}`);
   }
 
-  private handleLoadMore = () => {
-    this.props.relay.loadMore(
-      50,
+  private handleScroll = () => {
+    this.shouldScrollDown = window.scrollY + window.innerHeight === document.body.scrollHeight;
+
+    const prevScrollY = this.prevScrollY;
+    this.prevScrollY = window.scrollY;
+    if (prevScrollY < window.scrollY) {
+      return;
+    }
+
+    if (!this.props.relay.hasMore()) {
+      return;
+    }
+
+    if (this.props.relay.isLoading()) {
+      return;
+    }
+
+    if (window.scrollY > window.innerHeight) {
+      return;
+    }
+
+    this.previousScrollHeight = document.body.scrollHeight;
+
+    const disposable = this.props.relay.loadMore(
+      100,
       (err) => {
         if (err) {
           console.log(err);
         }
 
-        // Make sure load more button updates.
+        if (this.previousScrollHeight < document.body.scrollHeight) {
+          window.scrollTo(0, window.scrollY + document.body.scrollHeight - this.previousScrollHeight);
+        }
+
+        this.previousScrollHeight = document.body.scrollHeight;
+
+        // To hide loader.
         this.forceUpdate();
       },
     );
+
+    if (disposable) {
+      this.disposables.push(disposable);
+    }
+
+    // To show loader.
+    this.forceUpdate();
   }
 
 }
@@ -118,15 +173,15 @@ export default createPaginationContainer(
   graphql`
     fragment LogEntryListPage_system on System
       @argumentDefinitions(
-        count: {type: "Int", defaultValue: 50},
+        count: {type: "Int", defaultValue: 100},
         cursor: {type: "String"},
         level: { type: "[LogLevel!]", defaultValue: null },
         ownerId: { type: "ID", defaultValue: null }
       ) {
       lastMessageId
       logEntries(
-       first: $count,
-       after: $cursor,
+       last: $count,
+       before: $cursor,
        level: $level,
        ownerId: $ownerId,
       )
@@ -152,7 +207,7 @@ export default createPaginationContainer(
       }
     }`,
   {
-    direction: "forward",
+    direction: "backward",
     getConnectionFromProps: (props) => props.system && props.system.logEntries,
     getVariables: (_, {count, cursor}, fragmentVariables) => ({
       count,

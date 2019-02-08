@@ -63,7 +63,7 @@ export function subscribe(environment: Environment, lastMessageId?: string) {
             record,
             "KeysConnection",
           );
-          ConnectionHandler.insertEdgeBefore(connection, edge);
+          ConnectionHandler.insertEdgeAfter(connection, edge);
         }
     },
       variables: {

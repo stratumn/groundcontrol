@@ -40,9 +40,9 @@ type Logger struct {
 	level    LogLevel
 	systemID string
 
-	lastID       uint64
-	logEntryIDs  []string
-	logEntryHead int
+	lastID      uint64
+	logEntryIDs []string
+	head        int
 
 	debugCounter   int64
 	infoCounter    int64
@@ -59,13 +59,12 @@ func NewLogger(
 	systemID string,
 ) *Logger {
 	return &Logger{
-		nodes:        nodes,
-		subs:         subs,
-		cap:          cap,
-		level:        level,
-		systemID:     systemID,
-		logEntryIDs:  make([]string, cap*2),
-		logEntryHead: cap * 2,
+		nodes:       nodes,
+		subs:        subs,
+		cap:         cap,
+		level:       level,
+		systemID:    systemID,
+		logEntryIDs: make([]string, cap*2),
 	}
 }
 
@@ -98,39 +97,33 @@ func (l *Logger) Add(
 	l.subs.Publish(LogEntryAdded, logEntry.ID)
 
 	l.nodes.MustLockSystem(l.systemID, func(system System) {
-		l.logEntryHead--
+		if l.head >= l.cap*2 {
+			copy(l.logEntryIDs, l.logEntryIDs[l.cap:])
+			l.head = l.cap
 
-		if l.logEntryHead < 0 {
-			copy(l.logEntryIDs[l.cap+1:], l.logEntryIDs[:l.cap-1])
-			l.logEntryHead = l.cap
-		}
+			for _, oldEntryID := range l.logEntryIDs[l.head:] {
+				oldEntry := l.nodes.MustLoadLogEntry(oldEntryID)
 
-		if l.logEntryHead < l.cap {
-			oldEntryID := l.logEntryIDs[l.logEntryHead+l.cap]
-			oldEntry := l.nodes.MustLoadLogEntry(oldEntryID)
+				switch oldEntry.Level {
+				case LogLevelDebug:
+					atomic.AddInt64(&l.debugCounter, -1)
+				case LogLevelInfo:
+					atomic.AddInt64(&l.infoCounter, -1)
+				case LogLevelWarning:
+					atomic.AddInt64(&l.warningCounter, -1)
+				case LogLevelError:
+					atomic.AddInt64(&l.errorCounter, -1)
+				}
 
-			switch oldEntry.Level {
-			case LogLevelDebug:
-				atomic.AddInt64(&l.debugCounter, -1)
-			case LogLevelInfo:
-				atomic.AddInt64(&l.infoCounter, -1)
-			case LogLevelWarning:
-				atomic.AddInt64(&l.warningCounter, -1)
-			case LogLevelError:
-				atomic.AddInt64(&l.errorCounter, -1)
+				l.nodes.MustDeleteLogEntry(oldEntryID)
 			}
-
-			l.nodes.MustDeleteLogEntry(oldEntryID)
 		}
 
-		l.logEntryIDs[l.logEntryHead] = logEntry.ID
+		l.logEntryIDs[l.head] = logEntry.ID
 
-		end := l.logEntryHead + l.cap
-		if end > l.cap*2 {
-			end = l.cap * 2
-		}
-		system.LogEntryIDs = l.logEntryIDs[l.logEntryHead:end]
+		l.head++
 
+		system.LogEntryIDs = l.logEntryIDs[:l.head]
 		l.nodes.MustStoreSystem(system)
 	})
 

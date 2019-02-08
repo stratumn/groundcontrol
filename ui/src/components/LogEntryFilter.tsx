@@ -34,7 +34,7 @@ export class LogEntryFilter extends Component<IProps> {
     const { projects, ownerId, filters } = this.props;
 
     return (
-      <div>
+      <div className="LogEntryFilter">
         <LogEntryOwnerFilter
           items={projects}
           ownerId={ownerId}

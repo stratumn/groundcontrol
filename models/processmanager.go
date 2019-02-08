@@ -167,7 +167,7 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 	p.commands.Range(func(k, _ interface{}) bool {
 		processID := k.(string)
 
-		modelCtx.Log.InfoWithOwner(processID, "stopping process")
+		modelCtx.Log.DebugWithOwner(processID, "stopping process")
 
 		if err := p.Stop(ctx, processID); err != nil {
 			modelCtx.Log.ErrorWithOwner(processID, "failed to stop process because %s", err.Error())
@@ -193,7 +193,7 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 
 			switch process.Status {
 			case ProcessStatusDone, ProcessStatusFailed:
-				modelCtx.Log.InfoWithOwner(processID, "process stopped")
+				modelCtx.Log.DebugWithOwner(processID, "process stopped")
 				cancel()
 			}
 		})
@@ -246,7 +246,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 			return
 		}
 
-		modelCtx.Log.InfoWithOwner(project.ID, "process is running")
+		modelCtx.Log.DebugWithOwner(project.ID, "process is running")
 		p.commands.Store(id, cmd)
 
 		go func() {
@@ -258,7 +258,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 				if err == nil {
 					process.Status = ProcessStatusDone
 					atomic.AddInt64(&p.doneCounter, 1)
-					modelCtx.Log.InfoWithOwner(project.ID, "process done")
+					modelCtx.Log.DebugWithOwner(project.ID, "process done")
 				} else {
 					process.Status = ProcessStatusFailed
 					atomic.AddInt64(&p.failedCounter, 1)

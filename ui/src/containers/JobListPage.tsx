@@ -100,7 +100,7 @@ export class JobListPage extends Component<IProps> {
 
   private handleLoadMore = () => {
     this.props.relay.loadMore(
-      20,
+      50,
       (err) => {
         if (err) {
           console.log(err);
@@ -119,7 +119,7 @@ export default createPaginationContainer(
   graphql`
     fragment JobListPage_system on System
       @argumentDefinitions(
-        count: {type: "Int", defaultValue: 20},
+        count: {type: "Int", defaultValue: 50},
         cursor: {type: "String"},
         status: { type: "[JobStatus!]", defaultValue: null },
       ) {

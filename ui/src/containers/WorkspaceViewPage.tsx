@@ -17,7 +17,7 @@ import React, { Component } from "react";
 import ReactMarkdown from "react-markdown";
 import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
-import { Segment } from "semantic-ui-react";
+import { Segment, SemanticWIDTHS } from "semantic-ui-react";
 
 import { WorkspaceViewPage_system } from "./__generated__/WorkspaceViewPage_system.graphql";
 import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_viewer.graphql";
@@ -41,13 +41,22 @@ interface IProps {
   viewer: WorkspaceViewPage_viewer;
 }
 
-export class WorkspaceViewPage extends Component<IProps> {
+interface IState {
+  itemsPerRow: SemanticWIDTHS;
+}
+
+export class WorkspaceViewPage extends Component<IProps, IState> {
+
+  public state: IState = {
+    itemsPerRow: 3,
+  };
 
   private disposables: Disposable[] = [];
 
   public render() {
     const workspace = this.props.viewer.workspace!;
     const items = workspace.projects.edges.map(({ node }) => node);
+    const itemsPerRow = this.state.itemsPerRow;
     const notes = workspace.notes || "No notes";
 
     return (
@@ -71,6 +80,7 @@ export class WorkspaceViewPage extends Component<IProps> {
         </Segment>
         <ProjectCardGroup
           items={items}
+          itemsPerRow={itemsPerRow}
           onClone={this.handleCloneProject}
           onPull={this.handlePullProject}
         />
@@ -83,6 +93,15 @@ export class WorkspaceViewPage extends Component<IProps> {
     const lastMessageId = this.props.system.lastMessageId;
     const id = this.props.viewer.workspace!.id;
     this.disposables.push(subscribe(environment, lastMessageId, id));
+
+    this.setItemsPerRow();
+    window.addEventListener("resize", this.setItemsPerRow);
+    this.disposables.push({
+      dispose: () => {
+        window.removeEventListener("resize", this.setItemsPerRow);
+      },
+    });
+
     loadWorkspaceCommits(environment, id);
   }
 
@@ -112,6 +131,12 @@ export class WorkspaceViewPage extends Component<IProps> {
 
   private handleRun = (id: string) => {
     run(this.props.relay.environment, id);
+  }
+
+  private setItemsPerRow = () => {
+    let itemsPerRow = Math.floor(window.innerWidth / 400);
+    itemsPerRow = Math.min(Math.max(itemsPerRow, 1), 16);
+    this.setState({itemsPerRow: itemsPerRow as SemanticWIDTHS});
   }
 }
 

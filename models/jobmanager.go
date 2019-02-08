@@ -70,7 +70,7 @@ func (j *JobManager) Add(
 		OwnerID:   ownerID,
 	}
 
-	modelCtx.Log.InfoWithOwner(job.ID, "job queued")
+	modelCtx.Log.DebugWithOwner(job.ID, "job queued")
 	modelCtx.Nodes.MustStoreJob(job)
 	modelCtx.Subs.Publish(JobUpserted, job.ID)
 
@@ -88,7 +88,7 @@ func (j *JobManager) Add(
 	}
 
 	go do(func() {
-		modelCtx.Log.InfoWithOwner(job.ID, "job running")
+		modelCtx.Log.DebugWithOwner(job.ID, "job running")
 
 		ctx, cancel := context.WithCancel(WithModelContext(context.Background(), modelCtx))
 		defer cancel()
@@ -109,7 +109,7 @@ func (j *JobManager) Add(
 			job.Status = JobStatusFailed
 			atomic.AddInt64(&j.failedCounter, 1)
 		} else {
-			modelCtx.Log.InfoWithOwner(job.ID, "job done")
+			modelCtx.Log.DebugWithOwner(job.ID, "job done")
 			job.Status = JobStatusDone
 			atomic.AddInt64(&j.doneCounter, 1)
 		}

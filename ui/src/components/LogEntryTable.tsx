@@ -46,14 +46,6 @@ export class LogEntryTable extends Component<IProps> {
 
     return (
       <Table inverted={true}>
-        <Table.Header>
-          <Table.Row>
-            <Table.HeaderCell>Created At</Table.HeaderCell>
-            <Table.HeaderCell>Level</Table.HeaderCell>
-            <Table.HeaderCell>Owner</Table.HeaderCell>
-            <Table.HeaderCell>Message</Table.HeaderCell>
-          </Table.Row>
-        </Table.Header>
         <Table.Body>{rows}</Table.Body>
       </Table>
     );

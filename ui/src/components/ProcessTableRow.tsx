@@ -17,7 +17,6 @@ import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
 import {
   Button,
-  Icon,
   Table,
  } from "semantic-ui-react";
 
@@ -47,13 +46,9 @@ export class ProcessTableRow extends Component<IProps> {
         <Button
           key="start"
           size="tiny"
-          icon={true}
-          labelPosition="left"
+          icon="play"
           onClick={onStart}
-        >
-          <Icon name="play" />
-          Start
-        </Button>
+        />
       ));
       break;
     case "RUNNING":
@@ -61,13 +56,9 @@ export class ProcessTableRow extends Component<IProps> {
         <Button
           key="stop"
           size="tiny"
-          icon={true}
-          labelPosition="left"
+          icon="stop"
           onClick={onStop}
-        >
-          <Icon name="pause" />
-          Stop
-        </Button>
+        />
       ));
       break;
     case "STOPPING":
@@ -75,14 +66,10 @@ export class ProcessTableRow extends Component<IProps> {
         <Button
           key="stop"
           size="tiny"
-          icon={true}
-          labelPosition="left"
+          icon="stop"
           disabled={true}
           loading={true}
-        >
-          <Icon name="pause" />
-          Stop
-        </Button>
+        />
       ));
       break;
     }

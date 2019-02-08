@@ -98,7 +98,7 @@ export function subscribe(environment: Environment, lastMessageId?: string) {
                 record,
                 "LogEntrysConnection",
               );
-              ConnectionHandler.insertEdgeBefore(connection, edge);
+              ConnectionHandler.insertEdgeAfter(connection, edge);
             }
           }
         }

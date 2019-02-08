@@ -42,7 +42,7 @@ export class App extends Component<IProps> {
     return (
       <div className="App">
         <Menu system={system} />
-        <Container>
+        <Container fluid={true}>
           {this.props.children}
         </Container>
       </div>

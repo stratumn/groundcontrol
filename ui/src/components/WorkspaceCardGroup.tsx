@@ -15,7 +15,7 @@
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
 import { createFragmentContainer } from "react-relay";
-import { Card } from "semantic-ui-react";
+import { Card, SemanticWIDTHS } from "semantic-ui-react";
 
 import { WorkspaceCardGroup_items } from "./__generated__/WorkspaceCardGroup_items.graphql";
 
@@ -23,6 +23,7 @@ import WorkspaceCard from "./WorkspaceCard";
 
 interface IProps {
   items: WorkspaceCardGroup_items;
+  itemsPerRow: SemanticWIDTHS;
   onClone: (id: string) => any;
   onPull: (id: string) => any;
 }
@@ -30,7 +31,7 @@ interface IProps {
 export class WorkspaceCardGroup extends Component<IProps> {
 
   public render() {
-    const items = this.props.items;
+    const { items, itemsPerRow } = this.props;
     const cards = items.map((item) => (
       <WorkspaceCard
         key={item.id}
@@ -40,7 +41,11 @@ export class WorkspaceCardGroup extends Component<IProps> {
       />
      ));
 
-    return <Card.Group itemsPerRow={3}>{cards}</Card.Group>;
+    return (
+      <Card.Group itemsPerRow={itemsPerRow}>
+        {cards}
+      </Card.Group>
+    );
   }
 
   private handleClone(id: string) {
