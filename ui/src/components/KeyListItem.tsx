@@ -20,6 +20,8 @@ import { createFragmentContainer } from "react-relay";
 
 import { KeyListItem_item } from "./__generated__/KeyListItem_item.graphql";
 
+import "./KeyListItem.css";
+
 interface IProps {
   item: KeyListItem_item;
   onEdit: () => any;
@@ -33,7 +35,7 @@ export class KeyListItem extends Component<IProps> {
     const { onEdit, onDelete } = this.props;
 
     return (
-      <List.Item>
+      <List.Item className="KeyListItem">
         <List.Content>
           <Button
             floated="right"

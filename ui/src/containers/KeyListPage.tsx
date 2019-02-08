@@ -24,8 +24,8 @@ import { KeyListPage_viewer } from "./__generated__/KeyListPage_viewer.graphql";
 import KeyList from "../components/KeyList";
 import Page from "../components/Page";
 import SetKeyForm from "../components/SetKeyForm";
-import { commit as setKey } from "../mutations/setKey";
 import { commit as deleteKey } from "../mutations/deleteKey";
+import { commit as setKey } from "../mutations/setKey";
 import { subscribe as subscribeKeyDeleted } from "../subscriptions/keyDeleted";
 import { subscribe as subscribeKeyUpserted } from "../subscriptions/keyUpserted";
 
@@ -35,12 +35,29 @@ interface IProps {
   viewer: KeyListPage_viewer;
 }
 
-export class KeyListPage extends Component<IProps> {
+interface IState {
+  name: string;
+  value: string;
+}
 
+export class KeyListPage extends Component<IProps, IState> {
+
+  public state: IState = {
+    name: "",
+    value: "",
+  };
+
+  private formRef: React.RefObject<SetKeyForm>;
   private disposables: Disposable[] = [];
+
+  constructor(props: IProps) {
+    super(props);
+    this.formRef = React.createRef();
+  }
 
   public render() {
     const items = this.props.viewer.keys.edges.map(({ node }) => node);
+    const { name, value } = this.state;
 
     return (
       <Page
@@ -51,7 +68,11 @@ export class KeyListPage extends Component<IProps> {
         <Segment>
           <h3>Add or Replace a Key</h3>
           <SetKeyForm
-            onSet={this.handleSet}
+            name={name}
+            value={value}
+            ref={this.formRef}
+            onChange={this.handleChange}
+            onSubmit={this.handleSubmit}
           />
         </Segment>
         <Segment>
@@ -81,15 +102,37 @@ export class KeyListPage extends Component<IProps> {
     this.disposables = [];
   }
 
-  private handleSet = (name: string, value: string) => {
+  private handleChange = (obj: { name: string, value: string }) => {
+    this.setState(obj);
+  }
+
+  private handleSubmit = () => {
+    const { name, value } = this.state;
+
     setKey(this.props.relay.environment, {
       name,
       value,
     });
+
+    this.setState({
+      name: "",
+      value: "",
+    });
+
+    if (this.formRef.current) {
+      this.formRef.current.selectName();
+    }
   }
 
-  private handleEdit = (id: string) => {
-    alert(id);
+  private handleEdit = (_: string, name: string, value: string) => {
+    this.setState({
+      name,
+      value,
+    });
+
+    if (this.formRef.current) {
+      this.formRef.current.selectValue();
+    }
   }
 
   private handleDelete = (id: string) => {

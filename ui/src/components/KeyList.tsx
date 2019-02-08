@@ -23,7 +23,7 @@ import KeyListItem from "./KeyListItem";
 
 interface IProps {
   items: KeyList_items;
-  onEdit: (id: string) => any;
+  onEdit: (id: string, name: string, value: string) => any;
   onDelete: (id: string) => any;
 }
 
@@ -41,7 +41,7 @@ export class KeyList extends Component<IProps> {
       <KeyListItem
         key={item.id}
         item={item}
-        onEdit={onEdit.bind(null, item.id)}
+        onEdit={onEdit.bind(null, item.id, item.name, item.value)}
         onDelete={onDelete.bind(null, item.id)}
       />
     ));
@@ -60,6 +60,8 @@ export default createFragmentContainer(KeyList, graphql`
     @relay(plural: true) {
     __typename
     id
+    name
+    value
     ...KeyListItem_item
   }`,
 );

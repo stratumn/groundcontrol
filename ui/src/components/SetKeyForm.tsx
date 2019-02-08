@@ -23,27 +23,32 @@ import {
 import "./Page.css";
 
 interface IProps {
-  onSet: (name: string, value: string) => any;
-}
-
-interface IState {
   name: string;
   value: string;
+  onChange: (obj: { name: string, value: string }) => any;
+  onSubmit: () => any;
 }
 
-export default class SetKeyForm extends Component<IProps, IState> {
+export default class SetKeyForm extends Component<IProps> {
 
-  public state: IState = {
-    name: "",
-    value: "",
-  };
+  private nameRef: React.RefObject<HTMLInputElement>;
+  private valueRef: React.RefObject<HTMLInputElement>;
+
+  private shouldFocusName = false;
+  private shouldFocusValue = false;
+
+  constructor(props: IProps) {
+    super(props);
+    this.nameRef = React.createRef();
+    this.valueRef = React.createRef();
+  }
 
   public render() {
-    const { name, value } = this.state;
+    const { name, value, onSubmit } = this.props;
     const disabled = !name;
 
     return (
-      <Form onSubmit={this.handleSubmit}>
+      <Form onSubmit={onSubmit}>
         <Form.Group>
           <Form.Field width="5">
             <label>Name</label>
@@ -51,15 +56,23 @@ export default class SetKeyForm extends Component<IProps, IState> {
               name="name"
               value={name}
               onChange={this.handleChangeInput}
-            />
+            >
+              <input
+                ref={this.nameRef}
+              />
+            </Form.Input>
           </Form.Field>
-          <Form.Field width="12">
+          <Form.Field width="11">
             <label>Value</label>
             <Form.Input
-              name="value"
-              value={value}
-              onChange={this.handleChangeInput}
-            />
+                name="value"
+                value={value}
+                onChange={this.handleChangeInput}
+            >
+              <input
+                ref={this.valueRef}
+              />
+            </Form.Input>
           </Form.Field>
         </Form.Group>
         <Button
@@ -73,16 +86,47 @@ export default class SetKeyForm extends Component<IProps, IState> {
     );
   }
 
-  private handleChangeInput = (_: React.SyntheticEvent<HTMLElement>, { name, value }: InputProps) => {
-    switch (name) {
-    case "name": this.setState({ name: value }); break;
-    case "value": this.setState({ value }); break;
+  public componentDidUpdate() {
+    if (this.shouldFocusName) {
+      const input = this.nameRef.current;
+
+      if (input) {
+        input.focus();
+        input.select();
+      }
     }
+
+    if (this.shouldFocusValue) {
+      const input = this.valueRef.current;
+
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+
+    this.shouldFocusName = false;
+    this.shouldFocusValue = false;
   }
 
-  private handleSubmit = () => {
-    this.props.onSet(this.state.name, this.state.value);
-    this.setState({ name: "", value: "" });
+  public selectName() {
+    this.shouldFocusName = true;
+  }
+
+  public selectValue() {
+    this.shouldFocusValue = true;
+  }
+
+  private handleChangeInput = (_: React.SyntheticEvent<HTMLElement>, { name, value }: InputProps) => {
+    const onChange = this.props.onChange;
+    const obj = { ...this.props };
+
+    switch (name) {
+    case "name":
+    case "value":
+      onChange({ ...obj, [name]: value });
+      break;
+    }
   }
 
 }

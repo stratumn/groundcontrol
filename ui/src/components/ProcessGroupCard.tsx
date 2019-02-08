@@ -68,7 +68,7 @@ export class ProcessGroupCard extends Component<IProps> {
           labelPosition="left"
           onClick={onStopGroup}
         >
-          <Icon name="pause" />
+          <Icon name="stop" />
           Stop Group
         </Button>
       ));
