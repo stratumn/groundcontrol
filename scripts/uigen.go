@@ -32,7 +32,7 @@ func checkError(err error) {
 }
 
 func main() {
-	var fs http.FileSystem = http.Dir("ui/build")
+	var fs http.FileSystem = http.Dir("../groundcontrol-ui/build")
 
 	err := os.Remove("auto_ui.go")
 	checkError(err)
