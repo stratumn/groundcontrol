@@ -34,6 +34,7 @@ func (r *mutationResolver) Run(
 	viewerID := models.GetModelContext(ctx).ViewerID
 
 	env := os.Environ()
+	save := false
 
 	for _, variable := range variables {
 		env = append(env, fmt.Sprintf("%s=%s", variable.Name, variable.Value))
@@ -42,10 +43,18 @@ func (r *mutationResolver) Run(
 			continue
 		}
 
+		save = true
+
 		keys.UpsertKey(nodes, subs, viewerID, models.KeyInput{
 			Name:  variable.Name,
 			Value: variable.Value,
 		})
+	}
+
+	if save {
+		if err := keys.Save(); err != nil {
+			return models.Job{}, nil
+		}
 	}
 
 	jobID, err := jobs.Run(ctx, id, env, models.JobPriorityHigh)
