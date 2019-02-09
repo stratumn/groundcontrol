@@ -64,53 +64,8 @@ groundcontrol
 
 ## Development
 
-If you didn't run `make`, do:
+Use this source:
 
 ```
-make deps
-make gen-go
+git@github.com:stratumn/groundcontrol-source.git
 ```
-
-### Server
-
-```
-go run .
-```
-
-Server runs on `http://localhost:3333`.
-
-### UI
-
-```
-cd ui
-yarn dev
-```
-
-UI runs on `http://localhost:3000` during development.
-
-### Releasing
-
-```
-brew install goreleaser/tap/goreleaser
-git tag -a vX.X.X -m "New release"
-git push origin vX.X.X
-goreleaser
-```
-
-### Notes
-
-#### General
-
-- Lines of code don't matter if the code can be generated. Focus on writing repeatable code then write a generator once it makes sense.
-
-#### Server
-
-- GraphQL models should be *pure*. Mutations should create a new copy of the model. Avoid pointer accessors for models.
-- Reference GraphQL models by ID. Do not keep pointers. Do not pass models around.
-- Models should only store GraphQL fields and IDs of nodes they reference. They must not store a mutex. Use `NodeManager.Lock()`.
-- Queries must have no side effects (except appending the log). This may require more mutations triggered by the client.
-
-#### Client
-
-- Queries, mutations, subscriptions, and events must be handled at the top level.
-- Avoid using `@relay(mask: false)`.

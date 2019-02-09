@@ -1,11 +1,11 @@
 GO_AUTO = $(shell find . -name 'auto_*.go')
-UI_AUTO = $(shell find ui/src -name '__generated__')
-GARBAGE := groundcontrol dist ui/node_modules ui/build electron/assets/vendor
+UI_AUTO = $(shell find ../ui/src -name '__generated__')
+GARBAGE := groundcontrol dist electron/assets/vendor ../ui/node_modules ../ui/build 
 
 all: deps build
 
 deps-ui:
-	cd ui && yarn install
+	cd ../ui && yarn install
 
 deps-go:
 	go mod download
@@ -13,7 +13,7 @@ deps-go:
 deps: deps-ui deps-go
 
 gen-ui:
-	cd ui && yarn gen
+	cd ../ui && yarn gen
 
 gen-go-release:
 	go generate -tags=release ./...
@@ -24,7 +24,7 @@ gen-go-fmt:
 gen-go: gen-go-release gen-go-fmt
 
 build-ui:
-	cd ui && yarn build
+	cd ../ui && yarn build
 
 build-go:
 	go build -tags "release"
@@ -41,7 +41,7 @@ clean: clean-generated
 	rm -rf $(GARBAGE)
 
 test-ui:
-	cd ui && CI=1 yarn test
+	cd ../ui && CI=1 yarn test
 
 test-go:
 	go test ./...
