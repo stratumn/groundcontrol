@@ -17,6 +17,7 @@ import { Link } from "found";
 import React, { Component, Fragment } from "react";
 import {
   Accordion,
+  Responsive,
   Table,
  } from "semantic-ui-react";
 
@@ -64,18 +65,19 @@ export class LogEntryTableRow extends Component<IProps> {
       }
     }
 
-
     return (
       <Table.Row
         className="LogEntryTableRow"
         verticalAlign="top"
       >
-        <Table.Cell
+        <Responsive
+          as={Table.Cell}
           className="LogEntryTableRowCreatedAt"
+          minWidth={992}
           collapsing={true}
         >
           <Moment format={dateFormat}>{item.createdAt}</Moment>
-        </Table.Cell>
+        </Responsive>
         <Table.Cell
           className="LogEntryTableRowLevel"
           warning={item.level === "WARNING"}

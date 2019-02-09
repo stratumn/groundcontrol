@@ -19,7 +19,7 @@ import { Environment } from "relay-runtime";
 const subscription = graphql`
   subscription jobMetricsUpdatedSubscription($lastMessageId: ID) {
     jobMetricsUpdated(lastMessageId: $lastMessageId) {
-      ...Menu_jobMetrics
+      ...MenuSecondaryItems_jobMetrics
     }
   }
 `;

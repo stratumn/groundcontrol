@@ -33,7 +33,7 @@ func main() {
 		Center:    astilectron.PtrBool(true),
 		Width:     astilectron.PtrInt(900),
 		Height:    astilectron.PtrInt(600),
-		MinWidth:  astilectron.PtrInt(769),
+		MinWidth:  astilectron.PtrInt(440),
 		MinHeight: astilectron.PtrInt(480),
 	})
 	if err != nil {

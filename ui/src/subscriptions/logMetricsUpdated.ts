@@ -19,7 +19,7 @@ import { Environment } from "relay-runtime";
 const subscription = graphql`
   subscription logMetricsUpdatedSubscription($lastMessageId: ID) {
     logMetricsUpdated(lastMessageId: $lastMessageId) {
-      ...Menu_logMetrics
+      ...MenuSecondaryItems_logMetrics
     }
   }
 `;

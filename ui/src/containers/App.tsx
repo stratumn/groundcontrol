@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import graphql from "babel-plugin-relay/macro";
+import { Router } from "found";
 import React, { Component } from "react";
 import { createFragmentContainer, RelayProp } from "react-relay";
 import { Disposable } from "relay-runtime";
@@ -29,19 +30,34 @@ import "./App.css";
 
 interface IProps {
   relay: RelayProp;
+  router: Router;
   system: App_system;
 }
 
-export class App extends Component<IProps> {
+interface IState {
+  showSidebar: boolean;
+}
+
+export class App extends Component<IProps, IState> {
+
+  public state: IState = {
+    showSidebar: false,
+  };
 
   private disposables: Disposable[] = [];
 
   public render() {
     const system = this.props.system;
+    const showSidebar = this.state.showSidebar;
 
     return (
       <div className="App">
-        <Menu system={system} />
+        <Menu
+          system={system}
+          showSidebar={showSidebar}
+          onShowSidebar={this.handleSidebar.bind(this, true)}
+          onHideSidebar={this.handleSidebar.bind(this, false)}
+        />
         <Container fluid={true}>
           {this.props.children}
         </Container>
@@ -55,6 +71,13 @@ export class App extends Component<IProps> {
     this.disposables.push(subscribeJobMetrics(environment, lastMessageId));
     this.disposables.push(subscribeProcessMetrics(environment, lastMessageId));
     this.disposables.push(subscribeLogMetrics(environment, lastMessageId));
+
+    this.disposables.push({
+      dispose: this.props.router.addTransitionHook(() => {
+        this.setState({ showSidebar: false });
+        return true;
+      }),
+    });
   }
 
   public componentWillUnmount() {
@@ -64,6 +87,11 @@ export class App extends Component<IProps> {
 
     this.disposables = [];
   }
+
+  private handleSidebar(show: boolean) {
+    this.setState({ showSidebar: show });
+  }
+
 }
 
 export default createFragmentContainer(App, graphql`

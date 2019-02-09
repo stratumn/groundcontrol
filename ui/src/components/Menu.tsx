@@ -13,114 +13,97 @@
 // limitations under the License.
 
 import graphql from "babel-plugin-relay/macro";
-import { Link } from "found";
-import React, { Component } from "react";
+import React, { Fragment } from "react";
 import { createFragmentContainer } from "react-relay";
-import { Container, Label, Menu as SemanticMenu } from "semantic-ui-react";
+import {
+  Container,
+  Menu as SemanticMenu,
+  Responsive,
+  Sidebar,
+} from "semantic-ui-react";
 
 import { Menu_system } from "./__generated__/Menu_system.graphql";
 
+import MenuPrimaryItems from "./MenuPrimaryItems";
+import MenuSecondaryItems from "./MenuSecondaryItems";
+
 interface IProps {
   system: Menu_system;
+  showSidebar: boolean;
+  onShowSidebar: () => any;
+  onHideSidebar: () => any;
 }
 
-export class Menu extends Component<IProps> {
-  public render() {
-    const { jobMetrics, processMetrics, logMetrics } = this.props.system;
-
-    return (
-      <SemanticMenu
-        fixed="top"
-        size="large"
-        color="teal"
-        inverted={true}
+export const Menu = ({
+  system: {
+    jobMetrics,
+    processMetrics,
+    logMetrics,
+  },
+  showSidebar,
+  onShowSidebar,
+  onHideSidebar,
+}: IProps) => (
+  <Fragment>
+    <SemanticMenu
+      fixed="top"
+      size="large"
+      color="teal"
+      inverted={true}
+    >
+      <Container fluid={true}>
+        <Responsive
+          as={SemanticMenu.Item}
+          icon="bars"
+          maxWidth={767}
+          onClick={onShowSidebar}
+        />
+        <Responsive
+          as={MenuPrimaryItems}
+          minWidth={768}
+        />
+        <Responsive
+          as={SemanticMenu.Menu}
+          position="right"
+          minWidth={768}
+        >
+          <MenuSecondaryItems
+            jobMetrics={jobMetrics}
+            processMetrics={processMetrics}
+            logMetrics={logMetrics}
+          />
+        </Responsive>
+      </Container>
+    </SemanticMenu>
+    <Responsive maxWidth={767}>
+      <Sidebar
+        as={SemanticMenu}
+        vertical={true}
+        animation="push"
+        visible={showSidebar}
+        onHide={onHideSidebar}
       >
-        <Container fluid={true}>
-          <Link
-            to="/workspaces"
-            Component={SemanticMenu.Item}
-            activePropName="active"
-          >
-            Workspaces
-          </Link>
-          <Link
-            to="/sources"
-            Component={SemanticMenu.Item}
-            activePropName="active"
-          >
-            Sources
-          </Link>
-          <Link
-            to="/keys"
-            Component={SemanticMenu.Item}
-            activePropName="active"
-          >
-            Keys
-          </Link>
-          <SemanticMenu.Menu position="right">
-            <Link
-              to="/jobs"
-              Component={SemanticMenu.Item}
-              activePropName="active"
-            >
-              Jobs
-              <Label color="blue">
-                {jobMetrics.queued + jobMetrics.running}
-              </Label>
-            </Link>
-            <Link
-              to="/processes"
-              Component={SemanticMenu.Item}
-              activePropName="active"
-            >
-              Processes
-              <Label color="blue">
-                {processMetrics.running}
-              </Label>
-            </Link>
-            <Link
-              to="/logs"
-              Component={SemanticMenu.Item}
-              activePropName="active"
-            >
-              Logs
-              <Label color="pink">
-                {logMetrics.error}
-              </Label>
-            </Link>
-          <SemanticMenu.Item href="http://localhost:3333/graphql">
-            GraphQL
-          </SemanticMenu.Item>
-          </SemanticMenu.Menu>
-        </Container>
-      </SemanticMenu>
-    );
-  }
-}
-
-export const fragments = graphql`
-  fragment Menu_jobMetrics on JobMetrics {
-    queued
-    running
-  }
-  fragment Menu_processMetrics on ProcessMetrics {
-    running
-  }
-  fragment Menu_logMetrics on LogMetrics {
-    error
-  }
-`;
+        <MenuPrimaryItems />
+        <MenuSecondaryItems
+          jobMetrics={jobMetrics}
+          processMetrics={processMetrics}
+          logMetrics={logMetrics}
+        />
+      </Sidebar>
+    </Responsive>
+  </Fragment>
+);
 
 export default createFragmentContainer(Menu, graphql`
   fragment Menu_system on System {
     jobMetrics {
-      ...Menu_jobMetrics @relay(mask: false)
+      ...MenuSecondaryItems_jobMetrics
     }
     processMetrics {
-      ...Menu_processMetrics @relay(mask: false)
+      ...MenuSecondaryItems_processMetrics
     }
     logMetrics {
-      ...Menu_logMetrics @relay(mask: false)
+      ...MenuSecondaryItems_logMetrics
     }
   }`,
 );
