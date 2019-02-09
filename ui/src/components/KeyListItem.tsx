@@ -14,7 +14,10 @@
 
 import graphql from "babel-plugin-relay/macro";
 import React, { Component } from "react";
-import { Button, List } from "semantic-ui-react";
+import {
+  Button,
+  List,
+} from "semantic-ui-react";
 
 import { createFragmentContainer } from "react-relay";
 
@@ -37,22 +40,25 @@ export class KeyListItem extends Component<IProps> {
     return (
       <List.Item className="KeyListItem">
         <List.Content>
+          <List.Header>{name}</List.Header>
+          <List.Description>
+            <code>
+              {value}
+            </code>
+          </List.Description>
           <Button
-            floated="right"
+            icon="edit"
+            content="Edit"
+            color="teal"
+            size="small"
+            onClick={onEdit}
+          />
+          <Button
             icon="delete"
             color="pink"
             size="small"
             onClick={onDelete}
           />
-          <Button
-            floated="right"
-            icon="edit"
-            color="teal"
-            size="small"
-            onClick={onEdit}
-          />
-          <List.Header>{name}</List.Header>
-          <List.Description>{value}</List.Description>
         </List.Content>
       </List.Item>
     );

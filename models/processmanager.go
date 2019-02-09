@@ -77,6 +77,7 @@ func (p *ProcessManager) CreateGroup(ctx context.Context, taskID string) string 
 func (p *ProcessManager) Run(
 	ctx context.Context,
 	command string,
+	env []string,
 	processGroupID string,
 	projectID string,
 ) string {
@@ -90,6 +91,7 @@ func (p *ProcessManager) Run(
 	process := Process{
 		ID:             id,
 		Command:        command,
+		Env:            env,
 		ProcessGroupID: processGroupID,
 		ProjectID:      projectID,
 	}
@@ -221,6 +223,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 		stderr := CreateLineWriter(modelCtx.Log.WarningWithOwner, project.ID)
 		cmd := exec.Command("bash", "-l", "-c", process.Command)
 		cmd.Dir = dir
+		cmd.Env = process.Env
 		cmd.Stdout = stdout
 		cmd.Stderr = stderr
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}

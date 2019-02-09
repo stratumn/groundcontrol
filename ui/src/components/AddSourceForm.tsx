@@ -56,7 +56,7 @@ export default class AddSourceForm extends Component<IProps, IState> {
 
     if (type === "directory") {
       typeFields = (
-        <Form.Field width="13">
+        <Form.Field>
           <label>Directory (absolute path)</label>
           <Form.Input
             name="directory"
@@ -68,7 +68,7 @@ export default class AddSourceForm extends Component<IProps, IState> {
     } else {
       typeFields = (
         <Fragment>
-          <Form.Field width="9">
+          <Form.Field>
             <label>Repository</label>
             <Form.Input
               name="repository"
@@ -76,7 +76,7 @@ export default class AddSourceForm extends Component<IProps, IState> {
               onChange={this.handleChangeInput}
             />
           </Form.Field>
-          <Form.Field width="4">
+          <Form.Field>
             <label>Branch</label>
             <Form.Input
               name="branch"
@@ -91,16 +91,14 @@ export default class AddSourceForm extends Component<IProps, IState> {
 
     return (
       <Form onSubmit={this.handleSubmit}>
-        <Form.Group>
-          <Form.Select
-            label="Type"
-            options={options}
-            defaultValue="directory"
-            width="3"
-            onChange={this.handleChangeType}
-          />
-          {typeFields}
-        </Form.Group>
+        <Form.Select
+          label="Type"
+          options={options}
+          defaultValue="directory"
+          width="3"
+          onChange={this.handleChangeType}
+        />
+        {typeFields}
         <Button
           type="submit"
           color="teal"

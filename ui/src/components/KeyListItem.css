@@ -1,4 +1,17 @@
+.KeyListItem {
+  margin: 1em 0;
+}
+
+.KeyListItem .header {
+  padding-top: .5em;
+}
+
 .KeyListItem .description {
+  margin: 1em 0;
+}
+
+.KeyListItem .description code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
   word-break: break-all;
   white-space: pre-wrap;
 }

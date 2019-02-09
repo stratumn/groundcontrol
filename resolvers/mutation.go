@@ -16,6 +16,8 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/stratumn/groundcontrol/jobs"
 	"github.com/stratumn/groundcontrol/models"
@@ -212,10 +214,32 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 	return slice, nil
 }
 
-func (r *mutationResolver) Run(ctx context.Context, id string) (models.Job, error) {
+func (r *mutationResolver) Run(
+	ctx context.Context,
+	id string,
+	variables []models.VariableInput,
+) (models.Job, error) {
 	nodes := models.GetModelContext(ctx).Nodes
+	subs := models.GetModelContext(ctx).Subs
+	keys := models.GetModelContext(ctx).Keys
+	viewerID := models.GetModelContext(ctx).ViewerID
 
-	jobID, err := jobs.Run(ctx, id, models.JobPriorityHigh)
+	env := os.Environ()
+
+	for _, variable := range variables {
+		env = append(env, fmt.Sprintf("%s=%s", variable.Name, variable.Value))
+
+		if !variable.Save {
+			continue
+		}
+
+		keys.UpsertKey(nodes, subs, viewerID, models.KeyInput{
+			Name:  variable.Name,
+			Value: variable.Value,
+		})
+	}
+
+	jobID, err := jobs.Run(ctx, id, env, models.JobPriorityHigh)
 	if err != nil {
 		return models.Job{}, err
 	}

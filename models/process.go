@@ -18,8 +18,11 @@ import "context"
 
 // Process represents a process in the app.
 type Process struct {
-	ID             string        `json:"id"`
-	Command        string        `json:"command"`
+	ID      string `json:"id"`
+	Command string `json:"command"`
+	// Env is the environment of the process.
+	// Each entry is of the form "key=value".
+	Env            []string      `json:"env"`
 	ProcessGroupID string        `json:"processGroupId"`
 	ProjectID      string        `json:"projectId"`
 	Status         ProcessStatus `json:"status"`

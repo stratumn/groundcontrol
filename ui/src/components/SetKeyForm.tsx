@@ -18,9 +18,10 @@ import {
   Button,
   Form,
   InputProps,
+  TextAreaProps,
 } from "semantic-ui-react";
 
-import "./Page.css";
+import "./SetKeyForm.css";
 
 interface IProps {
   name: string;
@@ -32,7 +33,7 @@ interface IProps {
 export default class SetKeyForm extends Component<IProps> {
 
   private nameRef: React.RefObject<HTMLInputElement>;
-  private valueRef: React.RefObject<HTMLInputElement>;
+  private valueRef: React.RefObject<HTMLTextAreaElement>;
 
   private shouldFocusName = false;
   private shouldFocusValue = false;
@@ -48,33 +49,30 @@ export default class SetKeyForm extends Component<IProps> {
     const disabled = !name;
 
     return (
-      <Form onSubmit={onSubmit}>
-        <Form.Group>
-          <Form.Field width="5">
+      <Form
+        onSubmit={onSubmit}
+        className="SetKeyForm"
+      >
+          <Form.Field>
             <label>Name</label>
             <Form.Input
-              name="name"
               value={name}
-              onChange={this.handleChangeInput}
+              onChange={this.handleChangeName}
             >
               <input
                 ref={this.nameRef}
               />
             </Form.Input>
           </Form.Field>
-          <Form.Field width="11">
+          <Form.Field>
             <label>Value</label>
-            <Form.Input
-                name="value"
-                value={value}
-                onChange={this.handleChangeInput}
-            >
-              <input
-                ref={this.valueRef}
-              />
-            </Form.Input>
+            <textarea
+              value={value}
+              rows={8}
+              ref={this.valueRef}
+              onChange={this.handleChangeValue}
+            />
           </Form.Field>
-        </Form.Group>
         <Button
           type="submit"
           color="teal"
@@ -117,16 +115,12 @@ export default class SetKeyForm extends Component<IProps> {
     this.shouldFocusValue = true;
   }
 
-  private handleChangeInput = (_: React.SyntheticEvent<HTMLElement>, { name, value }: InputProps) => {
-    const onChange = this.props.onChange;
-    const obj = { ...this.props };
+  private handleChangeName = (_: React.SyntheticEvent<HTMLElement>, { value }: InputProps) => {
+    this.props.onChange({ ...this.props, name: value });
+  }
 
-    switch (name) {
-    case "name":
-    case "value":
-      onChange({ ...obj, [name]: value });
-      break;
-    }
+  private handleChangeValue = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    this.props.onChange({ ...this.props, value: event.currentTarget.value });
   }
 
 }

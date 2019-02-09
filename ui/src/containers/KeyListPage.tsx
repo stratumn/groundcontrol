@@ -130,6 +130,8 @@ export class KeyListPage extends Component<IProps, IState> {
       value,
     });
 
+    window.scrollTo(0, 0);
+
     if (this.formRef.current) {
       this.formRef.current.selectValue();
     }

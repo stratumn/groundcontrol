@@ -24,7 +24,7 @@ import (
 )
 
 // Run runs a task.
-func Run(ctx context.Context, taskID string, priority models.JobPriority) (string, error) {
+func Run(ctx context.Context, taskID string, env []string, priority models.JobPriority) (string, error) {
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
@@ -54,14 +54,14 @@ func Run(ctx context.Context, taskID string, priority models.JobPriority) (strin
 		workspaceID,
 		priority,
 		func(ctx context.Context) error {
-			return doRun(ctx, taskID, workspaceID, modelCtx.SystemID)
+			return doRun(ctx, taskID, env, workspaceID, modelCtx.SystemID)
 		},
 	)
 
 	return jobID, nil
 }
 
-func doRun(ctx context.Context, taskID string, workspaceID string, systemID string) error {
+func doRun(ctx context.Context, taskID string, env []string, workspaceID string, systemID string) error {
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
@@ -108,14 +108,14 @@ func doRun(ctx context.Context, taskID string, workspaceID string, systemID stri
 					}
 
 					rest := strings.Join(parts[1:], " ")
-					pm.Run(ctx, rest, processGroupID, project.ID)
+					pm.Run(ctx, rest, env, processGroupID, project.ID)
 
 					continue
 				}
 
 				stdout := models.CreateLineWriter(log.InfoWithOwner, project.ID)
 				stderr := models.CreateLineWriter(log.WarningWithOwner, project.ID)
-				err := run(ctx, command.Command, projectPath, stdout, stderr)
+				err := run(ctx, command.Command, projectPath, env, stdout, stderr)
 
 				stdout.Close()
 				stderr.Close()
@@ -134,11 +134,13 @@ func run(
 	ctx context.Context,
 	command string,
 	dir string,
+	env []string,
 	stdout io.Writer,
 	stderr io.Writer,
 ) error {
 	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command)
 	cmd.Dir = dir
+	cmd.Env = env
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 

@@ -63,6 +63,15 @@ input GitSourceInput {
 }
 
 """
+An input for a variable.
+"""
+input VariableInput {
+  name: String!
+  value: String!
+  save: Boolean!
+}
+
+"""
 An input for a key.
 """
 input KeyInput {
@@ -1015,6 +1024,11 @@ type Process implements Node {
   """
   command: String!
   """
+  Env is the environment of the process.
+  Each entry is of the form "key=value".
+  """
+  env: [String!]
+  """
   The current status.
   """
   status: ProcessStatus!
@@ -1196,7 +1210,7 @@ type Mutation {
   """
   Queue a job to run a task.
   """
-  run(id: String!): Job!
+  run(id: String!, variables: [VariableInput!]): Job!
   """
   Set a key.
   """

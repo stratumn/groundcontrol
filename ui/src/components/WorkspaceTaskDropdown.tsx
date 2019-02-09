@@ -51,7 +51,12 @@ export class WorkspaceTaskDropdown extends Component<IProps> {
     ));
 
     return (
-      <Dropdown item={true} text="Tasks" pointing={true} disabled={!enabled}>
+      <Dropdown
+        item={true}
+        text="Tasks"
+        pointing={true}
+        disabled={!enabled}
+      >
         <Dropdown.Menu>
           {dropdownItems}
         </Dropdown.Menu>

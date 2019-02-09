@@ -16,17 +16,23 @@ import graphql from "babel-plugin-relay/macro";
 import { commitMutation } from "react-relay";
 import { Environment } from "relay-runtime";
 
+import { VariableInput } from "./__generated__/runMutation.graphql";
+
 const mutation = graphql`
-  mutation runMutation($id: String!) {
-    run(id: $id) {
+  mutation runMutation($id: String!, $variables: [VariableInput!]) {
+    run(id: $id, variables: $variables) {
       id
     }
   }
 `;
 
-export function commit(environment: Environment, id: string) {
+export function commit(
+  environment: Environment,
+  id: string,
+  variables?: VariableInput[],
+) {
   commitMutation(environment, {
     mutation,
-    variables: { id },
+    variables: { id, variables },
   });
 }

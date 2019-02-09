@@ -24,6 +24,8 @@ import { WorkspaceViewPage_viewer } from "./__generated__/WorkspaceViewPage_view
 
 import Page from "../components/Page";
 import ProjectCardGroup from "../components/ProjectCardGroup";
+import { IVariable } from "../components/VariableForm";
+import VariableFormModal from "../components/VariableFormModal";
 import WorkspaceMenu from "../components/WorkspaceMenu";
 import { commit as cloneProject } from "../mutations/cloneProject";
 import { commit as cloneWorkspace } from "../mutations/cloneWorkspace";
@@ -43,6 +45,7 @@ interface IProps {
 
 interface IState {
   itemsPerRow: SemanticWIDTHS;
+  variables?: IVariable[];
 }
 
 export class WorkspaceViewPage extends Component<IProps, IState> {
@@ -52,12 +55,28 @@ export class WorkspaceViewPage extends Component<IProps, IState> {
   };
 
   private disposables: Disposable[] = [];
+  private taskID?: string;
 
   public render() {
     const workspace = this.props.viewer.workspace!;
     const items = workspace.projects.edges.map(({ node }) => node);
     const itemsPerRow = this.state.itemsPerRow;
-    const notes = workspace.notes || "No notes";
+    const notes = workspace.notes || "This workspace doesn't have notes.";
+    const variables = this.state.variables;
+
+    let modal: JSX.Element | null = null;
+
+    if (variables) {
+      modal = (
+        <VariableFormModal
+          variables={variables}
+          onClose={this.handleCloseModal}
+          onChangeValue={this.handleChangeVariableValue}
+          onChangeSave={this.handleChangeVariableSave}
+          onSubmit={this.handleSubmitVariables}
+        />
+      );
+    }
 
     return (
       <Page
@@ -84,6 +103,7 @@ export class WorkspaceViewPage extends Component<IProps, IState> {
           onClone={this.handleCloneProject}
           onPull={this.handlePullProject}
         />
+        {modal}
       </Page>
     );
   }
@@ -113,6 +133,32 @@ export class WorkspaceViewPage extends Component<IProps, IState> {
     this.disposables = [];
   }
 
+  private findTask(id: string) {
+    const edge = this.props.viewer.workspace!.tasks.edges.find((value) => {
+      return value.node.id === id;
+    });
+
+    if (edge) {
+      return edge.node;
+    }
+  }
+
+  private doesTaskHaveVariables(id: string) {
+    const task = this.findTask(id);
+
+    if (task) {
+      return task.variables.edges.length > 0;
+    }
+
+    return false;
+  }
+
+  private setItemsPerRow = () => {
+    let itemsPerRow = Math.floor(window.innerWidth / 400);
+    itemsPerRow = Math.min(Math.max(itemsPerRow, 1), 16);
+    this.setState({itemsPerRow: itemsPerRow as SemanticWIDTHS});
+  }
+
   private handleCloneWorkspace = () => {
     cloneWorkspace(this.props.relay.environment, this.props.viewer.workspace!.id);
   }
@@ -132,28 +178,68 @@ export class WorkspaceViewPage extends Component<IProps, IState> {
   private handleRun = (id: string) => {
     if (!this.doesTaskHaveVariables(id)) {
       run(this.props.relay.environment, id);
+      return;
     }
 
-    // TODO: show modal for variables.
-  }
-
-  private doesTaskHaveVariables(id: string) {
-    const task = this.props.viewer.workspace!.tasks.edges.find((value) => {
-      return value.node.id === id;
-    });
-
-    if (task) {
-      return task.node.variables.edges.length > 0;
+    const task = this.findTask(id);
+    if (!task) {
+      return;
     }
 
-    return false;
+    const vars = task.variables.edges.map(({ node }) => node);
+    const keys = this.props.viewer.keys.edges.map(({ node }) => node);
+    const keyMap: { [name: string]: string } = {};
+
+    for (const key of keys) {
+      keyMap[key.name] = key.value;
+    }
+
+    const variables: IVariable[] = vars.map((item) => ({
+      name: item.name,
+      save: true,
+      value: keyMap[item.name] || item.default || "",
+    }));
+
+    this.taskID = id;
+    this.setState({ variables });
   }
 
-  private setItemsPerRow = () => {
-    let itemsPerRow = Math.floor(window.innerWidth / 400);
-    itemsPerRow = Math.min(Math.max(itemsPerRow, 1), 16);
-    this.setState({itemsPerRow: itemsPerRow as SemanticWIDTHS});
+  private handleCloseModal = () => {
+    this.taskID = undefined;
+    this.setState({ variables: undefined });
   }
+
+  private handleChangeVariableValue = (name: string, value: string) => {
+    const variables = this.state.variables!.map((v) => ({...v}));
+
+    for (const variable of variables) {
+      if (variable.name === name) {
+        variable.value = value;
+        break;
+      }
+    }
+
+    this.setState({ variables });
+  }
+
+  private handleChangeVariableSave = (name: string, checked: boolean) => {
+    const variables = this.state.variables!.map((v) => ({...v}));
+
+    for (const variable of variables) {
+      if (variable.name === name) {
+        variable.save = checked;
+        break;
+      }
+    }
+
+    this.setState({ variables });
+  }
+
+  private handleSubmitVariables = () => {
+    run(this.props.relay.environment, this.taskID!, this.state.variables);
+    this.handleCloseModal();
+  }
+
 }
 
 export default createFragmentContainer(WorkspaceViewPage, graphql`
@@ -177,7 +263,8 @@ export default createFragmentContainer(WorkspaceViewPage, graphql`
             variables {
               edges {
                 node {
-                  id
+                  name
+                  default
                 }
               }
             }
@@ -197,6 +284,7 @@ export default createFragmentContainer(WorkspaceViewPage, graphql`
       edges {
         node {
           name
+          value
         }
       }
     }
