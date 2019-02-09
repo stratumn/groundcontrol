@@ -14,6 +14,20 @@
 
 package resolvers
 
-type mutationResolver struct {
-	*Resolver
+import (
+	"context"
+
+	"github.com/stratumn/groundcontrol/models"
+)
+
+func (r *mutationResolver) StopJob(ctx context.Context, id string) (models.Job, error) {
+	modelCtx := models.GetModelContext(ctx)
+	jobs := modelCtx.Jobs
+	nodes := modelCtx.Nodes
+
+	if err := jobs.Stop(modelCtx, id); err != nil {
+		return models.Job{}, nil
+	}
+
+	return nodes.MustLoadJob(id), nil
 }

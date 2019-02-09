@@ -14,6 +14,28 @@
 
 package resolvers
 
-type mutationResolver struct {
-	*Resolver
+import (
+	"context"
+
+	"github.com/stratumn/groundcontrol/models"
+)
+
+func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (models.DeletedNode, error) {
+	modelCtx := models.GetModelContext(ctx)
+
+	err := modelCtx.Sources.DeleteSource(
+		modelCtx.Nodes,
+		modelCtx.Subs,
+		modelCtx.ViewerID,
+		id,
+	)
+	if err != nil {
+		return models.DeletedNode{}, nil
+	}
+
+	if err := modelCtx.Sources.Save(); err != nil {
+		return models.DeletedNode{}, err
+	}
+
+	return models.DeletedNode{ID: id}, nil
 }

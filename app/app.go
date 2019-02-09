@@ -342,19 +342,20 @@ func (a *App) openAddressInBrowser(log *models.Logger) {
 	addr, err := net.ResolveTCPAddr("tcp", a.listenAddress)
 	if err != nil {
 		log.Warning("could not resolve address because %s", err.Error())
+		return
+	}
+
+	url := "http://"
+	if addr.IP == nil {
+		url += "localhost"
 	} else {
-		url := "http://"
-		if addr.IP == nil {
-			url += "localhost"
-		} else {
-			url += addr.IP.String()
-		}
-		if addr.Port != 0 {
-			url += fmt.Sprintf(":%d", addr.Port)
-		}
-		if err := browser.OpenURL(url); err != nil {
-			log.Warning("could not resolve address because %s", err.Error())
-		}
+		url += addr.IP.String()
+	}
+	if addr.Port != 0 {
+		url += fmt.Sprintf(":%d", addr.Port)
+	}
+	if err := browser.OpenURL(url); err != nil {
+		log.Warning("could not resolve address because %s", err.Error())
 	}
 }
 

@@ -14,6 +14,33 @@
 
 package resolvers
 
-type mutationResolver struct {
-	*Resolver
+import (
+	"context"
+
+	"github.com/stratumn/groundcontrol/models"
+)
+
+func (r *subscriptionResolver) LogEntryAdded(
+	ctx context.Context,
+	lastMessageID *string,
+) (<-chan models.LogEntry, error) {
+	ch := make(chan models.LogEntry, SubscriptionChannelSize)
+
+	last := uint64(0)
+	if lastMessageID != nil {
+		var err error
+		last, err = decodeBase64Uint64(*lastMessageID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Subs.Subscribe(ctx, models.LogEntryAdded, last, func(msg interface{}) {
+		select {
+		case ch <- r.Nodes.MustLoadLogEntry(msg.(string)):
+		default:
+		}
+	})
+
+	return ch, nil
 }

@@ -27,11 +27,10 @@ import (
 var createSettingsFileCmd = &cobra.Command{
 	Use:   fmt.Sprintf("create-settings-file [%s]", app.DefaultSettingsFile),
 	Short: "Create a settings file",
-	Long: `Create a settings file to avoid having to specify flags when groundcontrol is launched.
+	Long: `Create a settings file to avoid having to specify flags when Ground Control is launched.
 
 It will overwrite the file if it exists.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		if len(args) > 0 {
 			return viper.WriteConfigAs(args[0])
 		}

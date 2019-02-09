@@ -14,6 +14,20 @@
 
 package resolvers
 
-type mutationResolver struct {
-	*Resolver
+import (
+	"context"
+
+	"github.com/stratumn/groundcontrol/jobs"
+	"github.com/stratumn/groundcontrol/models"
+)
+
+func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (models.Job, error) {
+	nodes := models.GetModelContext(ctx).Nodes
+
+	jobID, err := jobs.LoadCommits(ctx, id, models.JobPriorityHigh)
+	if err != nil {
+		return models.Job{}, err
+	}
+
+	return nodes.MustLoadJob(jobID), nil
 }

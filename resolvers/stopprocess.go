@@ -14,6 +14,21 @@
 
 package resolvers
 
-type mutationResolver struct {
-	*Resolver
+import (
+	"context"
+
+	"github.com/stratumn/groundcontrol/models"
+)
+
+func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.Process, error) {
+	modelCtx := models.GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	pm := modelCtx.PM
+
+	err := pm.Stop(ctx, id)
+	if err != nil {
+		return models.Process{}, err
+	}
+
+	return nodes.MustLoadProcess(id), nil
 }

@@ -14,6 +14,28 @@
 
 package resolvers
 
-type mutationResolver struct {
-	*Resolver
+import (
+	"context"
+
+	"github.com/stratumn/groundcontrol/models"
+)
+
+func (r *mutationResolver) SetKey(
+	ctx context.Context,
+	input models.KeyInput,
+) (models.Key, error) {
+	modelCtx := models.GetModelContext(ctx)
+
+	id := modelCtx.Keys.UpsertKey(
+		modelCtx.Nodes,
+		modelCtx.Subs,
+		modelCtx.ViewerID,
+		input,
+	)
+
+	if err := modelCtx.Keys.Save(); err != nil {
+		return models.Key{}, err
+	}
+
+	return modelCtx.Nodes.MustLoadKey(id), nil
 }
