@@ -20,8 +20,8 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/pubsub"
+	"groundcontrol/relay"
 )
 
 // WorkspacesConfig contains all the data in a YAML workspaces config file.

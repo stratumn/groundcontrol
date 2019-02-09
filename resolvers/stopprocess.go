@@ -17,7 +17,7 @@ package resolvers
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/models"
 )
 
 func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.Process, error) {

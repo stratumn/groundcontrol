@@ -17,7 +17,7 @@ package resolvers
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/models"
 )
 
 type queryResolver struct {

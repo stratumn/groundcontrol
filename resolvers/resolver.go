@@ -15,9 +15,9 @@
 package resolvers
 
 import (
-	"github.com/stratumn/groundcontrol/gql"
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
+	"groundcontrol/gql"
+	"groundcontrol/models"
+	"groundcontrol/pubsub"
 )
 
 // Resolver is the root GraphQL resolver.

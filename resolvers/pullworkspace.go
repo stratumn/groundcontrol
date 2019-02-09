@@ -17,8 +17,8 @@ package resolvers
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/jobs"
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/jobs"
+	"groundcontrol/models"
 )
 
 func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]models.Job, error) {

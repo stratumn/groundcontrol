@@ -25,8 +25,8 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/models"
+	"groundcontrol/relay"
 )
 
 // LoadCommits loads the commits of a project from a remote repo and updates the project.

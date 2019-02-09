@@ -27,8 +27,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stratumn/groundcontrol/app"
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/app"
+	"groundcontrol/models"
 )
 
 var (

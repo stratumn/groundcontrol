@@ -34,7 +34,7 @@ brew upgrade groundcontrol
 
 ### Prebuilt binaries
 
-Head over to the [latest release](https://github.com/stratumn/groundcontrol/releases/latest) and download the binary for your platform.
+Head over to the [latest release](https://groundcontrol/releases/latest) and download the binary for your platform.
 
 ### From source
 

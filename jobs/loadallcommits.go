@@ -17,7 +17,7 @@ package jobs
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/models"
 )
 
 // LoadAllCommits creates jobs to load the commits of every project.

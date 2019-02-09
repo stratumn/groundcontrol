@@ -20,7 +20,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/models"
 )
 
 func modelContextResolverMiddleware(modelCtx *models.ModelContext) graphql.FieldMiddleware {

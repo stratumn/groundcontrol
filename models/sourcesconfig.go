@@ -21,8 +21,8 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/pubsub"
+	"groundcontrol/relay"
 )
 
 // SourcesConfig contains all the data in a YAML sources config file.

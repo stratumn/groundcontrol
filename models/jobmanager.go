@@ -21,8 +21,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/stratumn/groundcontrol/queue"
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/queue"
+	"groundcontrol/relay"
 )
 
 // JobManager manages creating and running jobs.

@@ -22,7 +22,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/stratumn/groundcontrol/cmd"
+	"groundcontrol/cmd"
 )
 
 var ui http.FileSystem

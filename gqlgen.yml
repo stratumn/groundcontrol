@@ -12,34 +12,34 @@ resolver:
   type: Resolver
 models:
   DateTime:
-    model: github.com/stratumn/groundcontrol/models.DateTime
+    model: groundcontrol/models.DateTime
   Node:
-    model: github.com/stratumn/groundcontrol/models.Node
+    model: groundcontrol/models.Node
   Source:
-    model: github.com/stratumn/groundcontrol/models.Source
+    model: groundcontrol/models.Source
   DirectorySource:
-    model: github.com/stratumn/groundcontrol/models.DirectorySource
+    model: groundcontrol/models.DirectorySource
   GitSource:
-    model: github.com/stratumn/groundcontrol/models.GitSource
+    model: groundcontrol/models.GitSource
   Hash:
-    model: github.com/stratumn/groundcontrol/models.Hash
+    model: groundcontrol/models.Hash
   User:
-    model: github.com/stratumn/groundcontrol/models.User
+    model: groundcontrol/models.User
   Workspace:
-    model: github.com/stratumn/groundcontrol/models.Workspace
+    model: groundcontrol/models.Workspace
   Project:
-    model: github.com/stratumn/groundcontrol/models.Project
+    model: groundcontrol/models.Project
   System:
-    model: github.com/stratumn/groundcontrol/models.System
+    model: groundcontrol/models.System
   Job:
-    model: github.com/stratumn/groundcontrol/models.Job
+    model: groundcontrol/models.Job
   Task:
-    model: github.com/stratumn/groundcontrol/models.Task
+    model: groundcontrol/models.Task
   Step:
-    model: github.com/stratumn/groundcontrol/models.Step
+    model: groundcontrol/models.Step
   ProcessGroup:
-    model: github.com/stratumn/groundcontrol/models.ProcessGroup
+    model: groundcontrol/models.ProcessGroup
   Process:
-    model: github.com/stratumn/groundcontrol/models.Process
+    model: groundcontrol/models.Process
   LogEntry:
-    model: github.com/stratumn/groundcontrol/models.LogEntry
+    model: groundcontrol/models.LogEntry

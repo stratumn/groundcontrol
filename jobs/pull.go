@@ -23,8 +23,8 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/models"
+	"groundcontrol/relay"
 )
 
 // Pull clones a remote repository locally and updates the project.

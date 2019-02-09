@@ -17,7 +17,7 @@ package models
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/relay"
 )
 
 // Source is a collection of workspaces.

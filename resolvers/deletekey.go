@@ -17,7 +17,7 @@ package resolvers
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/models"
 )
 
 func (r *mutationResolver) DeleteKey(ctx context.Context, id string) (models.DeletedNode, error) {

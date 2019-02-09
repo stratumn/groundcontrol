@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/stratumn/groundcontrol/jobs"
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/jobs"
+	"groundcontrol/models"
 )
 
 func (r *mutationResolver) Run(

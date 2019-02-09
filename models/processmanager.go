@@ -25,7 +25,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/relay"
 )
 
 // ProcessManager manages creating and running jobs.

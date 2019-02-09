@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/models"
 )
 
 // StartPeriodic is used to run jobs periodically.

@@ -17,7 +17,7 @@ package models
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/pubsub"
+	"groundcontrol/pubsub"
 )
 
 type contextKey string

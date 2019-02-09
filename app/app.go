@@ -34,12 +34,12 @@ import (
 	"github.com/pkg/browser"
 	"github.com/rs/cors"
 
-	"github.com/stratumn/groundcontrol/gql"
-	"github.com/stratumn/groundcontrol/jobs"
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
-	"github.com/stratumn/groundcontrol/resolvers"
+	"groundcontrol/gql"
+	"groundcontrol/jobs"
+	"groundcontrol/models"
+	"groundcontrol/pubsub"
+	"groundcontrol/relay"
+	"groundcontrol/resolvers"
 )
 
 // App contains data about the app.

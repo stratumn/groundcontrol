@@ -17,7 +17,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/stratumn/groundcontrol/app"
+	"groundcontrol/app"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

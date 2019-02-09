@@ -22,7 +22,7 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/models"
 )
 
 const (

@@ -20,8 +20,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/stratumn/groundcontrol/pubsub"
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/pubsub"
+	"groundcontrol/relay"
 )
 
 var logLevelPriorities = map[LogLevel]int{

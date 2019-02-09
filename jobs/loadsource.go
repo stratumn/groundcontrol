@@ -17,8 +17,8 @@ package jobs
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/models"
-	"github.com/stratumn/groundcontrol/relay"
+	"groundcontrol/models"
+	"groundcontrol/relay"
 )
 
 // LoadSource loads the workspaces of the source and updates it.

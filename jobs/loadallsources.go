@@ -17,7 +17,7 @@ package jobs
 import (
 	"context"
 
-	"github.com/stratumn/groundcontrol/models"
+	"groundcontrol/models"
 )
 
 // LoadAllSources creates jobs to load the workspaces of every source.
