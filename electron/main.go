@@ -29,7 +29,7 @@ func main() {
 	//go gc.Start(context.Background())
 
 	// Create a new window
-	w, err := a.NewWindow("http://127.0.0.1:3000", &astilectron.WindowOptions{
+	w, err := a.NewWindow("http://127.0.0.1:3333", &astilectron.WindowOptions{
 		Center:    astilectron.PtrBool(true),
 		Width:     astilectron.PtrInt(900),
 		Height:    astilectron.PtrInt(600),
