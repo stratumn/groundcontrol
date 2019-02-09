@@ -20,7 +20,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 
 	"groundcontrol/cmd"
 )
@@ -28,5 +30,6 @@ import (
 var ui http.FileSystem
 
 func main() {
+	log.SetOutput(os.Stdout)
 	cmd.Execute(ui)
 }
