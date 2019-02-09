@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"groundcontrol/models"
+
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
@@ -80,7 +81,7 @@ func doLoadGitSource(ctx context.Context, sourceID string) error {
 		subs.Publish(models.SourceUpserted, sourceID)
 	}()
 
-	directory, err := cloneOrFetchSource(ctx, sourceID)
+	directory, err := cloneOrPullSource(ctx, sourceID)
 	if err != nil {
 		return err
 	}
@@ -90,10 +91,11 @@ func doLoadGitSource(ctx context.Context, sourceID string) error {
 	return err
 }
 
-func cloneOrFetchSource(ctx context.Context, sourceID string) (string, error) {
+func cloneOrPullSource(ctx context.Context, sourceID string) (string, error) {
 	var (
-		repo *git.Repository
-		err  error
+		repo     *git.Repository
+		worktree *git.Worktree
+		err      error
 	)
 
 	modelCtx := models.GetModelContext(ctx)
@@ -108,10 +110,13 @@ func cloneOrFetchSource(ctx context.Context, sourceID string) (string, error) {
 	}
 
 	if repo != nil {
-		err = repo.FetchContext(
-			ctx,
-			&git.FetchOptions{},
-		)
+		worktree, err = repo.Worktree()
+		if err == nil {
+			err = worktree.PullContext(
+				ctx,
+				&git.PullOptions{RemoteName: "origin"},
+			)
+		}
 	} else {
 		repo, err = git.PlainCloneContext(
 			ctx,
