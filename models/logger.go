@@ -17,6 +17,7 @@ package models
 import (
 	"fmt"
 	"log"
+	"os"
 	"sync/atomic"
 	"time"
 
@@ -48,6 +49,9 @@ type Logger struct {
 	infoCounter    int64
 	warningCounter int64
 	errorCounter   int64
+
+	stdoutLog *log.Logger
+	stderrLog *log.Logger
 }
 
 // NewLogger creates a Logger with given capacity and level.
@@ -65,6 +69,8 @@ func NewLogger(
 		level:       level,
 		systemID:    systemID,
 		logEntryIDs: make([]string, cap*2),
+		stdoutLog:   log.New(os.Stdout, "", log.LstdFlags),
+		stderrLog:   log.New(os.Stderr, "", log.LstdFlags),
 	}
 }
 
@@ -76,6 +82,11 @@ func (l *Logger) Add(
 ) (string, error) {
 	if logLevelPriorities[level] < logLevelPriorities[l.level] {
 		return "", nil
+	}
+
+	log := l.stdoutLog
+	if logLevelPriorities[level] >= logLevelPriorities[LogLevelWarning] {
+		log = l.stderrLog
 	}
 
 	if ownerID != "" {
