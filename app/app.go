@@ -188,6 +188,9 @@ func (a *App) Start(ctx context.Context) error {
 	if a.enableSignalHandling {
 		go a.handleSignals(ctx, log, pm, server)
 	}
+
+	errorCh := make(chan error, 1)
+
 	go func() {
 		log.Info("app ready")
 		if a.ui != nil {
@@ -196,7 +199,7 @@ func (a *App) Start(ctx context.Context) error {
 		log.Info("GraphQL playground on %s/graphql", a.listenAddress)
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error("app crashed because %s", err.Error())
+			errorCh <- err
 		}
 	}()
 
@@ -204,9 +207,13 @@ func (a *App) Start(ctx context.Context) error {
 		a.openAddressInBrowser(log)
 	}
 
-	<-ctx.Done()
-
-	return ctx.Err()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-errorCh:
+		log.Error("app crashed because %s", err.Error())
+		return err
+	}
 }
 
 func (a *App) createBaseNodes(nodes *models.NodeManager) (string, string) {
