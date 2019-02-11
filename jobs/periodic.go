@@ -49,7 +49,7 @@ func StartPeriodic(
 			jobMap.Store(jobID, true)
 		}
 
-		subsCtx, cancel := context.WithCancel(context.Background())
+		subsCtx, cancel := context.WithCancel(ctx)
 
 		modelCtx.Subs.Subscribe(subsCtx, models.JobUpserted, 0, func(msg interface{}) {
 			id := msg.(string)
