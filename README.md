@@ -36,24 +36,7 @@ brew upgrade groundcontrol
 
 ### Prebuilt binaries
 
-Head over to the [latest release](https://groundcontrol/releases/latest) and download the binary for your platform.
-
-### From source
-
-You need:
-
-- Go >= v1.11
-- Node
-- Yarn
-
-Clone outside of `$GOPATH` since it's a Go module.
-
-Run:
-
-```
-make # <---- builds `./groundcontrol`
-make install # <---- copies it to `$GOPATH/bin`
-```
+Head over to the [latest release](https://github.com/stratumn/groundcontrol/releases/latest) and download the binary for your platform.
 
 ## Usage
 
