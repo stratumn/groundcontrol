@@ -161,7 +161,7 @@ func doPull(ctx context.Context, projectID string, workspaceID string) error {
 		project.IsBehind = false
 		project.IsAhead = false
 
-		if bytes.Compare(hash[:], remoteHash[:]) != 0 {
+		if !bytes.Equal(hash[:], remoteHash[:]) {
 			project.IsAhead = true
 		}
 

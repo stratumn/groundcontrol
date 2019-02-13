@@ -196,8 +196,13 @@ func (a *App) Start(ctx context.Context) error {
 		Handler: router,
 	}
 
-	go jobs.Work(ctx)
-	a.startPeriodicJobs(ctx)
+	go func() {
+		if err := jobs.Work(ctx); err != nil && err != context.Canceled {
+			log.Error("job manager crashed because %s", err.Error())
+		}
+	}()
+
+	a.startPeriodicJobs(ctx, log)
 	if a.enableSignalHandling {
 		go a.handleSignals(ctx, log, pm, server)
 	}
@@ -299,13 +304,19 @@ func (a *App) loadKeys(
 	return config, nil
 }
 
-func (a *App) startPeriodicJobs(ctx context.Context) {
-	go jobs.StartPeriodic(
-		ctx,
-		a.periodicJobsInterval,
-		jobs.LoadAllSources,
-		jobs.LoadAllCommits,
-	)
+func (a *App) startPeriodicJobs(ctx context.Context, log *models.Logger) {
+	go func() {
+		err := jobs.StartPeriodic(
+			ctx,
+			a.periodicJobsInterval,
+			jobs.LoadAllSources,
+			jobs.LoadAllCommits,
+		)
+		if err != nil && err != context.Canceled {
+			log.Error("job manager crashed because %s", err.Error())
+		}
+	}()
+
 }
 
 func (a *App) handleSignals(
@@ -314,7 +325,7 @@ func (a *App) handleSignals(
 	pm *models.ProcessManager,
 	server *http.Server,
 ) {
-	signalCh := make(chan os.Signal)
+	signalCh := make(chan os.Signal, 2)
 	signal.Notify(signalCh, syscall.SIGTERM)
 	signal.Notify(signalCh, syscall.SIGINT)
 
@@ -342,7 +353,9 @@ func (a *App) shutdownGracefully(
 	}()
 
 	go func() {
-		server.Shutdown(shutdownCtx)
+		if err := server.Shutdown(ctx); err != nil && err != context.Canceled {
+			log.Error("server shutdown failed because %s", err.Error())
+		}
 		waitGroup.Done()
 	}()
 

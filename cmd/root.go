@@ -112,7 +112,9 @@ func init() {
 		"cache-directory",
 		"enable-apollo-tracing",
 	} {
-		viper.BindPFlag(flagName, rootCmd.PersistentFlags().Lookup(flagName))
+		if err := viper.BindPFlag(flagName, rootCmd.PersistentFlags().Lookup(flagName)); err != nil {
+			panic(err)
+		}
 	}
 }
 

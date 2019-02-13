@@ -51,7 +51,7 @@ func (d *DateTime) UnmarshalGQL(v interface{}) error {
 
 // MarshalGQL implements the graphql.Marshaler interface.
 func (d DateTime) MarshalGQL(w io.Writer) {
-	w.Write([]byte(strconv.Quote(time.Time(d).Format(DateFormat))))
+	_, _ = w.Write([]byte(strconv.Quote(time.Time(d).Format(DateFormat))))
 }
 
 // Hash holds a Git hash.
@@ -72,5 +72,5 @@ func (h *Hash) UnmarshalGQL(v interface{}) error {
 
 // MarshalGQL implements the graphql.Marshaler interface.
 func (h Hash) MarshalGQL(w io.Writer) {
-	w.Write([]byte(strconv.Quote(string(h))))
+	_, _ = w.Write([]byte(strconv.Quote(string(h))))
 }

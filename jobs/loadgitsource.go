@@ -118,7 +118,7 @@ func cloneOrPullSource(ctx context.Context, sourceID string) (string, error) {
 			)
 		}
 	} else {
-		repo, err = git.PlainCloneContext(
+		_, err = git.PlainCloneContext(
 			ctx,
 			directory,
 			false,

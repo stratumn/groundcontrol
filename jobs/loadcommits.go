@@ -229,7 +229,7 @@ func updateStatus(ctx context.Context, repo *git.Repository, projectID string) (
 			default:
 			}
 
-			if bytes.Compare(remoteHash[:], commit.Hash[:]) == 0 {
+			if bytes.Equal(remoteHash[:], commit.Hash[:]) {
 				project.IsBehind = false
 				project.IsAhead = !last
 				return storer.ErrStop
