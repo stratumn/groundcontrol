@@ -12,5 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package app contains types to run the app and specify options.
+// +build windows
+
 package app
+
+import (
+	"context"
+	"groundcontrol/models"
+)
+
+func initHooks(ctx context.Context) error {
+	log := models.GetModelContext(ctx).Log
+	log.Warn("Ground Control doesn't currently support Windows")
+	return nil
+}

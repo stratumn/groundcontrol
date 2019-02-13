@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -42,7 +43,7 @@ import (
 	"groundcontrol/resolvers"
 )
 
-// App contains data about the app.
+// App starts Ground Control.
 type App struct {
 	sourcesFile             string
 	keysFile                string
@@ -62,7 +63,7 @@ type App struct {
 	enableSignalHandling    bool
 }
 
-// New creates a new App.
+// New creates a new App with given options.
 func New(opts ...Opt) *App {
 	app := &App{
 		sourcesFile:             DefaultSourcesFile,
@@ -98,6 +99,14 @@ func (a *App) Start(ctx context.Context) error {
 	jobs := models.NewJobManager(a.jobConcurrency)
 	pm := models.NewProcessManager()
 
+	log.Info("starting app")
+	log.Info(
+		"runtime %s %s %s",
+		runtime.GOOS,
+		runtime.GOARCH,
+		runtime.Version(),
+	)
+
 	sources, err := a.loadSources(nodes, subs, viewerID)
 	if err != nil {
 		return err
@@ -124,6 +133,10 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	ctx = models.WithModelContext(ctx, modelCtx)
+
+	if err := initHooks(ctx); err != nil {
+		return err
+	}
 
 	router := chi.NewRouter()
 
@@ -211,7 +224,6 @@ func (a *App) Start(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	case err := <-errorCh:
-		log.Error("app crashed because %s", err.Error())
 		return err
 	}
 }
