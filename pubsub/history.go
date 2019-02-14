@@ -26,7 +26,7 @@ type record struct {
 type history struct {
 	cap int
 
-	mu      sync.Mutex
+	mu      sync.RWMutex
 	records []record
 	head    int
 }
@@ -59,6 +59,9 @@ func (h *history) Add(id uint64, message interface{}) {
 }
 
 func (h *history) Since(id uint64) (messages []interface{}) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
 	start := h.head - 1
 
 	for ; start >= 0; start-- {

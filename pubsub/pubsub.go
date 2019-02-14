@@ -89,5 +89,5 @@ func (p *PubSub) Publish(messageType string, message interface{}) {
 
 // LastMessageID returns the ID of the last message.
 func (p *PubSub) LastMessageID() uint64 {
-	return p.lastMessageID
+	return atomic.LoadUint64(&p.lastMessageID)
 }
