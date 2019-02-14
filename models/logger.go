@@ -18,11 +18,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"groundcontrol/pubsub"
 	"groundcontrol/relay"
+	"groundcontrol/util"
 )
 
 var logLevelPriorities = map[LogLevel]int{
@@ -37,9 +40,10 @@ type Logger struct {
 	nodes *NodeManager
 	subs  *pubsub.PubSub
 
-	cap      int
-	level    LogLevel
-	systemID string
+	cap            int
+	level          LogLevel
+	systemID       string
+	getProjectPath ProjectPathGetter
 
 	lastID      uint64
 	logEntryIDs []string
@@ -61,16 +65,18 @@ func NewLogger(
 	cap int,
 	level LogLevel,
 	systemID string,
+	getProjectPath ProjectPathGetter,
 ) *Logger {
 	return &Logger{
-		nodes:       nodes,
-		subs:        subs,
-		cap:         cap,
-		level:       level,
-		systemID:    systemID,
-		logEntryIDs: make([]string, cap*2),
-		stdoutLog:   log.New(os.Stdout, "", log.LstdFlags),
-		stderrLog:   log.New(os.Stderr, "", log.LstdFlags),
+		nodes:          nodes,
+		subs:           subs,
+		cap:            cap,
+		level:          level,
+		systemID:       systemID,
+		getProjectPath: getProjectPath,
+		logEntryIDs:    make([]string, cap*2),
+		stdoutLog:      log.New(os.Stdout, "", log.LstdFlags),
+		stderrLog:      log.New(os.Stderr, "", log.LstdFlags),
 	}
 }
 
@@ -104,6 +110,7 @@ func (l *Logger) Add(
 		Message:   message,
 		OwnerID:   ownerID,
 	}
+	l.matchSourceFile(&logEntry)
 	l.nodes.MustStoreLogEntry(logEntry)
 	l.subs.Publish(LogEntryAdded, logEntry.ID)
 
@@ -238,4 +245,53 @@ func (l *Logger) publishMetrics() {
 	})
 
 	l.subs.Publish(LogMetricsUpdated, system.LogMetricsID)
+}
+
+func (l *Logger) matchSourceFile(entry *LogEntry) {
+	if entry.OwnerID == "" {
+		return
+	}
+
+	node, ok := l.nodes.Load(entry.OwnerID)
+	if !ok {
+		return
+	}
+
+	project, ok := node.(Project)
+	if !ok {
+		return
+	}
+
+	sourceFile, begin, end, err := util.MatchSourceFile(entry.Message)
+	if err != nil {
+		return
+	}
+
+	sourceParts := strings.Split(sourceFile, ":")
+	fileName := sourceParts[0]
+
+	workspace := l.nodes.MustLoadWorkspace(project.WorkspaceID)
+	projectPath := l.getProjectPath(
+		workspace.Slug,
+		project.Repository,
+		project.Branch,
+	)
+
+	if !filepath.IsAbs(fileName) {
+		fileName, err = filepath.Abs(filepath.Join(projectPath, fileName))
+		if err != nil {
+			return
+		}
+	}
+
+	fileName = filepath.Clean(fileName)
+	sourceFile = strings.Join(append([]string{fileName}, sourceParts[1:]...), ":")
+
+	if !util.FileExists(fileName) {
+		return
+	}
+
+	entry.SourceFile = &sourceFile
+	entry.SourceFileBegin = &begin
+	entry.SourceFileEnd = &end
 }

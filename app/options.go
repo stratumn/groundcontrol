@@ -55,6 +55,9 @@ const (
 
 	// DefaultEnableSignalHandling is whether to enable signal handling by default.
 	DefaultEnableSignalHandling = true
+
+	// DefaultOpenEditorCommand is the default open editor command.
+	DefaultOpenEditorCommand = "code --goto %s"
 )
 
 var (
@@ -190,6 +193,13 @@ func OptWorkspacesDirectory(dir string) Opt {
 func OptCacheDirectory(dir string) Opt {
 	return func(app *App) {
 		app.cacheDirectory = dir
+	}
+}
+
+// OptOpenEditorCommand sets the command to use to open an editor.
+func OptOpenEditorCommand(command string) Opt {
+	return func(app *App) {
+		app.openEditorCommand = command
 	}
 }
 

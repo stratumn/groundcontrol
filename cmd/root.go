@@ -59,6 +59,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptGitSourcesDirectory(viper.GetString("git-sources-directory")),
 			app.OptWorkspacesDirectory(viper.GetString("workspaces-directory")),
 			app.OptCacheDirectory(viper.GetString("cache-directory")),
+			app.OptOpenEditorCommand(viper.GetString("open-editor-command")),
 			app.OptEnableApolloTracing(viper.GetBool("enable-apollo-tracing")),
 			app.OptUI(userInterface),
 		)
@@ -94,6 +95,7 @@ func init() {
 	rootCmd.PersistentFlags().String("git-sources-directory", app.DefaultGitSourcesDirectory, "directory for Git sources")
 	rootCmd.PersistentFlags().String("workspaces-directory", app.DefaultWorkspacesDirectory, "directory for workspaces")
 	rootCmd.PersistentFlags().String("cache-directory", app.DefaultCacheDirectory, "directory for the cache")
+	rootCmd.PersistentFlags().String("open-editor-command", app.DefaultOpenEditorCommand, "command issued to open a text editor")
 	rootCmd.PersistentFlags().Bool("enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
 
 	for _, flagName := range []string{
@@ -110,6 +112,7 @@ func init() {
 		"git-sources-directory",
 		"workspaces-directory",
 		"cache-directory",
+		"open-editor-command",
 		"enable-apollo-tracing",
 	} {
 		if err := viper.BindPFlag(flagName, rootCmd.PersistentFlags().Lookup(flagName)); err != nil {

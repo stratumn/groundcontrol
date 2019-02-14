@@ -17,7 +17,6 @@ package jobs
 import (
 	"bytes"
 	"context"
-	"os"
 	"strings"
 
 	git "gopkg.in/src-d/go-git.v4"
@@ -27,6 +26,7 @@ import (
 
 	"groundcontrol/models"
 	"groundcontrol/relay"
+	"groundcontrol/util"
 )
 
 // LoadCommits loads the commits of a project from a remote repo and updates the project.
@@ -122,7 +122,7 @@ func cloneOrFetch(ctx context.Context, projectID string) (repo *git.Repository, 
 
 	if project.IsCloned(ctx) {
 		repo, err = git.PlainOpen(projectDir)
-	} else if exists(cacheDir) {
+	} else if util.FileExists(cacheDir) {
 		repo, err = git.PlainOpen(cacheDir)
 		force = true
 	}
@@ -246,9 +246,4 @@ func updateStatus(ctx context.Context, repo *git.Repository, projectID string) (
 	})
 
 	return
-}
-
-func exists(directory string) bool {
-	_, err := os.Stat(directory)
-	return !os.IsNotExist(err)
 }

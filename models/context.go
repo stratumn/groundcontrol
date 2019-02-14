@@ -45,6 +45,7 @@ type ModelContext struct {
 	GetGitSourcePath    ProjectGitSourcePathGetter
 	GetProjectPath      ProjectPathGetter
 	GetProjectCachePath ProjectCachePathGetter
+	OpenEditorCommand   string
 	ViewerID            string
 	SystemID            string
 }

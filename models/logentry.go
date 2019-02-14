@@ -18,11 +18,14 @@ import "context"
 
 // LogEntry represents a log entry in the app.
 type LogEntry struct {
-	ID        string   `json:"id"`
-	Level     LogLevel `json:"level"`
-	CreatedAt DateTime `json:"createdAt"`
-	Message   string   `json:"message"`
-	OwnerID   string   `json:"ownerId"`
+	ID              string   `json:"id"`
+	Level           LogLevel `json:"level"`
+	CreatedAt       DateTime `json:"createdAt"`
+	Message         string   `json:"message"`
+	OwnerID         string   `json:"ownerId"`
+	SourceFile      *string  `json:"sourceFile"`
+	SourceFileBegin *int     `json:"sourceFileBegin"`
+	SourceFileEnd   *int     `json:"sourceFileEnd"`
 }
 
 // IsNode tells gqlgen that it implements Node.

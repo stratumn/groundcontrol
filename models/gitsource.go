@@ -16,7 +16,8 @@ package models
 
 import (
 	"context"
-	"os"
+
+	"groundcontrol/util"
 )
 
 // GitSource is a collection of workspaces in a Git repository.
@@ -67,10 +68,5 @@ func (n GitSource) IsCloned(ctx context.Context) bool {
 	getGitSourcePath := GetModelContext(ctx).GetGitSourcePath
 	directory := getGitSourcePath(n.Repository, n.Branch)
 
-	return n.isCloned(directory)
-}
-
-func (n GitSource) isCloned(directory string) bool {
-	_, err := os.Stat(directory)
-	return !os.IsNotExist(err)
+	return util.FileExists(directory)
 }

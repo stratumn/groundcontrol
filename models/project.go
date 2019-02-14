@@ -16,7 +16,8 @@ package models
 
 import (
 	"context"
-	"os"
+
+	"groundcontrol/util"
 )
 
 // Project represents a project in the app.
@@ -49,12 +50,7 @@ func (p Project) IsCloned(ctx context.Context) bool {
 	getProjectPath := GetModelContext(ctx).GetProjectPath
 	directory := getProjectPath(p.Workspace(ctx).Slug, p.Repository, p.Branch)
 
-	return p.isCloned(directory)
-}
-
-func (p Project) isCloned(directory string) bool {
-	_, err := os.Stat(directory)
-	return !os.IsNotExist(err) && !p.IsCloning
+	return util.FileExists(directory)
 }
 
 // Commits returns paginated commits.

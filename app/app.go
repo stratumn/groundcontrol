@@ -59,6 +59,7 @@ type App struct {
 	gitSourcesDirectory     string
 	workspacesDirectory     string
 	cacheDirectory          string
+	openEditorCommand       string
 	enableApolloTracing     bool
 	enableSignalHandling    bool
 }
@@ -79,6 +80,7 @@ func New(opts ...Opt) *App {
 		gitSourcesDirectory:     DefaultGitSourcesDirectory,
 		workspacesDirectory:     DefaultWorkspacesDirectory,
 		cacheDirectory:          DefaultCacheDirectory,
+		openEditorCommand:       DefaultOpenEditorCommand,
 		enableApolloTracing:     DefaultEnableApolloTracing,
 		enableSignalHandling:    DefaultEnableSignalHandling,
 	}
@@ -95,7 +97,14 @@ func (a *App) Start(ctx context.Context) error {
 	nodes := &models.NodeManager{}
 	viewerID, systemID := a.createBaseNodes(nodes)
 	subs := pubsub.New(a.pubSubHistoryCap)
-	log := models.NewLogger(nodes, subs, a.logCap, a.logLevel, systemID)
+	log := models.NewLogger(
+		nodes,
+		subs,
+		a.logCap,
+		a.logLevel,
+		systemID,
+		a.getProjectPath,
+	)
 	jobs := models.NewJobManager(a.jobConcurrency)
 	pm := models.NewProcessManager()
 
@@ -128,6 +137,7 @@ func (a *App) Start(ctx context.Context) error {
 		GetGitSourcePath:    a.getGitSourcePath,
 		GetProjectPath:      a.getProjectPath,
 		GetProjectCachePath: a.getProjectCachePath,
+		OpenEditorCommand:   a.openEditorCommand,
 		ViewerID:            viewerID,
 		SystemID:            systemID,
 	}

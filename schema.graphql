@@ -1066,6 +1066,18 @@ type LogEntry implements Node {
   The node it belongs to.
   """
   owner: Node
+  """
+  A path to a source file using the format `/path/to/file:line:offset?`, if one was found in the message.
+  """
+  sourceFile: String
+  """
+  The offset in the message where the path to a source file begins.
+  """
+  sourceFileBegin: Int
+  """
+  The offset in the message where the path to a source file ends.
+  """
+  sourceFileEnd: Int
 }
 
 """
@@ -1140,6 +1152,13 @@ type LogMetrics implements Node {
   How many are error messages.
   """
   error: Int!
+}
+
+"""
+A mutation result for when there isn't much to say.
+"""
+type Ok {
+  ok: Boolean!
 }
 
 """
@@ -1239,6 +1258,10 @@ type Mutation {
   Stop a process.
   """
   stopProcess(id: String!): Process!
+  """
+  Open text editor.
+  """
+  openEditor(filename: String!): Ok!
 }
 
 """
