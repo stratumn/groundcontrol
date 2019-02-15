@@ -47,7 +47,7 @@ func TestPriorities(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	go q.Work(ctx)
+	go func() { _ = q.Work(ctx) }()
 
 	go func() {
 		wg.Wait()
@@ -68,7 +68,7 @@ func TestDoError(t *testing.T) {
 	defer cancel()
 
 	q := New(1)
-	go q.Work(ctx)
+	go func() { _ = q.Work(ctx) }()
 
 	errCh := make(chan error)
 
@@ -91,7 +91,7 @@ func TestDoErrorHi(t *testing.T) {
 	defer cancel()
 
 	q := New(1)
-	go q.Work(ctx)
+	go func() { _ = q.Work(ctx) }()
 
 	errCh := make(chan error)
 
