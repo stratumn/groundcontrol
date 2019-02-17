@@ -108,8 +108,9 @@ func (a *App) Start(ctx context.Context) error {
 	jobs := models.NewJobManager(a.jobConcurrency)
 	pm := models.NewProcessManager()
 
-	log.Info("starting app")
-	log.Info(
+	log.InfoWithOwner(systemID, "starting app")
+	log.InfoWithOwner(
+		systemID,
 		"runtime %s %s %s",
 		runtime.GOOS,
 		runtime.GOARCH,
@@ -151,7 +152,7 @@ func (a *App) Start(ctx context.Context) error {
 	router := chi.NewRouter()
 
 	if a.logLevel <= models.LogLevelDebug {
-		router.Use(logHTTPRequestMiddleware(log))
+		router.Use(logHTTPRequestMiddleware(log, systemID))
 	}
 
 	corsHandler := cors.New(cors.Options{
@@ -208,23 +209,31 @@ func (a *App) Start(ctx context.Context) error {
 
 	go func() {
 		if err := jobs.Work(ctx); err != nil && err != context.Canceled {
-			log.Error("job manager crashed because %s", err.Error())
+			log.ErrorWithOwner(
+				systemID,
+				"job manager crashed because %s",
+				err.Error(),
+			)
 		}
 	}()
 
-	a.startPeriodicJobs(ctx, log)
+	a.startPeriodicJobs(ctx, log, systemID)
 	if a.enableSignalHandling {
-		go a.handleSignals(ctx, log, pm, server)
+		go a.handleSignals(ctx, log, pm, server, systemID)
 	}
 
 	errorCh := make(chan error, 1)
 
 	go func() {
-		log.Info("app ready")
+		log.InfoWithOwner(systemID, "app ready")
 		if a.ui != nil {
-			log.Info("user interface on %s", a.listenAddress)
+			log.InfoWithOwner(systemID, "user interface on %s", a.listenAddress)
 		}
-		log.Info("GraphQL playground on %s/graphql", a.listenAddress)
+		log.InfoWithOwner(
+			systemID,
+			"GraphQL playground on %s/graphql",
+			a.listenAddress,
+		)
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errorCh <- err
@@ -232,7 +241,7 @@ func (a *App) Start(ctx context.Context) error {
 	}()
 
 	if a.openBrowser && a.ui != nil {
-		a.openAddressInBrowser(log)
+		a.openAddressInBrowser(log, systemID)
 	}
 
 	select {
@@ -314,7 +323,7 @@ func (a *App) loadKeys(
 	return config, nil
 }
 
-func (a *App) startPeriodicJobs(ctx context.Context, log *models.Logger) {
+func (a *App) startPeriodicJobs(ctx context.Context, log *models.Logger, systemID string) {
 	go func() {
 		err := jobs.StartPeriodic(
 			ctx,
@@ -323,7 +332,11 @@ func (a *App) startPeriodicJobs(ctx context.Context, log *models.Logger) {
 			jobs.LoadAllCommits,
 		)
 		if err != nil && err != context.Canceled {
-			log.Error("job manager crashed because %s", err.Error())
+			log.ErrorWithOwner(
+				systemID,
+				"job manager crashed because %s",
+				err.Error(),
+			)
 		}
 	}()
 
@@ -334,15 +347,16 @@ func (a *App) handleSignals(
 	log *models.Logger,
 	pm *models.ProcessManager,
 	server *http.Server,
+	systemID string,
 ) {
 	signalCh := make(chan os.Signal, 2)
 	signal.Notify(signalCh, syscall.SIGTERM)
 	signal.Notify(signalCh, syscall.SIGINT)
 
-	log.Debug("received signal %d", <-signalCh)
-	log.Info("starting graceful shutdown")
+	log.DebugWithOwner(systemID, "received signal %d", <-signalCh)
+	log.InfoWithOwner(systemID, "starting graceful shutdown")
 
-	a.shutdownGracefully(ctx, log, pm, server)
+	a.shutdownGracefully(ctx, log, pm, server, systemID)
 }
 
 func (a *App) shutdownGracefully(
@@ -350,6 +364,7 @@ func (a *App) shutdownGracefully(
 	log *models.Logger,
 	pm *models.ProcessManager,
 	server *http.Server,
+	systemID string,
 ) {
 	shutdownCtx, cancel := context.WithTimeout(ctx, a.gracefulShutdownTimeout)
 	defer cancel()
@@ -364,7 +379,11 @@ func (a *App) shutdownGracefully(
 
 	go func() {
 		if err := server.Shutdown(ctx); err != nil && err != context.Canceled {
-			log.Error("server shutdown failed because %s", err.Error())
+			log.ErrorWithOwner(
+				systemID,
+				"server shutdown failed because %s",
+				err.Error(),
+			)
 		}
 		waitGroup.Done()
 	}()
@@ -372,18 +391,26 @@ func (a *App) shutdownGracefully(
 	waitGroup.Wait()
 
 	if err := shutdownCtx.Err(); err != nil {
-		log.Error("graceful shutdown failed because %s", err.Error())
+		log.ErrorWithOwner(
+			systemID,
+			"graceful shutdown failed because %s",
+			err.Error(),
+		)
 		os.Exit(1)
 	}
 
-	log.Info("graceful shutdown complete, goodbye!")
+	log.InfoWithOwner(systemID, "graceful shutdown complete, goodbye!")
 	os.Exit(0)
 }
 
-func (a *App) openAddressInBrowser(log *models.Logger) {
+func (a *App) openAddressInBrowser(log *models.Logger, systemID string) {
 	addr, err := net.ResolveTCPAddr("tcp", a.listenAddress)
 	if err != nil {
-		log.Warning("could not resolve address because %s", err.Error())
+		log.WarningWithOwner(
+			systemID,
+			"could not resolve address because %s",
+			err.Error(),
+		)
 		return
 	}
 
@@ -397,7 +424,11 @@ func (a *App) openAddressInBrowser(log *models.Logger) {
 		url += fmt.Sprintf(":%d", addr.Port)
 	}
 	if err := browser.OpenURL(url); err != nil {
-		log.Warning("could not resolve address because %s", err.Error())
+		log.WarningWithOwner(
+			systemID,
+			"could not resolve address because %s",
+			err.Error(),
+		)
 	}
 }
 

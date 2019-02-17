@@ -28,11 +28,17 @@ func initHooks(ctx context.Context) error {
 }
 
 func incNoFile(ctx context.Context) {
-	log := models.GetModelContext(ctx).Log
+	modelCtx := models.GetModelContext(ctx)
+	log := modelCtx.Log
+	systemID := modelCtx.SystemID
 	limit := syscall.Rlimit{}
 
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
-		log.Warning("failed to get maximum number of open files because %s", err.Error())
+		log.WarningWithOwner(
+			systemID,
+			"failed to get maximum number of open files because %s",
+			err.Error(),
+		)
 		return
 	}
 
@@ -40,14 +46,27 @@ func incNoFile(ctx context.Context) {
 	limit.Cur = limit.Max
 
 	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
-		log.Warning("failed to set maximum number of open files because %s", err.Error())
+		log.WarningWithOwner(
+			systemID,
+			"failed to set maximum number of open files because %s",
+			err.Error(),
+		)
 		return
 	}
 
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
-		log.Warning("failed to get maximum number of open files because %s", err.Error())
+		log.WarningWithOwner(
+			systemID,
+			"failed to get maximum number of open files because %s",
+			err.Error(),
+		)
 		return
 	}
 
-	log.Info("maximum number of open files increased from %d to %d", was, limit.Cur)
+	log.InfoWithOwner(
+		systemID,
+		"maximum number of open files increased from %d to %d",
+		was,
+		limit.Cur,
+	)
 }

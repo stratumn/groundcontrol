@@ -29,10 +29,16 @@ func modelContextResolverMiddleware(modelCtx *models.ModelContext) graphql.Field
 	}
 }
 
-func logHTTPRequestMiddleware(log *models.Logger) func(h http.Handler) http.Handler {
+func logHTTPRequestMiddleware(log *models.Logger, systemID string) func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Debug("HTTP request %s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
+			log.DebugWithOwner(
+				systemID,
+				"HTTP request %s %s %s",
+				r.Method,
+				r.URL.String(),
+				r.RemoteAddr,
+			)
 			h.ServeHTTP(w, r)
 		})
 	}
