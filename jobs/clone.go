@@ -30,7 +30,7 @@ func Clone(ctx context.Context, projectID string, priority models.JobPriority) (
 
 	jobID := modelCtx.Jobs.Add(
 		models.GetModelContext(ctx),
-		LoadCommitsJob,
+		CloneJob,
 		projectID,
 		priority,
 		func(ctx context.Context) error {

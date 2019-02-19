@@ -30,7 +30,7 @@ func Pull(ctx context.Context, projectID string, priority models.JobPriority) (s
 
 	jobID := modelCtx.Jobs.Add(
 		models.GetModelContext(ctx),
-		LoadCommitsJob,
+		PullJob,
 		projectID,
 		priority,
 		func(ctx context.Context) error {
