@@ -662,6 +662,10 @@ type GitSource implements Node & Source {
   """
   reference: String!
   """
+  The short name of the Git reference.
+  """
+  referenceShort: String!
+  """
   Whether cloned.
   """
   isCloned: Boolean!

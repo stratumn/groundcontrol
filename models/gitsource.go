@@ -18,6 +18,8 @@ import (
 	"context"
 
 	"groundcontrol/util"
+
+	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 // GitSource is a collection of workspaces in a Git repository.
@@ -69,4 +71,9 @@ func (n GitSource) IsCloned(ctx context.Context) bool {
 	directory := getGitSourcePath(n.Repository, n.Reference)
 
 	return util.FileExists(directory)
+}
+
+// ReferenceShort returns the short name of the reference.
+func (n GitSource) ReferenceShort() string {
+	return plumbing.ReferenceName(n.Reference).Short()
 }
