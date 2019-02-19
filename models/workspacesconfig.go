@@ -149,10 +149,16 @@ func (c ProjectConfig) UpsertNodes(
 		project.Slug = c.Slug
 		project.Repository = c.Repository
 		project.Reference = c.Reference
-		project.RemoteReference = c.Reference
-		project.LocalReference = c.Reference
 		project.Description = c.Description
 		project.WorkspaceID = workspaceID
+
+		if project.RemoteReference == "" {
+			project.RemoteReference = c.Reference
+		}
+
+		if project.LocalReference == "" {
+			project.LocalReference = c.Reference
+		}
 
 		nodes.MustStoreProject(project)
 		subs.Publish(ProjectUpserted, id)
