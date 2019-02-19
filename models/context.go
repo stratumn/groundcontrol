@@ -25,13 +25,13 @@ type contextKey string
 const modelContextKey contextKey = "model_context"
 
 // ProjectGitSourcePathGetter is a function that returns the path to a Git source.
-type ProjectGitSourcePathGetter func(repo, branch string) string
+type ProjectGitSourcePathGetter func(repo, reference string) string
 
 // ProjectPathGetter is a function that returns the path to a project.
-type ProjectPathGetter func(workspaceSlug, repo, branch string) string
+type ProjectPathGetter func(workspaceSlug, projectSlug string) string
 
 // ProjectCachePathGetter is a function that returns the path to a project's cache.
-type ProjectCachePathGetter func(workspaceSlug, repo, branch string) string
+type ProjectCachePathGetter func(workspaceSlug, projectSlug string) string
 
 // ModelContext contains variables that are passed to model functions.
 type ModelContext struct {

@@ -30,8 +30,8 @@ type GitSource struct {
 	IsLoading bool `json:"isLoading"`
 	// The Git repository.
 	Repository string `json:"repository"`
-	// The Git branch.
-	Branch string `json:"branch"`
+	// The Git reference.
+	Reference string `json:"reference"`
 }
 
 // IsNode tells gqlgen that it implements Node.
@@ -66,7 +66,7 @@ func (n GitSource) Workspaces(
 // IsCloned checks if the project is cloned.
 func (n GitSource) IsCloned(ctx context.Context) bool {
 	getGitSourcePath := GetModelContext(ctx).GetGitSourcePath
-	directory := getGitSourcePath(n.Repository, n.Branch)
+	directory := getGitSourcePath(n.Repository, n.Reference)
 
 	return util.FileExists(directory)
 }

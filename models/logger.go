@@ -271,11 +271,7 @@ func (l *Logger) matchSourceFile(entry *LogEntry) {
 	fileName := sourceParts[0]
 
 	workspace := l.nodes.MustLoadWorkspace(project.WorkspaceID)
-	projectPath := l.getProjectPath(
-		workspace.Slug,
-		project.Repository,
-		project.Branch,
-	)
+	projectPath := l.getProjectPath(workspace.Slug, project.Slug)
 
 	if !filepath.IsAbs(fileName) {
 		fileName, err = filepath.Abs(filepath.Join(projectPath, fileName))

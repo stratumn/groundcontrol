@@ -99,7 +99,7 @@ func doRun(ctx context.Context, taskID string, env []string, workspaceID string,
 
 				log.InfoWithOwner(project.ID, command.Command)
 
-				projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Repository, project.Branch)
+				projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
 				parts := strings.Split(command.Command, " ")
 
 				if len(parts) > 0 && parts[0] == "spawn" {

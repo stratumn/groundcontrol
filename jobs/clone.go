@@ -17,14 +17,31 @@ package jobs
 import (
 	"context"
 
-	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-
 	"groundcontrol/models"
 )
 
 // Clone clones a remote repository locally.
 func Clone(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
+	if err := startCloning(ctx, projectID); err != nil {
+		return "", err
+	}
+
+	modelCtx := models.GetModelContext(ctx)
+
+	jobID := modelCtx.Jobs.Add(
+		models.GetModelContext(ctx),
+		LoadCommitsJob,
+		projectID,
+		priority,
+		func(ctx context.Context) error {
+			return doClone(ctx, projectID)
+		},
+	)
+
+	return jobID, nil
+}
+
+func startCloning(ctx context.Context, projectID string) error {
 	modelCtx := models.GetModelContext(ctx)
 	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
@@ -41,58 +58,21 @@ func Clone(ctx context.Context, projectID string, priority models.JobPriority) (
 
 		return nil
 	})
+
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	subs.Publish(models.ProjectUpserted, projectID)
 	subs.Publish(models.WorkspaceUpserted, workspaceID)
 
-	jobID := modelCtx.Jobs.Add(
-		models.GetModelContext(ctx),
-		CloneJob,
-		projectID,
-		priority,
-		func(ctx context.Context) error {
-			return doClone(ctx, projectID, workspaceID)
-		},
-	)
-
-	return jobID, nil
+	return nil
 }
 
-func doClone(ctx context.Context, projectID string, workspaceID string) error {
-	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
-	subs := modelCtx.Subs
-	project := nodes.MustLoadProject(projectID)
+func doClone(ctx context.Context, projectID string) error {
+	nodes := models.GetModelContext(ctx).Nodes
 
-	if project.IsCloned(ctx) {
-		return ErrCloned
-	}
-
-	defer func() {
-		nodes.MustLockProject(projectID, func(project models.Project) {
-			project.IsCloning = false
-			nodes.MustStoreProject(project)
-		})
-
-		subs.Publish(models.ProjectUpserted, projectID)
-		subs.Publish(models.WorkspaceUpserted, workspaceID)
-	}()
-
-	workspace := project.Workspace(ctx)
-	directory := modelCtx.GetProjectPath(workspace.Slug, project.Repository, project.Branch)
-
-	_, err := git.PlainCloneContext(
-		ctx,
-		directory,
-		false,
-		&git.CloneOptions{
-			URL:           project.Repository,
-			ReferenceName: plumbing.NewBranchReferenceName(project.Branch),
-		},
-	)
-
-	return err
+	return nodes.MustLockProjectE(projectID, func(project models.Project) error {
+		return project.Clone(ctx)
+	})
 }

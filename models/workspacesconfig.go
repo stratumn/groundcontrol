@@ -44,7 +44,7 @@ type WorkspaceConfig struct {
 type ProjectConfig struct {
 	Slug        string  `json:"slug"`
 	Repository  string  `json:"repository"`
-	Branch      string  `json:"branch"`
+	Reference   string  `json:"reference"`
 	Description *string `json:"description"`
 }
 
@@ -148,7 +148,9 @@ func (c ProjectConfig) UpsertNodes(
 	nodes.MustLockOrNewProject(id, func(project Project) {
 		project.Slug = c.Slug
 		project.Repository = c.Repository
-		project.Branch = c.Branch
+		project.Reference = c.Reference
+		project.RemoteReference = c.Reference
+		project.LocalReference = c.Reference
 		project.Description = c.Description
 		project.WorkspaceID = workspaceID
 

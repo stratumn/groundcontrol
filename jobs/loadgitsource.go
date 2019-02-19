@@ -100,7 +100,7 @@ func cloneOrPullSource(ctx context.Context, sourceID string) (string, error) {
 
 	modelCtx := models.GetModelContext(ctx)
 	source := modelCtx.Nodes.MustLoadGitSource(sourceID)
-	directory := modelCtx.GetGitSourcePath(source.Repository, source.Branch)
+	directory := modelCtx.GetGitSourcePath(source.Repository, source.Reference)
 
 	if source.IsCloned(ctx) {
 		repo, err = git.PlainOpen(directory)
@@ -114,7 +114,10 @@ func cloneOrPullSource(ctx context.Context, sourceID string) (string, error) {
 		if err == nil {
 			err = worktree.PullContext(
 				ctx,
-				&git.PullOptions{RemoteName: "origin"},
+				&git.PullOptions{
+					RemoteName:    "origin",
+					ReferenceName: plumbing.ReferenceName(source.Reference),
+				},
 			)
 		}
 	} else {
@@ -124,7 +127,7 @@ func cloneOrPullSource(ctx context.Context, sourceID string) (string, error) {
 			false,
 			&git.CloneOptions{
 				URL:           source.Repository,
-				ReferenceName: plumbing.NewBranchReferenceName(source.Branch),
+				ReferenceName: plumbing.ReferenceName(source.Reference),
 			},
 		)
 	}

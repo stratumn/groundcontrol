@@ -34,7 +34,7 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 	for _, projectID := range workspace.ProjectIDs {
 		project := nodes.MustLoadProject(projectID)
 
-		if project.IsLoadingCommits || len(project.CommitIDs) > 0 {
+		if project.IsLoadingCommits || len(project.RemoteCommitIDs) > 0 {
 			continue
 		}
 

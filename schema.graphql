@@ -59,7 +59,7 @@ An input for a Git source.
 """
 input GitSourceInput {
   repository: String!
-  branch: String!
+  reference: String!
 }
 
 """
@@ -658,9 +658,9 @@ type GitSource implements Node & Source {
   """
   repository: String!
   """
-  The Git branch.
+  The Git reference.
   """
-  branch: String!
+  reference: String!
   """
   Whether cloned.
   """
@@ -732,7 +732,7 @@ type Workspace implements Node {
 }
 
 """
-A Git repository and branch.
+A Git repository and reference.
 """
 type Project implements Node {
   """
@@ -748,17 +748,46 @@ type Project implements Node {
   """
   repository: String!
   """
-  The Git branch.
+  The Git reference to use when cloning.
   """
-  branch: String!
+  reference: String!
+  """
+  The remote Git reference.
+  """
+  remoteReference: String!
+  """
+  The local Git reference.
+  """
+  localReference: String!
+  """
+  The short name of the Git reference to use when cloning.
+  """
+  referenceShort: String!
+  """
+  The short name of the remote Git reference.
+  """
+  remoteReferenceShort: String!
+  """
+  The short name of the local Git reference.
+  """
+  localReferenceShort: String!
   """
   The optional description.
   """
   description: String
   """
-  The commits using Relay pagination.
+  The remote commits using Relay pagination.
   """
-  commits(
+  remoteCommits(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): CommitConnection!
+  """
+  The local commits using Relay pagination.
+  """
+  localCommits(
     after: String
     before: String
     first: Int

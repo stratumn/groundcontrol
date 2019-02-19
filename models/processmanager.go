@@ -213,11 +213,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 		project := process.Project(ctx)
 		workspace := project.Workspace(ctx)
 
-		dir := modelCtx.GetProjectPath(
-			workspace.Slug,
-			project.Repository,
-			project.Branch,
-		)
+		dir := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
 
 		stdout := CreateLineWriter(modelCtx.Log.InfoWithOwner, project.ID)
 		stderr := CreateLineWriter(modelCtx.Log.WarningWithOwner, project.ID)

@@ -432,23 +432,17 @@ func (a *App) openAddressInBrowser(log *models.Logger, systemID string) {
 	}
 }
 
-func (a *App) getGitSourcePath(repo, branch string) string {
+func (a *App) getGitSourcePath(repo, reference string) string {
 	name := path.Base(repo)
 	ext := path.Ext(name)
 	name = name[:len(name)-len(ext)]
-	return filepath.Join(a.gitSourcesDirectory, name, branch)
+	return filepath.Join(a.gitSourcesDirectory, name, reference)
 }
 
-func (a *App) getProjectPath(workspaceSlug, repo, branch string) string {
-	name := path.Base(repo)
-	ext := path.Ext(name)
-	name = name[:len(name)-len(ext)]
-	return filepath.Join(a.workspacesDirectory, workspaceSlug, name)
+func (a *App) getProjectPath(workspaceSlug, projectSlug string) string {
+	return filepath.Join(a.workspacesDirectory, workspaceSlug, projectSlug)
 }
 
-func (a *App) getProjectCachePath(workspaceSlug, repo, branch string) string {
-	name := path.Base(repo)
-	ext := path.Ext(name)
-	name = name[:len(name)-len(ext)]
-	return filepath.Join(a.cacheDirectory, workspaceSlug, name+".git")
+func (a *App) getProjectCachePath(workspaceSlug, projectSlug string) string {
+	return filepath.Join(a.cacheDirectory, workspaceSlug, projectSlug+".git")
 }

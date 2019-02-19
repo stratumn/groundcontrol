@@ -41,7 +41,7 @@ type DirectorySourceConfig struct {
 // GitSourceConfig contains all the data in a YAML Git source config file.
 type GitSourceConfig struct {
 	Repository string `json:"repository"`
-	Branch     string `json:"branch"`
+	Reference  string `json:"reference"`
 	ID         string `json:"-" yaml:"-"`
 }
 
@@ -72,10 +72,10 @@ func (c *SourcesConfig) UpsertNodes(
 				ID: relay.EncodeID(
 					NodeTypeGitSource,
 					sourceConfig.Repository,
-					sourceConfig.Branch,
+					sourceConfig.Reference,
 				),
 				Repository: sourceConfig.Repository,
-				Branch:     sourceConfig.Branch,
+				Reference:  sourceConfig.Reference,
 			}
 
 			c.GitSources[i].ID = source.ID
@@ -145,10 +145,10 @@ func (c *SourcesConfig) UpsertGitSource(
 		ID: relay.EncodeID(
 			NodeTypeGitSource,
 			input.Repository,
-			input.Branch,
+			input.Reference,
 		),
 		Repository: input.Repository,
-		Branch:     input.Branch,
+		Reference:  input.Reference,
 	}
 
 	nodes.MustLockUser(userID, func(user User) {
@@ -167,7 +167,7 @@ func (c *SourcesConfig) UpsertGitSource(
 			c.GitSources,
 			GitSourceConfig{
 				Repository: input.Repository,
-				Branch:     input.Branch,
+				Reference:  input.Reference,
 				ID:         source.ID,
 			},
 		)
