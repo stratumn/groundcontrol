@@ -15,13 +15,13 @@
 package models
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	yaml "gopkg.in/yaml.v2"
 
-	"groundcontrol/pubsub"
 	"groundcontrol/relay"
 )
 
@@ -46,13 +46,11 @@ type GitSourceConfig struct {
 }
 
 // UpsertNodes upserts nodes for the content of the sources config.
-// The user node must already exists.
-func (c *SourcesConfig) UpsertNodes(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-	userID string,
-) error {
-	return nodes.MustLockUserE(userID, func(user User) error {
+func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
+	modelCtx := GetModelContext(ctx)
+	subs := modelCtx.Subs
+
+	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
 		var sourceIDs []string
 
 		for i, sourceConfig := range c.DirectorySources {
@@ -63,7 +61,7 @@ func (c *SourcesConfig) UpsertNodes(
 
 			c.DirectorySources[i].ID = source.ID
 			sourceIDs = append(sourceIDs, source.ID)
-			nodes.MustStoreDirectorySource(source)
+			source.MustStore(ctx)
 			subs.Publish(SourceUpserted, source.ID)
 		}
 
@@ -80,12 +78,12 @@ func (c *SourcesConfig) UpsertNodes(
 
 			c.GitSources[i].ID = source.ID
 			sourceIDs = append(sourceIDs, source.ID)
-			nodes.MustStoreGitSource(source)
+			source.MustStore(ctx)
 			subs.Publish(SourceUpserted, source.ID)
 		}
 
-		user.SourceIDs = sourceIDs
-		nodes.MustStoreUser(user)
+		viewer.SourceIDs = sourceIDs
+		viewer.MustStore(ctx)
 
 		return nil
 	})
@@ -93,12 +91,10 @@ func (c *SourcesConfig) UpsertNodes(
 
 // UpsertDirectorySource upserts a directory source.
 // It returns the ID of the source.
-func (c *SourcesConfig) UpsertDirectorySource(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-	userID string,
-	input DirectorySourceInput,
-) string {
+func (c *SourcesConfig) UpsertDirectorySource(ctx context.Context, input DirectorySourceInput) string {
+	modelCtx := GetModelContext(ctx)
+	subs := modelCtx.Subs
+
 	source := DirectorySource{
 		ID: relay.EncodeID(
 			NodeTypeDirectorySource,
@@ -107,17 +103,17 @@ func (c *SourcesConfig) UpsertDirectorySource(
 		Directory: input.Directory,
 	}
 
-	nodes.MustLockUser(userID, func(user User) {
-		for _, sourceID := range user.SourceIDs {
+	MustLockUser(ctx, modelCtx.ViewerID, func(viewer User) {
+		for _, sourceID := range viewer.SourceIDs {
 			if sourceID == source.ID {
 				return
 			}
 		}
 
-		nodes.MustStoreDirectorySource(source)
+		source.MustStore(ctx)
 
-		user.SourceIDs = append(user.SourceIDs, source.ID)
-		nodes.MustStoreUser(user)
+		viewer.SourceIDs = append(viewer.SourceIDs, source.ID)
+		viewer.MustStore(ctx)
 
 		c.DirectorySources = append(
 			c.DirectorySources,
@@ -135,12 +131,10 @@ func (c *SourcesConfig) UpsertDirectorySource(
 
 // UpsertGitSource upserts a repository source.
 // It returns the ID of the source.
-func (c *SourcesConfig) UpsertGitSource(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-	userID string,
-	input GitSourceInput,
-) string {
+func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInput) string {
+	modelCtx := GetModelContext(ctx)
+	subs := modelCtx.Subs
+
 	source := GitSource{
 		ID: relay.EncodeID(
 			NodeTypeGitSource,
@@ -151,17 +145,17 @@ func (c *SourcesConfig) UpsertGitSource(
 		Reference:  input.Reference,
 	}
 
-	nodes.MustLockUser(userID, func(user User) {
-		for _, sourceID := range user.SourceIDs {
+	MustLockUser(ctx, modelCtx.ViewerID, func(viewer User) {
+		for _, sourceID := range viewer.SourceIDs {
 			if sourceID == source.ID {
 				return
 			}
 		}
 
-		nodes.MustStoreGitSource(source)
+		source.MustStore(ctx)
 
-		user.SourceIDs = append(user.SourceIDs, source.ID)
-		nodes.MustStoreUser(user)
+		viewer.SourceIDs = append(viewer.SourceIDs, source.ID)
+		viewer.MustStore(ctx)
 
 		c.GitSources = append(
 			c.GitSources,
@@ -179,23 +173,21 @@ func (c *SourcesConfig) UpsertGitSource(
 }
 
 // DeleteSource deletes a source.
-func (c *SourcesConfig) DeleteSource(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-	userID string,
-	id string,
-) error {
-	return nodes.LockUserE(userID, func(user User) error {
+func (c *SourcesConfig) DeleteSource(ctx context.Context, id string) error {
+	modelCtx := GetModelContext(ctx)
+	subs := modelCtx.Subs
+
+	return LockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
 		parts, err := relay.DecodeID(id)
 		if err != nil {
 			return err
 		}
 
-		for i, v := range user.SourceIDs {
+		for i, v := range viewer.SourceIDs {
 			if v == id {
-				user.SourceIDs = append(
-					user.SourceIDs[:i],
-					user.SourceIDs[i+1:]...,
+				viewer.SourceIDs = append(
+					viewer.SourceIDs[:i],
+					viewer.SourceIDs[i+1:]...,
 				)
 				break
 			}
@@ -228,7 +220,7 @@ func (c *SourcesConfig) DeleteSource(
 			return ErrType
 		}
 
-		nodes.MustStoreUser(user)
+		viewer.MustStore(ctx)
 		subs.Publish(SourceDeleted, id)
 
 		return nil
@@ -258,20 +250,11 @@ func LoadSourcesConfigYAML(filename string) (*SourcesConfig, error) {
 
 	bytes, err := ioutil.ReadFile(filename)
 	if os.IsNotExist(err) {
-		config := SourcesConfig{
-			Filename: filename,
-		}
-		if err := config.Save(); err != nil {
-			return nil, err
-		}
-
-		return LoadSourcesConfigYAML(filename)
+		return &config, config.Save()
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	err = yaml.UnmarshalStrict(bytes, &config)
-
-	return &config, err
+	return &config, yaml.UnmarshalStrict(bytes, &config)
 }

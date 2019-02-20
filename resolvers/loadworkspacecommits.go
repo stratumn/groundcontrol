@@ -22,9 +22,7 @@ import (
 )
 
 func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) ([]models.Job, error) {
-	nodes := models.GetModelContext(ctx).Nodes
-
-	workspace, err := nodes.LoadWorkspace(id)
+	workspace, err := models.LoadWorkspace(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +30,7 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 	var slice []models.Job
 
 	for _, projectID := range workspace.ProjectIDs {
-		project := nodes.MustLoadProject(projectID)
+		project := models.MustLoadProject(ctx, projectID)
 
 		if project.IsLoadingCommits || len(project.RemoteCommitIDs) > 0 {
 			continue
@@ -43,7 +41,7 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 			return nil, err
 		}
 
-		slice = append(slice, nodes.MustLoadJob(jobID))
+		slice = append(slice, models.MustLoadJob(ctx, jobID))
 	}
 
 	return slice, nil

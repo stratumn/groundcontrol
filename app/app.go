@@ -94,38 +94,11 @@ func New(opts ...Opt) *App {
 
 // Start starts the app. It blocks until an error occurs or the app exits.
 func (a *App) Start(ctx context.Context) error {
-	nodes := &models.NodeManager{}
-	viewerID, systemID := a.createBaseNodes(nodes)
-	subs := pubsub.New(a.pubSubHistoryCap)
-	log := models.NewLogger(
-		nodes,
-		subs,
-		a.logCap,
-		a.logLevel,
-		systemID,
-		a.getProjectPath,
-	)
+	nodes := models.NewNodeManager()
+	log := models.NewLogger(a.logCap, a.logLevel)
 	jobs := models.NewJobManager(a.jobConcurrency)
 	pm := models.NewProcessManager()
-
-	log.InfoWithOwner(systemID, "starting app")
-	log.InfoWithOwner(
-		systemID,
-		"runtime %s %s %s",
-		runtime.GOOS,
-		runtime.GOARCH,
-		runtime.Version(),
-	)
-
-	sources, err := a.loadSources(nodes, subs, viewerID)
-	if err != nil {
-		return err
-	}
-
-	keys, err := a.loadKeys(nodes, subs, viewerID)
-	if err != nil {
-		return err
-	}
+	subs := pubsub.New(a.pubSubHistoryCap)
 
 	modelCtx := &models.ModelContext{
 		Nodes:               nodes,
@@ -133,17 +106,33 @@ func (a *App) Start(ctx context.Context) error {
 		Jobs:                jobs,
 		PM:                  pm,
 		Subs:                subs,
-		Sources:             sources,
-		Keys:                keys,
 		GetGitSourcePath:    a.getGitSourcePath,
 		GetProjectPath:      a.getProjectPath,
 		GetProjectCachePath: a.getProjectCachePath,
 		OpenEditorCommand:   a.openEditorCommand,
-		ViewerID:            viewerID,
-		SystemID:            systemID,
 	}
 
 	ctx = models.WithModelContext(ctx, modelCtx)
+	a.createBaseNodes(ctx)
+	systemID := modelCtx.SystemID
+
+	log.InfoWithOwner(ctx, systemID, "starting app")
+	log.InfoWithOwner(
+		ctx,
+		systemID,
+		"runtime %s %s %s",
+		runtime.GOOS,
+		runtime.GOARCH,
+		runtime.Version(),
+	)
+
+	if err := a.createSources(ctx); err != nil {
+		return err
+	}
+
+	if err := a.createKeys(ctx); err != nil {
+		return err
+	}
 
 	if err := initHooks(ctx); err != nil {
 		return err
@@ -151,16 +140,10 @@ func (a *App) Start(ctx context.Context) error {
 
 	router := chi.NewRouter()
 
-	if a.logLevel <= models.LogLevelDebug {
-		router.Use(logHTTPRequestMiddleware(log, systemID))
-	}
-
-	corsHandler := cors.New(cors.Options{
+	router.Use(cors.New(cors.Options{
 		AllowCredentials: true,
 		Debug:            false,
-	}).Handler
-
-	router.Use(corsHandler)
+	}).Handler)
 
 	router.Handle("/graphql", handler.Playground("GraphQL playground", "/query"))
 
@@ -176,10 +159,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	gqlConfig := gql.Config{
-		Resolvers: &resolvers.Resolver{
-			Nodes: nodes,
-			Subs:  subs,
-		},
+		Resolvers: &resolvers.Resolver{ModelCtx: modelCtx},
 	}
 
 	gqlOptions := []handler.Option{
@@ -210,6 +190,7 @@ func (a *App) Start(ctx context.Context) error {
 	go func() {
 		if err := jobs.Work(ctx); err != nil && err != context.Canceled {
 			log.ErrorWithOwner(
+				ctx,
 				systemID,
 				"job manager crashed because %s",
 				err.Error(),
@@ -217,19 +198,20 @@ func (a *App) Start(ctx context.Context) error {
 		}
 	}()
 
-	a.startPeriodicJobs(ctx, log, systemID)
+	a.startPeriodicJobs(ctx)
 	if a.enableSignalHandling {
-		go a.handleSignals(ctx, log, pm, server, systemID)
+		go a.handleSignals(ctx, server)
 	}
 
 	errorCh := make(chan error, 1)
 
 	go func() {
-		log.InfoWithOwner(systemID, "app ready")
+		log.InfoWithOwner(ctx, systemID, "app ready")
 		if a.ui != nil {
-			log.InfoWithOwner(systemID, "user interface on %s", a.listenAddress)
+			log.InfoWithOwner(ctx, systemID, "user interface on %s", a.listenAddress)
 		}
 		log.InfoWithOwner(
+			ctx,
 			systemID,
 			"GraphQL playground on %s/graphql",
 			a.listenAddress,
@@ -241,7 +223,7 @@ func (a *App) Start(ctx context.Context) error {
 	}()
 
 	if a.openBrowser && a.ui != nil {
-		a.openAddressInBrowser(log, systemID)
+		a.openAddressInBrowser(ctx)
 	}
 
 	select {
@@ -252,7 +234,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 }
 
-func (a *App) createBaseNodes(nodes *models.NodeManager) (string, string) {
+func (a *App) createBaseNodes(ctx context.Context) {
 	var (
 		viewerID         = relay.EncodeID(models.NodeTypeUser)
 		systemID         = relay.EncodeID(models.NodeTypeSystem)
@@ -261,69 +243,63 @@ func (a *App) createBaseNodes(nodes *models.NodeManager) (string, string) {
 		logMetricsID     = relay.EncodeID(models.NodeTypeLogMetrics)
 	)
 
-	nodes.MustStoreUser(models.User{
-		ID: viewerID,
-	})
-
-	nodes.MustStoreLogMetrics(models.LogMetrics{
-		ID: logMetricsID,
-	})
-
-	nodes.MustStoreJobMetrics(models.JobMetrics{
-		ID: jobMetricsID,
-	})
-
-	nodes.MustStoreProcessMetrics(models.ProcessMetrics{
-		ID: processMetricsID,
-	})
-
-	nodes.MustStoreSystem(models.System{
+	models.User{ID: viewerID}.MustStore(ctx)
+	models.LogMetrics{ID: logMetricsID}.MustStore(ctx)
+	models.JobMetrics{ID: jobMetricsID}.MustStore(ctx)
+	models.ProcessMetrics{ID: processMetricsID}.MustStore(ctx)
+	models.System{
 		ID:               systemID,
 		JobMetricsID:     jobMetricsID,
 		LogMetricsID:     logMetricsID,
 		ProcessMetricsID: processMetricsID,
-	})
+	}.MustStore(ctx)
 
-	return viewerID, systemID
+	modelCtx := models.GetModelContext(ctx)
+	modelCtx.ViewerID = viewerID
+	modelCtx.SystemID = systemID
 }
 
-func (a *App) loadSources(
-	nodes *models.NodeManager,
-	subs *pubsub.PubSub,
-	viewerID string,
-) (*models.SourcesConfig, error) {
+func (a *App) createSources(ctx context.Context) error {
+	modelCtx := models.GetModelContext(ctx)
+
 	config, err := models.LoadSourcesConfigYAML(a.sourcesFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = config.UpsertNodes(nodes, subs, viewerID)
+	err = config.UpsertNodes(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return config, nil
+	modelCtx.Sources = config
+
+	return nil
 }
 
-func (a *App) loadKeys(
-	nodes *models.NodeManager,
-	subs *pubsub.PubSub,
-	viewerID string,
-) (*models.KeysConfig, error) {
+func (a *App) createKeys(ctx context.Context) error {
+	modelCtx := models.GetModelContext(ctx)
+
 	config, err := models.LoadKeysConfigYAML(a.keysFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = config.UpsertNodes(nodes, subs, viewerID)
+	err = config.UpsertNodes(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return config, nil
+	modelCtx.Keys = config
+
+	return nil
 }
 
-func (a *App) startPeriodicJobs(ctx context.Context, log *models.Logger, systemID string) {
+func (a *App) startPeriodicJobs(ctx context.Context) {
+	modelCtx := models.GetModelContext(ctx)
+	log := modelCtx.Log
+	systemID := modelCtx.SystemID
+
 	go func() {
 		err := jobs.StartPeriodic(
 			ctx,
@@ -333,6 +309,7 @@ func (a *App) startPeriodicJobs(ctx context.Context, log *models.Logger, systemI
 		)
 		if err != nil && err != context.Canceled {
 			log.ErrorWithOwner(
+				ctx,
 				systemID,
 				"job manager crashed because %s",
 				err.Error(),
@@ -342,30 +319,27 @@ func (a *App) startPeriodicJobs(ctx context.Context, log *models.Logger, systemI
 
 }
 
-func (a *App) handleSignals(
-	ctx context.Context,
-	log *models.Logger,
-	pm *models.ProcessManager,
-	server *http.Server,
-	systemID string,
-) {
+func (a *App) handleSignals(ctx context.Context, server *http.Server) {
+	modelCtx := models.GetModelContext(ctx)
+	log := modelCtx.Log
+	systemID := modelCtx.SystemID
+
 	signalCh := make(chan os.Signal, 2)
 	signal.Notify(signalCh, syscall.SIGTERM)
 	signal.Notify(signalCh, syscall.SIGINT)
 
-	log.DebugWithOwner(systemID, "received signal %d", <-signalCh)
-	log.InfoWithOwner(systemID, "starting graceful shutdown")
+	log.DebugWithOwner(ctx, systemID, "received signal %d", <-signalCh)
+	log.InfoWithOwner(ctx, systemID, "starting graceful shutdown")
 
-	a.shutdownGracefully(ctx, log, pm, server, systemID)
+	a.shutdownGracefully(ctx, server)
 }
 
-func (a *App) shutdownGracefully(
-	ctx context.Context,
-	log *models.Logger,
-	pm *models.ProcessManager,
-	server *http.Server,
-	systemID string,
-) {
+func (a *App) shutdownGracefully(ctx context.Context, server *http.Server) {
+	modelCtx := models.GetModelContext(ctx)
+	log := modelCtx.Log
+	pm := modelCtx.PM
+	systemID := modelCtx.SystemID
+
 	shutdownCtx, cancel := context.WithTimeout(ctx, a.gracefulShutdownTimeout)
 	defer cancel()
 
@@ -380,6 +354,7 @@ func (a *App) shutdownGracefully(
 	go func() {
 		if err := server.Shutdown(ctx); err != nil && err != context.Canceled {
 			log.ErrorWithOwner(
+				ctx,
 				systemID,
 				"server shutdown failed because %s",
 				err.Error(),
@@ -392,6 +367,7 @@ func (a *App) shutdownGracefully(
 
 	if err := shutdownCtx.Err(); err != nil {
 		log.ErrorWithOwner(
+			ctx,
 			systemID,
 			"graceful shutdown failed because %s",
 			err.Error(),
@@ -399,14 +375,19 @@ func (a *App) shutdownGracefully(
 		os.Exit(1)
 	}
 
-	log.InfoWithOwner(systemID, "graceful shutdown complete, goodbye!")
+	log.InfoWithOwner(ctx, systemID, "graceful shutdown complete, goodbye!")
 	os.Exit(0)
 }
 
-func (a *App) openAddressInBrowser(log *models.Logger, systemID string) {
+func (a *App) openAddressInBrowser(ctx context.Context) {
+	modelCtx := models.GetModelContext(ctx)
+	log := modelCtx.Log
+	systemID := modelCtx.SystemID
+
 	addr, err := net.ResolveTCPAddr("tcp", a.listenAddress)
 	if err != nil {
 		log.WarningWithOwner(
+			ctx,
 			systemID,
 			"could not resolve address because %s",
 			err.Error(),
@@ -425,6 +406,7 @@ func (a *App) openAddressInBrowser(log *models.Logger, systemID string) {
 	}
 	if err := browser.OpenURL(url); err != nil {
 		log.WarningWithOwner(
+			ctx,
 			systemID,
 			"could not resolve address because %s",
 			err.Error(),

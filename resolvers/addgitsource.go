@@ -27,12 +27,7 @@ func (r *mutationResolver) AddGitSource(
 ) (models.GitSource, error) {
 	modelCtx := models.GetModelContext(ctx)
 
-	id := modelCtx.Sources.UpsertGitSource(
-		modelCtx.Nodes,
-		modelCtx.Subs,
-		modelCtx.ViewerID,
-		input,
-	)
+	id := modelCtx.Sources.UpsertGitSource(ctx, input)
 
 	if err := modelCtx.Sources.Save(); err != nil {
 		return models.GitSource{}, err
@@ -43,5 +38,5 @@ func (r *mutationResolver) AddGitSource(
 		return models.GitSource{}, err
 	}
 
-	return modelCtx.Nodes.MustLoadGitSource(id), nil
+	return models.MustLoadGitSource(ctx, id), nil
 }

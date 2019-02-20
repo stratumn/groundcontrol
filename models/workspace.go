@@ -38,7 +38,7 @@ func (w Workspace) Projects(
 	first *int,
 	last *int,
 ) (ProjectConnection, error) {
-	return PaginateProjectIDSliceContext(ctx, w.ProjectIDs, after, before, first, last)
+	return PaginateProjectIDSlice(ctx, w.ProjectIDs, after, before, first, last)
 }
 
 // Tasks returns the workspace's tasks.
@@ -49,15 +49,13 @@ func (w Workspace) Tasks(
 	first *int,
 	last *int,
 ) (TaskConnection, error) {
-	return PaginateTaskIDSliceContext(ctx, w.TaskIDs, after, before, first, last)
+	return PaginateTaskIDSlice(ctx, w.TaskIDs, after, before, first, last)
 }
 
 // IsCloning returns true if any of the projects is cloning.
 func (w Workspace) IsCloning(ctx context.Context) bool {
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, id := range w.ProjectIDs {
-		node := nodes.MustLoadProject(id)
+		node := MustLoadProject(ctx, id)
 		if node.IsCloning {
 			return true
 		}
@@ -68,10 +66,8 @@ func (w Workspace) IsCloning(ctx context.Context) bool {
 
 // IsCloned returns true if all the projects are cloned.
 func (w Workspace) IsCloned(ctx context.Context) bool {
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, id := range w.ProjectIDs {
-		node := nodes.MustLoadProject(id)
+		node := MustLoadProject(ctx, id)
 		if !node.IsCloned(ctx) {
 			return false
 		}
@@ -82,10 +78,8 @@ func (w Workspace) IsCloned(ctx context.Context) bool {
 
 // IsPulling returns true if any of the projects is pulling.
 func (w Workspace) IsPulling(ctx context.Context) bool {
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, id := range w.ProjectIDs {
-		node := nodes.MustLoadProject(id)
+		node := MustLoadProject(ctx, id)
 		if node.IsPulling {
 			return true
 		}
@@ -96,10 +90,8 @@ func (w Workspace) IsPulling(ctx context.Context) bool {
 
 // IsBehind returns true if any of the projects is behind origin.
 func (w Workspace) IsBehind(ctx context.Context) bool {
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, id := range w.ProjectIDs {
-		node := nodes.MustLoadProject(id)
+		node := MustLoadProject(ctx, id)
 		if node.IsBehind {
 			return true
 		}
@@ -110,10 +102,8 @@ func (w Workspace) IsBehind(ctx context.Context) bool {
 
 // IsAhead returns true if any of the projects is ahead origin.
 func (w Workspace) IsAhead(ctx context.Context) bool {
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, id := range w.ProjectIDs {
-		node := nodes.MustLoadProject(id)
+		node := MustLoadProject(ctx, id)
 		if node.IsAhead {
 			return true
 		}

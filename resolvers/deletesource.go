@@ -23,13 +23,7 @@ import (
 func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (models.DeletedNode, error) {
 	modelCtx := models.GetModelContext(ctx)
 
-	err := modelCtx.Sources.DeleteSource(
-		modelCtx.Nodes,
-		modelCtx.Subs,
-		modelCtx.ViewerID,
-		id,
-	)
-	if err != nil {
+	if err := modelCtx.Sources.DeleteSource(ctx, id); err != nil {
 		return models.DeletedNode{}, nil
 	}
 

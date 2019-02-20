@@ -167,19 +167,14 @@ func Paginate{{$type}}Slice(slice []{{$type}}, after, before *string, first, las
 }
 
 // Paginate{{$type}}IDSlice paginates a slice of {{$type}} given their IDs and query parameters.
-func Paginate{{$type}}IDSlice(nodes *NodeManager, ids []string, after, before *string, first, last *int) ({{$type}}Connection, error) {
+func Paginate{{$type}}IDSlice(ctx context.Context, ids []string, after, before *string, first, last *int) ({{$type}}Connection, error) {
 	var slice []{{$type}}
 
 	for _, id := range ids {
-		slice = append(slice, nodes.MustLoad{{$type}}(id))
+		slice = append(slice, MustLoad{{$type}}(ctx, id))
 	}
 
 	return Paginate{{$type}}Slice(slice, after, before, first, last)
-}
-
-// Paginate{{$type}}IDSlice paginates a slice of {{$type}} given a context, their IDs, and query parameters.
-func Paginate{{$type}}IDSliceContext(ctx context.Context, ids []string, after, before *string, first, last *int) ({{$type}}Connection, error) {
-	return Paginate{{$type}}IDSlice(GetModelContext(ctx).Nodes, ids, after, before, first, last)
 }
 
 func applyCursorsTo{{$type}}Slice(slice []{{$type}}, after, before *string) ([]{{$type}}Edge, bool) {

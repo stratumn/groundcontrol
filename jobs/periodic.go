@@ -58,7 +58,7 @@ func StartPeriodic(
 				return
 			}
 
-			switch modelCtx.Nodes.MustLoadJob(id).Status {
+			switch models.MustLoadJob(subsCtx, id).Status {
 			case models.JobStatusDone, models.JobStatusFailed:
 				waitGroup.Done()
 			}

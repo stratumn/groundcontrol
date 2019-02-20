@@ -22,12 +22,10 @@ import (
 )
 
 func (r *mutationResolver) CloneProject(ctx context.Context, id string) (models.Job, error) {
-	nodes := models.GetModelContext(ctx).Nodes
-
 	jobID, err := jobs.Clone(ctx, id, models.JobPriorityHigh)
 	if err != nil {
 		return models.Job{}, err
 	}
 
-	return nodes.MustLoadJob(jobID), nil
+	return models.MustLoadJob(ctx, jobID), nil
 }

@@ -26,16 +26,11 @@ func (r *mutationResolver) SetKey(
 ) (models.Key, error) {
 	modelCtx := models.GetModelContext(ctx)
 
-	id := modelCtx.Keys.UpsertKey(
-		modelCtx.Nodes,
-		modelCtx.Subs,
-		modelCtx.ViewerID,
-		input,
-	)
+	id := modelCtx.Keys.UpsertKey(ctx, input)
 
 	if err := modelCtx.Keys.Save(); err != nil {
 		return models.Key{}, err
 	}
 
-	return modelCtx.Nodes.MustLoadKey(id), nil
+	return models.MustLoadKey(ctx, id), nil
 }

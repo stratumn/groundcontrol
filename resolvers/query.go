@@ -31,10 +31,10 @@ func (r *queryResolver) Node(ctx context.Context, id string) (models.Node, error
 
 func (r *queryResolver) Viewer(ctx context.Context) (models.User, error) {
 	modelCtx := models.GetModelContext(ctx)
-	return modelCtx.Nodes.MustLoadUser(modelCtx.ViewerID), nil
+	return models.MustLoadUser(ctx, modelCtx.ViewerID), nil
 }
 
 func (r *queryResolver) System(ctx context.Context) (models.System, error) {
 	modelCtx := models.GetModelContext(ctx)
-	return modelCtx.Nodes.MustLoadSystem(modelCtx.SystemID), nil
+	return models.MustLoadSystem(ctx, modelCtx.SystemID), nil
 }

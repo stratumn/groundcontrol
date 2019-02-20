@@ -22,9 +22,7 @@ import (
 )
 
 func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]models.Job, error) {
-	nodes := models.GetModelContext(ctx).Nodes
-
-	workspace, err := nodes.LoadWorkspace(id)
+	workspace, err := models.LoadWorkspace(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +30,7 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 	var slice []models.Job
 
 	for _, projectID := range workspace.ProjectIDs {
-		project := nodes.MustLoadProject(projectID)
+		project := models.MustLoadProject(ctx, projectID)
 
 		if project.IsPulling || !project.IsCloned(ctx) || !project.IsBehind {
 			continue
@@ -43,7 +41,7 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 			return nil, err
 		}
 
-		slice = append(slice, nodes.MustLoadJob(jobID))
+		slice = append(slice, models.MustLoadJob(ctx, jobID))
 	}
 
 	return slice, nil

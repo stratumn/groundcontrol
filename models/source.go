@@ -39,7 +39,7 @@ type Source interface {
 }
 
 // MustLoadSource loads a Source or panics on failure.
-func (n *NodeManager) MustLoadSource(id string) Source {
+func MustLoadSource(ctx context.Context, id string) Source {
 	identifiers, err := relay.DecodeID(id)
 	if err != nil {
 		panic(err)
@@ -47,9 +47,9 @@ func (n *NodeManager) MustLoadSource(id string) Source {
 
 	switch identifiers[0] {
 	case NodeTypeDirectorySource:
-		return n.MustLoadDirectorySource(id)
+		return MustLoadDirectorySource(ctx, id)
 	case NodeTypeGitSource:
-		return n.MustLoadGitSource(id)
+		return MustLoadGitSource(ctx, id)
 	}
 
 	panic(ErrType)

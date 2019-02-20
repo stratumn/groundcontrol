@@ -25,6 +25,7 @@ func (r *subscriptionResolver) SourceDeleted(
 	id *string,
 	lastMessageID *string,
 ) (<-chan models.DeletedNode, error) {
+	ctx = models.WithModelContext(ctx, r.ModelCtx)
 	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -36,7 +37,7 @@ func (r *subscriptionResolver) SourceDeleted(
 		}
 	}
 
-	r.Subs.Subscribe(ctx, models.SourceDeleted, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.SourceDeleted, last, func(msg interface{}) {
 		sourceID := msg.(string)
 		if id != nil && *id != sourceID {
 			return

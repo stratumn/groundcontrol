@@ -24,6 +24,16 @@ type NodeManager struct {
 	locks sync.Map
 }
 
+// NewNodeManager creates a NodeManager.
+func NewNodeManager() *NodeManager {
+	return &NodeManager{}
+}
+
+// Store stores a node.
+func (n *NodeManager) Store(id string, node Node) {
+	n.store.Store(id, node)
+}
+
 // Load loads a node.
 func (n *NodeManager) Load(id string) (Node, bool) {
 	node, ok := n.store.Load(id)
@@ -42,6 +52,11 @@ func (n *NodeManager) MustLoad(id string) Node {
 	}
 
 	return node
+}
+
+// Delete delets a node.
+func (n *NodeManager) Delete(id string) {
+	n.store.Delete(id)
 }
 
 // Lock locks the given IDs.

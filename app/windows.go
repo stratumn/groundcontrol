@@ -25,6 +25,6 @@ func initHooks(ctx context.Context) error {
 	modelCtx := models.GetModelContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
-	log.WarnWithOwner(systemID, "Ground Control doesn't currently support Windows")
+	log.WarnWithOwner(ctx, systemID, "Ground Control doesn't currently support Windows")
 	return nil
 }

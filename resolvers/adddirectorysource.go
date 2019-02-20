@@ -27,12 +27,7 @@ func (r *mutationResolver) AddDirectorySource(
 ) (models.DirectorySource, error) {
 	modelCtx := models.GetModelContext(ctx)
 
-	id := modelCtx.Sources.UpsertDirectorySource(
-		modelCtx.Nodes,
-		modelCtx.Subs,
-		modelCtx.ViewerID,
-		input,
-	)
+	id := modelCtx.Sources.UpsertDirectorySource(ctx, input)
 
 	if err := modelCtx.Sources.Save(); err != nil {
 		return models.DirectorySource{}, err
@@ -43,5 +38,5 @@ func (r *mutationResolver) AddDirectorySource(
 		return models.DirectorySource{}, err
 	}
 
-	return modelCtx.Nodes.MustLoadDirectorySource(id), nil
+	return models.MustLoadDirectorySource(ctx, id), nil
 }

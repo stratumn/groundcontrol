@@ -15,6 +15,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -23,7 +24,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"groundcontrol/pubsub"
 	"groundcontrol/relay"
 	"groundcontrol/util"
 )
@@ -37,13 +37,8 @@ var logLevelPriorities = map[LogLevel]int{
 
 // Logger logs messages.
 type Logger struct {
-	nodes *NodeManager
-	subs  *pubsub.PubSub
-
-	cap            int
-	level          LogLevel
-	systemID       string
-	getProjectPath ProjectPathGetter
+	cap   int
+	level LogLevel
 
 	lastID      uint64
 	logEntryIDs []string
@@ -59,33 +54,25 @@ type Logger struct {
 }
 
 // NewLogger creates a Logger with given capacity and level.
-func NewLogger(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-	cap int,
-	level LogLevel,
-	systemID string,
-	getProjectPath ProjectPathGetter,
-) *Logger {
+func NewLogger(cap int, level LogLevel) *Logger {
 	return &Logger{
-		nodes:          nodes,
-		subs:           subs,
-		cap:            cap,
-		level:          level,
-		systemID:       systemID,
-		getProjectPath: getProjectPath,
-		logEntryIDs:    make([]string, cap*2),
-		stdoutLog:      log.New(os.Stdout, "", log.LstdFlags),
-		stderrLog:      log.New(os.Stderr, "", log.LstdFlags),
+		cap:         cap,
+		level:       level,
+		logEntryIDs: make([]string, cap*2),
+		stdoutLog:   log.New(os.Stdout, "", log.LstdFlags),
+		stderrLog:   log.New(os.Stderr, "", log.LstdFlags),
 	}
 }
 
 // Add adds a log entry.
 func (l *Logger) Add(
+	ctx context.Context,
 	level LogLevel,
 	ownerID string,
 	message string,
 ) (string, error) {
+	modelCtx := GetModelContext(ctx)
+
 	if logLevelPriorities[level] < logLevelPriorities[l.level] {
 		return "", nil
 	}
@@ -110,17 +97,17 @@ func (l *Logger) Add(
 		Message:   message,
 		OwnerID:   ownerID,
 	}
-	l.matchSourceFile(&logEntry)
-	l.nodes.MustStoreLogEntry(logEntry)
-	l.subs.Publish(LogEntryAdded, logEntry.ID)
+	l.matchSourceFile(ctx, &logEntry)
+	logEntry.MustStore(ctx)
+	modelCtx.Subs.Publish(LogEntryAdded, logEntry.ID)
 
-	l.nodes.MustLockSystem(l.systemID, func(system System) {
+	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
 		if l.head >= l.cap*2 {
 			copy(l.logEntryIDs, l.logEntryIDs[l.cap:])
 			l.head = l.cap
 
 			for _, oldEntryID := range l.logEntryIDs[l.head:] {
-				oldEntry := l.nodes.MustLoadLogEntry(oldEntryID)
+				oldEntry := MustLoadLogEntry(ctx, oldEntryID)
 
 				switch oldEntry.Level {
 				case LogLevelDebug:
@@ -133,7 +120,7 @@ func (l *Logger) Add(
 					atomic.AddInt64(&l.errorCounter, -1)
 				}
 
-				l.nodes.MustDeleteLogEntry(oldEntryID)
+				MustDeleteLogEntry(ctx, oldEntryID)
 			}
 		}
 
@@ -142,7 +129,7 @@ func (l *Logger) Add(
 		l.head++
 
 		system.LogEntryIDs = l.logEntryIDs[:l.head]
-		l.nodes.MustStoreSystem(system)
+		system.MustStore(ctx)
 	})
 
 	switch level {
@@ -156,14 +143,14 @@ func (l *Logger) Add(
 		atomic.AddInt64(&l.errorCounter, 1)
 	}
 
-	l.publishMetrics()
+	l.publishMetrics(ctx)
 
 	return logEntry.ID, nil
 }
 
 // Debug adds a debug entry.
-func (l *Logger) Debug(message string, a ...interface{}) string {
-	id, err := l.Add(LogLevelDebug, "", fmt.Sprintf(message, a...))
+func (l *Logger) Debug(ctx context.Context, message string, a ...interface{}) string {
+	id, err := l.Add(ctx, LogLevelDebug, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -171,8 +158,8 @@ func (l *Logger) Debug(message string, a ...interface{}) string {
 }
 
 // Info adds an info entry.
-func (l *Logger) Info(message string, a ...interface{}) string {
-	id, err := l.Add(LogLevelInfo, "", fmt.Sprintf(message, a...))
+func (l *Logger) Info(ctx context.Context, message string, a ...interface{}) string {
+	id, err := l.Add(ctx, LogLevelInfo, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -180,8 +167,8 @@ func (l *Logger) Info(message string, a ...interface{}) string {
 }
 
 // Warning adds a warning entry.
-func (l *Logger) Warning(message string, a ...interface{}) string {
-	id, err := l.Add(LogLevelWarning, "", fmt.Sprintf(message, a...))
+func (l *Logger) Warning(ctx context.Context, message string, a ...interface{}) string {
+	id, err := l.Add(ctx, LogLevelWarning, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -189,8 +176,8 @@ func (l *Logger) Warning(message string, a ...interface{}) string {
 }
 
 // Error adds an error entry.
-func (l *Logger) Error(message string, a ...interface{}) string {
-	id, err := l.Add(LogLevelError, "", fmt.Sprintf(message, a...))
+func (l *Logger) Error(ctx context.Context, message string, a ...interface{}) string {
+	id, err := l.Add(ctx, LogLevelError, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -198,8 +185,13 @@ func (l *Logger) Error(message string, a ...interface{}) string {
 }
 
 // DebugWithOwner adds a debug entry with an owner.
-func (l *Logger) DebugWithOwner(ownerID string, message string, a ...interface{}) string {
-	id, err := l.Add(LogLevelDebug, ownerID, fmt.Sprintf(message, a...))
+func (l *Logger) DebugWithOwner(
+	ctx context.Context,
+	ownerID string,
+	message string,
+	a ...interface{},
+) string {
+	id, err := l.Add(ctx, LogLevelDebug, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -207,8 +199,13 @@ func (l *Logger) DebugWithOwner(ownerID string, message string, a ...interface{}
 }
 
 // InfoWithOwner adds an info entry with an owner.
-func (l *Logger) InfoWithOwner(ownerID string, message string, a ...interface{}) string {
-	id, err := l.Add(LogLevelInfo, ownerID, fmt.Sprintf(message, a...))
+func (l *Logger) InfoWithOwner(
+	ctx context.Context,
+	ownerID string,
+	message string,
+	a ...interface{},
+) string {
+	id, err := l.Add(ctx, LogLevelInfo, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -216,8 +213,13 @@ func (l *Logger) InfoWithOwner(ownerID string, message string, a ...interface{})
 }
 
 // WarningWithOwner adds a warning entry with an owner.
-func (l *Logger) WarningWithOwner(ownerID string, message string, a ...interface{}) string {
-	id, err := l.Add(LogLevelWarning, ownerID, fmt.Sprintf(message, a...))
+func (l *Logger) WarningWithOwner(
+	ctx context.Context,
+	ownerID string,
+	message string,
+	a ...interface{},
+) string {
+	id, err := l.Add(ctx, LogLevelWarning, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -225,34 +227,42 @@ func (l *Logger) WarningWithOwner(ownerID string, message string, a ...interface
 }
 
 // ErrorWithOwner adds an error entry with an owner.
-func (l *Logger) ErrorWithOwner(ownerID string, message string, a ...interface{}) string {
-	id, err := l.Add(LogLevelError, ownerID, fmt.Sprintf(message, a...))
+func (l *Logger) ErrorWithOwner(
+	ctx context.Context,
+	ownerID string,
+	message string,
+	a ...interface{},
+) string {
+	id, err := l.Add(ctx, LogLevelError, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
 	return id
 }
 
-func (l *Logger) publishMetrics() {
-	system := l.nodes.MustLoadSystem(l.systemID)
+func (l *Logger) publishMetrics(ctx context.Context) {
+	modelCtx := GetModelContext(ctx)
+	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
-	l.nodes.MustLockLogMetrics(system.LogMetricsID, func(metrics LogMetrics) {
+	MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics LogMetrics) {
 		metrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
 		metrics.Info = int(atomic.LoadInt64(&l.infoCounter))
 		metrics.Warning = int(atomic.LoadInt64(&l.warningCounter))
 		metrics.Error = int(atomic.LoadInt64(&l.errorCounter))
-		l.nodes.MustStoreLogMetrics(metrics)
+		metrics.MustStore(ctx)
 	})
 
-	l.subs.Publish(LogMetricsUpdated, system.LogMetricsID)
+	modelCtx.Subs.Publish(LogMetricsUpdated, system.LogMetricsID)
 }
 
-func (l *Logger) matchSourceFile(entry *LogEntry) {
+func (l *Logger) matchSourceFile(ctx context.Context, entry *LogEntry) {
+	modelCtx := GetModelContext(ctx)
+
 	if entry.OwnerID == "" {
 		return
 	}
 
-	node, ok := l.nodes.Load(entry.OwnerID)
+	node, ok := modelCtx.Nodes.Load(entry.OwnerID)
 	if !ok {
 		return
 	}
@@ -270,8 +280,8 @@ func (l *Logger) matchSourceFile(entry *LogEntry) {
 	sourceParts := strings.Split(sourceFile, ":")
 	fileName := sourceParts[0]
 
-	workspace := l.nodes.MustLoadWorkspace(project.WorkspaceID)
-	projectPath := l.getProjectPath(workspace.Slug, project.Slug)
+	workspace := MustLoadWorkspace(ctx, project.WorkspaceID)
+	projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
 
 	if !filepath.IsAbs(fileName) {
 		fileName, err = filepath.Abs(filepath.Join(projectPath, fileName))

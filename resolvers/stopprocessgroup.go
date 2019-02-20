@@ -22,16 +22,15 @@ import (
 
 func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) (models.ProcessGroup, error) {
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	pm := modelCtx.PM
 
-	processGroup, err := nodes.LoadProcessGroup(id)
+	processGroup, err := models.LoadProcessGroup(ctx, id)
 	if err != nil {
 		return models.ProcessGroup{}, err
 	}
 
 	for _, processID := range processGroup.ProcessIDs {
-		process := nodes.MustLoadProcess(processID)
+		process := models.MustLoadProcess(ctx, processID)
 
 		if process.Status != models.ProcessStatusRunning {
 			continue

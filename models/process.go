@@ -33,10 +33,10 @@ func (Process) IsNode() {}
 
 // ProcessGroup returns the ProcessGroup associated with the Process.
 func (p Process) ProcessGroup(ctx context.Context) ProcessGroup {
-	return GetModelContext(ctx).Nodes.MustLoadProcessGroup(p.ProcessGroupID)
+	return MustLoadProcessGroup(ctx, p.ProcessGroupID)
 }
 
 // Project returns the Project associated with the Process.
 func (p Process) Project(ctx context.Context) Project {
-	return GetModelContext(ctx).Nodes.MustLoadProject(p.ProjectID)
+	return MustLoadProject(ctx, p.ProjectID)
 }

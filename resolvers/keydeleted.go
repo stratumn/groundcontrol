@@ -25,6 +25,7 @@ func (r *subscriptionResolver) KeyDeleted(
 	id *string,
 	lastMessageID *string,
 ) (<-chan models.DeletedNode, error) {
+	ctx = models.WithModelContext(ctx, r.ModelCtx)
 	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -36,7 +37,7 @@ func (r *subscriptionResolver) KeyDeleted(
 		}
 	}
 
-	r.Subs.Subscribe(ctx, models.KeyDeleted, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.KeyDeleted, last, func(msg interface{}) {
 		keyID := msg.(string)
 		if id != nil && *id != keyID {
 			return

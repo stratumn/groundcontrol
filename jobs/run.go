@@ -26,18 +26,17 @@ import (
 // Run runs a task.
 func Run(ctx context.Context, taskID string, env []string, priority models.JobPriority) (string, error) {
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 	workspaceID := ""
 
-	err := nodes.LockTaskE(taskID, func(task models.Task) error {
+	err := models.LockTaskE(ctx, taskID, func(task models.Task) error {
 		if task.IsRunning {
 			return ErrDuplicate
 		}
 
 		workspaceID = task.WorkspaceID
 		task.IsRunning = true
-		nodes.MustStoreTask(task)
+		task.MustStore(ctx)
 
 		return nil
 	})
@@ -49,7 +48,7 @@ func Run(ctx context.Context, taskID string, env []string, priority models.JobPr
 	subs.Publish(models.WorkspaceUpserted, workspaceID)
 
 	jobID := modelCtx.Jobs.Add(
-		models.GetModelContext(ctx),
+		ctx,
 		RunJob,
 		workspaceID,
 		priority,
@@ -63,30 +62,29 @@ func Run(ctx context.Context, taskID string, env []string, priority models.JobPr
 
 func doRun(ctx context.Context, taskID string, env []string, workspaceID string, systemID string) error {
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 	log := modelCtx.Log
 	pm := modelCtx.PM
 
 	defer func() {
-		nodes.MustLockTask(taskID, func(task models.Task) {
+		models.MustLockTask(ctx, taskID, func(task models.Task) {
 			task.IsRunning = false
-			nodes.MustStoreTask(task)
+			task.MustStore(ctx)
 		})
 
 		subs.Publish(models.TaskUpserted, taskID)
 		subs.Publish(models.WorkspaceUpserted, workspaceID)
 	}()
 
-	workspace := nodes.MustLoadWorkspace(workspaceID)
-	task := nodes.MustLoadTask(taskID)
+	workspace := models.MustLoadWorkspace(ctx, workspaceID)
+	task := models.MustLoadTask(ctx, taskID)
 	processGroupID := ""
 
 	for _, stepID := range task.StepIDs {
-		step := nodes.MustLoadStep(stepID)
+		step := models.MustLoadStep(ctx, stepID)
 
 		for _, commandID := range step.CommandIDs {
-			command := nodes.MustLoadCommand(commandID)
+			command := models.MustLoadCommand(ctx, commandID)
 
 			for _, projectID := range step.ProjectIDs {
 				select {
@@ -95,9 +93,9 @@ func doRun(ctx context.Context, taskID string, env []string, workspaceID string,
 				default:
 				}
 
-				project := nodes.MustLoadProject(projectID)
+				project := models.MustLoadProject(ctx, projectID)
 
-				log.InfoWithOwner(project.ID, command.Command)
+				log.InfoWithOwner(ctx, project.ID, command.Command)
 
 				projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
 				parts := strings.Split(command.Command, " ")
@@ -113,8 +111,8 @@ func doRun(ctx context.Context, taskID string, env []string, workspaceID string,
 					continue
 				}
 
-				stdout := models.CreateLineWriter(log.InfoWithOwner, project.ID)
-				stderr := models.CreateLineWriter(log.WarningWithOwner, project.ID)
+				stdout := models.CreateLineWriter(ctx, log.InfoWithOwner, project.ID)
+				stderr := models.CreateLineWriter(ctx, log.WarningWithOwner, project.ID)
 				err := run(ctx, command.Command, projectPath, env, stdout, stderr)
 
 				stdout.Close()

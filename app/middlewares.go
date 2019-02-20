@@ -16,7 +16,6 @@ package app
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/99designs/gqlgen/graphql"
 
@@ -26,20 +25,5 @@ import (
 func modelContextResolverMiddleware(modelCtx *models.ModelContext) graphql.FieldMiddleware {
 	return func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
 		return next(models.WithModelContext(ctx, modelCtx))
-	}
-}
-
-func logHTTPRequestMiddleware(log *models.Logger, systemID string) func(h http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.DebugWithOwner(
-				systemID,
-				"HTTP request %s %s %s",
-				r.Method,
-				r.URL.String(),
-				r.RemoteAddr,
-			)
-			h.ServeHTTP(w, r)
-		})
 	}
 }

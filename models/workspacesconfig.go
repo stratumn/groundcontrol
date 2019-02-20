@@ -15,12 +15,12 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v2"
 
-	"groundcontrol/pubsub"
 	"groundcontrol/relay"
 )
 
@@ -69,14 +69,11 @@ type StepConfig struct {
 
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the IDs of the workspaces upserted.
-func (c WorkspacesConfig) UpsertNodes(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-) ([]string, error) {
+func (c WorkspacesConfig) UpsertNodes(ctx context.Context) ([]string, error) {
 	var workspaceIDs []string
 
 	for _, workspaceConfig := range c.Workspaces {
-		id, err := workspaceConfig.UpsertNodes(nodes, subs)
+		id, err := workspaceConfig.UpsertNodes(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -89,13 +86,12 @@ func (c WorkspacesConfig) UpsertNodes(
 
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the ID of the workspace upserted.
-func (c WorkspaceConfig) UpsertNodes(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-) (string, error) {
+func (c WorkspaceConfig) UpsertNodes(ctx context.Context) (string, error) {
+	modelCtx := GetModelContext(ctx)
+	subs := modelCtx.Subs
 	id := relay.EncodeID(NodeTypeWorkspace, c.Slug)
 
-	err := nodes.MustLockOrNewWorkspaceE(id, func(workspace Workspace) error {
+	err := MustLockOrNewWorkspaceE(ctx, id, func(workspace Workspace) error {
 		workspace.Slug = c.Slug
 		workspace.Name = c.Name
 		workspace.Description = c.Description
@@ -105,13 +101,13 @@ func (c WorkspaceConfig) UpsertNodes(
 		projectSlugToID := map[string]string{}
 
 		for _, projectConfig := range c.Projects {
-			projectID := projectConfig.UpsertNodes(nodes, subs, id, c.Slug)
+			projectID := projectConfig.UpsertNodes(ctx, id, c.Slug)
 			workspace.ProjectIDs = append(workspace.ProjectIDs, projectID)
 			projectSlugToID[projectConfig.Slug] = projectID
 		}
 
 		for _, taskConfig := range c.Tasks {
-			taskID, err := taskConfig.UpsertNodes(nodes, subs, id, workspace.Slug, projectSlugToID)
+			taskID, err := taskConfig.UpsertNodes(ctx, id, workspace.Slug, projectSlugToID)
 			if err != nil {
 				return err
 			}
@@ -119,7 +115,7 @@ func (c WorkspaceConfig) UpsertNodes(
 			workspace.TaskIDs = append(workspace.TaskIDs, taskID)
 		}
 
-		nodes.MustStoreWorkspace(workspace)
+		workspace.MustStore(ctx)
 		subs.Publish(WorkspaceUpserted, id)
 
 		return nil
@@ -134,18 +130,19 @@ func (c WorkspaceConfig) UpsertNodes(
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the ID of the project upserted.
 func (c ProjectConfig) UpsertNodes(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
+	ctx context.Context,
 	workspaceID string,
 	workspaceSlug string,
 ) string {
+	modelCtx := GetModelContext(ctx)
+	subs := modelCtx.Subs
 	id := relay.EncodeID(
 		NodeTypeProject,
 		workspaceSlug,
 		c.Slug,
 	)
 
-	nodes.MustLockOrNewProject(id, func(project Project) {
+	MustLockOrNewProject(ctx, id, func(project Project) {
 		project.Slug = c.Slug
 		project.Repository = c.Repository
 		project.Reference = c.Reference
@@ -160,7 +157,7 @@ func (c ProjectConfig) UpsertNodes(
 			project.LocalReference = c.Reference
 		}
 
-		nodes.MustStoreProject(project)
+		project.MustStore(ctx)
 		subs.Publish(ProjectUpserted, id)
 	})
 
@@ -170,19 +167,20 @@ func (c ProjectConfig) UpsertNodes(
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the ID of the task upserted.
 func (c TaskConfig) UpsertNodes(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
+	ctx context.Context,
 	workspaceID string,
 	workspaceSlug string,
 	projectSlugToID map[string]string,
 ) (string, error) {
+	modelCtx := GetModelContext(ctx)
+	subs := modelCtx.Subs
 	id := relay.EncodeID(
 		NodeTypeTask,
 		workspaceSlug,
 		c.Name,
 	)
 
-	err := nodes.MustLockOrNewTaskE(id, func(task Task) error {
+	err := MustLockOrNewTaskE(ctx, id, func(task Task) error {
 		task.Name = c.Name
 		task.WorkspaceID = workspaceID
 		task.VariableIDs = nil
@@ -190,7 +188,7 @@ func (c TaskConfig) UpsertNodes(
 
 		for variableIndex, variableConfig := range c.Variables {
 			variableID := variableConfig.UpsertNodes(
-				nodes,
+				ctx,
 				workspaceSlug,
 				id,
 				c.Name,
@@ -202,7 +200,7 @@ func (c TaskConfig) UpsertNodes(
 
 		for stepIndex, stepConfig := range c.Steps {
 			stepID, err := stepConfig.UpsertNodes(
-				nodes,
+				ctx,
 				workspaceSlug,
 				id,
 				c.Name,
@@ -216,7 +214,7 @@ func (c TaskConfig) UpsertNodes(
 			task.StepIDs = append(task.StepIDs, stepID)
 		}
 
-		nodes.MustStoreTask(task)
+		task.MustStore(ctx)
 		subs.Publish(TaskUpserted, id)
 
 		return nil
@@ -231,7 +229,7 @@ func (c TaskConfig) UpsertNodes(
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the ID of the variable upserted.
 func (c VariableConfig) UpsertNodes(
-	nodes *NodeManager,
+	ctx context.Context,
 	workspaceSlug string,
 	taskID string,
 	taskName string,
@@ -244,11 +242,11 @@ func (c VariableConfig) UpsertNodes(
 		fmt.Sprint(stepIndex),
 	)
 
-	nodes.MustLockOrNewVariable(id, func(variable Variable) {
+	MustLockOrNewVariable(ctx, id, func(variable Variable) {
 		variable.Name = c.Name
 		variable.Default = c.Default
 
-		nodes.MustStoreVariable(variable)
+		variable.MustStore(ctx)
 	})
 
 	return id
@@ -257,7 +255,7 @@ func (c VariableConfig) UpsertNodes(
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the ID of the step upserted.
 func (c StepConfig) UpsertNodes(
-	nodes *NodeManager,
+	ctx context.Context,
 	workspaceSlug string,
 	taskID string,
 	taskName string,
@@ -271,7 +269,7 @@ func (c StepConfig) UpsertNodes(
 		fmt.Sprint(stepIndex),
 	)
 
-	err := nodes.MustLockOrNewStepE(id, func(step Step) error {
+	err := MustLockOrNewStepE(ctx, id, func(step Step) error {
 		step.TaskID = taskID
 		step.ProjectIDs = nil
 		step.CommandIDs = nil
@@ -292,14 +290,11 @@ func (c StepConfig) UpsertNodes(
 				fmt.Sprint(stepIndex),
 				fmt.Sprint(commandIndex),
 			)
-			nodes.MustStoreCommand(Command{
-				ID:      id,
-				Command: command,
-			})
+			Command{ID: id, Command: command}.MustStore(ctx)
 			step.CommandIDs = append(step.CommandIDs, id)
 		}
 
-		nodes.MustStoreStep(step)
+		step.MustStore(ctx)
 
 		return nil
 	})
@@ -311,17 +306,15 @@ func (c StepConfig) UpsertNodes(
 }
 
 // LoadWorkspacesConfigYAML loads a config from a YAML file.
-func LoadWorkspacesConfigYAML(filename string) (WorkspacesConfig, error) {
+func LoadWorkspacesConfigYAML(filename string) (*WorkspacesConfig, error) {
 	config := WorkspacesConfig{
 		Filename: filename,
 	}
 
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return config, err
+		return nil, err
 	}
 
-	err = yaml.UnmarshalStrict(bytes, &config)
-
-	return config, err
+	return &config, yaml.UnmarshalStrict(bytes, &config)
 }

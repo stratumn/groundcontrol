@@ -53,7 +53,7 @@ func (Project) IsNode() {}
 
 // Workspace returns the workspace associated with the project.
 func (p Project) Workspace(ctx context.Context) Workspace {
-	return GetModelContext(ctx).Nodes.MustLoadWorkspace(p.WorkspaceID)
+	return MustLoadWorkspace(ctx, p.WorkspaceID)
 }
 
 // IsCloned checks if the project is cloned.
@@ -74,7 +74,7 @@ func (p Project) RemoteCommits(
 	first *int,
 	last *int,
 ) (CommitConnection, error) {
-	return PaginateCommitIDSliceContext(
+	return PaginateCommitIDSlice(
 		ctx,
 		p.RemoteCommitIDs,
 		after,
@@ -92,7 +92,7 @@ func (p Project) LocalCommits(
 	first *int,
 	last *int,
 ) (CommitConnection, error) {
-	return PaginateCommitIDSliceContext(
+	return PaginateCommitIDSlice(
 		ctx,
 		p.LocalCommitIDs,
 		after,
@@ -132,14 +132,13 @@ func (p Project) CachePath(ctx context.Context) string {
 // Clone clones and upserts the project.
 func (p *Project) Clone(ctx context.Context) error {
 	modelCtx := GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 
 	p.IsCloning = true
 
 	defer func() {
 		p.IsCloning = false
-		nodes.MustStoreProject(*p)
+		p.MustStore(ctx)
 
 		subs.Publish(ProjectUpserted, p.ID)
 		subs.Publish(WorkspaceUpserted, p.WorkspaceID)
@@ -161,14 +160,13 @@ func (p *Project) Clone(ctx context.Context) error {
 // Pull pulls and upserts the project.
 func (p *Project) Pull(ctx context.Context) error {
 	modelCtx := GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 
 	p.IsPulling = true
 
 	defer func() {
 		p.IsPulling = false
-		nodes.MustStoreProject(*p)
+		p.MustStore(ctx)
 
 		subs.Publish(ProjectUpserted, p.ID)
 		subs.Publish(WorkspaceUpserted, p.WorkspaceID)
@@ -203,14 +201,13 @@ func (p *Project) Pull(ctx context.Context) error {
 // Update loads the latest commits and upserts the project.
 func (p *Project) Update(ctx context.Context) error {
 	modelCtx := GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 
 	p.IsLoadingCommits = true
 
 	defer func() {
 		p.IsLoadingCommits = false
-		nodes.MustStoreProject(*p)
+		p.MustStore(ctx)
 
 		subs.Publish(ProjectUpserted, p.ID)
 		subs.Publish(WorkspaceUpserted, p.WorkspaceID)
@@ -326,8 +323,7 @@ func (p *Project) loadCommits(
 			Date:     DateTime(c.Author.When),
 		}
 
-		modelCtx := GetModelContext(ctx)
-		modelCtx.Nodes.MustStoreCommit(commit)
+		commit.MustStore(ctx)
 		commitIDs = append(commitIDs, commit.ID)
 
 		return nil

@@ -25,16 +25,15 @@ import (
 // LoadDirectorySource loads the workspaces of the source and updates it.
 func LoadDirectorySource(ctx context.Context, sourceID string, priority models.JobPriority) (string, error) {
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 
-	err := nodes.LockDirectorySourceE(sourceID, func(source models.DirectorySource) error {
+	err := models.LockDirectorySourceE(ctx, sourceID, func(source models.DirectorySource) error {
 		if source.IsLoading {
 			return ErrDuplicate
 		}
 
 		source.IsLoading = true
-		nodes.MustStoreDirectorySource(source)
+		source.MustStore(ctx)
 
 		return nil
 	})
@@ -45,7 +44,7 @@ func LoadDirectorySource(ctx context.Context, sourceID string, priority models.J
 	subs.Publish(models.SourceUpserted, sourceID)
 
 	jobID := modelCtx.Jobs.Add(
-		models.GetModelContext(ctx),
+		ctx,
 		LoadDirectorySourceJob,
 		sourceID,
 		priority,
@@ -64,23 +63,22 @@ func doLoadDirectorySource(ctx context.Context, sourceID string) error {
 	)
 
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 
 	defer func() {
-		nodes.MustLockDirectorySource(sourceID, func(source models.DirectorySource) {
+		models.MustLockDirectorySource(ctx, sourceID, func(source models.DirectorySource) {
 			if err == nil {
 				source.WorkspaceIDs = workspaceIDs
 			}
 
 			source.IsLoading = false
-			nodes.MustStoreDirectorySource(source)
+			source.MustStore(ctx)
 		})
 
 		subs.Publish(models.SourceUpserted, sourceID)
 	}()
 
-	source := nodes.MustLoadDirectorySource(sourceID)
+	source := models.MustLoadDirectorySource(ctx, sourceID)
 
 	workspaceIDs, err = walkSourceDirectory(ctx, source.Directory)
 
@@ -88,8 +86,6 @@ func doLoadDirectorySource(ctx context.Context, sourceID string) error {
 }
 
 func walkSourceDirectory(ctx context.Context, directory string) (workspaceIDs []string, err error) {
-	modelCtx := models.GetModelContext(ctx)
-
 	err = filepath.Walk(
 		directory,
 		func(path string, info os.FileInfo, err error) error {
@@ -116,7 +112,7 @@ func walkSourceDirectory(ctx context.Context, directory string) (workspaceIDs []
 				return err
 			}
 
-			ids, err := config.UpsertNodes(modelCtx.Nodes, modelCtx.Subs)
+			ids, err := config.UpsertNodes(ctx)
 			if err != nil {
 				return err
 			}

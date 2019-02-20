@@ -45,10 +45,8 @@ func (s System) Jobs(
 ) (JobConnection, error) {
 	var slice []Job
 
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, nodeID := range s.JobIDs {
-		node := nodes.MustLoadJob(nodeID)
+		node := MustLoadJob(ctx, nodeID)
 		match := len(status) == 0
 
 		for _, v := range status {
@@ -74,7 +72,7 @@ func (s System) Jobs(
 
 // JobMetrics returns the JobMetrics node.
 func (s System) JobMetrics(ctx context.Context) JobMetrics {
-	return GetModelContext(ctx).Nodes.MustLoadJobMetrics(s.JobMetricsID)
+	return MustLoadJobMetrics(ctx, s.JobMetricsID)
 }
 
 // ProcessGroups returns paginated process groups.
@@ -88,10 +86,8 @@ func (s System) ProcessGroups(
 ) (ProcessGroupConnection, error) {
 	var slice []ProcessGroup
 
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, nodeID := range s.ProcessGroupIDs {
-		node := nodes.MustLoadProcessGroup(nodeID)
+		node := MustLoadProcessGroup(ctx, nodeID)
 		match := len(status) == 0
 
 		for _, v := range status {
@@ -117,7 +113,7 @@ func (s System) ProcessGroups(
 
 // ProcessMetrics returns the ProcessMetrics node.
 func (s System) ProcessMetrics(ctx context.Context) ProcessMetrics {
-	return GetModelContext(ctx).Nodes.MustLoadProcessMetrics(s.ProcessMetricsID)
+	return MustLoadProcessMetrics(ctx, s.ProcessMetricsID)
 }
 
 // LogEntries returns paginated log entries.
@@ -132,10 +128,8 @@ func (s System) LogEntries(
 ) (LogEntryConnection, error) {
 	var slice []LogEntry
 
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, nodeID := range s.LogEntryIDs {
-		node := nodes.MustLoadLogEntry(nodeID)
+		node := MustLoadLogEntry(ctx, nodeID)
 
 		if ownerID != nil && *ownerID != node.OwnerID {
 			continue
@@ -166,7 +160,7 @@ func (s System) LogEntries(
 
 // LogMetrics returns the LogMetrics node.
 func (s System) LogMetrics(ctx context.Context) LogMetrics {
-	return GetModelContext(ctx).Nodes.MustLoadLogMetrics(s.LogMetricsID)
+	return MustLoadLogMetrics(ctx, s.LogMetricsID)
 }
 
 // LastMessageID is the ID of the last message which can be used for subscriptions.

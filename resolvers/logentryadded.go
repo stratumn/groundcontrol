@@ -24,6 +24,7 @@ func (r *subscriptionResolver) LogEntryAdded(
 	ctx context.Context,
 	lastMessageID *string,
 ) (<-chan models.LogEntry, error) {
+	ctx = models.WithModelContext(ctx, r.ModelCtx)
 	ch := make(chan models.LogEntry, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -35,9 +36,9 @@ func (r *subscriptionResolver) LogEntryAdded(
 		}
 	}
 
-	r.Subs.Subscribe(ctx, models.LogEntryAdded, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.LogEntryAdded, last, func(msg interface{}) {
 		select {
-		case ch <- r.Nodes.MustLoadLogEntry(msg.(string)):
+		case ch <- models.MustLoadLogEntry(ctx, msg.(string)):
 		default:
 		}
 	})

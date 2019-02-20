@@ -24,15 +24,19 @@ import (
 // It doesn't return errors but will output a log message when errors happen.
 func LoadAllSources(ctx context.Context) []string {
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
-	viewer := nodes.MustLoadUser(modelCtx.ViewerID)
+	viewer := models.MustLoadUser(ctx, modelCtx.ViewerID)
 
 	var jobIDs []string
 
 	for _, sourceID := range viewer.SourceIDs {
 		jobID, err := LoadSource(ctx, sourceID, models.JobPriorityNormal)
 		if err != nil {
-			modelCtx.Log.ErrorWithOwner(sourceID, "LoadSource failed because %s", err.Error())
+			modelCtx.Log.ErrorWithOwner(
+				ctx,
+				sourceID,
+				"LoadSource failed because %s",
+				err.Error(),
+			)
 			continue
 		}
 

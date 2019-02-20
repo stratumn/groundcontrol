@@ -22,7 +22,6 @@ import (
 
 func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.Process, error) {
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	pm := modelCtx.PM
 
 	err := pm.Stop(ctx, id)
@@ -30,5 +29,5 @@ func (r *mutationResolver) StopProcess(ctx context.Context, id string) (models.P
 		return models.Process{}, err
 	}
 
-	return nodes.MustLoadProcess(id), nil
+	return models.MustLoadProcess(ctx, id), nil
 }

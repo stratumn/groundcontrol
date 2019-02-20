@@ -89,7 +89,9 @@ import (
 )
 
 {{range $index, $type := .Added}}
-func (r *subscriptionResolver) {{$type}}Added(ctx context.Contextlast, lastMessageID *string) (<-chan models.{{$type}}, error) {
+func (r *subscriptionResolver) {{$type}}Added(ctx context.Context, lastMessageID *string) (<-chan models.{{$type}}, error) {
+	ctx = models.WithModelContext(ctx, r.ModelCtx)
+
 	go func() {
 		<-ctx.Done()
 	}()
@@ -105,10 +107,10 @@ func (r *subscriptionResolver) {{$type}}Added(ctx context.Contextlast, lastMessa
 		}
 	}
 
-	r.Subs.Subscribe(ctx, models.{{$type}}Added, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.{{$type}}Added, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		select {
-		case ch <- r.Nodes.MustLoad{{$type}}(nodeID):
+		case ch <- models.MustLoad{{$type}}(ctx, nodeID):
 		default:
 		}
 	})
@@ -119,6 +121,8 @@ func (r *subscriptionResolver) {{$type}}Added(ctx context.Contextlast, lastMessa
 
 {{range $index, $type := .Updated}}
 func (r *subscriptionResolver) {{$type}}Updated(ctx context.Context, id *string, lastMessageID *string) (<-chan models.{{$type}}, error) {
+	ctx = models.WithModelContext(ctx, r.ModelCtx)
+
 	go func() {
 		<-ctx.Done()
 	}()
@@ -134,13 +138,13 @@ func (r *subscriptionResolver) {{$type}}Updated(ctx context.Context, id *string,
 		}
 	}
 
-	r.Subs.Subscribe(ctx, models.{{$type}}Updated, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.{{$type}}Updated, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
 		}
 		select {
-		case ch <- r.Nodes.MustLoad{{$type}}(nodeID):
+		case ch <- models.MustLoad{{$type}}(ctx, nodeID):
 		default:
 		}
 	})
@@ -151,6 +155,8 @@ func (r *subscriptionResolver) {{$type}}Updated(ctx context.Context, id *string,
 
 {{range $index, $type := .Upserted}}
 func (r *subscriptionResolver) {{$type}}Upserted(ctx context.Context, id *string, lastMessageID *string) (<-chan models.{{$type}}, error) {
+	ctx = models.WithModelContext(ctx, r.ModelCtx)
+
 	go func() {
 		<-ctx.Done()
 	}()
@@ -166,13 +172,13 @@ func (r *subscriptionResolver) {{$type}}Upserted(ctx context.Context, id *string
 		}
 	}
 
-	r.Subs.Subscribe(ctx, models.{{$type}}Upserted, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.{{$type}}Upserted, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
 		}
 		select {
-		case ch <- r.Nodes.MustLoad{{$type}}(nodeID):
+		case ch <- models.MustLoad{{$type}}(ctx, nodeID):
 		default:
 		}
 	})

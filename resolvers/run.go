@@ -28,11 +28,7 @@ func (r *mutationResolver) Run(
 	id string,
 	variables []models.VariableInput,
 ) (models.Job, error) {
-	nodes := models.GetModelContext(ctx).Nodes
-	subs := models.GetModelContext(ctx).Subs
 	keys := models.GetModelContext(ctx).Keys
-	viewerID := models.GetModelContext(ctx).ViewerID
-
 	env := os.Environ()
 	save := false
 
@@ -45,7 +41,7 @@ func (r *mutationResolver) Run(
 
 		save = true
 
-		keys.UpsertKey(nodes, subs, viewerID, models.KeyInput{
+		keys.UpsertKey(ctx, models.KeyInput{
 			Name:  variable.Name,
 			Value: variable.Value,
 		})
@@ -62,5 +58,5 @@ func (r *mutationResolver) Run(
 		return models.Job{}, err
 	}
 
-	return nodes.MustLoadJob(jobID), nil
+	return models.MustLoadJob(ctx, jobID), nil
 }

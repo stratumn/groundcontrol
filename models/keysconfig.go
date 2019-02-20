@@ -15,13 +15,13 @@
 package models
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	yaml "gopkg.in/yaml.v2"
 
-	"groundcontrol/pubsub"
 	"groundcontrol/relay"
 )
 
@@ -32,13 +32,10 @@ type KeysConfig struct {
 }
 
 // UpsertNodes upserts nodes for the content of the keys config.
-// The user node must already exists.
-func (c *KeysConfig) UpsertNodes(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-	userID string,
-) error {
-	return nodes.MustLockUserE(userID, func(user User) error {
+func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
+	modelCtx := GetModelContext(ctx)
+
+	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
 		var keyIDs []string
 
 		for name, value := range c.Keys {
@@ -48,13 +45,13 @@ func (c *KeysConfig) UpsertNodes(
 				Value: value,
 			}
 
+			key.MustStore(ctx)
 			keyIDs = append(keyIDs, key.ID)
-			nodes.MustStoreKey(key)
-			subs.Publish(KeyUpserted, key.ID)
+			GetModelContext(ctx).Subs.Publish(KeyUpserted, key.ID)
 		}
 
-		user.KeyIDs = keyIDs
-		nodes.MustStoreUser(user)
+		viewer.KeyIDs = keyIDs
+		viewer.MustStore(ctx)
 
 		return nil
 	})
@@ -62,12 +59,9 @@ func (c *KeysConfig) UpsertNodes(
 
 // UpsertKey upserts a key.
 // It returns the ID of the key.
-func (c *KeysConfig) UpsertKey(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-	userID string,
-	input KeyInput,
-) string {
+func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
+	modelCtx := GetModelContext(ctx)
+
 	key := Key{
 		ID: relay.EncodeID(
 			NodeTypeKey,
@@ -77,43 +71,40 @@ func (c *KeysConfig) UpsertKey(
 		Value: input.Value,
 	}
 
-	nodes.MustLockUser(userID, func(user User) {
+	MustLockUser(ctx, modelCtx.ViewerID, func(viewer User) {
 		c.Keys[input.Name] = input.Value
 
 		exists := false
-		for _, keyID := range user.KeyIDs {
+		for _, keyID := range viewer.KeyIDs {
 			if keyID == key.ID {
 				exists = true
 			}
 		}
 
 		if !exists {
-			user.KeyIDs = append(user.KeyIDs, key.ID)
+			viewer.KeyIDs = append(viewer.KeyIDs, key.ID)
 		}
 
-		nodes.MustStoreKey(key)
-		nodes.MustStoreUser(user)
+		key.MustStore(ctx)
+		viewer.MustStore(ctx)
 
-		subs.Publish(KeyUpserted, key.ID)
+		modelCtx.Subs.Publish(KeyUpserted, key.ID)
 	})
 
 	return key.ID
 }
 
 // DeleteKey deletes a key.
-func (c *KeysConfig) DeleteKey(
-	nodes *NodeManager,
-	subs *pubsub.PubSub,
-	userID string,
-	id string,
-) error {
-	return nodes.LockUserE(userID, func(user User) error {
-		return nodes.LockKey(id, func(key Key) {
-			for i, v := range user.KeyIDs {
+func (c *KeysConfig) DeleteKey(ctx context.Context, id string) error {
+	modelCtx := GetModelContext(ctx)
+
+	return LockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
+		return LockKey(ctx, id, func(key Key) {
+			for i, v := range viewer.KeyIDs {
 				if v == id {
-					user.KeyIDs = append(
-						user.KeyIDs[:i],
-						user.KeyIDs[i+1:]...,
+					viewer.KeyIDs = append(
+						viewer.KeyIDs[:i],
+						viewer.KeyIDs[i+1:]...,
 					)
 					break
 				}
@@ -121,9 +112,9 @@ func (c *KeysConfig) DeleteKey(
 
 			delete(c.Keys, key.Name)
 
-			nodes.MustDeleteKey(id)
-			nodes.MustStoreUser(user)
-			subs.Publish(KeyDeleted, id)
+			MustDeleteKey(ctx, id)
+			viewer.MustStore(ctx)
+			modelCtx.Subs.Publish(KeyDeleted, id)
 		})
 	})
 }
@@ -152,20 +143,11 @@ func LoadKeysConfigYAML(filename string) (*KeysConfig, error) {
 
 	bytes, err := ioutil.ReadFile(filename)
 	if os.IsNotExist(err) {
-		config := KeysConfig{
-			Filename: filename,
-		}
-		if err := config.Save(); err != nil {
-			return nil, err
-		}
-
-		return LoadKeysConfigYAML(filename)
+		return &config, config.Save()
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	err = yaml.UnmarshalStrict(bytes, &config)
-
-	return &config, err
+	return &config, yaml.UnmarshalStrict(bytes, &config)
 }

@@ -24,16 +24,15 @@ import (
 // It doesn't return errors but will output a log message when errors happen.
 func LoadAllCommits(ctx context.Context) []string {
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
-	viewer := nodes.MustLoadUser(modelCtx.ViewerID)
+	viewer := models.MustLoadUser(ctx, modelCtx.ViewerID)
 
 	var jobIDs []string
 
 	for _, workspaceID := range viewer.WorkspaceIDs(ctx) {
-		workspace := nodes.MustLoadWorkspace(workspaceID)
+		workspace := models.MustLoadWorkspace(ctx, workspaceID)
 
 		for _, projectID := range workspace.ProjectIDs {
-			project := nodes.MustLoadProject(projectID)
+			project := models.MustLoadProject(ctx, projectID)
 
 			if project.IsLoadingCommits {
 				continue
@@ -41,7 +40,12 @@ func LoadAllCommits(ctx context.Context) []string {
 
 			jobID, err := LoadCommits(ctx, project.ID, models.JobPriorityNormal)
 			if err != nil {
-				modelCtx.Log.ErrorWithOwner(project.ID, "LoadCommits failed because %s", err.Error())
+				modelCtx.Log.ErrorWithOwner(
+					ctx,
+					project.ID,
+					"LoadCommits failed because %s",
+					err.Error(),
+				)
 				continue
 			}
 

@@ -47,7 +47,7 @@ func (n DirectorySource) Workspaces(
 	first *int,
 	last *int,
 ) (WorkspaceConnection, error) {
-	return PaginateWorkspaceIDSliceContext(
+	return PaginateWorkspaceIDSlice(
 		ctx,
 		n.WorkspaceIDs,
 		after,

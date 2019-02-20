@@ -60,7 +60,11 @@ var tmpl = `
 
 package models
 
-import "groundcontrol/relay"
+import (
+	"context"
+
+	"groundcontrol/relay"
+)
 
 // Node types.
 const (
@@ -69,38 +73,19 @@ const (
 {{- end}}
 )
 
-{{range $index, $type := .}}
-// GetID returns the unique ID of the node.
-func (n {{$type}}) GetID() string {
-	return n.ID
-}
-{{end}}
+// Message types.
+const (
+{{- range $index, $type := .}}
+	MessageType{{$type}}Stored = "{{$type}}Stored"
+	MessageType{{$type}}Deleted = "{{$type}}Deleted"
+{{- end}}
+)
 
 {{range $index, $type := .}}
-// Store{{$type}} stores a {{$type}}.
-func (n *NodeManager) Store{{$type}}(node {{$type}}) error {
-	identifiers, err := relay.DecodeID(node.GetID())
-	if err != nil {
-		return err
-	}
-	if identifiers[0] != NodeType{{$type}} {
-		return ErrType
-	}
-
-	n.store.Store(node.GetID(), node)
-
-	return nil
-}
-
-// MustStore{{$type}} stores a {{$type}} or panics on failure.
-func (n *NodeManager) MustStore{{$type}}(node {{$type}}) {
-	if err := n.Store{{$type}}(node); err != nil {
-		panic(err)
-	}
-}
-
 // Load{{$type}} loads a {{$type}}.
-func (n *NodeManager) Load{{$type}}(id string) ({{$type}}, error) {
+func Load{{$type}}(ctx context.Context, id string) ({{$type}}, error) {
+	nodes := GetModelContext(ctx).Nodes
+
 	identifiers, err := relay.DecodeID(id)
 	if err != nil {
 		return {{$type}}{}, err
@@ -108,7 +93,7 @@ func (n *NodeManager) Load{{$type}}(id string) ({{$type}}, error) {
 	if identifiers[0] != NodeType{{$type}} {
 		return {{$type}}{}, ErrType
 	}
-	node, ok := n.store.Load(id)
+	node, ok := nodes.Load(id)
 	if !ok {
 		return {{$type}}{}, ErrNotFound
 	}
@@ -117,8 +102,8 @@ func (n *NodeManager) Load{{$type}}(id string) ({{$type}}, error) {
 }
 
 // MustLoad{{$type}} loads a {{$type}} or panics on failure.
-func (n *NodeManager) MustLoad{{$type}}(id string) {{$type}} {
-	node, err := n.Load{{$type}}(id)
+func MustLoad{{$type}}(ctx context.Context, id string) {{$type}} {
+	node, err := Load{{$type}}(ctx, id)
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +113,11 @@ func (n *NodeManager) MustLoad{{$type}}(id string) {{$type}} {
 
 // Delete{{$type}} deletes a {{$type}}.
 // If the node doesn't exist it's a NOP.
-func (n *NodeManager) Delete{{$type}}(id string) error {
+func Delete{{$type}}(ctx context.Context, id string) error {
+	modelCtx := GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
+
 	identifiers, err := relay.DecodeID(id)
 	if err != nil {
 		return err
@@ -137,82 +126,89 @@ func (n *NodeManager) Delete{{$type}}(id string) error {
 		return ErrType
 	}
 
-	n.store.Delete(id)
+	nodes.Delete(id)
+	subs.Publish(MessageType{{$type}}Deleted, id)
+
 	return nil
 }
 
 // MustDelete{{$type}} deletes a {{$type}} or panics on failure.
 // If the node doesn't exist it's a NOP.
-func (n *NodeManager) MustDelete{{$type}}(id string) {
-	err := n.Delete{{$type}}(id)
+func MustDelete{{$type}}(ctx context.Context, id string) {
+	err := Delete{{$type}}(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 }
 
 // Lock{{$type}} loads a {{$type}} and locks it until the callback returns.
-func (n *NodeManager) Lock{{$type}}(id string, fn func({{$type}})) error {
-	n.Lock(id)
+func Lock{{$type}}(ctx context.Context, id string, fn func({{$type}})) error {
+	nodes := GetModelContext(ctx).Nodes
+	nodes.Lock(id)
 
-	node, err := n.Load{{$type}}(id)
+	node, err := Load{{$type}}(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	fn(node)
-	n.Unlock(id)
+	nodes.Unlock(id)
 
 	return nil
 }
 
 // Lock{{$type}}E is like Lock{{$type}}, but the callback can return an error.
-func (n *NodeManager) Lock{{$type}}E(id string, fn func({{$type}}) error) error {
-	n.Lock(id)
+func Lock{{$type}}E(ctx context.Context, id string, fn func({{$type}}) error) error {
+	nodes := GetModelContext(ctx).Nodes
+	nodes.Lock(id)
 
-	node, err := n.Load{{$type}}(id)
+	node, err := Load{{$type}}(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	err = fn(node)
-	n.Unlock(id)
+	nodes.Unlock(id)
 
 	return err
 }
 
 // MustLock{{$type}} loads a {{$type}} or panics on error and locks it until the callback returns.
-func (n *NodeManager) MustLock{{$type}}(id string, fn func({{$type}})) {
-	n.Lock(id)
+func MustLock{{$type}}(ctx context.Context, id string, fn func({{$type}})) {
+	nodes := GetModelContext(ctx).Nodes
+	nodes.Lock(id)
 
-	node, err := n.Load{{$type}}(id)
+	node, err := Load{{$type}}(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 
 	fn(node)
-	n.Unlock(id)
+	nodes.Unlock(id)
 }
 
 // MustLock{{$type}}E is like MustLock{{$type}}, but the callback can return an error.
-func (n *NodeManager) MustLock{{$type}}E(id string, fn func({{$type}}) error) error {
-	n.Lock(id)
+func MustLock{{$type}}E(ctx context.Context, id string, fn func({{$type}}) error) error {
+	nodes := GetModelContext(ctx).Nodes
+	nodes.Lock(id)
 
-	node, err := n.Load{{$type}}(id)
+	node, err := Load{{$type}}(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 
 	err = fn(node)
-	n.Unlock(id)
+	nodes.Unlock(id)
 
 	return err
 }
 
 // LockOrNew{{$type}} loads or initializes a {{$type}} and locks it until the callback returns.
-func (n *NodeManager) LockOrNew{{$type}}(id string, fn func({{$type}})) error {
-	n.Lock(id)
+func LockOrNew{{$type}}(ctx context.Context, id string, fn func({{$type}})) error {
+	nodes := GetModelContext(ctx).Nodes
+	nodes.Lock(id)
 
-	node, err := n.Load{{$type}}(id)
+	node, err := Load{{$type}}(ctx, id)
 	if err == ErrNotFound {
 		node = {{$type}}{
 			ID: id,
@@ -222,16 +218,17 @@ func (n *NodeManager) LockOrNew{{$type}}(id string, fn func({{$type}})) error {
 	}
 
 	fn(node)
-	n.Unlock(id)
+	nodes.Unlock(id)
 
 	return nil
 }
 
 // LockOrNew{{$type}}E is like LockOrNew{{$type}}, but the callback can return an error.
-func (n *NodeManager) LockOrNew{{$type}}E(id string, fn func({{$type}}) error) error {
-	n.Lock(id)
+func LockOrNew{{$type}}E(ctx context.Context, id string, fn func({{$type}}) error) error {
+	nodes := GetModelContext(ctx).Nodes
+	nodes.Lock(id)
 
-	node, err := n.Load{{$type}}(id)
+	node, err := Load{{$type}}(ctx, id)
 	if err == ErrNotFound {
 		node = {{$type}}{
 			ID: id,
@@ -241,16 +238,17 @@ func (n *NodeManager) LockOrNew{{$type}}E(id string, fn func({{$type}}) error) e
 	}
 
 	err = fn(node)
-	n.Unlock(id)
+	nodes.Unlock(id)
 
 	return err
 }
 
 // MustLockOrNew{{$type}} loads or initializes a {{$type}} or panics on error and locks it until the callback returns.
-func (n *NodeManager) MustLockOrNew{{$type}}(id string, fn func({{$type}})) {
-	n.Lock(id)
+func MustLockOrNew{{$type}}(ctx context.Context, id string, fn func({{$type}})) {
+	nodes := GetModelContext(ctx).Nodes
+	nodes.Lock(id)
 
-	node, err := n.Load{{$type}}(id)
+	node, err := Load{{$type}}(ctx, id)
 	if err == ErrNotFound {
 		node = {{$type}}{
 			ID: id,
@@ -260,14 +258,15 @@ func (n *NodeManager) MustLockOrNew{{$type}}(id string, fn func({{$type}})) {
 	}
 
 	fn(node)
-	n.Unlock(id)
+	nodes.Unlock(id)
 }
 
 // MustLockOrNew{{$type}}E is like MustLockOrNew{{$type}}, but the callback can return an error.
-func (n *NodeManager) MustLockOrNew{{$type}}E(id string, fn func({{$type}}) error) error {
-	n.Lock(id)
+func MustLockOrNew{{$type}}E(ctx context.Context, id string, fn func({{$type}}) error) error {
+	nodes := GetModelContext(ctx).Nodes
+	nodes.Lock(id)
 
-	node, err := n.Load{{$type}}(id)
+	node, err := Load{{$type}}(ctx, id)
 	if err == ErrNotFound {
 		node = {{$type}}{
 			ID: id,
@@ -277,9 +276,41 @@ func (n *NodeManager) MustLockOrNew{{$type}}E(id string, fn func({{$type}}) erro
 	}
 
 	err = fn(node)
-	n.Unlock(id)
+	nodes.Unlock(id)
 
 	return err
+}
+
+// GetID returns the unique ID of the node.
+func (n {{$type}}) GetID() string {
+	return n.ID
+}
+
+// Store stores the {{$type}}.
+func (n {{$type}}) Store(ctx context.Context) error {
+	modelCtx := GetModelContext(ctx)
+	nodes := modelCtx.Nodes
+	subs := modelCtx.Subs
+
+	identifiers, err := relay.DecodeID(n.ID)
+	if err != nil {
+		return err
+	}
+	if identifiers[0] != NodeType{{$type}} {
+		return ErrType
+	}
+
+	nodes.Store(n.ID, n)
+	subs.Publish(MessageType{{$type}}Stored, n.ID)
+
+	return nil
+}
+
+// MustStore stores a {{$type}} or panics on failure.
+func (n {{$type}}) MustStore(ctx context.Context) {
+	if err := n.Store(ctx); err != nil {
+		panic(err)
+	}
 }
 
 {{end}}

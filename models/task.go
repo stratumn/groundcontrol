@@ -37,7 +37,7 @@ func (t Task) Variables(
 	first *int,
 	last *int,
 ) (VariableConnection, error) {
-	return PaginateVariableIDSliceContext(ctx, t.VariableIDs, after, before, first, last)
+	return PaginateVariableIDSlice(ctx, t.VariableIDs, after, before, first, last)
 }
 
 // Steps returns the task's steps.
@@ -48,10 +48,10 @@ func (t Task) Steps(
 	first *int,
 	last *int,
 ) (StepConnection, error) {
-	return PaginateStepIDSliceContext(ctx, t.StepIDs, after, before, first, last)
+	return PaginateStepIDSlice(ctx, t.StepIDs, after, before, first, last)
 }
 
 // Workspace returns the task's workspace.
 func (t Task) Workspace(ctx context.Context) Workspace {
-	return GetModelContext(ctx).Nodes.MustLoadWorkspace(t.WorkspaceID)
+	return MustLoadWorkspace(ctx, t.WorkspaceID)
 }

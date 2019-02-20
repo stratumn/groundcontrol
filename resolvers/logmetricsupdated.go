@@ -25,6 +25,7 @@ func (r *subscriptionResolver) LogMetricsUpdated(
 	id *string,
 	lastMessageID *string,
 ) (<-chan models.LogMetrics, error) {
+	ctx = models.WithModelContext(ctx, r.ModelCtx)
 	ch := make(chan models.LogMetrics, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -36,13 +37,13 @@ func (r *subscriptionResolver) LogMetricsUpdated(
 		}
 	}
 
-	r.Subs.Subscribe(ctx, models.LogMetricsUpdated, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.LogMetricsUpdated, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
 		}
 		select {
-		case ch <- r.Nodes.MustLoadLogMetrics(nodeID):
+		case ch <- models.MustLoadLogMetrics(ctx, nodeID):
 		default:
 		}
 	})

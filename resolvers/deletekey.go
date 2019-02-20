@@ -23,12 +23,7 @@ import (
 func (r *mutationResolver) DeleteKey(ctx context.Context, id string) (models.DeletedNode, error) {
 	modelCtx := models.GetModelContext(ctx)
 
-	err := modelCtx.Keys.DeleteKey(
-		modelCtx.Nodes,
-		modelCtx.Subs,
-		modelCtx.ViewerID,
-		id,
-	)
+	err := modelCtx.Keys.DeleteKey(ctx, id)
 	if err != nil {
 		return models.DeletedNode{}, nil
 	}

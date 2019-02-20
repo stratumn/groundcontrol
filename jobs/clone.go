@@ -29,7 +29,7 @@ func Clone(ctx context.Context, projectID string, priority models.JobPriority) (
 	modelCtx := models.GetModelContext(ctx)
 
 	jobID := modelCtx.Jobs.Add(
-		models.GetModelContext(ctx),
+		ctx,
 		CloneJob,
 		projectID,
 		priority,
@@ -43,18 +43,17 @@ func Clone(ctx context.Context, projectID string, priority models.JobPriority) (
 
 func startCloning(ctx context.Context, projectID string) error {
 	modelCtx := models.GetModelContext(ctx)
-	nodes := modelCtx.Nodes
 	subs := modelCtx.Subs
 	workspaceID := ""
 
-	err := nodes.LockProjectE(projectID, func(project models.Project) error {
+	err := models.LockProjectE(ctx, projectID, func(project models.Project) error {
 		if project.IsCloning {
 			return ErrDuplicate
 		}
 
 		workspaceID = project.WorkspaceID
 		project.IsCloning = true
-		nodes.MustStoreProject(project)
+		project.MustStore(ctx)
 
 		return nil
 	})
@@ -70,9 +69,7 @@ func startCloning(ctx context.Context, projectID string) error {
 }
 
 func doClone(ctx context.Context, projectID string) error {
-	nodes := models.GetModelContext(ctx).Nodes
-
-	return nodes.MustLockProjectE(projectID, func(project models.Project) error {
+	return models.MustLockProjectE(ctx, projectID, func(project models.Project) error {
 		return project.Clone(ctx)
 	})
 }

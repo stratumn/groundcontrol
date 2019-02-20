@@ -34,17 +34,15 @@ func (u User) Sources(
 	first *int,
 	last *int,
 ) (SourceConnection, error) {
-	return PaginateSourceIDSliceContext(ctx, u.SourceIDs, after, before, first, last)
+	return PaginateSourceIDSlice(ctx, u.SourceIDs, after, before, first, last)
 }
 
 // WorkspaceIDs returns the user's workspace IDs.
 func (u User) WorkspaceIDs(ctx context.Context) []string {
 	var slice []string
 
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, sourceID := range u.SourceIDs {
-		source := nodes.MustLoadSource(sourceID)
+		source := MustLoadSource(ctx, sourceID)
 		slice = append(slice, source.GetWorkspaceIDs()...)
 	}
 
@@ -59,7 +57,7 @@ func (u User) Workspaces(
 	first *int,
 	last *int,
 ) (WorkspaceConnection, error) {
-	return PaginateWorkspaceIDSliceContext(
+	return PaginateWorkspaceIDSlice(
 		ctx,
 		u.WorkspaceIDs(ctx),
 		after,
@@ -71,10 +69,8 @@ func (u User) Workspaces(
 
 // Workspace finds a workspace.
 func (u User) Workspace(ctx context.Context, slug string) *Workspace {
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, id := range u.WorkspaceIDs(ctx) {
-		node := nodes.MustLoadWorkspace(id)
+		node := MustLoadWorkspace(ctx, id)
 
 		if node.Slug == slug {
 			return &node
@@ -94,14 +90,12 @@ func (u User) Projects(
 ) (ProjectConnection, error) {
 	var slice []string
 
-	nodes := GetModelContext(ctx).Nodes
-
 	for _, workspaceID := range u.WorkspaceIDs(ctx) {
-		workspace := nodes.MustLoadWorkspace(workspaceID)
+		workspace := MustLoadWorkspace(ctx, workspaceID)
 		slice = append(slice, workspace.ProjectIDs...)
 	}
 
-	return PaginateProjectIDSlice(nodes, slice, after, before, first, last)
+	return PaginateProjectIDSlice(ctx, slice, after, before, first, last)
 }
 
 // Keys returns the user's keys.
@@ -112,7 +106,7 @@ func (u User) Keys(
 	first *int,
 	last *int,
 ) (KeyConnection, error) {
-	return PaginateKeyIDSliceContext(
+	return PaginateKeyIDSlice(
 		ctx,
 		u.KeyIDs,
 		after,

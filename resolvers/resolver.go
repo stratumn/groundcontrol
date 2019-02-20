@@ -17,13 +17,11 @@ package resolvers
 import (
 	"groundcontrol/gql"
 	"groundcontrol/models"
-	"groundcontrol/pubsub"
 )
 
 // Resolver is the root GraphQL resolver.
 type Resolver struct {
-	Nodes *models.NodeManager
-	Subs  *pubsub.PubSub
+	ModelCtx *models.ModelContext
 }
 
 // Query returns the resolver for queries.

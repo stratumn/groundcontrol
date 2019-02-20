@@ -35,21 +35,20 @@ func (p ProcessGroup) Processes(
 	first *int,
 	last *int,
 ) (ProcessConnection, error) {
-	return PaginateProcessIDSliceContext(ctx, p.ProcessIDs, after, before, first, last)
+	return PaginateProcessIDSlice(ctx, p.ProcessIDs, after, before, first, last)
 }
 
 // Task returns the Task associated with the ProcessGroup.
 func (p ProcessGroup) Task(ctx context.Context) Task {
-	return GetModelContext(ctx).Nodes.MustLoadTask(p.TaskID)
+	return MustLoadTask(ctx, p.TaskID)
 }
 
 // Status returns the status of the ProcessGroup.
 func (p ProcessGroup) Status(ctx context.Context) ProcessStatus {
-	nodes := GetModelContext(ctx).Nodes
 	status := ProcessStatusDone
 
 	for _, id := range p.ProcessIDs {
-		node := nodes.MustLoadProcess(id)
+		node := MustLoadProcess(ctx, id)
 
 		if node.Status == ProcessStatusFailed {
 			return ProcessStatusFailed
