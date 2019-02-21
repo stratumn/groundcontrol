@@ -123,7 +123,7 @@ func (p Project) Path(ctx context.Context) string {
 	return modelCtx.GetProjectPath(p.Workspace(ctx).Slug, p.Slug)
 }
 
-// CachePath returns the path to the project.
+// CachePath returns the path to the project's cache.
 func (p Project) CachePath(ctx context.Context) string {
 	modelCtx := GetModelContext(ctx)
 	return modelCtx.GetProjectCachePath(p.Workspace(ctx).Slug, p.Slug)
@@ -132,6 +132,7 @@ func (p Project) CachePath(ctx context.Context) string {
 // Clone clones and upserts the project.
 func (p *Project) Clone(ctx context.Context) error {
 	p.IsCloning = true
+	p.MustStore(ctx)
 
 	defer func() {
 		p.IsCloning = false
@@ -154,6 +155,7 @@ func (p *Project) Clone(ctx context.Context) error {
 // Pull pulls and upserts the project.
 func (p *Project) Pull(ctx context.Context) error {
 	p.IsPulling = true
+	p.MustStore(ctx)
 
 	defer func() {
 		p.IsPulling = false
@@ -189,6 +191,7 @@ func (p *Project) Pull(ctx context.Context) error {
 // Update loads the latest commits and upserts the project.
 func (p *Project) Update(ctx context.Context) error {
 	p.IsLoadingCommits = true
+	p.MustStore(ctx)
 
 	defer func() {
 		p.IsLoadingCommits = false
