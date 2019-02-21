@@ -23,7 +23,11 @@ import (
 // Source is a collection of workspaces.
 type Source interface {
 	Node
+
 	IsSource()
+
+	// User returns the user who owns the source.
+	User(context.Context) User
 
 	// GetWorkspaceIDs returns the IDs of the workspaces.
 	GetWorkspaceIDs() []string

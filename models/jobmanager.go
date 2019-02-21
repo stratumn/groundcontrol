@@ -75,7 +75,6 @@ func (j *JobManager) Add(
 
 	log.DebugWithOwner(ctx, job.ID, "job queued")
 	job.MustStore(ctx)
-	modelCtx.Subs.Publish(JobUpserted, job.ID)
 
 	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
 		system.JobIDs = append([]string{job.ID}, system.JobIDs...)
@@ -83,7 +82,7 @@ func (j *JobManager) Add(
 	})
 
 	atomic.AddInt64(&j.queuedCounter, 1)
-	j.publishMetrics(ctx)
+	j.updateMetrics(ctx)
 
 	do := j.queue.Do
 	if priority == JobPriorityHigh {
@@ -104,10 +103,9 @@ func (j *JobManager) Add(
 		job.Status = JobStatusRunning
 		job.UpdatedAt = DateTime(time.Now())
 		job.MustStore(ctx)
-		modelCtx.Subs.Publish(JobUpserted, job.ID)
 		atomic.AddInt64(&j.runningCounter, 1)
 		atomic.AddInt64(&j.queuedCounter, -1)
-		j.publishMetrics(ctx)
+		j.updateMetrics(ctx)
 
 		if err := fn(ctx); err != nil {
 			log.ErrorWithOwner(ctx, job.ID, "job failed because %s", err.Error())
@@ -122,9 +120,8 @@ func (j *JobManager) Add(
 		job.UpdatedAt = DateTime(time.Now())
 		job.MustStore(ctx)
 
-		modelCtx.Subs.Publish(JobUpserted, job.ID)
 		atomic.AddInt64(&j.runningCounter, -1)
-		j.publishMetrics(ctx)
+		j.updateMetrics(ctx)
 	})
 
 	return job.ID
@@ -145,7 +142,6 @@ func (j *JobManager) Stop(ctx context.Context, id string) error {
 		job.Status = JobStatusStopping
 		job.UpdatedAt = DateTime(time.Now())
 		job.MustStore(ctx)
-		GetModelContext(ctx).Subs.Publish(JobUpserted, id)
 
 		cancel := actual.(context.CancelFunc)
 		cancel()
@@ -154,7 +150,7 @@ func (j *JobManager) Stop(ctx context.Context, id string) error {
 	})
 }
 
-func (j *JobManager) publishMetrics(ctx context.Context) {
+func (j *JobManager) updateMetrics(ctx context.Context) {
 	modelCtx := GetModelContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
@@ -165,6 +161,4 @@ func (j *JobManager) publishMetrics(ctx context.Context) {
 		metrics.Failed = int(atomic.LoadInt64(&j.failedCounter))
 		metrics.MustStore(ctx)
 	})
-
-	modelCtx.Subs.Publish(JobMetricsUpdated, system.JobMetricsID)
 }

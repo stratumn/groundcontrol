@@ -28,7 +28,7 @@ func Pull(ctx context.Context, projectID string, priority models.JobPriority) (s
 
 	modelCtx := models.GetModelContext(ctx)
 
-	jobID := modelCtx.Jobs.Add(
+	return modelCtx.Jobs.Add(
 		ctx,
 		PullJob,
 		projectID,
@@ -36,36 +36,20 @@ func Pull(ctx context.Context, projectID string, priority models.JobPriority) (s
 		func(ctx context.Context) error {
 			return doPull(ctx, projectID)
 		},
-	)
-
-	return jobID, nil
+	), nil
 }
 
 func startPulling(ctx context.Context, projectID string) error {
-	modelCtx := models.GetModelContext(ctx)
-	subs := modelCtx.Subs
-	workspaceID := ""
-
-	err := models.LockProjectE(ctx, projectID, func(project models.Project) error {
+	return models.LockProjectE(ctx, projectID, func(project models.Project) error {
 		if project.IsPulling {
 			return ErrDuplicate
 		}
 
-		workspaceID = project.WorkspaceID
 		project.IsPulling = true
 		project.MustStore(ctx)
 
 		return nil
 	})
-
-	if err != nil {
-		return err
-	}
-
-	subs.Publish(models.ProjectUpserted, projectID)
-	subs.Publish(models.WorkspaceUpserted, workspaceID)
-
-	return nil
 }
 
 func doPull(ctx context.Context, projectID string) error {

@@ -32,29 +32,9 @@ func checkError(err error) {
 }
 
 func main() {
-	subs := flag.String("s", "", "A comma separated list of subscriptions")
+	types := flag.String("t", "", "A comma separated list of types")
 	filename := flag.String("o", "", "A filename to output the generated code to")
 	flag.Parse()
-
-	vars := struct {
-		Added    []string
-		Updated  []string
-		Upserted []string
-	}{}
-
-	for _, sub := range strings.Split(*subs, ",") {
-		switch {
-		case strings.HasSuffix(sub, "Added"):
-			vars.Added = append(vars.Added, strings.TrimSuffix(sub, "Added"))
-		case strings.HasSuffix(sub, "Updated"):
-			vars.Updated = append(vars.Updated, strings.TrimSuffix(sub, "Updated"))
-		case strings.HasSuffix(sub, "Upserted"):
-			vars.Upserted = append(vars.Upserted, strings.TrimSuffix(sub, "Upserted"))
-		default:
-			fmt.Println("subscriptions must be of the form TypeAdded, TypeUpdated, or TypeUpserted")
-			os.Exit(1)
-		}
-	}
 
 	w := os.Stdout
 
@@ -71,7 +51,7 @@ func main() {
 	t, err := template.New("tmpl").Parse(strings.TrimSpace(tmpl))
 	checkError(err)
 
-	err = t.Execute(w, vars)
+	err = t.Execute(w, strings.Split(*types, ","))
 	checkError(err)
 }
 
@@ -88,14 +68,9 @@ import (
 	"groundcontrol/models"
 )
 
-{{range $index, $type := .Added}}
-func (r *subscriptionResolver) {{$type}}Added(ctx context.Context, lastMessageID *string) (<-chan models.{{$type}}, error) {
+{{range $index, $type := .}}
+func (r *subscriptionResolver) {{$type}}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan models.{{$type}}, error) {
 	ctx = models.WithModelContext(ctx, r.ModelCtx)
-
-	go func() {
-		<-ctx.Done()
-	}()
-
 	ch := make(chan models.{{$type}}, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -107,38 +82,7 @@ func (r *subscriptionResolver) {{$type}}Added(ctx context.Context, lastMessageID
 		}
 	}
 
-	r.ModelCtx.Subs.Subscribe(ctx, models.{{$type}}Added, last, func(msg interface{}) {
-		nodeID := msg.(string)
-		select {
-		case ch <- models.MustLoad{{$type}}(ctx, nodeID):
-		default:
-		}
-	})
-
-	return ch, nil
-}
-{{end}}
-
-{{range $index, $type := .Updated}}
-func (r *subscriptionResolver) {{$type}}Updated(ctx context.Context, id *string, lastMessageID *string) (<-chan models.{{$type}}, error) {
-	ctx = models.WithModelContext(ctx, r.ModelCtx)
-
-	go func() {
-		<-ctx.Done()
-	}()
-
-	ch := make(chan models.{{$type}}, SubscriptionChannelSize)
-
-	last := uint64(0)
-	if lastMessageID != nil {
-		var err error
-		last, err = decodeBase64Uint64(*lastMessageID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	r.ModelCtx.Subs.Subscribe(ctx, models.{{$type}}Updated, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.MessageType{{$type}}Stored, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
@@ -151,17 +95,10 @@ func (r *subscriptionResolver) {{$type}}Updated(ctx context.Context, id *string,
 
 	return ch, nil
 }
-{{end}}
 
-{{range $index, $type := .Upserted}}
-func (r *subscriptionResolver) {{$type}}Upserted(ctx context.Context, id *string, lastMessageID *string) (<-chan models.{{$type}}, error) {
+func (r *subscriptionResolver) {{$type}}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan models.DeletedNode, error) {
 	ctx = models.WithModelContext(ctx, r.ModelCtx)
-
-	go func() {
-		<-ctx.Done()
-	}()
-
-	ch := make(chan models.{{$type}}, SubscriptionChannelSize)
+	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
 
 	last := uint64(0)
 	if lastMessageID != nil {
@@ -172,13 +109,13 @@ func (r *subscriptionResolver) {{$type}}Upserted(ctx context.Context, id *string
 		}
 	}
 
-	r.ModelCtx.Subs.Subscribe(ctx, models.{{$type}}Upserted, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, models.MessageType{{$type}}Deleted, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
 		}
 		select {
-		case ch <- models.MustLoad{{$type}}(ctx, nodeID):
+		case ch <- models.DeletedNode{ID: nodeID}:
 		default:
 		}
 	})

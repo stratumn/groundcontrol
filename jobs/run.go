@@ -26,7 +26,6 @@ import (
 // Run runs a task.
 func Run(ctx context.Context, taskID string, env []string, priority models.JobPriority) (string, error) {
 	modelCtx := models.GetModelContext(ctx)
-	subs := modelCtx.Subs
 	workspaceID := ""
 
 	err := models.LockTaskE(ctx, taskID, func(task models.Task) error {
@@ -44,10 +43,7 @@ func Run(ctx context.Context, taskID string, env []string, priority models.JobPr
 		return "", err
 	}
 
-	subs.Publish(models.TaskUpserted, taskID)
-	subs.Publish(models.WorkspaceUpserted, workspaceID)
-
-	jobID := modelCtx.Jobs.Add(
+	return modelCtx.Jobs.Add(
 		ctx,
 		RunJob,
 		workspaceID,
@@ -55,14 +51,11 @@ func Run(ctx context.Context, taskID string, env []string, priority models.JobPr
 		func(ctx context.Context) error {
 			return doRun(ctx, taskID, env, workspaceID, modelCtx.SystemID)
 		},
-	)
-
-	return jobID, nil
+	), nil
 }
 
 func doRun(ctx context.Context, taskID string, env []string, workspaceID string, systemID string) error {
 	modelCtx := models.GetModelContext(ctx)
-	subs := modelCtx.Subs
 	log := modelCtx.Log
 	pm := modelCtx.PM
 
@@ -71,9 +64,6 @@ func doRun(ctx context.Context, taskID string, env []string, workspaceID string,
 			task.IsRunning = false
 			task.MustStore(ctx)
 		})
-
-		subs.Publish(models.TaskUpserted, taskID)
-		subs.Publish(models.WorkspaceUpserted, workspaceID)
 	}()
 
 	workspace := models.MustLoadWorkspace(ctx, workspaceID)

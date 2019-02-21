@@ -98,6 +98,10 @@ interface Source {
   """
   id: ID!
   """
+  The user who owns the source.
+  """
+  user: User!
+  """
   The workspaces using Relay pagination.
   """
   workspaces(
@@ -614,6 +618,10 @@ type DirectorySource implements Node & Source {
   """
   id: ID!
   """
+  The user who owns the source.
+  """
+  user: User!
+  """
   The workspaces using Relay pagination.
   """
   workspaces(
@@ -640,6 +648,10 @@ type GitSource implements Node & Source {
   The global ID of the node.
   """
   id: ID!
+  """
+  The user who owns the source.
+  """
+  user: User!
   """
   The workspaces using Relay pagination.
   """
@@ -687,6 +699,10 @@ type Workspace implements Node {
   The human friendly name.
   """
   name: String!
+  """
+  The source which this workspace is part of.
+  """
+  source: Source!
   """
   The projects using Relay pagination.
   """
@@ -1302,29 +1318,49 @@ The root subscription resolver.
 """
 type Subscription {
   """
+  Receive a user when added or updated.
+  """
+  userStored(id: ID, lastMessageId: ID): User!
+  """
+  Receive a system when added or updated.
+  """
+  systemStored(id: ID, lastMessageId: ID): System!
+  """
   Receive a source when added or updated.
   """
-  sourceUpserted(id: ID, lastMessageId: ID): Source!
+  sourceStored(id: ID, lastMessageId: ID): Source!
   """
   Receive a message when a source is deleted.
   """
   sourceDeleted(id: ID, lastMessageId: ID): DeletedNode!
   """
-  Receive a workspace when added updated including child nodes.
+  Receive a workspace when added updated.
   """
-  workspaceUpserted(id: ID, lastMessageId: ID): Workspace!
+  workspaceStored(id: ID, lastMessageId: ID): Workspace!
   """
-  Receive a project when added or updated including child nodes.
+  Receive a message when a workspace is deleted.
   """
-  projectUpserted(id: ID, lastMessageId: ID): Project!
+  workspaceDeleted(id: ID, lastMessageId: ID): DeletedNode!
   """
-  Receive a task when added or updated including child nodes.
+  Receive a project when added or updated.
   """
-  taskUpserted(id: ID, lastMessageId: ID): Task!
+  projectStored(id: ID, lastMessageId: ID): Project!
+  """
+  Receive a message when a project is deleted.
+  """
+  projectDeleted(id: ID, lastMessageId: ID): DeletedNode!
+  """
+  Receive a task when added or updated.
+  """
+  taskStored(id: ID, lastMessageId: ID): Task!
+  """
+  Receive a message when a task is deleted.
+  """
+  taskDeleted(id: ID, lastMessageId: ID): DeletedNode!
   """
   Receive a key when added or updated.
   """
-  keyUpserted(id: ID, lastMessageId: ID): Key!
+  keyStored(id: ID, lastMessageId: ID): Key!
   """
   Receive a message when a key is deleted.
   """
@@ -1332,29 +1368,29 @@ type Subscription {
   """
   Receive a job when added or updated.
   """
-  jobUpserted(id: ID, lastMessageId: ID): Job!
+  jobStored(id: ID, lastMessageId: ID): Job!
   """
-  Receive a process group when added or updated including child nodes.
+  Receive a process group when added or updated.
   """
-  processGroupUpserted(id: ID, lastMessageId: ID): ProcessGroup!
+  processGroupStored(id: ID, lastMessageId: ID): ProcessGroup!
   """
   Receive a process when added or updated.
   """
-  processUpserted(id: ID, lastMessageId: ID): Process!
+  processStored(id: ID, lastMessageId: ID): Process!
   """
-  Receive a log entry when added.
+  Receive a log entry when added or updated.
   """
-  logEntryAdded(lastMessageId: ID): LogEntry!
+  logEntryStored(id: ID, lastMessageId: ID): LogEntry!
   """
-  Receive metrics when jobs are updated.
+  Receive a job metrics when added or updated.
   """
-  jobMetricsUpdated(id: ID, lastMessageId: ID): JobMetrics!
+  jobMetricsStored(id: ID, lastMessageId: ID): JobMetrics!
   """
-  Receive metrics when processes are updated.
+  Receive a process metrics when added or updated.
   """
-  processMetricsUpdated(id: ID, lastMessageId: ID): ProcessMetrics!
+  processMetricsStored(id: ID, lastMessageId: ID): ProcessMetrics!
   """
-  Receive metrics when logs are updated.
+  Receive a log metrics when logs are updated.
   """
-  logMetricsUpdated(id: ID, lastMessageId: ID): LogMetrics!
+  logMetricsStored(id: ID, lastMessageId: ID): LogMetrics!
 }

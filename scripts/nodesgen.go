@@ -112,7 +112,6 @@ func MustLoad{{$type}}(ctx context.Context, id string) {{$type}} {
 }
 
 // Delete{{$type}} deletes a {{$type}}.
-// If the node doesn't exist it's a NOP.
 func Delete{{$type}}(ctx context.Context, id string) error {
 	modelCtx := GetModelContext(ctx)
 	nodes := modelCtx.Nodes
@@ -126,14 +125,28 @@ func Delete{{$type}}(ctx context.Context, id string) error {
 		return ErrType
 	}
 
+	node, err := Load{{$type}}(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	var v interface{} = node
+
+	if v, ok := v.(BeforeDeleter); ok {
+		v.BeforeDelete(ctx)
+	}
+
 	nodes.Delete(id)
 	subs.Publish(MessageType{{$type}}Deleted, id)
+
+	if v, ok := v.(AfterDeleter); ok {
+		v.AfterDelete(ctx)
+	}
 
 	return nil
 }
 
 // MustDelete{{$type}} deletes a {{$type}} or panics on failure.
-// If the node doesn't exist it's a NOP.
 func MustDelete{{$type}}(ctx context.Context, id string) {
 	err := Delete{{$type}}(ctx, id)
 	if err != nil {
@@ -300,8 +313,18 @@ func (n {{$type}}) Store(ctx context.Context) error {
 		return ErrType
 	}
 
+	var v interface{} = n
+
+	if v, ok := v.(BeforeStorer); ok {
+		v.BeforeStore(ctx)
+	}
+
 	nodes.Store(n.ID, n)
 	subs.Publish(MessageType{{$type}}Stored, n.ID)
+
+	if v, ok := v.(AfterStorer); ok {
+		v.AfterStore(ctx)
+	}
 
 	return nil
 }

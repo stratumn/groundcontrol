@@ -131,17 +131,11 @@ func (p Project) CachePath(ctx context.Context) string {
 
 // Clone clones and upserts the project.
 func (p *Project) Clone(ctx context.Context) error {
-	modelCtx := GetModelContext(ctx)
-	subs := modelCtx.Subs
-
 	p.IsCloning = true
 
 	defer func() {
 		p.IsCloning = false
 		p.MustStore(ctx)
-
-		subs.Publish(ProjectUpserted, p.ID)
-		subs.Publish(WorkspaceUpserted, p.WorkspaceID)
 	}()
 
 	path := p.Path(ctx)
@@ -159,17 +153,11 @@ func (p *Project) Clone(ctx context.Context) error {
 
 // Pull pulls and upserts the project.
 func (p *Project) Pull(ctx context.Context) error {
-	modelCtx := GetModelContext(ctx)
-	subs := modelCtx.Subs
-
 	p.IsPulling = true
 
 	defer func() {
 		p.IsPulling = false
 		p.MustStore(ctx)
-
-		subs.Publish(ProjectUpserted, p.ID)
-		subs.Publish(WorkspaceUpserted, p.WorkspaceID)
 	}()
 
 	repo, err := p.openRepository(ctx)
@@ -200,17 +188,11 @@ func (p *Project) Pull(ctx context.Context) error {
 
 // Update loads the latest commits and upserts the project.
 func (p *Project) Update(ctx context.Context) error {
-	modelCtx := GetModelContext(ctx)
-	subs := modelCtx.Subs
-
 	p.IsLoadingCommits = true
 
 	defer func() {
 		p.IsLoadingCommits = false
 		p.MustStore(ctx)
-
-		subs.Publish(ProjectUpserted, p.ID)
-		subs.Publish(WorkspaceUpserted, p.WorkspaceID)
 	}()
 
 	if !p.IsCloned(ctx) && !p.IsCached(ctx) {

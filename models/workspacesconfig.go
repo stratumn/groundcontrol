@@ -69,11 +69,11 @@ type StepConfig struct {
 
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the IDs of the workspaces upserted.
-func (c WorkspacesConfig) UpsertNodes(ctx context.Context) ([]string, error) {
+func (c WorkspacesConfig) UpsertNodes(ctx context.Context, sourceID string) ([]string, error) {
 	var workspaceIDs []string
 
 	for _, workspaceConfig := range c.Workspaces {
-		id, err := workspaceConfig.UpsertNodes(ctx)
+		id, err := workspaceConfig.UpsertNodes(ctx, sourceID)
 		if err != nil {
 			return nil, err
 		}
@@ -86,9 +86,7 @@ func (c WorkspacesConfig) UpsertNodes(ctx context.Context) ([]string, error) {
 
 // UpsertNodes upserts nodes for the content of the config.
 // It returns the ID of the workspace upserted.
-func (c WorkspaceConfig) UpsertNodes(ctx context.Context) (string, error) {
-	modelCtx := GetModelContext(ctx)
-	subs := modelCtx.Subs
+func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (string, error) {
 	id := relay.EncodeID(NodeTypeWorkspace, c.Slug)
 
 	err := MustLockOrNewWorkspaceE(ctx, id, func(workspace Workspace) error {
@@ -96,9 +94,13 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context) (string, error) {
 		workspace.Name = c.Name
 		workspace.Description = c.Description
 		workspace.Notes = c.Notes
+		workspace.SourceID = sourceID
 		workspace.ProjectIDs = nil
 		workspace.TaskIDs = nil
 		projectSlugToID := map[string]string{}
+
+		// We need to make sure the workspace exists before child nodes refer to it.
+		workspace.MustStore(ctx)
 
 		for _, projectConfig := range c.Projects {
 			projectID := projectConfig.UpsertNodes(ctx, id, c.Slug)
@@ -116,7 +118,6 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context) (string, error) {
 		}
 
 		workspace.MustStore(ctx)
-		subs.Publish(WorkspaceUpserted, id)
 
 		return nil
 	})
@@ -134,8 +135,6 @@ func (c ProjectConfig) UpsertNodes(
 	workspaceID string,
 	workspaceSlug string,
 ) string {
-	modelCtx := GetModelContext(ctx)
-	subs := modelCtx.Subs
 	id := relay.EncodeID(
 		NodeTypeProject,
 		workspaceSlug,
@@ -158,7 +157,6 @@ func (c ProjectConfig) UpsertNodes(
 		}
 
 		project.MustStore(ctx)
-		subs.Publish(ProjectUpserted, id)
 	})
 
 	return id
@@ -172,8 +170,6 @@ func (c TaskConfig) UpsertNodes(
 	workspaceSlug string,
 	projectSlugToID map[string]string,
 ) (string, error) {
-	modelCtx := GetModelContext(ctx)
-	subs := modelCtx.Subs
 	id := relay.EncodeID(
 		NodeTypeTask,
 		workspaceSlug,
@@ -185,6 +181,9 @@ func (c TaskConfig) UpsertNodes(
 		task.WorkspaceID = workspaceID
 		task.VariableIDs = nil
 		task.StepIDs = nil
+
+		// We need to make sure the task exists before child nodes refer to it.
+		task.MustStore(ctx)
 
 		for variableIndex, variableConfig := range c.Variables {
 			variableID := variableConfig.UpsertNodes(
@@ -215,7 +214,6 @@ func (c TaskConfig) UpsertNodes(
 		}
 
 		task.MustStore(ctx)
-		subs.Publish(TaskUpserted, id)
 
 		return nil
 	})

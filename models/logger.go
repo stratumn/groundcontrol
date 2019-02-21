@@ -99,7 +99,6 @@ func (l *Logger) Add(
 	}
 	l.matchSourceFile(ctx, &logEntry)
 	logEntry.MustStore(ctx)
-	modelCtx.Subs.Publish(LogEntryAdded, logEntry.ID)
 
 	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
 		if l.head >= l.cap*2 {
@@ -143,7 +142,7 @@ func (l *Logger) Add(
 		atomic.AddInt64(&l.errorCounter, 1)
 	}
 
-	l.publishMetrics(ctx)
+	l.updateMetrics(ctx)
 
 	return logEntry.ID, nil
 }
@@ -240,7 +239,7 @@ func (l *Logger) ErrorWithOwner(
 	return id
 }
 
-func (l *Logger) publishMetrics(ctx context.Context) {
+func (l *Logger) updateMetrics(ctx context.Context) {
 	modelCtx := GetModelContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
@@ -251,8 +250,6 @@ func (l *Logger) publishMetrics(ctx context.Context) {
 		metrics.Error = int(atomic.LoadInt64(&l.errorCounter))
 		metrics.MustStore(ctx)
 	})
-
-	modelCtx.Subs.Publish(LogMetricsUpdated, system.LogMetricsID)
 }
 
 func (l *Logger) matchSourceFile(ctx context.Context, entry *LogEntry) {

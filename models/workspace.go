@@ -21,6 +21,7 @@ type Workspace struct {
 	ID          string   `json:"id"`
 	Slug        string   `json:"slug"`
 	Name        string   `json:"name"`
+	SourceID    string   `json:"source"`
 	ProjectIDs  []string `json:"projectIds"`
 	TaskIDs     []string `json:"taskIds"`
 	Description string   `json:"description"`
@@ -29,6 +30,11 @@ type Workspace struct {
 
 // IsNode tells gqlgen that it implements Node.
 func (Workspace) IsNode() {}
+
+// Source is the source which this workspace is part of.
+func (w Workspace) Source(ctx context.Context) Source {
+	return MustLoadSource(ctx, w.SourceID)
+}
 
 // Projects returns the workspace's projects.
 func (w Workspace) Projects(

@@ -26,7 +26,6 @@ import (
 // LoadGitSource loads the workspaces of the source and updates it.
 func LoadGitSource(ctx context.Context, sourceID string, priority models.JobPriority) (string, error) {
 	modelCtx := models.GetModelContext(ctx)
-	subs := modelCtx.Subs
 
 	err := models.LockGitSourceE(ctx, sourceID, func(source models.GitSource) error {
 		if source.IsLoading {
@@ -42,9 +41,7 @@ func LoadGitSource(ctx context.Context, sourceID string, priority models.JobPrio
 		return "", err
 	}
 
-	subs.Publish(models.SourceUpserted, sourceID)
-
-	jobID := modelCtx.Jobs.Add(
+	return modelCtx.Jobs.Add(
 		ctx,
 		LoadGitSourceJob,
 		sourceID,
@@ -52,9 +49,7 @@ func LoadGitSource(ctx context.Context, sourceID string, priority models.JobPrio
 		func(ctx context.Context) error {
 			return doLoadGitSource(ctx, sourceID)
 		},
-	)
-
-	return jobID, nil
+	), nil
 }
 
 func doLoadGitSource(ctx context.Context, sourceID string) error {
@@ -62,9 +57,6 @@ func doLoadGitSource(ctx context.Context, sourceID string) error {
 		workspaceIDs []string
 		err          error
 	)
-
-	modelCtx := models.GetModelContext(ctx)
-	subs := modelCtx.Subs
 
 	defer func() {
 		models.MustLockGitSource(ctx, sourceID, func(source models.GitSource) {
@@ -75,8 +67,6 @@ func doLoadGitSource(ctx context.Context, sourceID string) error {
 			source.IsLoading = false
 			source.MustStore(ctx)
 		})
-
-		subs.Publish(models.SourceUpserted, sourceID)
 	}()
 
 	directory, err := cloneOrPullSource(ctx, sourceID)
@@ -84,7 +74,7 @@ func doLoadGitSource(ctx context.Context, sourceID string) error {
 		return err
 	}
 
-	workspaceIDs, err = walkSourceDirectory(ctx, directory)
+	workspaceIDs, err = walkSourceDirectory(ctx, directory, sourceID)
 
 	return err
 }

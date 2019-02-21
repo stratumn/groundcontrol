@@ -59,7 +59,6 @@ func (p *ProcessManager) CreateGroup(ctx context.Context, taskID string) string 
 	}
 
 	group.MustStore(ctx)
-	modelCtx.Subs.Publish(ProcessGroupUpserted, id)
 
 	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
 		system.ProcessGroupIDs = append(
@@ -129,8 +128,6 @@ func (p *ProcessManager) Start(ctx context.Context, processID string) error {
 
 // Stop stops a running process.
 func (p *ProcessManager) Stop(ctx context.Context, processID string) error {
-	subs := GetModelContext(ctx).Subs
-
 	return LockProcessE(ctx, processID, func(process Process) error {
 		if process.Status != ProcessStatusRunning {
 			return ErrNotRunning
@@ -138,9 +135,6 @@ func (p *ProcessManager) Stop(ctx context.Context, processID string) error {
 
 		process.Status = ProcessStatusStopping
 		process.MustStore(ctx)
-
-		subs.Publish(ProcessUpserted, processID)
-		subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
 
 		actual, ok := p.commands.Load(processID)
 		if !ok {
@@ -186,7 +180,7 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 			waitGroup.Done()
 		}()
 
-		modelCtx.Subs.Subscribe(processCtx, ProcessUpserted, 0, func(msg interface{}) {
+		modelCtx.Subs.Subscribe(processCtx, MessageTypeProcessStored, 0, func(msg interface{}) {
 			id := msg.(string)
 			if id != processID {
 				return
@@ -209,7 +203,6 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 
 func (p *ProcessManager) exec(ctx context.Context, id string) {
 	modelCtx := GetModelContext(ctx)
-	subs := modelCtx.Subs
 
 	MustLockProcess(ctx, id, func(process Process) {
 		project := process.Project(ctx)
@@ -236,9 +229,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 		}
 
 		process.MustStore(ctx)
-		subs.Publish(ProcessUpserted, id)
-		subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
-		p.publishMetrics(ctx)
+		p.updateMetrics(ctx)
 
 		if err != nil {
 			modelCtx.Log.ErrorWithOwner(
@@ -280,9 +271,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 				process.MustStore(ctx)
 			})
 
-			subs.Publish(ProcessUpserted, id)
-			subs.Publish(ProcessGroupUpserted, process.ProcessGroupID)
-			p.publishMetrics(ctx)
+			p.updateMetrics(ctx)
 
 			stdout.Close()
 			stderr.Close()
@@ -290,7 +279,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 	})
 }
 
-func (p *ProcessManager) publishMetrics(ctx context.Context) {
+func (p *ProcessManager) updateMetrics(ctx context.Context) {
 	modelCtx := GetModelContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
@@ -300,8 +289,6 @@ func (p *ProcessManager) publishMetrics(ctx context.Context) {
 		metrics.Failed = int(atomic.LoadInt64(&p.failedCounter))
 		metrics.MustStore(ctx)
 	})
-
-	modelCtx.Subs.Publish(ProcessMetricsUpdated, system.ProcessMetricsID)
 }
 
 // CreateLineWriter creates a writer with a line splitter.

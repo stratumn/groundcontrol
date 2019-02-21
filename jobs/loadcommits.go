@@ -28,7 +28,7 @@ func LoadCommits(ctx context.Context, projectID string, priority models.JobPrior
 
 	modelCtx := models.GetModelContext(ctx)
 
-	jobID := modelCtx.Jobs.Add(
+	return modelCtx.Jobs.Add(
 		ctx,
 		LoadCommitsJob,
 		projectID,
@@ -36,36 +36,20 @@ func LoadCommits(ctx context.Context, projectID string, priority models.JobPrior
 		func(ctx context.Context) error {
 			return doLoadCommits(ctx, projectID)
 		},
-	)
-
-	return jobID, nil
+	), nil
 }
 
 func startLoadingCommits(ctx context.Context, projectID string) error {
-	modelCtx := models.GetModelContext(ctx)
-	subs := modelCtx.Subs
-	workspaceID := ""
-
-	err := models.LockProjectE(ctx, projectID, func(project models.Project) error {
+	return models.LockProjectE(ctx, projectID, func(project models.Project) error {
 		if project.IsLoadingCommits {
 			return ErrDuplicate
 		}
 
-		workspaceID = project.WorkspaceID
 		project.IsLoadingCommits = true
 		project.MustStore(ctx)
 
 		return nil
 	})
-
-	if err != nil {
-		return err
-	}
-
-	subs.Publish(models.ProjectUpserted, projectID)
-	subs.Publish(models.WorkspaceUpserted, workspaceID)
-
-	return nil
 }
 
 func doLoadCommits(ctx context.Context, projectID string) error {

@@ -20,6 +20,8 @@ import "context"
 type DirectorySource struct {
 	// The global ID of the node.
 	ID string `json:"id"`
+	// The ID of the user.
+	UserID string `json:"userId"`
 	// The IDs of the workspaces.
 	WorkspaceIDs []string `json:"workspaceIds"`
 	// Whether currently loading workspaces.
@@ -33,6 +35,11 @@ func (DirectorySource) IsNode() {}
 
 // IsSource tells gqlgen that it implements Source.
 func (DirectorySource) IsSource() {}
+
+// User returns the user who owns the source.
+func (n DirectorySource) User(ctx context.Context) User {
+	return MustLoadUser(ctx, n.UserID)
+}
 
 // GetWorkspaceIDs returns the IDs of the workspaces.
 func (n DirectorySource) GetWorkspaceIDs() []string {

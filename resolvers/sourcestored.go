@@ -20,33 +20,37 @@ import (
 	"groundcontrol/models"
 )
 
-func (r *subscriptionResolver) LogMetricsUpdated(
-	ctx context.Context,
-	id *string,
-	lastMessageID *string,
-) (<-chan models.LogMetrics, error) {
-	ctx = models.WithModelContext(ctx, r.ModelCtx)
-	ch := make(chan models.LogMetrics, SubscriptionChannelSize)
-
-	last := uint64(0)
-	if lastMessageID != nil {
-		var err error
-		last, err = decodeBase64Uint64(*lastMessageID)
-		if err != nil {
-			return nil, err
-		}
+func (r *subscriptionResolver) SourceStored(ctx context.Context, id *string, lastMessageID *string) (<-chan models.Source, error) {
+	dirCh, err := r.DirectorySourceStored(ctx, id, lastMessageID)
+	if err != nil {
+		return nil, err
 	}
 
-	r.ModelCtx.Subs.Subscribe(ctx, models.LogMetricsUpdated, last, func(msg interface{}) {
-		nodeID := msg.(string)
-		if id != nil && *id != nodeID {
-			return
+	gitCh, err := r.GitSourceStored(ctx, id, lastMessageID)
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan models.Source, SubscriptionChannelSize)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case node := <-dirCh:
+				select {
+				case ch <- node:
+				default:
+				}
+			case node := <-gitCh:
+				select {
+				case ch <- node:
+				default:
+				}
+			}
 		}
-		select {
-		case ch <- models.MustLoadLogMetrics(ctx, nodeID):
-		default:
-		}
-	})
+	}()
 
 	return ch, nil
 }

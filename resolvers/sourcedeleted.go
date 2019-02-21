@@ -20,34 +20,37 @@ import (
 	"groundcontrol/models"
 )
 
-func (r *subscriptionResolver) SourceDeleted(
-	ctx context.Context,
-	id *string,
-	lastMessageID *string,
-) (<-chan models.DeletedNode, error) {
-	ctx = models.WithModelContext(ctx, r.ModelCtx)
-	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
-
-	last := uint64(0)
-	if lastMessageID != nil {
-		var err error
-		last, err = decodeBase64Uint64(*lastMessageID)
-		if err != nil {
-			return nil, err
-		}
+func (r *subscriptionResolver) SourceDeleted(ctx context.Context, id *string, lastMessageID *string) (<-chan models.DeletedNode, error) {
+	dirCh, err := r.DirectorySourceDeleted(ctx, id, lastMessageID)
+	if err != nil {
+		return nil, err
 	}
 
-	r.ModelCtx.Subs.Subscribe(ctx, models.SourceDeleted, last, func(msg interface{}) {
-		sourceID := msg.(string)
-		if id != nil && *id != sourceID {
-			return
-		}
+	gitCh, err := r.GitSourceDeleted(ctx, id, lastMessageID)
+	if err != nil {
+		return nil, err
+	}
 
-		select {
-		case ch <- models.DeletedNode{ID: sourceID}:
-		default:
+	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case node := <-dirCh:
+				select {
+				case ch <- node:
+				default:
+				}
+			case node := <-gitCh:
+				select {
+				case ch <- node:
+				default:
+				}
+			}
 		}
-	})
+	}()
 
 	return ch, nil
 }

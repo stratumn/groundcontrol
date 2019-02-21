@@ -47,7 +47,6 @@ func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
 
 			key.MustStore(ctx)
 			keyIDs = append(keyIDs, key.ID)
-			GetModelContext(ctx).Subs.Publish(KeyUpserted, key.ID)
 		}
 
 		viewer.KeyIDs = keyIDs
@@ -87,8 +86,6 @@ func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
 
 		key.MustStore(ctx)
 		viewer.MustStore(ctx)
-
-		modelCtx.Subs.Publish(KeyUpserted, key.ID)
 	})
 
 	return key.ID
@@ -114,7 +111,6 @@ func (c *KeysConfig) DeleteKey(ctx context.Context, id string) error {
 
 			MustDeleteKey(ctx, id)
 			viewer.MustStore(ctx)
-			modelCtx.Subs.Publish(KeyDeleted, id)
 		})
 	})
 }
