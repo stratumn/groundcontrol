@@ -21,3 +21,13 @@ func FileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return !os.IsNotExist(err)
 }
+
+// IsDirectory returns whether a file is a directory.
+func IsDirectory(filename string) bool {
+	info, err := os.Stat(filename)
+	if err != nil {
+		return false
+	}
+
+	return info.Mode().IsDir()
+}

@@ -294,6 +294,10 @@ func (l *Logger) matchSourceFile(ctx context.Context, entry *LogEntry) {
 		return
 	}
 
+	if util.IsDirectory(fileName) {
+		return
+	}
+
 	entry.SourceFile = &sourceFile
 	entry.SourceFileBegin = &begin
 	entry.SourceFileEnd = &end

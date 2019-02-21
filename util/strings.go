@@ -25,7 +25,7 @@ var (
 )
 
 var sourceFileRegexes = []*regexp.Regexp{
-	regexp.MustCompile(`(\.?/[^:\s]+(:\d+)?(:(\d+))?)`),
+	regexp.MustCompile(`(\.?/[\w\d/\-.@]*(:\d+){0,2})`),
 }
 
 // MatchSourceFile tries to find a path to a source file in a string.
