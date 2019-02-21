@@ -16,29 +16,17 @@ package jobs
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 
 	"groundcontrol/models"
 )
 
 // LoadDirectorySource loads the workspaces of the source and updates it.
 func LoadDirectorySource(ctx context.Context, sourceID string, priority models.JobPriority) (string, error) {
-	modelCtx := models.GetModelContext(ctx)
-
-	err := models.LockDirectorySourceE(ctx, sourceID, func(source models.DirectorySource) error {
-		if source.IsLoading {
-			return ErrDuplicate
-		}
-
-		source.IsLoading = true
-		source.MustStore(ctx)
-
-		return nil
-	})
-	if err != nil {
+	if err := startLoadingDirectorySource(ctx, sourceID); err != nil {
 		return "", err
 	}
+
+	modelCtx := models.GetModelContext(ctx)
 
 	return modelCtx.Jobs.Add(
 		ctx,
@@ -51,70 +39,21 @@ func LoadDirectorySource(ctx context.Context, sourceID string, priority models.J
 	), nil
 }
 
-func doLoadDirectorySource(ctx context.Context, sourceID string) error {
-	var (
-		workspaceIDs []string
-		err          error
-	)
+func startLoadingDirectorySource(ctx context.Context, sourceID string) error {
+	return models.LockDirectorySourceE(ctx, sourceID, func(source models.DirectorySource) error {
+		if source.IsLoading {
+			return ErrDuplicate
+		}
 
-	defer func() {
-		models.MustLockDirectorySource(ctx, sourceID, func(source models.DirectorySource) {
-			if err == nil {
-				source.WorkspaceIDs = workspaceIDs
-			}
+		source.IsLoading = true
+		source.MustStore(ctx)
 
-			source.IsLoading = false
-			source.MustStore(ctx)
-		})
-	}()
-
-	source := models.MustLoadDirectorySource(ctx, sourceID)
-	workspaceIDs, err = walkSourceDirectory(ctx, source.Directory, sourceID)
-
-	return err
+		return nil
+	})
 }
 
-func walkSourceDirectory(
-	ctx context.Context,
-	directory string,
-	sourceID string,
-) (workspaceIDs []string, err error) {
-	err = filepath.Walk(
-		directory,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-			}
-
-			if info.IsDir() && info.Name() == ".git" {
-				return filepath.SkipDir
-			}
-
-			if filepath.Ext(path) != ".yml" {
-				return nil
-			}
-
-			config, err := models.LoadWorkspacesConfigYAML(path)
-			if err != nil {
-				return err
-			}
-
-			ids, err := config.UpsertNodes(ctx, sourceID)
-			if err != nil {
-				return err
-			}
-
-			workspaceIDs = append(workspaceIDs, ids...)
-
-			return nil
-		},
-	)
-
-	return
+func doLoadDirectorySource(ctx context.Context, sourceID string) error {
+	return models.MustLockDirectorySourceE(ctx, sourceID, func(source models.DirectorySource) error {
+		return source.Update(ctx)
+	})
 }

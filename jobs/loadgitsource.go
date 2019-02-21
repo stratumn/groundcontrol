@@ -18,28 +18,15 @@ import (
 	"context"
 
 	"groundcontrol/models"
-
-	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 // LoadGitSource loads the workspaces of the source and updates it.
 func LoadGitSource(ctx context.Context, sourceID string, priority models.JobPriority) (string, error) {
-	modelCtx := models.GetModelContext(ctx)
-
-	err := models.LockGitSourceE(ctx, sourceID, func(source models.GitSource) error {
-		if source.IsLoading {
-			return ErrDuplicate
-		}
-
-		source.IsLoading = true
-		source.MustStore(ctx)
-
-		return nil
-	})
-	if err != nil {
+	if err := startLoadingGitSource(ctx, sourceID); err != nil {
 		return "", err
 	}
+
+	modelCtx := models.GetModelContext(ctx)
 
 	return modelCtx.Jobs.Add(
 		ctx,
@@ -52,77 +39,21 @@ func LoadGitSource(ctx context.Context, sourceID string, priority models.JobPrio
 	), nil
 }
 
-func doLoadGitSource(ctx context.Context, sourceID string) error {
-	var (
-		workspaceIDs []string
-		err          error
-	)
+func startLoadingGitSource(ctx context.Context, sourceID string) error {
+	return models.LockGitSourceE(ctx, sourceID, func(source models.GitSource) error {
+		if source.IsLoading {
+			return ErrDuplicate
+		}
 
-	defer func() {
-		models.MustLockGitSource(ctx, sourceID, func(source models.GitSource) {
-			if err == nil {
-				source.WorkspaceIDs = workspaceIDs
-			}
+		source.IsLoading = true
+		source.MustStore(ctx)
 
-			source.IsLoading = false
-			source.MustStore(ctx)
-		})
-	}()
-
-	directory, err := cloneOrPullSource(ctx, sourceID)
-	if err != nil {
-		return err
-	}
-
-	workspaceIDs, err = walkSourceDirectory(ctx, directory, sourceID)
-
-	return err
+		return nil
+	})
 }
 
-func cloneOrPullSource(ctx context.Context, sourceID string) (string, error) {
-	var (
-		repo     *git.Repository
-		worktree *git.Worktree
-		err      error
-	)
-
-	modelCtx := models.GetModelContext(ctx)
-	source := models.MustLoadGitSource(ctx, sourceID)
-	directory := modelCtx.GetGitSourcePath(source.Repository, source.Reference)
-
-	if source.IsCloned(ctx) {
-		repo, err = git.PlainOpen(directory)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if repo != nil {
-		worktree, err = repo.Worktree()
-		if err == nil {
-			err = worktree.PullContext(
-				ctx,
-				&git.PullOptions{
-					RemoteName:    "origin",
-					ReferenceName: plumbing.ReferenceName(source.Reference),
-				},
-			)
-		}
-	} else {
-		_, err = git.PlainCloneContext(
-			ctx,
-			directory,
-			false,
-			&git.CloneOptions{
-				URL:           source.Repository,
-				ReferenceName: plumbing.ReferenceName(source.Reference),
-			},
-		)
-	}
-
-	if err != nil && err != git.NoErrAlreadyUpToDate {
-		return "", err
-	}
-
-	return directory, nil
+func doLoadGitSource(ctx context.Context, sourceID string) error {
+	return models.MustLockGitSourceE(ctx, sourceID, func(source models.GitSource) error {
+		return source.Update(ctx)
+	})
 }

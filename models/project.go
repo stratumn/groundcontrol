@@ -249,7 +249,7 @@ func (p Project) openRepository(ctx context.Context) (*git.Repository, error) {
 }
 
 // cloneCache bare clones the repository into the cache.
-func (p *Project) cloneCache(ctx context.Context) error {
+func (p Project) cloneCache(ctx context.Context) error {
 	cachePath := p.CachePath(ctx)
 	options := &git.CloneOptions{
 		URL:           p.Repository,
@@ -261,7 +261,7 @@ func (p *Project) cloneCache(ctx context.Context) error {
 }
 
 // fetch fetches either the cloned or the cached repository.
-func (p *Project) fetch(ctx context.Context) error {
+func (p Project) fetch(ctx context.Context) error {
 	repo, err := p.openRepository(ctx)
 	if err != nil {
 		return err
@@ -280,7 +280,7 @@ func (p *Project) fetch(ctx context.Context) error {
 }
 
 // loadCommits loads the commits of a reference.
-func (p *Project) loadCommits(
+func (p Project) loadCommits(
 	ctx context.Context,
 	refName plumbing.ReferenceName,
 ) ([]string, error) {
@@ -365,7 +365,7 @@ func (p *Project) updateStatus(ctx context.Context) error {
 }
 
 // iterateCommits creates an iterator for the commits of a reference.
-func (p *Project) iterateCommits(
+func (p Project) iterateCommits(
 	ctx context.Context,
 	refName plumbing.ReferenceName,
 ) (object.CommitIter, error) {

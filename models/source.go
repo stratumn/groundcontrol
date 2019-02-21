@@ -16,6 +16,8 @@ package models
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"groundcontrol/relay"
 )
@@ -57,4 +59,50 @@ func MustLoadSource(ctx context.Context, id string) Source {
 	}
 
 	panic(ErrType)
+}
+
+// LoadWorkspacesInSource loads and stores nodes for the workspaces in a directory recursively.
+func LoadWorkspacesInSource(
+	ctx context.Context,
+	directory string,
+	sourceID string,
+) ([]string, error) {
+	var workspaceIDs []string
+
+	return workspaceIDs, filepath.Walk(
+		directory,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
+			if info.IsDir() && info.Name() == ".git" {
+				return filepath.SkipDir
+			}
+
+			if filepath.Ext(path) != ".yml" {
+				return nil
+			}
+
+			config, err := LoadWorkspacesConfigYAML(path)
+			if err != nil {
+				return err
+			}
+
+			ids, err := config.UpsertNodes(ctx, sourceID)
+			if err != nil {
+				return err
+			}
+
+			workspaceIDs = append(workspaceIDs, ids...)
+
+			return nil
+		},
+	)
 }

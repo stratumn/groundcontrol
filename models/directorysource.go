@@ -63,3 +63,24 @@ func (n DirectorySource) Workspaces(
 		last,
 	)
 }
+
+// Update loads the workspaces and upserts the source.
+func (n *DirectorySource) Update(ctx context.Context) error {
+	n.IsLoading = true
+	n.MustStore(ctx)
+
+	defer func() {
+		n.IsLoading = false
+		n.MustStore(ctx)
+	}()
+
+	workspaceIDs, err := LoadWorkspacesInSource(ctx, n.Directory, n.ID)
+	if err != nil {
+		return err
+	}
+
+	n.WorkspaceIDs = workspaceIDs
+	n.MustStore(ctx)
+
+	return nil
+}
