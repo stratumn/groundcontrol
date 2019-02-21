@@ -37,13 +37,13 @@ func TestMatchSourceFile(t *testing.T) {
 		"hello world",
 		"", 0, 0, true,
 	}, {
-		"Colon after text",
-		"hello: world",
-		"", 0, 0, true,
-	}, {
 		"Source file",
-		"main.go:12",
-		"main.go:12", 0, 10, false,
+		"./main.go",
+		"./main.go", 0, 9, false,
+	}, {
+		"Source file with line",
+		"./main.go:12",
+		"./main.go:12", 0, 12, false,
 	}, {
 		"Text before source file",
 		"\tat ./abc/main.go:12",
@@ -54,24 +54,28 @@ func TestMatchSourceFile(t *testing.T) {
 		"./main.go:12", 0, 12, false,
 	}, {
 		"Source file with offset",
-		"main.go:12:10",
-		"main.go:12:10", 0, 13, false,
+		"./main.go:12:10",
+		"./main.go:12:10", 0, 15, false,
 	}, {
 		"Text after source file with offset",
-		"main.go:12:10hello",
-		"main.go:12:10", 0, 13, false,
+		"./main.go:12:10hello",
+		"./main.go:12:10", 0, 15, false,
 	}, {
 		"Source file in parentheses",
 		"    at Object.<anonymous> (/src/index.js:12) ",
 		"/src/index.js:12", 27, 43, false,
 	}, {
 		"Source file in parentheses with offset",
-		"in (src/main.go:12:6)",
-		"src/main.go:12:6", 4, 20, false,
+		"in (./src/main.go:12:6)",
+		"./src/main.go:12:6", 4, 22, false,
 	}, {
 		"Text in parentheses",
 		"in (test)",
 		"", 0, 0, true,
+	}, {
+		"Two source files",
+		"./main.go /util.go",
+		"./main.go", 0, 9, false,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
