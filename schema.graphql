@@ -1332,6 +1332,22 @@ type Subscription {
   """
   systemStored(id: ID, lastMessageId: ID): System! @stored
   """
+  Receive a directory source when added or updated.
+  """
+  directorySourceStored(id: ID, lastMessageId: ID): DirectorySource! @stored
+  """
+  Receive a message when a directory source is deleted.
+  """
+  directorySourceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  """
+  Receive a Git source when added or updated.
+  """
+  gitSourceStored(id: ID, lastMessageId: ID): GitSource! @stored
+  """
+  Receive a message when a Git source is deleted.
+  """
+  gitSourceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  """
   Receive a source when added or updated.
   """
   sourceStored(id: ID, lastMessageId: ID): Source!

@@ -10,6 +10,8 @@ import (
 	"github.com/99designs/gqlgen/codegen/templates"
 	"github.com/99designs/gqlgen/plugin"
 	"github.com/vektah/gqlparser/ast"
+
+	"groundcontrol/plugin/util"
 )
 
 // ModelBuild contains data about the models to build.
@@ -107,7 +109,7 @@ func (m *Plugin) Name() string {
 	return "modelgen"
 }
 
-// MutateConfig adds models to the configuration.
+// MutateConfig adds models.
 func (m *Plugin) MutateConfig(cfg *config.Config) error {
 	if err := cfg.Check(); err != nil {
 		return err
@@ -166,7 +168,7 @@ func (m *Plugin) MutateConfig(cfg *config.Config) error {
 					continue
 				}
 
-				typ, err := m.goType(cfg, schema, binder, field.Type.Name())
+				typ, err := util.GoType(cfg, schema, binder, field.Type.Name())
 				if err != nil {
 					return err
 				}
@@ -281,12 +283,12 @@ func (m *Plugin) connection(
 	nodeName := nodeType.Name()
 	nodeDef := schema.Types[nodeName]
 
-	edgeGoType, err := m.goType(cfg, schema, binder, edgeName)
+	edgeGoType, err := util.GoType(cfg, schema, binder, edgeName)
 	if err != nil {
 		return err
 	}
 
-	nodeGoType, err := m.goType(cfg, schema, binder, nodeName)
+	nodeGoType, err := util.GoType(cfg, schema, binder, nodeName)
 	if err != nil {
 		return err
 	}
@@ -322,7 +324,7 @@ func (m *Plugin) relate(
 		Tag:         `json:"` + idName + `"`,
 	})
 
-	relateGoType, err := m.goType(cfg, schema, binder, field.Type.Name())
+	relateGoType, err := util.GoType(cfg, schema, binder, field.Type.Name())
 	if err != nil {
 		return err
 	}
@@ -388,17 +390,17 @@ func (m *Plugin) paginate(
 	nodeName := nodeType.Name()
 	nodeDef := schema.Types[nodeName]
 
-	connectionGoType, err := m.goType(cfg, schema, binder, connectionName)
+	connectionGoType, err := util.GoType(cfg, schema, binder, connectionName)
 	if err != nil {
 		return err
 	}
 
-	edgeGoType, err := m.goType(cfg, schema, binder, edgeName)
+	edgeGoType, err := util.GoType(cfg, schema, binder, edgeName)
 	if err != nil {
 		return err
 	}
 
-	nodeGoType, err := m.goType(cfg, schema, binder, nodeName)
+	nodeGoType, err := util.GoType(cfg, schema, binder, nodeName)
 	if err != nil {
 		return err
 	}
@@ -413,7 +415,7 @@ func (m *Plugin) paginate(
 	}
 
 	for _, argument := range field.Arguments[4:] {
-		argumentGoType, err := m.goType(cfg, schema, binder, argument.Type.Name())
+		argumentGoType, err := util.GoType(cfg, schema, binder, argument.Type.Name())
 		if err != nil {
 			return err
 		}
@@ -429,13 +431,4 @@ func (m *Plugin) paginate(
 	obj.Paginates = append(obj.Paginates, paginates)
 
 	return nil
-}
-
-func (m *Plugin) goType(cfg *config.Config, schema *ast.Schema, binder *config.Binder, name string) (types.Type, error) {
-	if cfg.Models.UserDefined(name) {
-		pkg, typeName := PkgAndType(cfg.Models[name].Model[0])
-		return binder.FindType(pkg, typeName)
-	}
-
-	return types.NewNamed(types.NewTypeName(0, cfg.Model.Pkg(), templates.ToGo(name), nil), nil, nil), nil
 }

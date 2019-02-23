@@ -1,9 +1,14 @@
-package modelgen
+package util
 
 import (
+	"go/types"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/99designs/gqlgen/codegen/config"
+	"github.com/99designs/gqlgen/codegen/templates"
+	"github.com/vektah/gqlparser/ast"
 )
 
 func PkgAndType(name string) (string, string) {
@@ -28,4 +33,13 @@ var invalidPackageNameChar = regexp.MustCompile(`[^\w]`)
 
 func SanitizePackageName(pkg string) string {
 	return invalidPackageNameChar.ReplaceAllLiteralString(filepath.Base(pkg), "_")
+}
+
+func GoType(cfg *config.Config, schema *ast.Schema, binder *config.Binder, name string) (types.Type, error) {
+	if cfg.Models.UserDefined(name) {
+		pkg, typeName := PkgAndType(cfg.Models[name].Model[0])
+		return binder.FindType(pkg, typeName)
+	}
+
+	return types.NewNamed(types.NewTypeName(0, cfg.Model.Pkg(), templates.ToGo(name), nil), nil, nil), nil
 }

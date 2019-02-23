@@ -12,21 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run scripts/gqlgen.go
-
-package main
-
-import (
-	"log"
-	"net/http"
-	"os"
-
-	"groundcontrol/cmd"
-)
-
-var ui http.FileSystem
-
-func main() {
-	log.SetOutput(os.Stdout)
-	cmd.Execute(ui)
-}
+// Package subscriptiongen contains a plugin to generate subscriptions.
+package subscriptiongen

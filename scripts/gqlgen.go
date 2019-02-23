@@ -24,6 +24,7 @@ import (
 	"github.com/99designs/gqlgen/codegen/config"
 
 	"groundcontrol/plugin/modelgen"
+	"groundcontrol/plugin/subscriptiongen"
 )
 
 func main() {
@@ -36,6 +37,7 @@ func main() {
 	opts := []api.Option{
 		api.NoPlugins(),
 		api.AddPlugin(modelgen.New()),
+		api.AddPlugin(subscriptiongen.New("resolvers/auto_subscriptions.go", "resolvers")),
 	}
 
 	if err = api.Generate(cfg, opts...); err != nil {
