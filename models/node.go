@@ -14,8 +14,20 @@
 
 package models
 
+import "context"
+
 // Node represents a Relay node.
 type Node interface {
 	IsNode()
 	GetID() string
+}
+
+// MustLoadNode loads a Node or panics on failure.
+func MustLoadNode(ctx context.Context, id string) Node {
+	node, ok := GetModelContext(ctx).Nodes.Load(id)
+	if !ok {
+		panic(ErrNotFound)
+	}
+
+	return node
 }

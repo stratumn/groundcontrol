@@ -40,9 +40,9 @@ type Logger struct {
 	cap   int
 	level LogLevel
 
-	lastID      uint64
-	logEntryIDs []string
-	head        int
+	lastID        uint64
+	logEntriesIDs []string
+	head          int
 
 	debugCounter   int64
 	infoCounter    int64
@@ -56,11 +56,11 @@ type Logger struct {
 // NewLogger creates a Logger with given capacity and level.
 func NewLogger(cap int, level LogLevel) *Logger {
 	return &Logger{
-		cap:         cap,
-		level:       level,
-		logEntryIDs: make([]string, cap*2),
-		stdoutLog:   log.New(os.Stdout, "", log.LstdFlags),
-		stderrLog:   log.New(os.Stderr, "", log.LstdFlags),
+		cap:           cap,
+		level:         level,
+		logEntriesIDs: make([]string, cap*2),
+		stdoutLog:     log.New(os.Stdout, "", log.LstdFlags),
+		stderrLog:     log.New(os.Stderr, "", log.LstdFlags),
 	}
 }
 
@@ -102,10 +102,10 @@ func (l *Logger) Add(
 
 	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
 		if l.head >= l.cap*2 {
-			copy(l.logEntryIDs, l.logEntryIDs[l.cap:])
+			copy(l.logEntriesIDs, l.logEntriesIDs[l.cap:])
 			l.head = l.cap
 
-			for _, oldEntryID := range l.logEntryIDs[l.head:] {
+			for _, oldEntryID := range l.logEntriesIDs[l.head:] {
 				oldEntry := MustLoadLogEntry(ctx, oldEntryID)
 
 				switch oldEntry.Level {
@@ -123,11 +123,11 @@ func (l *Logger) Add(
 			}
 		}
 
-		l.logEntryIDs[l.head] = logEntry.ID
+		l.logEntriesIDs[l.head] = logEntry.ID
 
 		l.head++
 
-		system.LogEntryIDs = l.logEntryIDs[:l.head]
+		system.LogEntriesIDs = l.logEntriesIDs[:l.head]
 		system.MustStore(ctx)
 	})
 

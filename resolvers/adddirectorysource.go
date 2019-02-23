@@ -24,19 +24,20 @@ import (
 func (r *mutationResolver) AddDirectorySource(
 	ctx context.Context,
 	input models.DirectorySourceInput,
-) (models.DirectorySource, error) {
+) (*models.DirectorySource, error) {
 	modelCtx := models.GetModelContext(ctx)
 
 	id := modelCtx.Sources.UpsertDirectorySource(ctx, input)
 
 	if err := modelCtx.Sources.Save(); err != nil {
-		return models.DirectorySource{}, err
+		return nil, err
 	}
 
 	_, err := jobs.LoadDirectorySource(ctx, id, models.JobPriorityHigh)
 	if err != nil {
-		return models.DirectorySource{}, err
+		return nil, err
 	}
 
-	return models.MustLoadDirectorySource(ctx, id), nil
+	node := models.MustLoadDirectorySource(ctx, id)
+	return &node, nil
 }

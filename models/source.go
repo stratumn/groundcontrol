@@ -31,8 +31,8 @@ type Source interface {
 	// User returns the user who owns the source.
 	User(context.Context) User
 
-	// GetWorkspaceIDs returns the IDs of the workspaces.
-	GetWorkspaceIDs() []string
+	// GetWorkspacesIDs returns the IDs of the workspaces.
+	GetWorkspacesIDs() []string
 
 	// Workspaces are the workspaces using Relay pagination.
 	Workspaces(

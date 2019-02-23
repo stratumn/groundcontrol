@@ -61,9 +61,9 @@ func (p *ProcessManager) CreateGroup(ctx context.Context, taskID string) string 
 	group.MustStore(ctx)
 
 	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
-		system.ProcessGroupIDs = append(
+		system.ProcessGroupsIDs = append(
 			[]string{id},
-			system.ProcessGroupIDs...,
+			system.ProcessGroupsIDs...,
 		)
 
 		system.MustStore(ctx)
@@ -95,7 +95,7 @@ func (p *ProcessManager) Run(
 
 	process.MustStore(ctx)
 	MustLockProcessGroup(ctx, processGroupID, func(processGroup ProcessGroup) {
-		processGroup.ProcessIDs = append([]string{id}, processGroup.ProcessIDs...)
+		processGroup.ProcessesIDs = append([]string{id}, processGroup.ProcessesIDs...)
 		processGroup.MustStore(ctx)
 	})
 

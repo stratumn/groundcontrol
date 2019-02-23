@@ -16,38 +16,11 @@ package models
 
 import "context"
 
-// ProcessGroup represents a ProcessGroup in the app.
-type ProcessGroup struct {
-	ID         string   `json:"id"`
-	CreatedAt  DateTime `json:"createdAt"`
-	TaskID     string   `json:"taskId"`
-	ProcessIDs []string `json:"processIds"`
-}
-
-// IsNode tells gqlgen that it implements Node.
-func (ProcessGroup) IsNode() {}
-
-// Processes returns the ProcessGroup's processes.
-func (p ProcessGroup) Processes(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-) (ProcessConnection, error) {
-	return PaginateProcessIDSlice(ctx, p.ProcessIDs, after, before, first, last)
-}
-
-// Task returns the Task associated with the ProcessGroup.
-func (p ProcessGroup) Task(ctx context.Context) Task {
-	return MustLoadTask(ctx, p.TaskID)
-}
-
 // Status returns the status of the ProcessGroup.
 func (p ProcessGroup) Status(ctx context.Context) ProcessStatus {
 	status := ProcessStatusDone
 
-	for _, id := range p.ProcessIDs {
+	for _, id := range p.ProcessesIDs {
 		node := MustLoadProcess(ctx, id)
 
 		if node.Status == ProcessStatusFailed {

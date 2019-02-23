@@ -1,3 +1,9 @@
+directive @dynamic on FIELD_DEFINITION
+directive @relate(goIdFieldName: String) on FIELD_DEFINITION
+directive @paginate(goIdsFieldName: String) on FIELD_DEFINITION
+directive @stored on FIELD_DEFINITION
+directive @deleted on FIELD_DEFINITION
+
 """
 A date and time serialized as a string using the format `2006-01-02T15:04:05-0700`.
 """
@@ -518,7 +524,7 @@ type User implements Node {
     before: String
     first: Int
     last: Int
-  ): SourceConnection!
+  ): SourceConnection! @paginate
   """
   The workspaces using Relay pagination.
   """
@@ -527,11 +533,11 @@ type User implements Node {
     before: String
     first: Int
     last: Int
-  ): WorkspaceConnection!
+  ): WorkspaceConnection! @dynamic
   """
   The workspace with the given slug.
   """
-  workspace(slug: String!): Workspace
+  workspace(slug: String!): Workspace @dynamic
   """
   The projects using Relay pagination.
   """
@@ -540,7 +546,7 @@ type User implements Node {
     before: String
     first: Int
     last: Int
-  ): ProjectConnection!
+  ): ProjectConnection! @dynamic
   """
   The keys using Relay pagination.
   """
@@ -549,7 +555,7 @@ type User implements Node {
     before: String
     first: Int
     last: Int
-  ): KeyConnection!
+  ): KeyConnection! @paginate
 }
 
 """
@@ -569,7 +575,7 @@ type System implements Node {
     first: Int
     last: Int
     status: [JobStatus!]
-  ): JobConnection!
+  ): JobConnection! @paginate
   """
   The process groups using Relay pagination optionally filtered by status.
   """
@@ -579,7 +585,7 @@ type System implements Node {
     first: Int
     last: Int
     status: [ProcessStatus!]
-  ): ProcessGroupConnection!
+  ): ProcessGroupConnection! @paginate
   """
   The log entries using Relay pagination optionally filtered by level and/or owner ID.
   """
@@ -590,23 +596,23 @@ type System implements Node {
     last: Int
     level: [LogLevel!]
     ownerId: ID
-  ): LogEntryConnection!
+  ): LogEntryConnection! @paginate
   """
   The job metrics.
   """
-  jobMetrics: JobMetrics!
+  jobMetrics: JobMetrics! @relate
   """
   The process metrics.
   """
-  processMetrics: ProcessMetrics!
+  processMetrics: ProcessMetrics! @relate
   """
   The log metrics.
   """
-  logMetrics: LogMetrics!
+  logMetrics: LogMetrics! @relate
   """
   The ID of the last message which can be used for subscriptions.
   """
-  lastMessageId: ID!
+  lastMessageId: ID! @dynamic
 }
 
 """
@@ -620,7 +626,7 @@ type DirectorySource implements Node & Source {
   """
   The user who owns the source.
   """
-  user: User!
+  user: User! @relate
   """
   The workspaces using Relay pagination.
   """
@@ -629,7 +635,7 @@ type DirectorySource implements Node & Source {
     before: String
     first: Int
     last: Int
-  ): WorkspaceConnection!
+  ): WorkspaceConnection! @paginate
   """
   Whether currently loading workspaces.
   """
@@ -651,7 +657,7 @@ type GitSource implements Node & Source {
   """
   The user who owns the source.
   """
-  user: User!
+  user: User! @relate
   """
   The workspaces using Relay pagination.
   """
@@ -660,7 +666,7 @@ type GitSource implements Node & Source {
     before: String
     first: Int
     last: Int
-  ): WorkspaceConnection!
+  ): WorkspaceConnection! @paginate
   """
   Whether currently loading workspaces.
   """
@@ -676,11 +682,11 @@ type GitSource implements Node & Source {
   """
   The short name of the Git reference.
   """
-  referenceShort: String!
+  referenceShort: String! @dynamic
   """
   Whether cloned.
   """
-  isCloned: Boolean!
+  isCloned: Boolean! @dynamic
 }
 
 """
@@ -702,7 +708,7 @@ type Workspace implements Node {
   """
   The source which this workspace is part of.
   """
-  source: Source!
+  source: Source! @relate
   """
   The projects using Relay pagination.
   """
@@ -711,7 +717,7 @@ type Workspace implements Node {
     before: String
     first: Int
     last: Int
-  ): ProjectConnection!
+  ): ProjectConnection! @paginate
   """
   The tasks using Relay pagination.
   """
@@ -720,7 +726,7 @@ type Workspace implements Node {
     before: String
     first: Int
     last: Int
-  ): TaskConnection!
+  ): TaskConnection! @paginate
   """
   The optional description.
   """
@@ -732,23 +738,23 @@ type Workspace implements Node {
   """
   Whether any of the projects is currently cloning.
   """
-  isCloning: Boolean!
+  isCloning: Boolean! @dynamic
   """
   Whether all projects are cloned.
   """
-  isCloned: Boolean!
+  isCloned: Boolean! @dynamic
   """
   Whether any of the projects is currently pulling.
   """
-  isPulling: Boolean!
+  isPulling: Boolean! @dynamic
   """
   Whether any of the projects is behind (see Project).
   """
-  isBehind: Boolean!
+  isBehind: Boolean! @dynamic
   """
   Whether any of the projects is ahead (see Project).
   """
-  isAhead: Boolean!
+  isAhead: Boolean! @dynamic
 }
 
 """
@@ -782,15 +788,15 @@ type Project implements Node {
   """
   The short name of the Git reference to use when cloning.
   """
-  referenceShort: String!
+  referenceShort: String! @dynamic
   """
   The short name of the remote Git reference.
   """
-  remoteReferenceShort: String!
+  remoteReferenceShort: String! @dynamic
   """
   The short name of the local Git reference.
   """
-  localReferenceShort: String!
+  localReferenceShort: String! @dynamic
   """
   The optional description.
   """
@@ -803,7 +809,7 @@ type Project implements Node {
     before: String
     first: Int
     last: Int
-  ): CommitConnection!
+  ): CommitConnection! @paginate
   """
   The local commits using Relay pagination.
   """
@@ -812,11 +818,11 @@ type Project implements Node {
     before: String
     first: Int
     last: Int
-  ): CommitConnection!
+  ): CommitConnection! @paginate
   """
   The parent workspace.
   """
-  workspace: Workspace!
+  workspace: Workspace! @relate
   """
   Whether currently loading commits.
   """
@@ -828,7 +834,7 @@ type Project implements Node {
   """
   Whether cloned.
   """
-  isCloned: Boolean!
+  isCloned: Boolean! @dynamic
   """
   Whether currently pulling.
   """
@@ -893,7 +899,7 @@ type Task implements Node {
     before: String
     first: Int
     last: Int
-  ): VariableConnection!
+  ): VariableConnection! @paginate
   """
   The steps using Relay pagination.
   """
@@ -902,11 +908,11 @@ type Task implements Node {
     before: String
     first: Int
     last: Int
-  ): StepConnection!
+  ): StepConnection! @paginate
   """
   The parent workspace.
   """
-  workspace: Workspace!
+  workspace: Workspace! @relate
   """
   Whether currently running.
   """
@@ -947,7 +953,7 @@ type Step implements Node {
     before: String
     first: Int
     last: Int
-  ): ProjectConnection!
+  ): ProjectConnection! @paginate
   """
   The commands using Relay pagination.
   """
@@ -956,11 +962,11 @@ type Step implements Node {
     before: String
     first: Int
     last: Int
-  ): CommandConnection!
+  ): CommandConnection! @paginate
   """
   The parent task.
   """
-  task: Task!
+  task: Task! @relate
 }
 
 """
@@ -1026,7 +1032,7 @@ type Job implements Node {
   """
   The node it belongs to.
   """
-  owner: Node!
+  owner: Node! @relate
 }
 
 """
@@ -1044,11 +1050,11 @@ type ProcessGroup implements Node {
   """
   The current status.
   """
-  status: ProcessStatus!
+  status: ProcessStatus! @dynamic
   """
   The parent task.
   """
-  task: Task!
+  task: Task! @relate
   """
   The processes using Relay pagination.
   """
@@ -1057,7 +1063,7 @@ type ProcessGroup implements Node {
     before: String
     first: Int
     last: Int
-  ): ProcessConnection!
+  ): ProcessConnection! @paginate
 }
 
 """
@@ -1084,11 +1090,11 @@ type Process implements Node {
   """
   The parent process group.
   """
-  processGroup: ProcessGroup!
+  processGroup: ProcessGroup! @relate
   """
   The parent project.
   """
-  project: Project!
+  project: Project! @relate
 }
 
 """
@@ -1114,7 +1120,7 @@ type LogEntry implements Node {
   """
   The node it belongs to.
   """
-  owner: Node
+  owner: Node @relate
   """
   A path to a source file using the format `/path/to/file:line:offset?`, if one was found in the message.
   """
@@ -1320,11 +1326,11 @@ type Subscription {
   """
   Receive a user when added or updated.
   """
-  userStored(id: ID, lastMessageId: ID): User!
+  userStored(id: ID, lastMessageId: ID): User! @stored
   """
   Receive a system when added or updated.
   """
-  systemStored(id: ID, lastMessageId: ID): System!
+  systemStored(id: ID, lastMessageId: ID): System! @stored
   """
   Receive a source when added or updated.
   """
@@ -1336,61 +1342,61 @@ type Subscription {
   """
   Receive a workspace when added updated.
   """
-  workspaceStored(id: ID, lastMessageId: ID): Workspace!
+  workspaceStored(id: ID, lastMessageId: ID): Workspace! @stored
   """
   Receive a message when a workspace is deleted.
   """
-  workspaceDeleted(id: ID, lastMessageId: ID): DeletedNode!
+  workspaceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
   """
   Receive a project when added or updated.
   """
-  projectStored(id: ID, lastMessageId: ID): Project!
+  projectStored(id: ID, lastMessageId: ID): Project! @stored
   """
   Receive a message when a project is deleted.
   """
-  projectDeleted(id: ID, lastMessageId: ID): DeletedNode!
+  projectDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
   """
   Receive a task when added or updated.
   """
-  taskStored(id: ID, lastMessageId: ID): Task!
+  taskStored(id: ID, lastMessageId: ID): Task! @stored
   """
   Receive a message when a task is deleted.
   """
-  taskDeleted(id: ID, lastMessageId: ID): DeletedNode!
+  taskDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
   """
   Receive a key when added or updated.
   """
-  keyStored(id: ID, lastMessageId: ID): Key!
+  keyStored(id: ID, lastMessageId: ID): Key! @stored
   """
   Receive a message when a key is deleted.
   """
-  keyDeleted(id: ID, lastMessageId: ID): DeletedNode!
+  keyDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
   """
   Receive a job when added or updated.
   """
-  jobStored(id: ID, lastMessageId: ID): Job!
+  jobStored(id: ID, lastMessageId: ID): Job! @stored
   """
   Receive a process group when added or updated.
   """
-  processGroupStored(id: ID, lastMessageId: ID): ProcessGroup!
+  processGroupStored(id: ID, lastMessageId: ID): ProcessGroup! @stored
   """
   Receive a process when added or updated.
   """
-  processStored(id: ID, lastMessageId: ID): Process!
+  processStored(id: ID, lastMessageId: ID): Process! @stored
   """
   Receive a log entry when added or updated.
   """
-  logEntryStored(id: ID, lastMessageId: ID): LogEntry!
+  logEntryStored(id: ID, lastMessageId: ID): LogEntry! @stored
   """
   Receive a job metrics when added or updated.
   """
-  jobMetricsStored(id: ID, lastMessageId: ID): JobMetrics!
+  jobMetricsStored(id: ID, lastMessageId: ID): JobMetrics! @stored
   """
   Receive a process metrics when added or updated.
   """
-  processMetricsStored(id: ID, lastMessageId: ID): ProcessMetrics!
+  processMetricsStored(id: ID, lastMessageId: ID): ProcessMetrics! @stored
   """
   Receive a log metrics when logs are updated.
   """
-  logMetricsStored(id: ID, lastMessageId: ID): LogMetrics!
+  logMetricsStored(id: ID, lastMessageId: ID): LogMetrics! @stored
 }

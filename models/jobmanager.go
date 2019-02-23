@@ -77,7 +77,7 @@ func (j *JobManager) Add(
 	job.MustStore(ctx)
 
 	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
-		system.JobIDs = append([]string{job.ID}, system.JobIDs...)
+		system.JobsIDs = append([]string{job.ID}, system.JobsIDs...)
 		system.MustStore(ctx)
 	})
 

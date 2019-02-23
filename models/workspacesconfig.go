@@ -34,7 +34,7 @@ type WorkspacesConfig struct {
 type WorkspaceConfig struct {
 	Slug        string          `json:"slug"`
 	Name        string          `json:"name"`
-	Description string          `json:"description"`
+	Description *string         `json:"description"`
 	Notes       *string         `json:"notes"`
 	Projects    []ProjectConfig `json:"projects" yaml:",flow"`
 	Tasks       []TaskConfig    `json:"tasks"`
@@ -95,8 +95,8 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 		workspace.Description = c.Description
 		workspace.Notes = c.Notes
 		workspace.SourceID = sourceID
-		workspace.ProjectIDs = nil
-		workspace.TaskIDs = nil
+		workspace.ProjectsIDs = nil
+		workspace.TasksIDs = nil
 		projectSlugToID := map[string]string{}
 
 		// We need to make sure the workspace exists before child nodes refer to it.
@@ -104,7 +104,7 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 
 		for _, projectConfig := range c.Projects {
 			projectID := projectConfig.UpsertNodes(ctx, id, c.Slug)
-			workspace.ProjectIDs = append(workspace.ProjectIDs, projectID)
+			workspace.ProjectsIDs = append(workspace.ProjectsIDs, projectID)
 			projectSlugToID[projectConfig.Slug] = projectID
 		}
 
@@ -114,7 +114,7 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 				return err
 			}
 
-			workspace.TaskIDs = append(workspace.TaskIDs, taskID)
+			workspace.TasksIDs = append(workspace.TasksIDs, taskID)
 		}
 
 		workspace.MustStore(ctx)
@@ -179,8 +179,8 @@ func (c TaskConfig) UpsertNodes(
 	err := MustLockOrNewTaskE(ctx, id, func(task Task) error {
 		task.Name = c.Name
 		task.WorkspaceID = workspaceID
-		task.VariableIDs = nil
-		task.StepIDs = nil
+		task.VariablesIDs = nil
+		task.StepsIDs = nil
 
 		// We need to make sure the task exists before child nodes refer to it.
 		task.MustStore(ctx)
@@ -194,7 +194,7 @@ func (c TaskConfig) UpsertNodes(
 				variableIndex,
 			)
 
-			task.VariableIDs = append(task.VariableIDs, variableID)
+			task.VariablesIDs = append(task.VariablesIDs, variableID)
 		}
 
 		for stepIndex, stepConfig := range c.Steps {
@@ -210,7 +210,7 @@ func (c TaskConfig) UpsertNodes(
 				return err
 			}
 
-			task.StepIDs = append(task.StepIDs, stepID)
+			task.StepsIDs = append(task.StepsIDs, stepID)
 		}
 
 		task.MustStore(ctx)
@@ -269,15 +269,15 @@ func (c StepConfig) UpsertNodes(
 
 	err := MustLockOrNewStepE(ctx, id, func(step Step) error {
 		step.TaskID = taskID
-		step.ProjectIDs = nil
-		step.CommandIDs = nil
+		step.ProjectsIDs = nil
+		step.CommandsIDs = nil
 
 		for _, slug := range c.Projects {
 			id, ok := projectSlugToID[slug]
 			if !ok {
 				return ErrNotFound
 			}
-			step.ProjectIDs = append(step.ProjectIDs, id)
+			step.ProjectsIDs = append(step.ProjectsIDs, id)
 		}
 
 		for commandIndex, command := range c.Commands {
@@ -289,7 +289,7 @@ func (c StepConfig) UpsertNodes(
 				fmt.Sprint(commandIndex),
 			)
 			Command{ID: id, Command: command}.MustStore(ctx)
-			step.CommandIDs = append(step.CommandIDs, id)
+			step.CommandsIDs = append(step.CommandsIDs, id)
 		}
 
 		step.MustStore(ctx)

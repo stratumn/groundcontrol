@@ -26,7 +26,7 @@ import (
 func (r *mutationResolver) OpenEditor(
 	ctx context.Context,
 	filename string,
-) (models.Ok, error) {
+) (*models.Ok, error) {
 	modelCtx := models.GetModelContext(ctx)
 
 	command := fmt.Sprintf(modelCtx.OpenEditorCommand, filename)
@@ -34,8 +34,8 @@ func (r *mutationResolver) OpenEditor(
 	cmd := exec.Command(parts[0], parts[1:]...)
 
 	if err := cmd.Run(); err != nil {
-		return models.Ok{}, err
+		return nil, err
 	}
 
-	return models.Ok{Ok: true}, nil
+	return &models.Ok{Ok: true}, nil
 }

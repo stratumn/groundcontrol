@@ -28,7 +28,7 @@ func LoadAllSources(ctx context.Context) []string {
 
 	var jobIDs []string
 
-	for _, sourceID := range viewer.SourceIDs {
+	for _, sourceID := range viewer.SourcesIDs {
 		jobID, err := LoadSource(ctx, sourceID, models.JobPriorityNormal)
 		if err != nil {
 			modelCtx.Log.ErrorWithOwner(

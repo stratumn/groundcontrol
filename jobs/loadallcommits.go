@@ -28,10 +28,10 @@ func LoadAllCommits(ctx context.Context) []string {
 
 	var jobIDs []string
 
-	for _, workspaceID := range viewer.WorkspaceIDs(ctx) {
+	for _, workspaceID := range viewer.WorkspacesIDs(ctx) {
 		workspace := models.MustLoadWorkspace(ctx, workspaceID)
 
-		for _, projectID := range workspace.ProjectIDs {
+		for _, projectID := range workspace.ProjectsIDs {
 			project := models.MustLoadProject(ctx, projectID)
 
 			if project.IsLoadingCommits {

@@ -24,19 +24,20 @@ import (
 func (r *mutationResolver) AddGitSource(
 	ctx context.Context,
 	input models.GitSourceInput,
-) (models.GitSource, error) {
+) (*models.GitSource, error) {
 	modelCtx := models.GetModelContext(ctx)
 
 	id := modelCtx.Sources.UpsertGitSource(ctx, input)
 
 	if err := modelCtx.Sources.Save(); err != nil {
-		return models.GitSource{}, err
+		return nil, err
 	}
 
 	_, err := jobs.LoadGitSource(ctx, id, models.JobPriorityHigh)
 	if err != nil {
-		return models.GitSource{}, err
+		return nil, err
 	}
 
-	return models.MustLoadGitSource(ctx, id), nil
+	node := models.MustLoadGitSource(ctx, id)
+	return &node, err
 }

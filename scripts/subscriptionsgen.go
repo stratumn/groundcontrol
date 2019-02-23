@@ -69,9 +69,9 @@ import (
 )
 
 {{range $index, $type := .}}
-func (r *subscriptionResolver) {{$type}}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan models.{{$type}}, error) {
+func (r *subscriptionResolver) {{$type}}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan *models.{{$type}}, error) {
 	ctx = models.WithModelContext(ctx, r.ModelCtx)
-	ch := make(chan models.{{$type}}, SubscriptionChannelSize)
+	ch := make(chan *models.{{$type}}, SubscriptionChannelSize)
 
 	last := uint64(0)
 	if lastMessageID != nil {
@@ -87,8 +87,9 @@ func (r *subscriptionResolver) {{$type}}Stored(ctx context.Context, id *string, 
 		if id != nil && *id != nodeID {
 			return
 		}
+		node := models.MustLoad{{$type}}(ctx, nodeID)
 		select {
-		case ch <- models.MustLoad{{$type}}(ctx, nodeID):
+		case ch <- &node:
 		default:
 		}
 	})
@@ -96,9 +97,9 @@ func (r *subscriptionResolver) {{$type}}Stored(ctx context.Context, id *string, 
 	return ch, nil
 }
 
-func (r *subscriptionResolver) {{$type}}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan models.DeletedNode, error) {
+func (r *subscriptionResolver) {{$type}}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan *models.DeletedNode, error) {
 	ctx = models.WithModelContext(ctx, r.ModelCtx)
-	ch := make(chan models.DeletedNode, SubscriptionChannelSize)
+	ch := make(chan *models.DeletedNode, SubscriptionChannelSize)
 
 	last := uint64(0)
 	if lastMessageID != nil {
@@ -115,7 +116,7 @@ func (r *subscriptionResolver) {{$type}}Deleted(ctx context.Context, id *string,
 			return
 		}
 		select {
-		case ch <- models.DeletedNode{ID: nodeID}:
+		case ch <- &models.DeletedNode{ID: nodeID}:
 		default:
 		}
 	})

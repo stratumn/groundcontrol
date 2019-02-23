@@ -20,16 +20,16 @@ import (
 	"groundcontrol/models"
 )
 
-func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (models.ProcessGroup, error) {
+func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (*models.ProcessGroup, error) {
 	modelCtx := models.GetModelContext(ctx)
 	pm := modelCtx.PM
 
 	processGroup, err := models.LoadProcessGroup(ctx, id)
 	if err != nil {
-		return models.ProcessGroup{}, err
+		return nil, err
 	}
 
-	for _, processID := range processGroup.ProcessIDs {
+	for _, processID := range processGroup.ProcessesIDs {
 		process := models.MustLoadProcess(ctx, processID)
 
 		if process.Status == models.ProcessStatusRunning {
@@ -37,9 +37,9 @@ func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (mo
 		}
 
 		if err := pm.Start(ctx, process.ID); err != nil {
-			return models.ProcessGroup{}, err
+			return nil, err
 		}
 	}
 
-	return processGroup, nil
+	return &processGroup, nil
 }

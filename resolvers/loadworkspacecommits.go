@@ -29,10 +29,10 @@ func (r *mutationResolver) LoadWorkspaceCommits(ctx context.Context, id string) 
 
 	var slice []models.Job
 
-	for _, projectID := range workspace.ProjectIDs {
+	for _, projectID := range workspace.ProjectsIDs {
 		project := models.MustLoadProject(ctx, projectID)
 
-		if project.IsLoadingCommits || len(project.RemoteCommitIDs) > 0 {
+		if project.IsLoadingCommits || len(project.RemoteCommitsIDs) > 0 {
 			continue
 		}
 

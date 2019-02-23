@@ -20,13 +20,14 @@ import (
 	"groundcontrol/models"
 )
 
-func (r *mutationResolver) StopJob(ctx context.Context, id string) (models.Job, error) {
+func (r *mutationResolver) StopJob(ctx context.Context, id string) (*models.Job, error) {
 	modelCtx := models.GetModelContext(ctx)
 	jobs := modelCtx.Jobs
 
 	if err := jobs.Stop(ctx, id); err != nil {
-		return models.Job{}, nil
+		return nil, err
 	}
 
-	return models.MustLoadJob(ctx, id), nil
+	node := models.MustLoadJob(ctx, id)
+	return &node, nil
 }

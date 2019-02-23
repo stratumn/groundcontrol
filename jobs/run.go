@@ -70,13 +70,13 @@ func doRun(ctx context.Context, taskID string, env []string, workspaceID string,
 	task := models.MustLoadTask(ctx, taskID)
 	processGroupID := ""
 
-	for _, stepID := range task.StepIDs {
+	for _, stepID := range task.StepsIDs {
 		step := models.MustLoadStep(ctx, stepID)
 
-		for _, commandID := range step.CommandIDs {
+		for _, commandID := range step.CommandsIDs {
 			command := models.MustLoadCommand(ctx, commandID)
 
-			for _, projectID := range step.ProjectIDs {
+			for _, projectID := range step.ProjectsIDs {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()

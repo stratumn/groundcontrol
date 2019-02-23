@@ -29,12 +29,14 @@ func (r *queryResolver) Node(ctx context.Context, id string) (models.Node, error
 	return node, nil
 }
 
-func (r *queryResolver) Viewer(ctx context.Context) (models.User, error) {
+func (r *queryResolver) Viewer(ctx context.Context) (*models.User, error) {
 	modelCtx := models.GetModelContext(ctx)
-	return models.MustLoadUser(ctx, modelCtx.ViewerID), nil
+	node := models.MustLoadUser(ctx, modelCtx.ViewerID)
+	return &node, nil
 }
 
-func (r *queryResolver) System(ctx context.Context) (models.System, error) {
+func (r *queryResolver) System(ctx context.Context) (*models.System, error) {
 	modelCtx := models.GetModelContext(ctx)
-	return models.MustLoadSystem(ctx, modelCtx.SystemID), nil
+	system := models.MustLoadSystem(ctx, modelCtx.SystemID)
+	return &system, nil
 }

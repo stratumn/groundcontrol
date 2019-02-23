@@ -20,16 +20,16 @@ import (
 	"groundcontrol/models"
 )
 
-func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (models.DeletedNode, error) {
+func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (*models.DeletedNode, error) {
 	modelCtx := models.GetModelContext(ctx)
 
 	if err := modelCtx.Sources.DeleteSource(ctx, id); err != nil {
-		return models.DeletedNode{}, nil
+		return nil, nil
 	}
 
 	if err := modelCtx.Sources.Save(); err != nil {
-		return models.DeletedNode{}, err
+		return nil, err
 	}
 
-	return models.DeletedNode{ID: id}, nil
+	return &models.DeletedNode{ID: id}, nil
 }

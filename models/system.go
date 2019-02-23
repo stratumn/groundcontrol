@@ -20,147 +20,47 @@ import (
 	"fmt"
 )
 
-// System contains information about the running app.
-type System struct {
-	ID               string   `json:"id"`
-	JobIDs           []string `json:"jobsIds"`
-	JobMetricsID     string   `json:"jobMetricsId"`
-	ProcessGroupIDs  []string `json:"processGroupIds"`
-	ProcessMetricsID string   `json:"processMetricsId"`
-	LogEntryIDs      []string `json:"logEntryIds"`
-	LogMetricsID     string   `json:"logMetricsId"`
-}
+func (s System) filterJobsNode(ctx context.Context, node Job, status []JobStatus) bool {
+	match := len(status) == 0
 
-// IsNode tells gqlgen that it implements Node.
-func (System) IsNode() {}
-
-// Jobs returns paginated jobs.
-func (s System) Jobs(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-	status []JobStatus,
-) (JobConnection, error) {
-	var slice []Job
-
-	for _, nodeID := range s.JobIDs {
-		node := MustLoadJob(ctx, nodeID)
-		match := len(status) == 0
-
-		for _, v := range status {
-			if node.Status == v {
-				match = true
-				break
-			}
-		}
-
-		if match {
-			slice = append(slice, node)
+	for _, v := range status {
+		if node.Status == v {
+			match = true
+			break
 		}
 	}
 
-	return PaginateJobSlice(
-		slice,
-		after,
-		before,
-		first,
-		last,
-	)
+	return match
 }
 
-// JobMetrics returns the JobMetrics node.
-func (s System) JobMetrics(ctx context.Context) JobMetrics {
-	return MustLoadJobMetrics(ctx, s.JobMetricsID)
-}
+func (s System) filterProcessGroupsNode(ctx context.Context, node ProcessGroup, status []ProcessStatus) bool {
+	match := len(status) == 0
 
-// ProcessGroups returns paginated process groups.
-func (s System) ProcessGroups(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-	status []ProcessStatus,
-) (ProcessGroupConnection, error) {
-	var slice []ProcessGroup
-
-	for _, nodeID := range s.ProcessGroupIDs {
-		node := MustLoadProcessGroup(ctx, nodeID)
-		match := len(status) == 0
-
-		for _, v := range status {
-			if node.Status(ctx) == v {
-				match = true
-				break
-			}
-		}
-
-		if match {
-			slice = append(slice, node)
+	for _, v := range status {
+		if node.Status(ctx) == v {
+			match = true
+			break
 		}
 	}
 
-	return PaginateProcessGroupSlice(
-		slice,
-		after,
-		before,
-		first,
-		last,
-	)
+	return match
 }
 
-// ProcessMetrics returns the ProcessMetrics node.
-func (s System) ProcessMetrics(ctx context.Context) ProcessMetrics {
-	return MustLoadProcessMetrics(ctx, s.ProcessMetricsID)
-}
+func (s System) filterLogEntriesNode(ctx context.Context, node LogEntry, level []LogLevel, ownerID *string) bool {
+	if ownerID != nil && *ownerID != node.OwnerID {
+		return false
+	}
 
-// LogEntries returns paginated log entries.
-func (s System) LogEntries(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-	level []LogLevel,
-	ownerID *string,
-) (LogEntryConnection, error) {
-	var slice []LogEntry
+	match := len(level) == 0
 
-	for _, nodeID := range s.LogEntryIDs {
-		node := MustLoadLogEntry(ctx, nodeID)
-
-		if ownerID != nil && *ownerID != node.OwnerID {
-			continue
-		}
-
-		match := len(level) == 0
-
-		for _, v := range level {
-			if node.Level == v {
-				match = true
-				break
-			}
-		}
-
-		if match {
-			slice = append(slice, node)
+	for _, v := range level {
+		if node.Level == v {
+			match = true
+			break
 		}
 	}
 
-	return PaginateLogEntrySlice(
-		slice,
-		after,
-		before,
-		first,
-		last,
-	)
-}
-
-// LogMetrics returns the LogMetrics node.
-func (s System) LogMetrics(ctx context.Context) LogMetrics {
-	return MustLoadLogMetrics(ctx, s.LogMetricsID)
+	return match
 }
 
 // LastMessageID is the ID of the last message which can be used for subscriptions.

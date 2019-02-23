@@ -21,11 +21,12 @@ import (
 	"groundcontrol/models"
 )
 
-func (r *mutationResolver) PullProject(ctx context.Context, id string) (models.Job, error) {
+func (r *mutationResolver) PullProject(ctx context.Context, id string) (*models.Job, error) {
 	jobID, err := jobs.Pull(ctx, id, models.JobPriorityHigh)
 	if err != nil {
-		return models.Job{}, err
+		return nil, err
 	}
 
-	return models.MustLoadJob(ctx, jobID), nil
+	node := models.MustLoadJob(ctx, jobID)
+	return &node, nil
 }

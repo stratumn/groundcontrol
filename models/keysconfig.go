@@ -36,7 +36,7 @@ func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
 	modelCtx := GetModelContext(ctx)
 
 	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
-		var keyIDs []string
+		var keysIDs []string
 
 		for name, value := range c.Keys {
 			key := Key{
@@ -46,10 +46,10 @@ func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
 			}
 
 			key.MustStore(ctx)
-			keyIDs = append(keyIDs, key.ID)
+			keysIDs = append(keysIDs, key.ID)
 		}
 
-		viewer.KeyIDs = keyIDs
+		viewer.KeysIDs = keysIDs
 		viewer.MustStore(ctx)
 
 		return nil
@@ -74,14 +74,14 @@ func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
 		c.Keys[input.Name] = input.Value
 
 		exists := false
-		for _, keyID := range viewer.KeyIDs {
-			if keyID == key.ID {
+		for _, keysID := range viewer.KeysIDs {
+			if keysID == key.ID {
 				exists = true
 			}
 		}
 
 		if !exists {
-			viewer.KeyIDs = append(viewer.KeyIDs, key.ID)
+			viewer.KeysIDs = append(viewer.KeysIDs, key.ID)
 		}
 
 		key.MustStore(ctx)
@@ -97,11 +97,11 @@ func (c *KeysConfig) DeleteKey(ctx context.Context, id string) error {
 
 	return LockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
 		return LockKey(ctx, id, func(key Key) {
-			for i, v := range viewer.KeyIDs {
+			for i, v := range viewer.KeysIDs {
 				if v == id {
-					viewer.KeyIDs = append(
-						viewer.KeyIDs[:i],
-						viewer.KeyIDs[i+1:]...,
+					viewer.KeysIDs = append(
+						viewer.KeysIDs[:i],
+						viewer.KeysIDs[i+1:]...,
 					)
 					break
 				}

@@ -20,17 +20,17 @@ import (
 	"groundcontrol/models"
 )
 
-func (r *mutationResolver) DeleteKey(ctx context.Context, id string) (models.DeletedNode, error) {
+func (r *mutationResolver) DeleteKey(ctx context.Context, id string) (*models.DeletedNode, error) {
 	modelCtx := models.GetModelContext(ctx)
 
 	err := modelCtx.Keys.DeleteKey(ctx, id)
 	if err != nil {
-		return models.DeletedNode{}, nil
+		return nil, nil
 	}
 
 	if err := modelCtx.Keys.Save(); err != nil {
-		return models.DeletedNode{}, err
+		return nil, err
 	}
 
-	return models.DeletedNode{ID: id}, nil
+	return &models.DeletedNode{ID: id}, nil
 }

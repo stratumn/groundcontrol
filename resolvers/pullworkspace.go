@@ -29,7 +29,7 @@ func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]mode
 
 	var slice []models.Job
 
-	for _, projectID := range workspace.ProjectIDs {
+	for _, projectID := range workspace.ProjectsIDs {
 		project := models.MustLoadProject(ctx, projectID)
 
 		if project.IsPulling || !project.IsCloned(ctx) || !project.IsBehind {

@@ -13,33 +13,9 @@ resolver:
 models:
   DateTime:
     model: groundcontrol/models.DateTime
+  Hash:
+    model: groundcontrol/models.Hash
   Node:
     model: groundcontrol/models.Node
   Source:
     model: groundcontrol/models.Source
-  DirectorySource:
-    model: groundcontrol/models.DirectorySource
-  GitSource:
-    model: groundcontrol/models.GitSource
-  Hash:
-    model: groundcontrol/models.Hash
-  User:
-    model: groundcontrol/models.User
-  Workspace:
-    model: groundcontrol/models.Workspace
-  Project:
-    model: groundcontrol/models.Project
-  System:
-    model: groundcontrol/models.System
-  Job:
-    model: groundcontrol/models.Job
-  Task:
-    model: groundcontrol/models.Task
-  Step:
-    model: groundcontrol/models.Step
-  ProcessGroup:
-    model: groundcontrol/models.ProcessGroup
-  Process:
-    model: groundcontrol/models.Process
-  LogEntry:
-    model: groundcontrol/models.LogEntry

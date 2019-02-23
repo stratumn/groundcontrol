@@ -23,54 +23,9 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-// GitSource is a collection of workspaces in a Git repository.
-type GitSource struct {
-	// The global ID of the node.
-	ID string `json:"id"`
-	// The ID of the user.
-	UserID string `json:"userId"`
-	// The IDs of the workspaces.
-	WorkspaceIDs []string `json:"workspaceIds"`
-	// Whether currently loading workspaces.
-	IsLoading bool `json:"isLoading"`
-	// The Git repository.
-	Repository string `json:"repository"`
-	// The Git reference.
-	Reference string `json:"reference"`
-}
-
-// IsNode tells gqlgen that it implements Node.
-func (GitSource) IsNode() {}
-
-// IsSource tells gqlgen that it implements Source.
-func (GitSource) IsSource() {}
-
-// User returns the user who owns the source.
-func (n GitSource) User(ctx context.Context) User {
-	return MustLoadUser(ctx, n.UserID)
-}
-
-// GetWorkspaceIDs returns the IDs of the workspaces.
-func (n GitSource) GetWorkspaceIDs() []string {
-	return n.WorkspaceIDs
-}
-
-// Workspaces are the workspaces using Relay pagination.
-func (n GitSource) Workspaces(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-) (WorkspaceConnection, error) {
-	return PaginateWorkspaceIDSlice(
-		ctx,
-		n.WorkspaceIDs,
-		after,
-		before,
-		first,
-		last,
-	)
+// GetWorkspacesIDs returns the IDs of the workspaces.
+func (n GitSource) GetWorkspacesIDs() []string {
+	return n.WorkspacesIDs
 }
 
 // IsCloned checks if the project is cloned.
@@ -111,7 +66,7 @@ func (n *GitSource) Update(ctx context.Context) error {
 		return err
 	}
 
-	n.WorkspaceIDs = workspaceIDs
+	n.WorkspacesIDs = workspaceIDs
 	n.MustStore(ctx)
 
 	return nil

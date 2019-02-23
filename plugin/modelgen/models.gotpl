@@ -1,0 +1,549 @@
+{{ reserveImport "context"  }}
+{{ reserveImport "fmt"  }}
+{{ reserveImport "io"  }}
+{{ reserveImport "strconv"  }}
+{{ reserveImport "time"  }}
+{{ reserveImport "sync"  }}
+{{ reserveImport "errors"  }}
+{{ reserveImport "bytes"  }}
+
+{{ reserveImport "github.com/vektah/gqlparser" }}
+{{ reserveImport "github.com/vektah/gqlparser/ast" }}
+{{ reserveImport "github.com/99designs/gqlgen/graphql" }}
+{{ reserveImport "github.com/99designs/gqlgen/graphql/introspection" }}
+
+{{ reserveImport "groundcontrol/relay" }}
+
+{{- range $model := .Interfaces }}
+	{{ with .Description }} {{.|prefixLines "// "}} {{ end }}
+	type {{.Name }} interface {
+		Is{{.Name }}()
+	}
+{{- end }}
+
+// Node types.
+const (
+	{{ range $model := .Models }}
+		{{- range $iface := .Implements }}
+			{{- if (eq $iface "Node") }}
+				NodeType{{ $model.Name }} = "{{ $model.Name }}"
+		{{- end -}}
+		{{- end -}}
+	{{- end}}
+)
+
+// Message types.
+const (
+	{{ range $model := .Models }}
+		{{- range $iface := .Implements }}
+			{{- if (eq $iface "Node") }}
+				MessageType{{ $model.Name }}Stored = "{{ $model.Name }}Stored"
+				MessageType{{ $model.Name }}Deleted = "{{ $model.Name }}Deleted"
+		{{- end -}}
+		{{- end -}}
+	{{- end}}
+)
+
+{{ range $model := .Models }}
+	{{with .Description }} {{.|prefixLines "// "}} {{end}}
+	type {{ .Name }} struct {
+		{{- range $field := .Fields }}
+			{{- with .Description }}
+				{{.|prefixLines "// "}}
+			{{- end}}
+			{{ $field.Name }} {{$field.Type | ref}} `{{$field.Tag}}`
+		{{- end }}
+	}
+
+	{{- range $iface := .Implements }}
+		func ({{ $model.Name }}) Is{{ $iface }}() {}
+	{{- end }}
+
+	{{- range $iface := .Implements }}
+		{{- if (eq $iface "Node") }}
+			// Load{{ $model.Name }} loads a {{ $model.Name }}.
+			func Load{{ $model.Name }}(ctx context.Context, id string) ({{ $model.Name }}, error) {
+				nodes := GetModelContext(ctx).Nodes
+			
+				identifiers, err := relay.DecodeID(id)
+				if err != nil {
+					return {{ $model.Name }}{}, err
+				}
+				if identifiers[0] != NodeType{{ $model.Name }} {
+					return {{ $model.Name }}{}, ErrType
+				}
+				node, ok := nodes.Load(id)
+				if !ok {
+					return {{ $model.Name }}{}, ErrNotFound
+				}
+			
+				return node.({{ $model.Name }}), nil
+			}
+			
+			// MustLoad{{ $model.Name }} loads a {{ $model.Name }} or panics on failure.
+			func MustLoad{{ $model.Name }}(ctx context.Context, id string) {{ $model.Name }} {
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err != nil {
+					panic(err)
+				}
+			
+				return node
+			}
+			
+			// Delete{{ $model.Name }} deletes a {{ $model.Name }}.
+			func Delete{{ $model.Name }}(ctx context.Context, id string) error {
+				modelCtx := GetModelContext(ctx)
+				nodes := modelCtx.Nodes
+				subs := modelCtx.Subs
+			
+				identifiers, err := relay.DecodeID(id)
+				if err != nil {
+					return err
+				}
+				if identifiers[0] != NodeType{{ $model.Name }} {
+					return ErrType
+				}
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err != nil {
+					return err
+				}
+			
+				var v interface{} = node
+			
+				if v, ok := v.(BeforeDeleter); ok {
+					v.BeforeDelete(ctx)
+				}
+			
+				nodes.Delete(id)
+				subs.Publish(MessageType{{ $model.Name }}Deleted, id)
+			
+				if v, ok := v.(AfterDeleter); ok {
+					v.AfterDelete(ctx)
+				}
+			
+				return nil
+			}
+			
+			// MustDelete{{ $model.Name }} deletes a {{ $model.Name }} or panics on failure.
+			func MustDelete{{ $model.Name }}(ctx context.Context, id string) {
+				err := Delete{{ $model.Name }}(ctx, id)
+				if err != nil {
+					panic(err)
+				}
+			}
+			
+			// Lock{{ $model.Name }} loads a {{ $model.Name }} and locks it until the callback returns.
+			func Lock{{ $model.Name }}(ctx context.Context, id string, fn func({{ $model.Name }})) error {
+				nodes := GetModelContext(ctx).Nodes
+				nodes.Lock(id)
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err != nil {
+					return err
+				}
+			
+				fn(node)
+				nodes.Unlock(id)
+			
+				return nil
+			}
+			
+			// Lock{{ $model.Name }}E is like Lock{{ $model.Name }}, but the callback can return an error.
+			func Lock{{ $model.Name }}E(ctx context.Context, id string, fn func({{ $model.Name }}) error) error {
+				nodes := GetModelContext(ctx).Nodes
+				nodes.Lock(id)
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err != nil {
+					return err
+				}
+			
+				err = fn(node)
+				nodes.Unlock(id)
+			
+				return err
+			}
+			
+			// MustLock{{ $model.Name }} loads a {{ $model.Name }} or panics on error and locks it until the callback returns.
+			func MustLock{{ $model.Name }}(ctx context.Context, id string, fn func({{ $model.Name }})) {
+				nodes := GetModelContext(ctx).Nodes
+				nodes.Lock(id)
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err != nil {
+					panic(err)
+				}
+			
+				fn(node)
+				nodes.Unlock(id)
+			}
+			
+			// MustLock{{ $model.Name }}E is like MustLock{{ $model.Name }}, but the callback can return an error.
+			func MustLock{{ $model.Name }}E(ctx context.Context, id string, fn func({{ $model.Name }}) error) error {
+				nodes := GetModelContext(ctx).Nodes
+				nodes.Lock(id)
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err != nil {
+					panic(err)
+				}
+			
+				err = fn(node)
+				nodes.Unlock(id)
+			
+				return err
+			}
+			
+			// LockOrNew{{ $model.Name }} loads or initializes a {{ $model.Name }} and locks it until the callback returns.
+			func LockOrNew{{ $model.Name }}(ctx context.Context, id string, fn func({{ $model.Name }})) error {
+				nodes := GetModelContext(ctx).Nodes
+				nodes.Lock(id)
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err == ErrNotFound {
+					node = {{ $model.Name }}{
+						ID: id,
+					}
+				} else if err != nil {
+					return err
+				}
+			
+				fn(node)
+				nodes.Unlock(id)
+			
+				return nil
+			}
+			
+			// LockOrNew{{ $model.Name }}E is like LockOrNew{{ $model.Name }}, but the callback can return an error.
+			func LockOrNew{{ $model.Name }}E(ctx context.Context, id string, fn func({{ $model.Name }}) error) error {
+				nodes := GetModelContext(ctx).Nodes
+				nodes.Lock(id)
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err == ErrNotFound {
+					node = {{ $model.Name }}{
+						ID: id,
+					}
+				} else if err != nil {
+					return err
+				}
+			
+				err = fn(node)
+				nodes.Unlock(id)
+			
+				return err
+			}
+			
+			// MustLockOrNew{{ $model.Name }} loads or initializes a {{ $model.Name }} or panics on error and locks it until the callback returns.
+			func MustLockOrNew{{ $model.Name }}(ctx context.Context, id string, fn func({{ $model.Name }})) {
+				nodes := GetModelContext(ctx).Nodes
+				nodes.Lock(id)
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err == ErrNotFound {
+					node = {{ $model.Name }}{
+						ID: id,
+					}
+				} else if err != nil {
+					panic(err)
+				}
+			
+				fn(node)
+				nodes.Unlock(id)
+			}
+			
+			// MustLockOrNew{{ $model.Name }}E is like MustLockOrNew{{ $model.Name }}, but the callback can return an error.
+			func MustLockOrNew{{ $model.Name }}E(ctx context.Context, id string, fn func({{ $model.Name }}) error) error {
+				nodes := GetModelContext(ctx).Nodes
+				nodes.Lock(id)
+			
+				node, err := Load{{ $model.Name }}(ctx, id)
+				if err == ErrNotFound {
+					node = {{ $model.Name }}{
+						ID: id,
+					}
+				} else if err != nil {
+					panic(err)
+				}
+			
+				err = fn(node)
+				nodes.Unlock(id)
+			
+				return err
+			}
+			
+			// GetID returns the unique ID of the node.
+			func (n {{ $model.Name }}) GetID() string {
+				return n.ID
+			}
+			
+			// Store stores the {{ $model.Name }}.
+			func (n {{ $model.Name }}) Store(ctx context.Context) error {
+				modelCtx := GetModelContext(ctx)
+				nodes := modelCtx.Nodes
+				subs := modelCtx.Subs
+			
+				identifiers, err := relay.DecodeID(n.ID)
+				if err != nil {
+					return err
+				}
+				if identifiers[0] != NodeType{{ $model.Name }} {
+					return ErrType
+				}
+			
+				var v interface{} = n
+			
+				if v, ok := v.(BeforeStorer); ok {
+					v.BeforeStore(ctx)
+				}
+			
+				nodes.Store(n.ID, n)
+				subs.Publish(MessageType{{ $model.Name }}Stored, n.ID)
+			
+				if v, ok := v.(AfterStorer); ok {
+					v.AfterStore(ctx)
+				}
+			
+				return nil
+			}
+			
+			// MustStore stores a {{ $model.Name }} or panics on failure.
+			func (n {{ $model.Name }}) MustStore(ctx context.Context) {
+				if err := n.Store(ctx); err != nil {
+					panic(err)
+				}
+			}
+
+			{{- range $relate := $model.Relates }}
+				{{- with .Description }}
+					{{.|prefixLines "// "}}
+				{{- end}}
+				func (n {{ $model.Name }}){{ $relate.Name }}(ctx context.Context) {{ $relate.Type | ref }} {
+					return MustLoad{{ $relate.Type | ref }}(ctx, n.{{ $relate.GoIDFieldName }})
+				}
+			{{- end }}
+
+			{{- range $paginate := $model.Paginates }}
+				{{- with .Description }}
+					{{.|prefixLines "// "}}
+				{{- end}}
+				func (n {{ $model.Name }}){{ $paginate.Name }}(
+					ctx context.Context,
+					after,
+					before *string,
+					first,
+					last *int,
+					{{- range $argument := $paginate.Filters }}
+						{{ $argument.Name }} {{ $argument.Type | ref }},
+					{{- end }}
+				) ({{ $paginate.Connection | ref }}, error) {
+					{{- if $paginate.Filters }}
+						filter := func(node {{ $paginate.Node | ref }}) bool {
+							return n.filter{{ $paginate.Name }}Node(ctx, node{{range $argument := $paginate.Filters}}, {{ $argument.Name }}{{ end }})
+						}
+						return Paginate{{ $paginate.Node | ref }}IDSlice(ctx, n.{{ $paginate.GoIDsFieldName }}, after, before, first, last, filter)
+					{{- else }}
+						return Paginate{{ $paginate.Node | ref }}IDSlice(ctx, n.{{ $paginate.GoIDsFieldName }}, after, before, first, last, nil)
+					{{- end }}
+				}
+			{{- end }}
+		{{- end }}
+	{{- end }}
+{{- end }}
+
+{{ range $connection := .Connections }}
+	// {{ $connection.Node | ref }}Filter filters a {{ $connection.Node | ref }}.
+	type {{ $connection.Node | ref }}Filter func({{ $connection.Node | ref }}) bool
+
+	// Paginate{{ $connection.Node | ref }}Slice paginates a slice of {{ $connection.Node | ref }} given query parameters.
+	func Paginate{{ $connection.Node | ref }}Slice(
+		slice []{{ $connection.Node | ref }},
+		after,
+		before *string,
+		first,
+		last *int,
+		filter {{ $connection.Node | ref }}Filter,
+	) ({{ $connection.Name }}, error) {
+		edgeSlice, hadMore := applyCursorsTo{{ $connection.Node | ref }}Slice(slice, after, before, filter)
+		edgeSliceLen := len(edgeSlice)
+	
+		pageInfo := PageInfo{}
+	
+		if first != nil {
+			firstValue := *first
+			if firstValue < 0 {
+				return {{ $connection.Name }}{}, ErrFirstNegative
+			}
+			if firstValue > edgeSliceLen {
+				firstValue = edgeSliceLen
+			}
+			if firstValue < edgeSliceLen {
+				pageInfo.HasNextPage = true
+			} else if before != nil {
+				pageInfo.HasNextPage = hadMore
+			}
+			edgeSlice = edgeSlice[0:firstValue]
+			edgeSliceLen = len(edgeSlice)
+		} else if before != nil {
+			pageInfo.HasNextPage = hadMore
+		}
+	
+		if last != nil {
+			lastValue := *last
+			if lastValue < 0 {
+				return {{ $connection.Name }}{}, ErrLastNegative
+			}
+			if lastValue > edgeSliceLen {
+				lastValue = edgeSliceLen
+			}
+			if lastValue < edgeSliceLen {
+				pageInfo.HasPreviousPage = true
+			} else if after != nil {
+				pageInfo.HasPreviousPage = hadMore
+			}
+			end := edgeSliceLen - lastValue
+			edgeSlice = edgeSlice[end:]
+			edgeSliceLen = len(edgeSlice)
+		} else if after != nil {
+			pageInfo.HasPreviousPage = hadMore
+		}
+	
+		if edgeSliceLen > 0 {
+			pageInfo.StartCursor = edgeSlice[0].Cursor
+			pageInfo.EndCursor = edgeSlice[edgeSliceLen-1].Cursor
+		}
+	
+		return {{ $connection.Name }}{
+			Edges:    edgeSlice,
+			PageInfo: pageInfo,
+		}, nil
+	}
+
+	// Paginate{{ $connection.Node | ref }}IDSlice paginates a slice of {{ $connection.Node | ref }} given their IDs and query parameters.
+	func Paginate{{ $connection.Node | ref }}IDSlice(
+		ctx context.Context,
+		ids []string,
+		after,
+		before *string,
+		first,
+		last *int,
+		filter {{ $connection.Node | ref }}Filter,
+	) ({{ $connection.Name }}, error) {
+		var slice []{{ $connection.Node | ref }}
+	
+		for _, id := range ids {
+			slice = append(slice, MustLoad{{ $connection.Node | ref }}(ctx, id))
+		}
+	
+		return Paginate{{ $connection.Node | ref }}Slice(slice, after, before, first, last, filter)
+	}
+
+	func applyCursorsTo{{ $connection.Node | ref }}Slice(
+		slice []{{ $connection.Node | ref }},
+		after,
+		before *string,
+		filter {{ $connection.Node | ref }}Filter,
+	) ([]{{ $connection.Edge | ref }}, bool) {
+		var edges []{{ $connection.Edge | ref }}
+	
+		hadMore := false
+	
+		if after != nil {
+			index := indexOf{{ $connection.Node | ref }}InSlice(slice, *after)
+			if index < 0 {
+				return nil, false
+			}
+			hadMore = index > 0
+			for _, node := range slice[index+1:] {
+				if filter != nil && !filter(node) {
+					continue
+				}
+				edges = append(edges, {{ $connection.Edge | ref }}{Cursor: node.GetID(), Node: node})
+			}
+			return edges, hadMore
+		}
+	
+		if before != nil {
+			index := indexOf{{ $connection.Node | ref }}InSlice(slice, *before)
+			if index < 0 {
+				return nil, false
+			}
+			hadMore = index < len(slice)-1
+			for _, node := range slice[:index] {
+				if filter != nil && !filter(node) {
+					continue
+				}
+				edges = append(edges, {{ $connection.Edge | ref }}{Cursor: node.GetID(), Node: node})
+			}
+			return edges, hadMore
+		}
+	
+		for _, node := range slice {
+			if filter != nil && !filter(node) {
+				continue
+			}
+			edges = append(edges, {{ $connection.Edge | ref }}{Cursor: node.GetID(), Node: node})
+		}
+		return edges, hadMore
+	}
+
+	func indexOf{{ $connection.Node | ref }}InSlice(slice []{{ $connection.Node | ref }}, id string) int {
+		for i := range slice {
+			if slice[i].GetID() == id {
+				return i
+			}
+		}
+	
+		return -1
+	}
+{{- end }}
+
+{{ range $enum := .Enums }}
+	{{ with .Description }} {{.|prefixLines "// "}} {{end}}
+	type {{.Name }} string
+	const (
+	{{- range $value := .Values}}
+		{{- with .Description}}
+			{{.|prefixLines "// "}}
+		{{- end}}
+		{{ $enum.Name }}{{ .Name }} {{$enum.Name }} = {{.Value|quote}}
+	{{- end }}
+	)
+
+	var All{{.Name }} = []{{ .Name }}{
+	{{- range $value := .Values}}
+		{{$enum.Name }}{{ .Name }},
+	{{- end }}
+	}
+
+	func (e {{.Name }}) IsValid() bool {
+		switch e {
+		case {{ range $index, $element := .Values}}{{if $index}},{{end}}{{ $enum.Name }}{{ $element.Name }}{{end}}:
+			return true
+		}
+		return false
+	}
+
+	func (e {{.Name }}) String() string {
+		return string(e)
+	}
+
+	func (e *{{.Name }}) UnmarshalGQL(v interface{}) error {
+		str, ok := v.(string)
+		if !ok {
+			return fmt.Errorf("enums must be strings")
+		}
+
+		*e = {{ .Name }}(str)
+		if !e.IsValid() {
+			return fmt.Errorf("%s is not a valid {{ .Raw }}", str)
+		}
+		return nil
+	}
+
+	func (e {{.Name }}) MarshalGQL(w io.Writer) {
+		fmt.Fprint(w, strconv.Quote(e.String()))
+	}
+
+{{- end }}

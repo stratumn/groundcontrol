@@ -28,34 +28,6 @@ import (
 	"groundcontrol/util"
 )
 
-// Project represents a project in the app.
-type Project struct {
-	ID               string   `json:"id"`
-	Slug             string   `json:"slug"`
-	Repository       string   `json:"repository"`
-	Reference        string   `json:"reference"`
-	RemoteReference  string   `json:"remoteReference"`
-	LocalReference   string   `json:"localReference"`
-	Description      *string  `json:"description"`
-	WorkspaceID      string   `json:"workspaceId"`
-	RemoteCommitIDs  []string `json:"remoteCommitIds"`
-	LocalCommitIDs   []string `json:"localCommitIds"`
-	Tasks            []Task   `json:"projects"`
-	IsLoadingCommits bool     `json:"isLoadingCommits"`
-	IsCloning        bool     `json:"isCloning"`
-	IsPulling        bool     `json:"isPulling"`
-	IsBehind         bool     `json:"isBehind"`
-	IsAhead          bool     `json:"isAhead"`
-}
-
-// IsNode tells gqlgen that it implements Node.
-func (Project) IsNode() {}
-
-// Workspace returns the workspace associated with the project.
-func (p Project) Workspace(ctx context.Context) Workspace {
-	return MustLoadWorkspace(ctx, p.WorkspaceID)
-}
-
 // IsCloned checks if the project is cloned.
 func (p Project) IsCloned(ctx context.Context) bool {
 	return util.FileExists(p.Path(ctx))
@@ -64,42 +36,6 @@ func (p Project) IsCloned(ctx context.Context) bool {
 // IsCached checks if the project is cached.
 func (p Project) IsCached(ctx context.Context) bool {
 	return util.FileExists(p.CachePath(ctx))
-}
-
-// RemoteCommits returns paginated remote commits.
-func (p Project) RemoteCommits(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-) (CommitConnection, error) {
-	return PaginateCommitIDSlice(
-		ctx,
-		p.RemoteCommitIDs,
-		after,
-		before,
-		first,
-		last,
-	)
-}
-
-// LocalCommits returns paginated local commits.
-func (p Project) LocalCommits(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-) (CommitConnection, error) {
-	return PaginateCommitIDSlice(
-		ctx,
-		p.LocalCommitIDs,
-		after,
-		before,
-		first,
-		last,
-	)
 }
 
 // ReferenceShort returns the short name of the reference.
@@ -212,22 +148,22 @@ func (p *Project) Update(ctx context.Context) error {
 		return err
 	}
 
-	remoteCommitIDs, err := p.loadCommits(ctx, p.localRemoteReferenceName())
+	remoteCommitsIDs, err := p.loadCommits(ctx, p.localRemoteReferenceName())
 	if err != nil {
 		return err
 	}
 
-	localCommitIDs, err := p.loadCommits(ctx, plumbing.ReferenceName(p.LocalReference))
+	localCommitsIDs, err := p.loadCommits(ctx, plumbing.ReferenceName(p.LocalReference))
 	if err != nil {
 		return err
 	}
 
-	if len(remoteCommitIDs) > 0 {
-		p.RemoteCommitIDs = remoteCommitIDs
+	if len(remoteCommitsIDs) > 0 {
+		p.RemoteCommitsIDs = remoteCommitsIDs
 	}
 
-	if len(localCommitIDs) > 0 {
-		p.LocalCommitIDs = localCommitIDs
+	if len(localCommitsIDs) > 0 {
+		p.LocalCommitsIDs = localCommitsIDs
 	}
 
 	return p.updateStatus(ctx)

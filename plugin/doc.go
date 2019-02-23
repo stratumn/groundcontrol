@@ -12,21 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resolvers
-
-import (
-	"context"
-
-	"groundcontrol/jobs"
-	"groundcontrol/models"
-)
-
-func (r *mutationResolver) LoadProjectCommits(ctx context.Context, id string) (*models.Job, error) {
-	jobID, err := jobs.LoadCommits(ctx, id, models.JobPriorityHigh)
-	if err != nil {
-		return nil, err
-	}
-
-	node := models.MustLoadJob(ctx, jobID)
-	return &node, nil
-}
+// Package plugin contains plugins for gqlgen.
+package plugin

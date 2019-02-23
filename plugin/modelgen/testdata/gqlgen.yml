@@ -1,0 +1,20 @@
+schema:
+  - "testdata/schema.graphql"
+
+exec:
+  filename: out/ignored.go
+model:
+  filename: out/auto_models.go
+
+models:
+  ExistingModel:
+    model: groundcontrol/plugin/modelgen/out.ExistingModel
+  ExistingInput:
+    model: groundcontrol/plugin/modelgen/out.ExistingInput
+  ExistingEnum:
+    model: groundcontrol/plugin/modelgen/out.ExistingEnum
+  ExistingInterface:
+    model: groundcontrol/plugin/modelgen/out.ExistingInterface
+  ExistingUnion:
+    model: groundcontrol/plugin/modelgen/out.ExistingUnion
+

@@ -23,14 +23,15 @@ import (
 func (r *mutationResolver) SetKey(
 	ctx context.Context,
 	input models.KeyInput,
-) (models.Key, error) {
+) (*models.Key, error) {
 	modelCtx := models.GetModelContext(ctx)
 
 	id := modelCtx.Keys.UpsertKey(ctx, input)
 
 	if err := modelCtx.Keys.Save(); err != nil {
-		return models.Key{}, err
+		return nil, err
 	}
 
-	return models.MustLoadKey(ctx, id), nil
+	node := models.MustLoadKey(ctx, id)
+	return &node, nil
 }

@@ -16,8 +16,30 @@
 
 package main
 
-import "github.com/99designs/gqlgen/cmd"
+import (
+	"fmt"
+	"os"
+
+	"github.com/99designs/gqlgen/api"
+	"github.com/99designs/gqlgen/codegen/config"
+
+	"groundcontrol/plugin/modelgen"
+)
 
 func main() {
-	cmd.Execute()
+	cfg, err := config.LoadConfigFromDefaultLocations()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(2)
+	}
+
+	opts := []api.Option{
+		api.NoPlugins(),
+		api.AddPlugin(modelgen.New()),
+	}
+
+	if err = api.Generate(cfg, opts...); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(3)
+	}
 }

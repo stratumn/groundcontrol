@@ -20,14 +20,15 @@ import (
 	"groundcontrol/models"
 )
 
-func (r *mutationResolver) StartProcess(ctx context.Context, id string) (models.Process, error) {
+func (r *mutationResolver) StartProcess(ctx context.Context, id string) (*models.Process, error) {
 	modelCtx := models.GetModelContext(ctx)
 	pm := modelCtx.PM
 
 	err := pm.Start(ctx, id)
 	if err != nil {
-		return models.Process{}, err
+		return nil, err
 	}
 
-	return models.MustLoadProcess(ctx, id), nil
+	node := models.MustLoadProcess(ctx, id)
+	return &node, nil
 }

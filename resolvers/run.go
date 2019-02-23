@@ -27,7 +27,7 @@ func (r *mutationResolver) Run(
 	ctx context.Context,
 	id string,
 	variables []models.VariableInput,
-) (models.Job, error) {
+) (*models.Job, error) {
 	keys := models.GetModelContext(ctx).Keys
 	env := os.Environ()
 	save := false
@@ -49,14 +49,15 @@ func (r *mutationResolver) Run(
 
 	if save {
 		if err := keys.Save(); err != nil {
-			return models.Job{}, nil
+			return nil, err
 		}
 	}
 
 	jobID, err := jobs.Run(ctx, id, env, models.JobPriorityHigh)
 	if err != nil {
-		return models.Job{}, err
+		return nil, err
 	}
 
-	return models.MustLoadJob(ctx, jobID), nil
+	node := models.MustLoadJob(ctx, jobID)
+	return &node, nil
 }

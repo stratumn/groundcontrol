@@ -50,7 +50,7 @@ func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
 	modelCtx := GetModelContext(ctx)
 
 	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
-		var sourceIDs []string
+		var sourcesIDs []string
 
 		for i, sourceConfig := range c.DirectorySources {
 			source := DirectorySource{
@@ -60,7 +60,7 @@ func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
 			}
 
 			c.DirectorySources[i].ID = source.ID
-			sourceIDs = append(sourceIDs, source.ID)
+			sourcesIDs = append(sourcesIDs, source.ID)
 			source.MustStore(ctx)
 		}
 
@@ -77,11 +77,11 @@ func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
 			}
 
 			c.GitSources[i].ID = source.ID
-			sourceIDs = append(sourceIDs, source.ID)
+			sourcesIDs = append(sourcesIDs, source.ID)
 			source.MustStore(ctx)
 		}
 
-		viewer.SourceIDs = sourceIDs
+		viewer.SourcesIDs = sourcesIDs
 		viewer.MustStore(ctx)
 
 		return nil
@@ -103,7 +103,7 @@ func (c *SourcesConfig) UpsertDirectorySource(ctx context.Context, input Directo
 	}
 
 	MustLockUser(ctx, modelCtx.ViewerID, func(viewer User) {
-		for _, sourceID := range viewer.SourceIDs {
+		for _, sourceID := range viewer.SourcesIDs {
 			if sourceID == source.ID {
 				return
 			}
@@ -111,7 +111,7 @@ func (c *SourcesConfig) UpsertDirectorySource(ctx context.Context, input Directo
 
 		source.MustStore(ctx)
 
-		viewer.SourceIDs = append(viewer.SourceIDs, source.ID)
+		viewer.SourcesIDs = append(viewer.SourcesIDs, source.ID)
 		viewer.MustStore(ctx)
 
 		c.DirectorySources = append(
@@ -143,7 +143,7 @@ func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInpu
 	}
 
 	MustLockUser(ctx, modelCtx.ViewerID, func(viewer User) {
-		for _, sourceID := range viewer.SourceIDs {
+		for _, sourceID := range viewer.SourcesIDs {
 			if sourceID == source.ID {
 				return
 			}
@@ -151,7 +151,7 @@ func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInpu
 
 		source.MustStore(ctx)
 
-		viewer.SourceIDs = append(viewer.SourceIDs, source.ID)
+		viewer.SourcesIDs = append(viewer.SourcesIDs, source.ID)
 		viewer.MustStore(ctx)
 
 		c.GitSources = append(
@@ -177,11 +177,11 @@ func (c *SourcesConfig) DeleteSource(ctx context.Context, id string) error {
 			return err
 		}
 
-		for i, v := range viewer.SourceIDs {
+		for i, v := range viewer.SourcesIDs {
 			if v == id {
-				viewer.SourceIDs = append(
-					viewer.SourceIDs[:i],
-					viewer.SourceIDs[i+1:]...,
+				viewer.SourcesIDs = append(
+					viewer.SourcesIDs[:i],
+					viewer.SourcesIDs[i+1:]...,
 				)
 				break
 			}
