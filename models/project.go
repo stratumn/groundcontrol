@@ -28,7 +28,22 @@ import (
 	"groundcontrol/util"
 )
 
-// IsCloned checks if the project is cloned.
+// ReferenceShort is he short name of the Reference.
+func (n *Project) ReferenceShort() string {
+	return plumbing.ReferenceName(n.Reference).Short()
+}
+
+// RemoteReferenceShort is he short name of the RemoteReference.
+func (n *Project) RemoteReferenceShort() string {
+	return plumbing.ReferenceName(n.RemoteReference).Short()
+}
+
+// LocalReferenceShort is he short name of the LocalReference.
+func (n *Project) LocalReferenceShort() string {
+	return plumbing.ReferenceName(n.LocalReference).Short()
+}
+
+// IsCloned indicates whether the repository is cloned.
 func (n *Project) IsCloned(ctx context.Context) bool {
 	return util.FileExists(n.Path(ctx))
 }
@@ -36,21 +51,6 @@ func (n *Project) IsCloned(ctx context.Context) bool {
 // IsCached checks if the project is cached.
 func (n *Project) IsCached(ctx context.Context) bool {
 	return util.FileExists(n.CachePath(ctx))
-}
-
-// ReferenceShort returns the short name of the reference.
-func (n *Project) ReferenceShort() string {
-	return plumbing.ReferenceName(n.Reference).Short()
-}
-
-// RemoteReferenceShort returns the short name of the remote reference.
-func (n *Project) RemoteReferenceShort() string {
-	return plumbing.ReferenceName(n.RemoteReference).Short()
-}
-
-// LocalReferenceShort returns the short name of the local reference.
-func (n *Project) LocalReferenceShort() string {
-	return plumbing.ReferenceName(n.LocalReference).Short()
 }
 
 // Path returns the path to the project.

@@ -51,13 +51,25 @@ const (
 			{{- with .Description }}
 				{{.|prefixLines "// "}}
 			{{- end}}
-			{{ $field.Name }} {{ $field.Type | ref }} `{{$field.Tag}}`
+			{{ $field.Name }} {{ $field.Type | ref }} `{{ $field.Tag }}`
 		{{- end }}
 	}
 
 	{{- range $iface := .Implements }}
 		// Is{{ $iface }} declares that {{ $model.Name }} implements {{ $iface }}.
 		func ({{ $model.Name }}) Is{{ $iface }}() {}
+	{{- end }}
+
+	{{- range $field := $model.Fields }}
+		// Get{{ $field.Name }} returns the {{ $field.Name }}.
+		func (n *{{ $model.Name }})Get{{ $field.Name }}() {{ $field.Type | ref }} {
+			return n.{{ $field.Name }}
+		}
+
+		// Set{{ $field.Name }} sets the {{ $field.Name }}.
+		func (n *{{ $model.Name }})Set{{ $field.Name }}(value {{ $field.Type | ref }}) {
+			n.{{ $field.Name }} = value
+		}
 	{{- end }}
 
 	{{- range $iface := .Implements }}
@@ -80,6 +92,85 @@ const (
 
 				return c
 			}
+			
+			// Store stores the {{ $model.Name }}.
+			func (n *{{ $model.Name }}) Store(ctx context.Context) error {
+				modelCtx := GetModelContext(ctx)
+				nodes := modelCtx.Nodes
+				subs := modelCtx.Subs
+			
+				identifiers, err := relay.DecodeID(n.ID)
+				if err != nil {
+					return err
+				}
+				if identifiers[0] != NodeType{{ $model.Name }} {
+					return ErrType
+				}
+			
+				var v interface{} = n
+			
+				if v, ok := v.(BeforeStorer); ok {
+					v.BeforeStore(ctx)
+				}
+			
+				nodes.Store(n.ID, n.Copy())
+				subs.Publish(MessageType{{ $model.Name }}Stored, n.ID)
+			
+				if v, ok := v.(AfterStorer); ok {
+					v.AfterStore(ctx)
+				}
+			
+				return nil
+			}
+			
+			// MustStore stores a {{ $model.Name }} or panics on failure.
+			func (n *{{ $model.Name }}) MustStore(ctx context.Context) {
+				if err := n.Store(ctx); err != nil {
+					panic(err)
+				}
+			}
+
+			{{- range $relate := $model.Relates }}
+				{{- with .Description }}
+					{{.|prefixLines "// "}}
+				{{- end}}
+				func (n *{{ $model.Name }}){{ $relate.Name }}(ctx context.Context) {{ $relate.Type | ref }} {
+				{{ if $relate.NonNull -}}
+						return MustLoad{{ $relate.TypeName }}(ctx, n.{{ $relate.GoIDFieldName }})
+				{{- else -}}
+						node, err := Load{{ $relate.TypeName }}(ctx, n.{{ $relate.GoIDFieldName }})
+						if err != nil {
+							return nil
+						}
+						return node
+				{{- end }}
+				}
+			{{- end }}
+
+			{{- range $paginate := $model.Paginates }}
+				{{- with .Description }}
+					{{.|prefixLines "// "}}
+				{{- end}}
+				func (n *{{ $model.Name }}){{ $paginate.Name }}(
+					ctx context.Context,
+					after,
+					before *string,
+					first,
+					last *int,
+					{{- range $argument := $paginate.Filters }}
+						{{ $argument.Name }} {{ $argument.Type | ref }},
+					{{- end }}
+				) ({{ $paginate.Connection | ref }}, error) {
+					{{- if $paginate.Filters }}
+						filter := func(node {{ $paginate.Node | ref }}) bool {
+							return n.filter{{ $paginate.Name }}Node(ctx, node{{range $argument := $paginate.Filters}}, {{ $argument.Name }}{{ end }})
+						}
+						return Paginate{{ $paginate.NodeName }}IDSlice(ctx, n.{{ $paginate.GoIDsFieldName }}, after, before, first, last, filter)
+					{{- else }}
+						return Paginate{{ $paginate.NodeName }}IDSlice(ctx, n.{{ $paginate.GoIDsFieldName }}, after, before, first, last, nil)
+					{{- end }}
+				}
+			{{- end }}
 
 			// Load{{ $model.Name }} loads a {{ $model.Name }}.
 			func Load{{ $model.Name }}(ctx context.Context, id string) (*{{ $model.Name }}, error) {
@@ -292,90 +383,6 @@ const (
 			
 				return err
 			}
-			
-			// GetID returns the unique ID of the node.
-			func (n *{{ $model.Name }}) GetID() string {
-				return n.ID
-			}
-			
-			// Store stores the {{ $model.Name }}.
-			func (n *{{ $model.Name }}) Store(ctx context.Context) error {
-				modelCtx := GetModelContext(ctx)
-				nodes := modelCtx.Nodes
-				subs := modelCtx.Subs
-			
-				identifiers, err := relay.DecodeID(n.ID)
-				if err != nil {
-					return err
-				}
-				if identifiers[0] != NodeType{{ $model.Name }} {
-					return ErrType
-				}
-			
-				var v interface{} = n
-			
-				if v, ok := v.(BeforeStorer); ok {
-					v.BeforeStore(ctx)
-				}
-			
-				nodes.Store(n.ID, n.Copy())
-				subs.Publish(MessageType{{ $model.Name }}Stored, n.ID)
-			
-				if v, ok := v.(AfterStorer); ok {
-					v.AfterStore(ctx)
-				}
-			
-				return nil
-			}
-			
-			// MustStore stores a {{ $model.Name }} or panics on failure.
-			func (n *{{ $model.Name }}) MustStore(ctx context.Context) {
-				if err := n.Store(ctx); err != nil {
-					panic(err)
-				}
-			}
-
-			{{- range $relate := $model.Relates }}
-				{{- with .Description }}
-					{{.|prefixLines "// "}}
-				{{- end}}
-				func (n *{{ $model.Name }}){{ $relate.Name }}(ctx context.Context) {{ $relate.Type | ref }} {
-				{{ if $relate.NonNull -}}
-						return MustLoad{{ $relate.TypeName }}(ctx, n.{{ $relate.GoIDFieldName }})
-				{{- else -}}
-						node, err := Load{{ $relate.TypeName }}(ctx, n.{{ $relate.GoIDFieldName }})
-						if err != nil {
-							return nil
-						}
-						return node
-				{{- end }}
-				}
-			{{- end }}
-
-			{{- range $paginate := $model.Paginates }}
-				{{- with .Description }}
-					{{.|prefixLines "// "}}
-				{{- end}}
-				func (n *{{ $model.Name }}){{ $paginate.Name }}(
-					ctx context.Context,
-					after,
-					before *string,
-					first,
-					last *int,
-					{{- range $argument := $paginate.Filters }}
-						{{ $argument.Name }} {{ $argument.Type | ref }},
-					{{- end }}
-				) ({{ $paginate.Connection | ref }}, error) {
-					{{- if $paginate.Filters }}
-						filter := func(node {{ $paginate.Node | ref }}) bool {
-							return n.filter{{ $paginate.Name }}Node(ctx, node{{range $argument := $paginate.Filters}}, {{ $argument.Name }}{{ end }})
-						}
-						return Paginate{{ $paginate.NodeName }}IDSlice(ctx, n.{{ $paginate.GoIDsFieldName }}, after, before, first, last, filter)
-					{{- else }}
-						return Paginate{{ $paginate.NodeName }}IDSlice(ctx, n.{{ $paginate.GoIDsFieldName }}, after, before, first, last, nil)
-					{{- end }}
-				}
-			{{- end }}
 		{{- end }}
 	{{- end }}
 {{- end }}

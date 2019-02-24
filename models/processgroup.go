@@ -16,7 +16,7 @@ package models
 
 import "context"
 
-// Status returns the status of the ProcessGroup.
+// Status is the ProcessStatus.
 func (n *ProcessGroup) Status(ctx context.Context) ProcessStatus {
 	status := ProcessStatusDone
 

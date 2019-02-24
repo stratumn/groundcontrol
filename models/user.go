@@ -16,7 +16,7 @@ package models
 
 import "context"
 
-// Workspaces returns the user's projects.
+// Workspaces lists the workspaces belonging to the User using Relay pagination.
 func (n *User) Workspaces(
 	ctx context.Context,
 	after *string,
@@ -27,7 +27,7 @@ func (n *User) Workspaces(
 	return PaginateWorkspaceIDSlice(ctx, n.WorkspacesIDs(ctx), after, before, first, last, nil)
 }
 
-// WorkspacesIDs returns the user's workspaces IDs.
+// WorkspacesIDs returns the IDs of the workspaces belonging to the User.
 func (n *User) WorkspacesIDs(ctx context.Context) []string {
 	var slice []string
 
@@ -39,7 +39,7 @@ func (n *User) WorkspacesIDs(ctx context.Context) []string {
 	return slice
 }
 
-// Workspace finds a workspace.
+// Workspace find a workspace by its slug.
 func (n *User) Workspace(ctx context.Context, slug string) *Workspace {
 	for _, id := range n.WorkspacesIDs(ctx) {
 		node := MustLoadWorkspace(ctx, id)
@@ -52,7 +52,7 @@ func (n *User) Workspace(ctx context.Context, slug string) *Workspace {
 	return nil
 }
 
-// Projects returns the user's projects.
+// Projects lists the projects belonging to the User using Relay pagination.
 func (n *User) Projects(
 	ctx context.Context,
 	after *string,

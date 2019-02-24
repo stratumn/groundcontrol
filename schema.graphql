@@ -1,4 +1,4 @@
-"""Dynamic indicates a property is dynamically computed and is not stored in the model."""
+"""Dynamic indicates a property is dynamically computed and is not stored in the model. Note that dynamic fields don't trigger Stored subscriptions."""
 directive @dynamic on FIELD_DEFINITION
 """Relate indicates a field references another Node."""
 directive @relate(goIdFieldName: String) on FIELD_DEFINITION
@@ -329,11 +329,11 @@ type User implements Node {
   id: ID!
   """Sources lists the sources belonging to the User using Relay pagination."""
   sources(after: String, before: String, first: Int, last: Int): SourceConnection! @paginate
-  """Workspaces lists the workspaces belonging to the User using Relay pagination"""
+  """Workspaces lists the workspaces belonging to the User using Relay pagination."""
   workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection! @dynamic
   """Workspace find a workspace by its slug."""
   workspace(slug: String!): Workspace @dynamic
-  """Projets lists the projects belonging to the User using Relay pagination."""
+  """Projects lists the projects belonging to the User using Relay pagination."""
   projects(after: String, before: String, first: Int, last: Int): ProjectConnection! @dynamic
   """Keys lists the keys belonging to the User using Relay pagination."""
   keys(after: String, before: String, first: Int, last: Int): KeyConnection! @paginate

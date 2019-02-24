@@ -23,22 +23,17 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-// GetWorkspacesIDs returns the IDs of the workspaces.
-func (n *GitSource) GetWorkspacesIDs() []string {
-	return n.WorkspacesIDs
+// ReferenceShort is the short name of the Reference.
+func (n *GitSource) ReferenceShort() string {
+	return plumbing.ReferenceName(n.Reference).Short()
 }
 
-// IsCloned checks if the project is cloned.
+// IsCloned indicates whether the repository is cloned.
 func (n *GitSource) IsCloned(ctx context.Context) bool {
 	getGitSourcePath := GetModelContext(ctx).GetGitSourcePath
 	directory := getGitSourcePath(n.Repository, n.Reference)
 
 	return util.FileExists(directory)
-}
-
-// ReferenceShort returns the short name of the reference.
-func (n *GitSource) ReferenceShort() string {
-	return plumbing.ReferenceName(n.Reference).Short()
 }
 
 // Path returns the path to the source.

@@ -16,11 +16,6 @@ package models
 
 import "context"
 
-// GetWorkspacesIDs returns the IDs of the workspaces.
-func (n *DirectorySource) GetWorkspacesIDs() []string {
-	return n.WorkspacesIDs
-}
-
 // Update loads the workspaces and upserts the source.
 func (n *DirectorySource) Update(ctx context.Context) error {
 	n.IsLoading = true
