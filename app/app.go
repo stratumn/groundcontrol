@@ -157,8 +157,6 @@ func (a *App) Start(ctx context.Context) error {
 
 	<-ctx.Done()
 
-	log.InfoWithOwner(ctx, systemID, "starting shutdown")
-
 	a.shutdown(ctx, server)
 
 	return ctx.Err()
@@ -382,11 +380,7 @@ func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel fun
 	signal.Notify(signalCh, syscall.SIGTERM)
 	signal.Notify(signalCh, syscall.SIGINT)
 
-	a.waitGroup.Add(1)
-
 	go func() {
-		defer a.waitGroup.Done()
-
 		log.DebugWithOwner(ctx, systemID, "received signal %d", <-signalCh)
 
 		cancel()
@@ -404,6 +398,8 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 		a.gracefulShutdownTimeout,
 	)
 	defer cancel()
+
+	log.InfoWithOwner(ctx, systemID, "starting shutdown")
 
 	a.waitGroup.Add(2)
 
