@@ -14,9 +14,42 @@
 
 package model
 
-import "context"
+import (
+	"context"
+	"sort"
+	"strings"
+)
 
-// Workspaces lists the workspaces belonging to the User using Relay pagination.
+// BeforeStore sorts collections before storing the user.
+func (n *User) BeforeStore(ctx context.Context) {
+	sort.Slice(n.SourcesIDs, func(i, j int) bool {
+		a := MustLoadSource(ctx, n.SourcesIDs[i])
+		b := MustLoadSource(ctx, n.SourcesIDs[j])
+		u, v := "", ""
+		switch source := a.(type) {
+		case *DirectorySource:
+			u = source.Directory
+		case *GitSource:
+			u = source.Repository
+		}
+		switch source := b.(type) {
+		case *DirectorySource:
+			v = source.Directory
+		case *GitSource:
+			v = source.Repository
+		}
+		return strings.ToLower(u) < strings.ToLower(v)
+	})
+
+	sort.Slice(n.KeysIDs, func(i, j int) bool {
+		a := MustLoadKey(ctx, n.KeysIDs[i])
+		b := MustLoadKey(ctx, n.KeysIDs[j])
+		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+	})
+}
+
+// Workspaces lists the workspaces belonging to the User sorted by Name
+// using Relay pagination.
 func (n *User) Workspaces(
 	ctx context.Context,
 	after *string,
@@ -27,7 +60,8 @@ func (n *User) Workspaces(
 	return PaginateWorkspaceIDSlice(ctx, n.WorkspacesIDs(ctx), after, before, first, last, nil)
 }
 
-// WorkspacesIDs returns the IDs of the workspaces belonging to the User.
+// WorkspacesIDs returns the IDs of the workspaces belonging to the User
+// sorted by Name.
 func (n *User) WorkspacesIDs(ctx context.Context) []string {
 	var slice []string
 
@@ -35,6 +69,12 @@ func (n *User) WorkspacesIDs(ctx context.Context) []string {
 		source := MustLoadSource(ctx, sourceID)
 		slice = append(slice, source.GetWorkspacesIDs()...)
 	}
+
+	sort.Slice(slice, func(i, j int) bool {
+		a := MustLoadWorkspace(ctx, slice[i])
+		b := MustLoadWorkspace(ctx, slice[j])
+		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+	})
 
 	return slice
 }

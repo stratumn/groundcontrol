@@ -14,7 +14,20 @@
 
 package model
 
-import "context"
+import (
+	"context"
+	"sort"
+	"strings"
+)
+
+// BeforeStore sorts the Workspaces by Slug before storing the Workspace.
+func (n *Workspace) BeforeStore(ctx context.Context) {
+	sort.Slice(n.ProjectsIDs, func(i, j int) bool {
+		a := MustLoadProject(ctx, n.ProjectsIDs[i])
+		b := MustLoadProject(ctx, n.ProjectsIDs[j])
+		return strings.ToLower(a.Slug) < strings.ToLower(b.Slug)
+	})
+}
 
 // IsCloning indicates whether any of the Projects is currently cloning.
 func (n *Workspace) IsCloning(ctx context.Context) bool {
