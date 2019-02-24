@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package jobgen contains a plugin to generate mutations for jobs.
+// Package jobgen contains a plugin to generate mutations for job.
 package jobgen

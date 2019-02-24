@@ -4,7 +4,7 @@ schema:
 exec:
   filename: out/ignored.go
 model:
-  filename: out/auto_models.go
+  filename: out/auto_model.go
 
 models:
   ExistingModel:

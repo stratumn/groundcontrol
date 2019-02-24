@@ -100,12 +100,12 @@ type Connection struct {
 	Node     types.Type
 }
 
-// New creates a new plugin to build models.
+// New creates a new plugin to build model.
 func New() plugin.Plugin {
 	return &Plugin{}
 }
 
-// Plugin represents the plugin to build models.
+// Plugin represents the plugin to build model.
 type Plugin struct{}
 
 var _ plugin.ConfigMutator = &Plugin{}
@@ -115,7 +115,7 @@ func (m *Plugin) Name() string {
 	return "modelgen"
 }
 
-// MutateConfig adds models.
+// MutateConfig adds model.
 func (m *Plugin) MutateConfig(cfg *config.Config) error {
 	if err := cfg.Check(); err != nil {
 		return err

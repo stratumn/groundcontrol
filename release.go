@@ -14,7 +14,7 @@
 
 //+build release
 
-//go:generate go run -tags=ui scripts/uigen.go
+//go:generate go run -tags=ui script/uigen.go
 
 package main
 

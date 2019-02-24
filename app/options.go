@@ -22,7 +22,7 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 
-	"groundcontrol/models"
+	"groundcontrol/model"
 )
 
 const (
@@ -33,7 +33,7 @@ const (
 	DefaultJobConcurrency = 2
 
 	// DefaultLogLevel is the default log level.
-	DefaultLogLevel = models.LogLevelInfo
+	DefaultLogLevel = model.LogLevelInfo
 
 	// DefaultLogCap is the default capacity of the logger.
 	DefaultLogCap = 10000
@@ -127,7 +127,7 @@ func OptJobConcurrency(concurrency int) Opt {
 }
 
 // OptLogLevel sets the minimum level for log messages.
-func OptLogLevel(level models.LogLevel) Opt {
+func OptLogLevel(level model.LogLevel) Opt {
 	return func(app *App) {
 		app.logLevel = level
 	}
@@ -147,7 +147,7 @@ func OptLogCap(cap int) Opt {
 	}
 }
 
-// OptPeriodicJobsInterval sets the time to wait between periodic jobs.
+// OptPeriodicJobsInterval sets the time to wait between periodic job.
 func OptPeriodicJobsInterval(interval time.Duration) Opt {
 	return func(app *App) {
 		app.periodicJobsInterval = interval

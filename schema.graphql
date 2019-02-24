@@ -4,7 +4,7 @@ directive @dynamic on FIELD_DEFINITION
 directive @relate(goIdFieldName: String) on FIELD_DEFINITION
 """Paginate indicate a field hat references a collection of Nodes using Relay pagination."""
 directive @paginate(goIdsFieldName: String) on FIELD_DEFINITION
-"""Job indicate a mutation that queues one or multiple jobs."""
+"""Job indicate a mutation that queues one or multiple job."""
 directive @job on FIELD_DEFINITION
 """Stored indicate a subscription that emits a message when a Node is stored."""
 directive @stored on FIELD_DEFINITION
@@ -33,7 +33,7 @@ enum JobStatus {
 
 """JobPriority is the priority of a Job in the queue."""
 enum JobPriority {
-  """NORMAL is usually used for periodic Jobs."""
+  """NORMAL is usually used for periodic job."""
   NORMAL
   """HIGH is usually used for Jobs that were triggered by a User action."""
   HIGH
@@ -261,7 +261,7 @@ type KeyEdge {
   node: Key!
 }
 
-"""JobConnection is a Relay Connection for a page of Jobs."""
+"""JobConnection is a Relay Connection for a page of job."""
 type JobConnection {
   """Edges contains an array of Edge in the current page."""
   edges: [JobEdge!]!
@@ -607,7 +607,7 @@ type LogEntry implements Node {
   sourceFileEnd: Int
 }
 
-"""JobMetrics contains metrics related to Jobs."""
+"""JobMetrics contains metrics related to job."""
 type JobMetrics implements Node {
   """ID is the global ID of the Node."""
   id: ID!

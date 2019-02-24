@@ -36,11 +36,11 @@ import (
 	"github.com/rs/cors"
 
 	"groundcontrol/gql"
-	"groundcontrol/jobs"
-	"groundcontrol/models"
+	"groundcontrol/job"
+	"groundcontrol/model"
 	"groundcontrol/pubsub"
 	"groundcontrol/relay"
-	"groundcontrol/resolvers"
+	"groundcontrol/resolver"
 )
 
 // App starts Ground Control.
@@ -49,7 +49,7 @@ type App struct {
 	keysFile                string
 	listenAddress           string
 	jobConcurrency          int
-	logLevel                models.LogLevel
+	logLevel                model.LogLevel
 	logCap                  int
 	pubSubHistoryCap        int
 	periodicJobsInterval    time.Duration
@@ -94,13 +94,13 @@ func New(opts ...Opt) *App {
 
 // Start starts the app. It blocks until an error occurs or the app exits.
 func (a *App) Start(ctx context.Context) error {
-	nodes := models.NewNodeManager()
-	log := models.NewLogger(a.logCap, a.logLevel)
-	jobs := models.NewJobManager(a.jobConcurrency)
-	pm := models.NewProcessManager()
+	nodes := model.NewNodeManager()
+	log := model.NewLogger(a.logCap, a.logLevel)
+	jobs := model.NewJobManager(a.jobConcurrency)
+	pm := model.NewProcessManager()
 	subs := pubsub.New(a.pubSubHistoryCap)
 
-	modelCtx := &models.ModelContext{
+	modelCtx := &model.ModelContext{
 		Nodes:               nodes,
 		Log:                 log,
 		Jobs:                jobs,
@@ -112,7 +112,7 @@ func (a *App) Start(ctx context.Context) error {
 		OpenEditorCommand:   a.openEditorCommand,
 	}
 
-	ctx = models.WithModelContext(ctx, modelCtx)
+	ctx = model.WithModelContext(ctx, modelCtx)
 	a.createBaseNodes(ctx)
 	systemID := modelCtx.SystemID
 
@@ -159,7 +159,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	gqlConfig := gql.Config{
-		Resolvers: &resolvers.Resolver{ModelCtx: modelCtx},
+		Resolvers: &resolver.Resolver{ModelCtx: modelCtx},
 	}
 
 	gqlOptions := []handler.Option{
@@ -236,33 +236,33 @@ func (a *App) Start(ctx context.Context) error {
 
 func (a *App) createBaseNodes(ctx context.Context) {
 	var (
-		viewerID         = relay.EncodeID(models.NodeTypeUser)
-		systemID         = relay.EncodeID(models.NodeTypeSystem)
-		jobMetricsID     = relay.EncodeID(models.NodeTypeJobMetrics)
-		processMetricsID = relay.EncodeID(models.NodeTypeProcessMetrics)
-		logMetricsID     = relay.EncodeID(models.NodeTypeLogMetrics)
+		viewerID         = relay.EncodeID(model.NodeTypeUser)
+		systemID         = relay.EncodeID(model.NodeTypeSystem)
+		jobMetricsID     = relay.EncodeID(model.NodeTypeJobMetrics)
+		processMetricsID = relay.EncodeID(model.NodeTypeProcessMetrics)
+		logMetricsID     = relay.EncodeID(model.NodeTypeLogMetrics)
 	)
 
-	(&models.User{ID: viewerID}).MustStore(ctx)
-	(&models.LogMetrics{ID: logMetricsID}).MustStore(ctx)
-	(&models.JobMetrics{ID: jobMetricsID}).MustStore(ctx)
-	(&models.ProcessMetrics{ID: processMetricsID}).MustStore(ctx)
-	(&models.System{
+	(&model.User{ID: viewerID}).MustStore(ctx)
+	(&model.LogMetrics{ID: logMetricsID}).MustStore(ctx)
+	(&model.JobMetrics{ID: jobMetricsID}).MustStore(ctx)
+	(&model.ProcessMetrics{ID: processMetricsID}).MustStore(ctx)
+	(&model.System{
 		ID:               systemID,
 		JobMetricsID:     jobMetricsID,
 		LogMetricsID:     logMetricsID,
 		ProcessMetricsID: processMetricsID,
 	}).MustStore(ctx)
 
-	modelCtx := models.GetModelContext(ctx)
+	modelCtx := model.GetModelContext(ctx)
 	modelCtx.ViewerID = viewerID
 	modelCtx.SystemID = systemID
 }
 
 func (a *App) createSources(ctx context.Context) error {
-	modelCtx := models.GetModelContext(ctx)
+	modelCtx := model.GetModelContext(ctx)
 
-	config, err := models.LoadSourcesConfigYAML(a.sourcesFile)
+	config, err := model.LoadSourcesConfigYAML(a.sourcesFile)
 	if err != nil {
 		return err
 	}
@@ -278,9 +278,9 @@ func (a *App) createSources(ctx context.Context) error {
 }
 
 func (a *App) createKeys(ctx context.Context) error {
-	modelCtx := models.GetModelContext(ctx)
+	modelCtx := model.GetModelContext(ctx)
 
-	config, err := models.LoadKeysConfigYAML(a.keysFile)
+	config, err := model.LoadKeysConfigYAML(a.keysFile)
 	if err != nil {
 		return err
 	}
@@ -296,19 +296,19 @@ func (a *App) createKeys(ctx context.Context) error {
 }
 
 func (a *App) startPeriodicJobs(ctx context.Context) {
-	modelCtx := models.GetModelContext(ctx)
+	modelCtx := model.GetModelContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 
 	go func() {
-		err := jobs.StartPeriodic(
+		err := job.StartPeriodic(
 			ctx,
 			a.periodicJobsInterval,
 			func(ctx context.Context) []string {
-				return jobs.LoadAllSources(ctx, models.JobPriorityNormal)
+				return job.LoadAllSources(ctx, model.JobPriorityNormal)
 			},
 			func(ctx context.Context) []string {
-				return jobs.LoadAllCommits(ctx, models.JobPriorityNormal)
+				return job.LoadAllCommits(ctx, model.JobPriorityNormal)
 			},
 		)
 		if err != nil && err != context.Canceled {
@@ -324,7 +324,7 @@ func (a *App) startPeriodicJobs(ctx context.Context) {
 }
 
 func (a *App) handleSignals(ctx context.Context, server *http.Server) {
-	modelCtx := models.GetModelContext(ctx)
+	modelCtx := model.GetModelContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 
@@ -339,7 +339,7 @@ func (a *App) handleSignals(ctx context.Context, server *http.Server) {
 }
 
 func (a *App) shutdownGracefully(ctx context.Context, server *http.Server) {
-	modelCtx := models.GetModelContext(ctx)
+	modelCtx := model.GetModelContext(ctx)
 	log := modelCtx.Log
 	pm := modelCtx.PM
 	systemID := modelCtx.SystemID
@@ -384,7 +384,7 @@ func (a *App) shutdownGracefully(ctx context.Context, server *http.Server) {
 }
 
 func (a *App) openAddressInBrowser(ctx context.Context) {
-	modelCtx := models.GetModelContext(ctx)
+	modelCtx := model.GetModelContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 

@@ -4,18 +4,18 @@ exec:
   filename: gql/auto_gql.go
   package: gql
 model:
-  filename: models/auto_models.go
-  package: models
+  filename: model/auto_model.go
+  package: model
 resolver:
   filename: resolvers/root.go
   package: resolvers
   type: Resolver
 models:
   DateTime:
-    model: groundcontrol/models.DateTime
+    model: groundcontrol/model.DateTime
   Hash:
-    model: groundcontrol/models.Hash
+    model: groundcontrol/model.Hash
   Node:
-    model: groundcontrol/models.Node
+    model: groundcontrol/model.Node
   Source:
-    model: groundcontrol/models.Source
+    model: groundcontrol/model.Source

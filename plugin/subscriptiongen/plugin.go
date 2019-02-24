@@ -85,7 +85,7 @@ func (p *Plugin) MutateConfig(cfg *config.Config) error {
 
 	build := &SubscriptionBuild{
 		DeletedType: types.NewPointer(deletedType),
-		DeletedName: "models.DeletedNode",
+		DeletedName: "model.DeletedNode",
 	}
 
 	subscriptions := schema.Types["Subscription"]

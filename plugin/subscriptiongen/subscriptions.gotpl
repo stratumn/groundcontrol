@@ -2,13 +2,13 @@
 {{ reserveImport "encoding/base64" }}
 {{ reserveImport "strconv" }}
 
-{{ reserveImport "groundcontrol/models" }}
+{{ reserveImport "groundcontrol/model" }}
 
 {{ $root := . }}
 
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ .Type | ref }}, error) {
-	ctx = models.WithModelContext(ctx, r.ModelCtx)
+	ctx = model.WithModelContext(ctx, r.ModelCtx)
 	ch := make(chan {{ .Type | ref }}, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -20,13 +20,13 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 		}
 	}
 
-	r.ModelCtx.Subs.Subscribe(ctx, models.MessageType{{ .TypeName }}Stored, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, model.MessageType{{ .TypeName }}Stored, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
 		}
 		select {
-		case ch <- models.MustLoad{{ .TypeName }}(ctx, nodeID):
+		case ch <- model.MustLoad{{ .TypeName }}(ctx, nodeID):
 		default:
 		}
 	})
@@ -37,7 +37,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ $root.DeletedType | ref }}, error) {
-	ctx = models.WithModelContext(ctx, r.ModelCtx)
+	ctx = model.WithModelContext(ctx, r.ModelCtx)
 	ch := make(chan {{ $root.DeletedType | ref }}, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -49,7 +49,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *s
 		}
 	}
 
-	r.ModelCtx.Subs.Subscribe(ctx, models.MessageType{{ .TypeName }}Deleted, last, func(msg interface{}) {
+	r.ModelCtx.Subs.Subscribe(ctx, model.MessageType{{ .TypeName }}Deleted, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return

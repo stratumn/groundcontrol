@@ -18,7 +18,7 @@ package app
 
 import (
 	"context"
-	"groundcontrol/models"
+	"groundcontrol/model"
 	"syscall"
 )
 
@@ -28,7 +28,7 @@ func initHooks(ctx context.Context) error {
 }
 
 func incNoFile(ctx context.Context) {
-	modelCtx := models.GetModelContext(ctx)
+	modelCtx := model.GetModelContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 	limit := syscall.Rlimit{}

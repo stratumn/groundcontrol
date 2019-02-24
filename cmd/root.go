@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/viper"
 
 	"groundcontrol/app"
-	"groundcontrol/models"
+	"groundcontrol/model"
 )
 
 var (
@@ -50,7 +50,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptKeysFile(viper.GetString("keys-file")),
 			app.OptListenAddress(viper.GetString("listen-address")),
 			app.OptJobConcurrency(viper.GetInt("job-concurrency")),
-			app.OptLogLevel(models.LogLevel(strings.ToUpper(viper.GetString("log-level")))),
+			app.OptLogLevel(model.LogLevel(strings.ToUpper(viper.GetString("log-level")))),
 			app.OptLogCap(viper.GetInt("log-cap")),
 			app.OptPubSubHistoryCap(viper.GetInt("pubsub-history-cap")),
 			app.OptPeriodicJobsInterval(viper.GetDuration("periodic-jobs-interval")),

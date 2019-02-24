@@ -35,7 +35,7 @@ func New(concurrency int) *Queue {
 	}
 }
 
-// Work tells the queue to start executing jobs.
+// Work tells the queue to start executing job.
 //
 // It blocks until the context is canceled.
 func (q *Queue) Work(ctx context.Context) error {

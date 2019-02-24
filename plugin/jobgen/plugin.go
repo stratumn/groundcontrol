@@ -24,7 +24,7 @@ import (
 	"groundcontrol/plugin/util"
 )
 
-// Plugin generates mutations for jobs.
+// Plugin generates mutations for job.
 type Plugin struct {
 	filename string
 	pkgname  string
@@ -78,7 +78,7 @@ func (p *Plugin) MutateConfig(cfg *config.Config) error {
 
 	build := &JobBuild{
 		JobType: types.NewPointer(jobType),
-		JobName: "models.Job",
+		JobName: "model.Job",
 	}
 
 	mutations := schema.Types["Mutation"]
