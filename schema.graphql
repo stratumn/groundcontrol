@@ -1,14 +1,20 @@
 """Dynamic indicates a property is dynamically computed and is not stored in the model. Note that dynamic fields don't trigger Stored subscriptions."""
 directive @dynamic on FIELD_DEFINITION
 """Relate indicates a field references another Node."""
-directive @relate(goIdFieldName: String) on FIELD_DEFINITION
-"""Paginate indicate a field hat references a collection of Nodes using Relay pagination."""
-directive @paginate(goIdsFieldName: String) on FIELD_DEFINITION
-"""Job indicate a mutation that queues one or multiple job."""
+directive @relate(
+  """GoIDFieldName is the name of the field for the ID of the referenced Node that will be used in the Go Struct."""
+  goIdFieldName: String
+) on FIELD_DEFINITION
+"""Paginate indicates a field that references a collection of Nodes using Relay pagination."""
+directive @paginate(
+  """GoIDSFieldName is the name of the field for the IDs of the referenced Nodes that will be used in the Go Struct."""
+  goIdsFieldName: String
+) on FIELD_DEFINITION
+"""Job indicates a mutation that queues one or multiple job."""
 directive @job on FIELD_DEFINITION
-"""Stored indicate a subscription that emits a message when a Node is stored."""
+"""Stored indicates a subscription that emits a message when a Node is stored."""
 directive @stored on FIELD_DEFINITION
-"""Deleted indicate a subscription that emits a message when a Node is deleted."""
+"""Deleted indicates a subscription that emits a message when a Node is deleted."""
 directive @deleted on FIELD_DEFINITION
 
 """DateTime is a date and time serialized as a string using the format `2006-01-02T15:04:05-0700`."""
@@ -495,7 +501,7 @@ type Task implements Node {
   name: String!
   """Variables lists the Variables using Relay pagination."""
   variables(after: String, before: String, first: Int, last: Int): VariableConnection! @paginate
-  """Steps lists the steps using Relay pagination."""
+  """Steps lists the Steps using Relay pagination."""
   steps(after: String, before: String, first: Int, last: Int): StepConnection! @paginate
   """Workspace is Workspace that defines this Task."""
   workspace: Workspace! @relate
