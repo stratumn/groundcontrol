@@ -16,6 +16,7 @@ package model
 
 import (
 	"context"
+	"os/exec"
 	"strings"
 
 	git "gopkg.in/src-d/go-git.v4"
@@ -297,7 +298,26 @@ func (n *Project) updateStatus(ctx context.Context) error {
 		return err
 	}
 
+	n.IsClean, err = n.checkIfClean(ctx)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// checkIfClean checks if there are uncommited changes.
+// We currently call git because go-git can't do it efficiently.
+func (n *Project) checkIfClean(ctx context.Context) (bool, error) {
+	if !n.IsCloned(ctx) {
+		return true, nil
+	}
+
+	cmd := exec.Command("git", "status", "--porcelain")
+	cmd.Dir = n.Path(ctx)
+
+	out, err := cmd.CombinedOutput()
+	return len(out) < 1, err
 }
 
 // iterateCommits creates an iterator for the commits of a reference.

@@ -423,6 +423,8 @@ type Workspace implements Node {
   isBehind: Boolean! @dynamic
   """IsAhead indicates whether any of the Projects is ahead. See Project."""
   isAhead: Boolean! @dynamic
+  """IsClean indicates whether all Projects are clean. See Project."""
+  isClean: Boolean! @dynamic
 }
 
 """Project tracks a Git repository and reference."""
@@ -465,6 +467,8 @@ type Project implements Node {
   isBehind: Boolean!
   """IsAhead indicates whether the local Git branch has Commits not in the remote repository."""
   isAhead: Boolean!
+  """IsClean indicates whether there are uncommitted changes."""
+  isClean: Boolean!
 }
 
 """A Git commit."""

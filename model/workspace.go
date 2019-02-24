@@ -88,3 +88,15 @@ func (n *Workspace) IsAhead(ctx context.Context) bool {
 
 	return false
 }
+
+// IsClean indicates whether all Projects are clean. See Project.
+func (n *Workspace) IsClean(ctx context.Context) bool {
+	for _, id := range n.ProjectsIDs {
+		node := MustLoadProject(ctx, id)
+		if !node.IsClean {
+			return false
+		}
+	}
+
+	return true
+}
