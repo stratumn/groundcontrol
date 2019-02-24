@@ -11,6 +11,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/rs/cors v1.6.0
+	github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0
