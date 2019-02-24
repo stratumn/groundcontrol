@@ -148,12 +148,10 @@ func (c ProjectConfig) UpsertNodes(
 		project.Description = c.Description
 		project.WorkspaceID = workspaceID
 
-		if project.RemoteReference == "" {
+		if _, err := LoadProject(ctx, id); err == ErrNotFound {
 			project.RemoteReference = c.Reference
-		}
-
-		if project.LocalReference == "" {
 			project.LocalReference = c.Reference
+			project.IsClean = true
 		}
 
 		project.MustStore(ctx)
