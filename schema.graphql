@@ -1,1418 +1,758 @@
+"""Dynamic indicates a property is dynamically computed and is not stored in the model."""
 directive @dynamic on FIELD_DEFINITION
+"""Relate indicates a field references another Node."""
 directive @relate(goIdFieldName: String) on FIELD_DEFINITION
+"""Paginate indicate a field hat references a collection of Nodes using Relay pagination."""
 directive @paginate(goIdsFieldName: String) on FIELD_DEFINITION
+"""Stored indicate a subscription that emits a message when a Node is stored."""
 directive @stored on FIELD_DEFINITION
+"""Deleted indicate a subscription that emits a message when a Node is deleted."""
 directive @deleted on FIELD_DEFINITION
 
-"""
-A date and time serialized as a string using the format `2006-01-02T15:04:05-0700`.
-"""
+"""DateTime is a date and time serialized as a string using the format `2006-01-02T15:04:05-0700`."""
 scalar DateTime
 
-"""
-A hash, usually from Git, serialized as a string using base64 encoding.
-"""
+"""Hash contains a hash, usually from Git, serialized as a string using base64 encoding."""
 scalar Hash
 
-"""
-The status of a job.
-"""
+"""JobStatus is the status of a Job in the queue."""
 enum JobStatus {
+  """QUEUED indicates the Job is waiting in the queue."""
   QUEUED
+  """RUNNING indicates the Job is currently running."""
   RUNNING
+  """STOPPING indicates the Job was asked to stop."""
   STOPPING
+  """DONE indicates the Job completed successfully."""
   DONE
+  """FAILED indicates the Job failed to complete."""
   FAILED
 }
 
-"""
-The priority of a job.
-"""
+"""JobPriority is the priority of a Job in the queue."""
 enum JobPriority {
+  """NORMAL is usually used for periodic Jobs."""
   NORMAL
+  """HIGH is usually used for Jobs that were triggered by a User action."""
   HIGH
 }
 
-"""
-The status of a process.
-"""
+"""ProcessStatus is the status of a Process."""
 enum ProcessStatus {
+  """RUNNING indicates the Process is currently running."""
   RUNNING
+  """STOPPING indicates the Process was asked to stop."""
   STOPPING
+  """DONE indicates the Process exited successfully."""
   DONE
+  """FAILED indicates the Process exited with an error."""
   FAILED
 }
 
-"""
-The level of a log entry.
-"""
+"""LogLevel represents how important a LogEntry is."""
 enum LogLevel {
+  """DEBUG is used by developers to debug the application."""
   DEBUG
+  """INFO indicates normal behavior."""
   INFO
+  """WARNING indicates a potential issue."""
   WARNING
+  """ERROR indicates an important issue."""
   ERROR
 }
 
-"""
-An input for a repository source.
-"""
+"""Node is a Relay node."""
+interface Node {
+  """ID is the global ID of the Node."""
+  id: ID!
+}
+
+"""Source is is a collection of workspaces and tasks."""
+interface Source {
+  """ID is the global ID of the Node."""
+  id: ID!
+  """User is the user who owns the Source."""
+  user: User!
+  """Workspaces lists the workspaces defined by the Source using Relay pagination."""
+  workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection!
+  """IsLoading indicates whether the Source is currently loading workspaces."""
+  isLoading: Boolean!
+}
+
+"""DirectorySourceInput contains fields to create a DirectorySource. See DirectorySource."""
 input DirectorySourceInput {
   directory: String!
 }
 
-"""
-An input for a Git source.
-"""
+"""GitSourceInput contains fields to create a GitSource. See GitSource."""
 input GitSourceInput {
   repository: String!
   reference: String!
 }
 
-"""
-An input for a variable.
-"""
+"""VariableInput contains fields to create a Variable. See Variable."""
 input VariableInput {
   name: String!
   value: String!
   save: Boolean!
 }
 
-"""
-An input for a key.
-"""
+"""KeyInput contains fields to set a Key. See KeyInput."""
 input KeyInput {
   name: String!
   value: String!
 }
 
-"""
-A Relay node.
-"""
-interface Node {
-  """
-  The global ID of the node.
-  """
-  id: ID!
-}
-
-"""
-A collection of workspaces.
-"""
-interface Source {
-  """
-  The global ID of the node.
-  """
-  id: ID!
-  """
-  The user who owns the source.
-  """
-  user: User!
-  """
-  The workspaces using Relay pagination.
-  """
-  workspaces(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): WorkspaceConnection!
-  """
-  Whether currently loading workspaces.
-  """
-  isLoading: Boolean!
-}
-
-"""
-A Relay pagination info.
-"""
+"""PageInfo contains Relay pagination info."""
 type PageInfo {
-  """
-  Whether there is a next page.
-  """
+  """HasNextPage indicates whether there is a next page."""
   hasNextPage: Boolean!
-  """
-  Whether there is a previous page.
-  """
+  """HasPreviousPage indicates whether there is a previous page."""
   hasPreviousPage: Boolean!
-  """
-  A cursor pointing to the last edge.
-  """
+  """EndCursor points to the last Edge."""
   endCursor: String!
-  """
-  A cursor pointing to the first edge.
-  """
+  """StartCursor points pointing to the first Edge."""
   startCursor: String!
 }
 
-"""
-A Relay connection for sources.
-"""
+"""SourceConnection is a Relay Connection for a page of Sources."""
 type SourceConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [SourceEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a source.
-"""
+"""SourceEdge is a Relay Edge for a Source."""
 type SourceEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Source!
 }
 
-"""
-A Relay connection for workspaces.
-"""
+"""WorkspaceConnection is a Relay Connection for a page of Workspaces."""
 type WorkspaceConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [WorkspaceEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a workspace.
-"""
+"""WorkspaceEdge is a Relay Edge for a Workspace."""
 type WorkspaceEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Workspace!
 }
 
-"""
-A Relay connection for projects.
-"""
+"""ProjectConnection is a Relay Connection for a page of Projects."""
 type ProjectConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [ProjectEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a project.
-"""
+"""ProjectEdge is a Relay Edge for a Project."""
 type ProjectEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Project!
 }
 
-"""
-A Relay connection for commits.
-"""
+"""CommitConnection is a Relay Connection for a page of Commits."""
 type CommitConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [CommitEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
-}
+} 
 
-"""
-A Relay edge for a commit.
-"""
+"""CommitEdge is a Relay Edge for a Commit."""
 type CommitEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Commit!
 }
 
-"""
-A Relay connection for tasks.
-"""
+"""TaskConnection is a Relay Connection for a page of Tasks."""
 type TaskConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [TaskEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a task.
-"""
+"""TaskEdge is a Relay Edge for a Task."""
 type TaskEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Task!
 }
 
-"""
-A Relay connection for variables.
-"""
+"""VariableConnection is a Relay Connection for a page of Variables."""
 type VariableConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [VariableEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a variable.
-"""
+"""VariableEdge is a Relay Edge for a Variable."""
 type VariableEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Variable!
 }
 
-"""
-A Relay connection for steps.
-"""
+"""StepConnection is a Relay Connection for a page of Steps."""
 type StepConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [StepEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a step.
-"""
+"""StepEdge is a Relay Edge for a Step."""
 type StepEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Step!
 }
 
-"""
-A Relay connection for commands.
-"""
+"""CommandConnection is a Relay Connection for a page of Commands."""
 type CommandConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [CommandEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a command.
-"""
+"""CommandEdge is a Relay Edge for a Command."""
 type CommandEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Command!
 }
 
-"""
-A Relay connection for keys.
-"""
+"""KeyConnection is a Relay Connection for a page of Keys."""
 type KeyConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [KeyEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a key.
-"""
+"""KeyEdge is a Relay Edge for a Key."""
 type KeyEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Key!
 }
 
-"""
-A Relay connection for jobs.
-"""
+"""JobConnection is a Relay Connection for a page of Jobs."""
 type JobConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [JobEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a job.
-"""
+"""JobEdge is a Relay Edge for a Job."""
 type JobEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Job!
 }
 
-"""
-A Relay connection for process groups.
-"""
+"""ProcessGroupConnection is a Relay Connection for a page of ProcessGroups."""
 type ProcessGroupConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [ProcessGroupEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a process group.
-"""
+"""ProcessGroupEdge is a Relay Edge for a ProcessGroup."""
 type ProcessGroupEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: ProcessGroup!
 }
 
-"""
-A Relay connection for processes.
-"""
+"""ProcessConnection is a Relay Connection for a page of Processes."""
 type ProcessConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [ProcessEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a process.
-"""
+"""ProcessEdge is a Relay Edge for a Process."""
 type ProcessEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: Process!
 }
 
-"""
-A Relay connection for log entries.
-"""
+"""LogEntryConnection is a Relay Connection for a page of LogEntries."""
 type LogEntryConnection {
-  """
-  The edges for the current page.
-  """
+  """Edges contains an array of Edge in the current page."""
   edges: [LogEntryEdge!]!
-  """
-  The pagination info.
-  """
+  """PaginationInfo contains metadata about the current page."""
   pageInfo: PageInfo!
 }
 
-"""
-A Relay edge for a log entry.
-"""
+"""LogEntryEdge is a Relay Edge for a LogEntry."""
 type LogEntryEdge {
-  """
-  The cursor pointing to the edge.
-  """
+  """Cursor is used to paginate Nodes relative to this Edge."""
   cursor: String!
-  """
-  The target node.
-  """
+  """Node is the Node pointed by the Edge."""
   node: LogEntry!
 }
 
-"""
-A person using the app.
-"""
+"""User is a person using Ground Control."""
 type User implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The sources using Relay pagination.
-  """
-  sources(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): SourceConnection! @paginate
-  """
-  The workspaces using Relay pagination.
-  """
-  workspaces(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): WorkspaceConnection! @dynamic
-  """
-  The workspace with the given slug.
-  """
+  """Sources lists the sources belonging to the User using Relay pagination."""
+  sources(after: String, before: String, first: Int, last: Int): SourceConnection! @paginate
+  """Workspaces lists the workspaces belonging to the User using Relay pagination"""
+  workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection! @dynamic
+  """Workspace find a workspace by its slug."""
   workspace(slug: String!): Workspace @dynamic
-  """
-  The projects using Relay pagination.
-  """
-  projects(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): ProjectConnection! @dynamic
-  """
-  The keys using Relay pagination.
-  """
-  keys(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): KeyConnection! @paginate
+  """Projets lists the projects belonging to the User using Relay pagination."""
+  projects(after: String, before: String, first: Int, last: Int): ProjectConnection! @dynamic
+  """Keys lists the keys belonging to the User using Relay pagination."""
+  keys(after: String, before: String, first: Int, last: Int): KeyConnection! @paginate
 }
 
-"""
-Information about the running app.
-"""
+"""System contains information about Ground Control."""
 type System implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The jobs using Relay pagination optionally filtered by status.
-  """
-  jobs(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    status: [JobStatus!]
-  ): JobConnection! @paginate
-  """
-  The process groups using Relay pagination optionally filtered by status.
-  """
-  processGroups(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    status: [ProcessStatus!]
-  ): ProcessGroupConnection! @paginate
-  """
-  The log entries using Relay pagination optionally filtered by level and/or owner ID.
-  """
-  logEntries(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    level: [LogLevel!]
-    ownerId: ID
-  ): LogEntryConnection! @paginate
-  """
-  The job metrics.
-  """
+  """Jobs lists the Jobs using Relay pagination optionally filtered by JobStatus."""
+  jobs(after: String, before: String, first: Int, last: Int, status: [JobStatus!]): JobConnection! @paginate
+  """ProcessGroups lists the ProcessGroups using Relay pagination optionally filtered by ProcessStatus."""
+  processGroups(after: String, before: String, first: Int, last: Int, status: [ProcessStatus!]): ProcessGroupConnection! @paginate
+  """LogEntries lists the LogEntries using Relay pagination optionally filtered by Level and by the Node who owns the LogEntry."""
+  logEntries(after: String, before: String, first: Int, last: Int, level: [LogLevel!], ownerId: ID): LogEntryConnection! @paginate
+  """JobMetrics are the JobMetrics for the System."""
   jobMetrics: JobMetrics! @relate
-  """
-  The process metrics.
-  """
+  """ProcessMetrics are the ProcessMetrics for the System."""
   processMetrics: ProcessMetrics! @relate
-  """
-  The log metrics.
-  """
+  """JobMetrics are the JobMetrics for the System."""
   logMetrics: LogMetrics! @relate
-  """
-  The ID of the last message which can be used for subscriptions.
-  """
+  """LastMessageID is the ID of the last PubSub message and can be used to not miss any message when subscribing."""
   lastMessageId: ID! @dynamic
 }
 
-"""
-A collection of workspaces in a directory.
-"""
+"""DirectorySource is a collection of Workspaces in a directory."""
 type DirectorySource implements Node & Source {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The user who owns the source.
-  """
+  """User is the user who owns the Source."""
   user: User! @relate
-  """
-  The workspaces using Relay pagination.
-  """
-  workspaces(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): WorkspaceConnection! @paginate
-  """
-  Whether currently loading workspaces.
-  """
+  """Workspaces lists the workspaces defined by the Source using Relay pagination."""
+  workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection! @paginate
+  """IsLoading indicates whether the Source is currently loading workspaces."""
   isLoading: Boolean!
-  """
-  The path to the directory containing the workspaces.
-  """
+  """Directory is the path to the directory containing the workspaces."""
   directory: String!
 }
 
-"""
-A collection of workspaces in a Git repository.
-"""
+"""GitSource is a collection of Workspaces in a Git repository."""
 type GitSource implements Node & Source {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The user who owns the source.
-  """
+  """User is the user who owns the Source."""
   user: User! @relate
-  """
-  The workspaces using Relay pagination.
-  """
-  workspaces(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): WorkspaceConnection! @paginate
-  """
-  Whether currently loading workspaces.
-  """
+  """Workspaces lists the workspaces defined by the Source using Relay pagination."""
+  workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection! @paginate
+  """IsLoading indicates whether the Source is currently loading workspaces."""
   isLoading: Boolean!
-  """
-  The Git repository.
-  """
+  """Repository is a Git repository to track."""
   repository: String!
-  """
-  The Git reference.
-  """
+  """Reference is the Git reference to track."""
   reference: String!
-  """
-  The short name of the Git reference.
-  """
+  """ReferenceShort is the short name of the Reference."""
   referenceShort: String! @dynamic
-  """
-  Whether cloned.
-  """
+  """IsCloned indicates whether the repository is cloned."""
   isCloned: Boolean! @dynamic
 }
 
-"""
-A collection of projects and tasks.
-"""
+"""Workspace is a collection of Projects and Tasks."""
 type Workspace implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The unique, URL friendly identifier.
-  """
+  """Slug is the unique URL friendly identifier."""
   slug: String!
-  """
-  The human friendly name.
-  """
+  """Name is the human friendly name."""
   name: String!
-  """
-  The source which this workspace is part of.
-  """
+  """Source is the source which this Workspace is part of."""
   source: Source! @relate
-  """
-  The projects using Relay pagination.
-  """
-  projects(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): ProjectConnection! @paginate
-  """
-  The tasks using Relay pagination.
-  """
-  tasks(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): TaskConnection! @paginate
-  """
-  The optional description.
-  """
+  """Projects lists the projects within the Workspace using Relay pagination."""
+  projects(after: String, before: String, first: Int, last: Int): ProjectConnection! @paginate
+  """Tasks lists the tasks of the Workspace using Relay pagination."""
+  tasks(after: String, before: String, first: Int, last: Int): TaskConnection! @paginate
+  """Description is an optional description."""
   description: String
-  """
-  The optional notes.
-  """
+  """Notes contains optional notes."""
   notes: String
-  """
-  Whether any of the projects is currently cloning.
-  """
+  """IsCloning indicates whether any of the Projects is currently cloning."""
   isCloning: Boolean! @dynamic
-  """
-  Whether all projects are cloned.
-  """
+  """IsCloned indicates whether all Projects are cloned."""
   isCloned: Boolean! @dynamic
-  """
-  Whether any of the projects is currently pulling.
-  """
+  """IsPulling indicates whether any of the Projects is currently pulling."""
   isPulling: Boolean! @dynamic
-  """
-  Whether any of the projects is behind (see Project).
-  """
+  """IsBehind indicates whether any of the Projects is behind. See Project."""
   isBehind: Boolean! @dynamic
-  """
-  Whether any of the projects is ahead (see Project).
-  """
+  """IsAhead indicates whether any of the Projects is ahead. See Project."""
   isAhead: Boolean! @dynamic
 }
 
-"""
-A Git repository and reference.
-"""
+"""Project tracks a Git repository and reference."""
 type Project implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The unique, URL friendly identifier within the workspace.
-  """
+  """Slug is the unique, URL friendly identifier within the workspace."""
   slug: String!
-  """
-  The Git repository.
-  """
+  """Repository is the Git repository to track."""
   repository: String!
-  """
-  The Git reference to use when cloning.
-  """
+  """Reference is the Git reference to track."""
   reference: String!
-  """
-  The remote Git reference.
-  """
+  """RemoteReference is the remote Git reference."""
   remoteReference: String!
-  """
-  The local Git reference.
-  """
+  """LocalReference is the local Git reference."""
   localReference: String!
-  """
-  The short name of the Git reference to use when cloning.
-  """
+  """ReferenceShort is he short name of the Reference."""
   referenceShort: String! @dynamic
-  """
-  The short name of the remote Git reference.
-  """
+  """RemoteReferenceShort is he short name of the RemoteReference."""
   remoteReferenceShort: String! @dynamic
-  """
-  The short name of the local Git reference.
-  """
+  """LocalReferenceShort is he short name of the LocalReference."""
   localReferenceShort: String! @dynamic
-  """
-  The optional description.
-  """
+  """Description is an optional description."""
   description: String
-  """
-  The remote commits using Relay pagination.
-  """
-  remoteCommits(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): CommitConnection! @paginate
-  """
-  The local commits using Relay pagination.
-  """
-  localCommits(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): CommitConnection! @paginate
-  """
-  The parent workspace.
-  """
+  """RemoteCommits lists the remote Commits using Relay pagination."""
+  remoteCommits(after: String, before: String, first: Int, last: Int): CommitConnection! @paginate
+  """LocalCommits lists the local Commits using Relay pagination."""
+  localCommits(after: String, before: String, first: Int, last: Int): CommitConnection! @paginate
+  """Workspace is the Workspace this Project is part of."""
   workspace: Workspace! @relate
-  """
-  Whether currently loading commits.
-  """
+  """IsLoadingCommits indicates whether Commits are currently being loaded."""
   isLoadingCommits: Boolean!
-  """
-  Whether currently cloning.
-  """
+  """IsCloning indicates whether the repository is being cloned."""
   isCloning: Boolean!
-  """
-  Whether cloned.
-  """
+  """IsCloned indicates whether the repository is cloned."""
   isCloned: Boolean! @dynamic
-  """
-  Whether currently pulling.
-  """
+  """IsCloned indicates whether the repository is currently being pulled."""
   isPulling: Boolean!
-  """
-  Whether the remote Git head has parent commits the local head doesn't.
-  """
+  """IsBehind indicates whether the remote Git repository has Commits not in the local branch."""
   isBehind: Boolean!
-  """
-  Whether the local Git head has parent commits the remote head doesn't.
-  """
+  """IsAhead indicates whether the local Git branch has Commits not in the remote repository."""
   isAhead: Boolean!
 }
 
-"""
-A Git commit.
-"""
+"""A Git commit."""
 type Commit implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The Git hash.
-  """
+  """Hash is the Git hash."""
   hash: Hash!
-  """
-  The first line of the message.
-  """
+  """Headline is the first line of the message."""
   headline: String!
-  """
-  The message.
-  """
+  """Message is the message of the Commit."""
   message: String!
-  """
-  The committer's name.
-  """
+  """Author is the name of the committer."""
   author: String!
-  """
-  The date committed.
-  """
+  """Date is the date of the Commit committed."""
   date: DateTime!
 }
 
-"""
-A sequence of steps.
-"""
+"""Task is a sequence of Steps to execute on a Workspace."""
 type Task implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The human friendly name.
-  """
+  """Name is the human friendly name."""
   name: String!
-  """
-  The variables using Relay pagination.
-  """
-  variables(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): VariableConnection! @paginate
-  """
-  The steps using Relay pagination.
-  """
-  steps(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): StepConnection! @paginate
-  """
-  The parent workspace.
-  """
+  """Variables lists the Variables using Relay pagination."""
+  variables(after: String, before: String, first: Int, last: Int): VariableConnection! @paginate
+  """Steps lists the steps using Relay pagination."""
+  steps(after: String, before: String, first: Int, last: Int): StepConnection! @paginate
+  """Workspace is Workspace that defines this Task."""
   workspace: Workspace! @relate
-  """
-  Whether currently running.
-  """
+  """IsRunning indicates whether the task is currently running."""
   isRunning: Boolean!
 }
 
-"""
-A variable.
-"""
+"""Variable is a value that can be set before executing a Task."""
 type Variable implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The name of the variable.
-  """
+  """Name is the unique name of the Variable."""
   name: String!
-  """
-  The default value of the variable.
-  """
+  """Default is the default value of the Variable."""
   default: String
 }
 
-"""
-A sequence of commands to execute on projects.
-"""
+"""Step is a sequence of commands to execute on Projects."""
 type Step implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The projects using Relay pagination.
-  """
-  projects(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): ProjectConnection! @paginate
-  """
-  The commands using Relay pagination.
-  """
-  commands(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): CommandConnection! @paginate
-  """
-  The parent task.
-  """
+  """The projects using Relay pagination."""
+  projects(after: String, before: String, first: Int, last: Int): ProjectConnection! @paginate
+  """The commands using Relay pagination."""
+  commands(after: String, before: String, first: Int, last: Int): CommandConnection! @paginate
+  """The parent task."""
   task: Task! @relate
 }
 
-"""
-A command to execute.
-"""
+"""Command is a shell command to execute."""
 type Command implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The command that will be executed by Bash.
-  """
+  """Command is the actual shell command."""
   command: String!
 }
 
-"""
-A key to set task variables.
-"""
+"""Key stores a value that can be used to set and save Task Variables."""
 type Key implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The unique name of the key.
-  """
+  """Name is the unique name of the Key."""
   name: String!
-  """
-  The value of the key.
-  """
+  """Value is the value of the Key."""
   value: String!
 }
 
-"""
-Work that takes too long to respond immediately.
-"""
+"""Job are put in the queue to do work that takes too long to process immediately."""
 type Job implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  A human frienly name.
-  """
+  """Name is the human frienly name."""
   name: String!
-  """
-  When it was created.
-  """
+  """CreatedAt is the date it was created."""
   createdAt: DateTime!
-  """
-  When it was updated.
-  """
+  """UpdatedAt is the date it was updated."""
   updatedAt: DateTime!
-  """
-  The current status.
-  """
+  """Status is the JobStatus."""
   status: JobStatus!
-  """
-  The priority in the queue.
-  """
+  """Priority is the JobPriority."""
   priority: JobPriority!
-  """
-  The node it belongs to.
-  """
+  """Owner is the Node who owns the Job."""
   owner: Node! @relate
 }
 
-"""
-A group of processes launched by a task.
-"""
+"""ProcessGroup groups processes launched by a Task."""
 type ProcessGroup implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  When it was created.
-  """
+  """CreatedAt is the date it was created."""
   createdAt: DateTime!
-  """
-  The current status.
-  """
+  """Status is the ProcessStatus."""
   status: ProcessStatus! @dynamic
-  """
-  The parent task.
-  """
+  """Task is the Task that created the Processes."""
   task: Task! @relate
-  """
-  The processes using Relay pagination.
-  """
-  processes(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): ProcessConnection! @paginate
+  """Processes lists the processes using Relay pagination."""
+  processes(after: String, before: String, first: Int, last: Int): ProcessConnection! @paginate
 }
 
-"""
-A command running in the background.
-"""
+"""Process is a program running in the background."""
 type Process implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The command to execute.
-  """
+  """Command is the shell command used to launch the Process."""
   command: String!
-  """
-  Env is the environment of the process.
-  Each entry is of the form "key=value".
-  """
+  """Env is the environment of the Process. Each entry is of the form 'key=value'."""
   env: [String!]
-  """
-  The current status.
-  """
+  """Status is the ProcessStatus."""
   status: ProcessStatus!
-  """
-  The parent process group.
-  """
+  """ProcessGroup is the ProcessGroup this Process is part of."""
   processGroup: ProcessGroup! @relate
-  """
-  The parent project.
-  """
+  """Project is the Project this Process was launched in."""
   project: Project! @relate
 }
 
-"""
-An entry in the logs.
-"""
+"""LogEntry is an entry in the logs."""
 type LogEntry implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  The level.
-  """
+  """Level is the LogLevel."""
   level: LogLevel!
-  """
-  When it was created.
-  """
+  """When it was created."""
   createdAt: DateTime!
-  """
-  The message.
-  """
+  """Message is the content of the log message."""
   message: String!
-  """
-  The node it belongs to.
-  """
+  """Owner is the Node who owns the Job."""
   owner: Node @relate
-  """
-  A path to a source file using the format `/path/to/file:line:offset?`, if one was found in the message.
-  """
+  """SourceFile is a path to a source file using the format `/path/to/file:line?:offset?`, if one was found in the message."""
   sourceFile: String
-  """
-  The offset in the message where the path to a source file begins.
-  """
+  """SourceFileBegin is the offset in the message where the path to a source file begins."""
   sourceFileBegin: Int
-  """
-  The offset in the message where the path to a source file ends.
-  """
+  """SourceFileEnd is the offset in the message where the path to a source file ends."""
   sourceFileEnd: Int
 }
 
-"""
-Metrics about jobs.
-"""
+"""JobMetrics contains metrics related to Jobs."""
 type JobMetrics implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  How many are queued.
-  """
+  """Running tracks how many Jobs are QUEUED."""
   queued: Int!
-  """
-  How many are running.
-  """
+  """Running tracks how many Jobs are RUNNING."""
   running: Int!
-  """
-  How many are done.
-  """
+  """Done tracks how many Jobs are DONE."""
   done: Int!
-  """
-  How many failed.
-  """
+  """Failed tracks wow many Jobs FAILED."""
   failed: Int!
 }
 
-"""
-Metrics about processes.
-"""
+"""ProcessMetrics contains metrics related to Processes."""
 type ProcessMetrics implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  How many are running.
-  """
+  """Running tracks how many Processes are RUNNING."""
   running: Int!
-  """
-  How many are done.
-  """
+  """Done tracks how many Processes are DONE."""
   done: Int!
-  """
-  How many failed.
-  """
+  """Failed tracks wow many Processes FAILED."""
   failed: Int!
 }
 
-"""
-Metrics about logs.
-"""
+"""LogMetrics contains metrics related to LogEntries."""
 type LogMetrics implements Node {
-  """
-  The global ID of the node.
-  """
+  """ID is the global ID of the Node."""
   id: ID!
-  """
-  How many are debug messages.
-  """
+  """Debug tracks how many DEBUG LogEntries there are."""
   debug: Int!
-  """
-  How many are info messages.
-  """
+  """Info tracks how many INFO LogEntries there are."""
   info: Int!
-  """
-  How many are warning messages.
-  """
+  """Warning tracks how many WARNING LogEntries there are."""
   warning: Int!
-  """
-  How many are error messages.
-  """
+  """Error tracks how many ERROR LogEntries there are."""
   error: Int!
 }
 
-"""
-A mutation result for when there isn't much to say.
-"""
+"""Ok is returned by mutations when there isn't much else to say."""
 type Ok {
+  """Ok is there because a field is required."""
   ok: Boolean!
 }
 
-"""
-A deleted node.
-"""
+"""DeletedNode is deleted node."""
 type DeletedNode {
+  """ID is the global ID of the deleted Node."""
   id: ID!
 }
 
-"""
-The root query resolver.
-"""
+"""Query is the root query resolver."""
 type Query {
-  """
-  A node given its global ID.
-  """
+  """Node finds a node from a global ID."""
   node(id: ID!): Node
-  """
-  The person using the app.
-  """
+  """The person using the app."""
   viewer: User!
-  """
-  Information about the running app.
-  """
+  """Information about the running app."""
   system: System!
 }
 
-"""
-The root mutation resolver.
-"""
+"""Mutation is the root mutation resolver."""
 type Mutation {
-  """
-  Add a directory source.
-  """
+  """AddDirectorySource add a DirectorySource."""
   addDirectorySource(input: DirectorySourceInput!): DirectorySource!
-  """
-  Add a Git source.
-  """
+  """AddGitSource adds a GitSource."""
   addGitSource(input: GitSourceInput!): GitSource!
-  """
-  Delete a source.
-  """
+  """DeleteSource deletes a Source."""
   deleteSource(id: ID!): DeletedNode!
-  """
-  Queue a job to load the commits of a project.
-  """
+  """LoadProjectCommits queues a Job to load the Commits of a Project."""
   loadProjectCommits(id: String!): Job!
-  """
-  Queue a job to load the commits of all the projects of a workspace.
-  """
+  """loadWorkspaceCommits queues a Job to load the commits of all the Projects of a Workspace."""
   loadWorkspaceCommits(id: String!): [Job!]!
-  """
-  Queue a job to clone a project.
-  """
+  """CloneProject queues a Job to clone a Project."""
   cloneProject(id: String!): Job!
-  """
-  Queue a job to clone all the projects of a workspace.
-  """
+  """CloneWorkspace queues a Job to clone all the Projects of a Workspace."""
   cloneWorkspace(id: String!): [Job!]!
-  """
-  Queue a job to pull a project.
-  """
+  """PullProject queues a Job to pull a Project."""
   pullProject(id: String!): Job!
-  """
-  Queue a job to pull all the projects of a workspace.
-  """
+  """PullWorkspace queues a Job to pull all the Projects of a Workspace."""
   pullWorkspace(id: String!): [Job!]!
-  """
-  Queue a job to run a task.
-  """
+  """Run queues a Job to run a Task."""
   run(id: String!, variables: [VariableInput!]): Job!
-  """
-  Set a key.
-  """
+  """SetKey sets a Key."""
   setKey(input: KeyInput!): Key!
-  """
-  Delete a key.
-  """
+  """DeleteKey deletes a Key."""
   deleteKey(id: ID!): DeletedNode!
-  """
-  Queue a job to stop a running job.
-  """
+  """StopJob stops a RUNNING Job."""
   stopJob(id: String!): Job!
-  """
-  Start all the processes of a group.
-  """
+  """StartProcessGroup starts all the Processes of a ProcessGroup."""
   startProcessGroup(id: String!): ProcessGroup!
-  """
-  Stop all the processes of a group.
-  """
+  """StopProcessGroup stops all the Processes of a ProcessGroup."""
   stopProcessGroup(id: String!): ProcessGroup!
-  """
-  Start a process.
-  """
+  """StartProcess starts a Process."""
   startProcess(id: String!): Process!
-  """
-  Stop a process.
-  """
+  """StopProcess stops a Process."""
   stopProcess(id: String!): Process!
-  """
-  Open text editor.
-  """
+  """OpenEditor opens the text editor."""
   openEditor(filename: String!): Ok!
 }
 
-"""
-The root subscription resolver.
-"""
+"""Subscription is the root subscription resolver."""
 type Subscription {
-  """
-  Receive a user when added or updated.
-  """
+  """UserStored sends a User when added or updated."""
   userStored(id: ID, lastMessageId: ID): User! @stored
-  """
-  Receive a system when added or updated.
-  """
+  """SystemStored sends a System when added or updated."""
   systemStored(id: ID, lastMessageId: ID): System! @stored
-  """
-  Receive a directory source when added or updated.
-  """
+  """DirectorySourceStored sends a DirectorySource when added or updated."""
   directorySourceStored(id: ID, lastMessageId: ID): DirectorySource! @stored
-  """
-  Receive a message when a directory source is deleted.
-  """
+  """DirectorySourceDeleted sends a message when a DirectorySource is deleted."""
   directorySourceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
-  """
-  Receive a Git source when added or updated.
-  """
+  """GitSourceStored sends a GitSource when added or updated."""
   gitSourceStored(id: ID, lastMessageId: ID): GitSource! @stored
-  """
-  Receive a message when a Git source is deleted.
-  """
+  """GitSourceDeleted sends a message when a GitSource is deleted."""
   gitSourceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
-  """
-  Receive a source when added or updated.
-  """
+  """SourceStored sends a Source when added or updated."""
   sourceStored(id: ID, lastMessageId: ID): Source!
-  """
-  Receive a message when a source is deleted.
-  """
+  """SourceDeleted sends a message when a Source is deleted."""
   sourceDeleted(id: ID, lastMessageId: ID): DeletedNode!
-  """
-  Receive a workspace when added updated.
-  """
+  """WorkspaceStored sends a Workspace when added updated."""
   workspaceStored(id: ID, lastMessageId: ID): Workspace! @stored
-  """
-  Receive a message when a workspace is deleted.
-  """
+  """WorkspaceDeleted sends a message when a Workspace is deleted."""
   workspaceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
-  """
-  Receive a project when added or updated.
-  """
+  """ProjectStored sends a Project when added or updated."""
   projectStored(id: ID, lastMessageId: ID): Project! @stored
-  """
-  Receive a message when a project is deleted.
-  """
+  """ProjectDeleted sends a message when a Project is deleted."""
   projectDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
-  """
-  Receive a task when added or updated.
-  """
+  """TaskStored sends a Task when added or updated."""
   taskStored(id: ID, lastMessageId: ID): Task! @stored
-  """
-  Receive a message when a task is deleted.
-  """
+  """TaskDeleted sends a Message when a Task is deleted."""
   taskDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
-  """
-  Receive a key when added or updated.
-  """
+  """KeyStored sends a Key when added or updated."""
   keyStored(id: ID, lastMessageId: ID): Key! @stored
-  """
-  Receive a message when a key is deleted.
-  """
+  """KeyDeleted sends a message when a Key is deleted."""
   keyDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
-  """
-  Receive a job when added or updated.
-  """
+  """JobStored sends a Job when added or updated."""
   jobStored(id: ID, lastMessageId: ID): Job! @stored
-  """
-  Receive a process group when added or updated.
-  """
+  """ProcessGroupStored sends a ProcessGroup when added or updated."""
   processGroupStored(id: ID, lastMessageId: ID): ProcessGroup! @stored
-  """
-  Receive a process when added or updated.
-  """
+  """ProcessStored sends a Process when added or updated."""
   processStored(id: ID, lastMessageId: ID): Process! @stored
-  """
-  Receive a log entry when added or updated.
-  """
+  """LogEntryStored sends a LogEntry when added or updated."""
   logEntryStored(id: ID, lastMessageId: ID): LogEntry! @stored
-  """
-  Receive a job metrics when added or updated.
-  """
+  """JobMetricsStored sends a JobMetrics when added or updated."""
   jobMetricsStored(id: ID, lastMessageId: ID): JobMetrics! @stored
-  """
-  Receive a process metrics when added or updated.
-  """
+  """ProcessMetricsStored sends a ProcessMetrics when added or updated."""
   processMetricsStored(id: ID, lastMessageId: ID): ProcessMetrics! @stored
-  """
-  Receive a log metrics when logs are updated.
-  """
+  """LogMetricsStored sends a LogMetrics when added or updated."""
   logMetricsStored(id: ID, lastMessageId: ID): LogMetrics! @stored
 }
