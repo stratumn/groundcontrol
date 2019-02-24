@@ -14,6 +14,6 @@
 
 package resolvers
 
-type mutationResolver struct {
-	*Resolver
-}
+// SubscriptionChannelSize is the size of a subscription channel.
+// If a channel is full new messages will be dropped and the client won't receive them.
+const SubscriptionChannelSize = 1024

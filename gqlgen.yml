@@ -7,7 +7,7 @@ model:
   filename: models/auto_models.go
   package: models
 resolver:
-  filename: resolvers/resolver.go
+  filename: resolvers/root.go
   package: resolvers
   type: Resolver
 models:

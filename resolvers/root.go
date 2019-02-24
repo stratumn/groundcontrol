@@ -16,9 +16,38 @@ package resolvers
 
 import (
 	"context"
-
+	"groundcontrol/gql"
 	"groundcontrol/models"
 )
+
+// Resolver is the root GraphQL resolver.
+type Resolver struct {
+	// We need this here because gqlgen doesn't currently pass it in the context of subscriptions.
+	ModelCtx *models.ModelContext
+}
+
+// Query returns the resolver for queries.
+func (r *Resolver) Query() gql.QueryResolver {
+	return &queryResolver{r}
+}
+
+// Mutation returns the resolver for mutations.
+func (r *Resolver) Mutation() gql.MutationResolver {
+	return &mutationResolver{r}
+}
+
+// Subscription returns the resolver for subscriptions.
+func (r *Resolver) Subscription() gql.SubscriptionResolver {
+	return &subscriptionResolver{r}
+}
+
+type mutationResolver struct {
+	*Resolver
+}
+
+type subscriptionResolver struct {
+	*Resolver
+}
 
 type queryResolver struct {
 	*Resolver
