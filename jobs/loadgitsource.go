@@ -30,7 +30,7 @@ func LoadGitSource(ctx context.Context, sourceID string, priority models.JobPrio
 
 	return modelCtx.Jobs.Add(
 		ctx,
-		LoadGitSourceJob,
+		JobNameLoadGitSource,
 		sourceID,
 		priority,
 		func(ctx context.Context) error {

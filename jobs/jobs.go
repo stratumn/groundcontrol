@@ -16,10 +16,10 @@ package jobs
 
 // Job names.
 const (
-	LoadDirectorySourceJob = "Load Directory Source"
-	LoadGitSourceJob       = "Load Git Source"
-	LoadCommitsJob         = "Load Commits"
-	CloneJob               = "Clone"
-	PullJob                = "Pull"
-	RunJob                 = "Run"
+	JobNameLoadDirectorySource = "Load Directory Source"
+	JobNameLoadGitSource       = "Load Git Source"
+	JobNameLoadProjectCommits  = "Load Project Commits"
+	JobNameCloneProject        = "Clone Project"
+	JobNamePullProject         = "Pull Project"
+	JobNameRun                 = "Run"
 )

@@ -304,8 +304,12 @@ func (a *App) startPeriodicJobs(ctx context.Context) {
 		err := jobs.StartPeriodic(
 			ctx,
 			a.periodicJobsInterval,
-			jobs.LoadAllSources,
-			jobs.LoadAllCommits,
+			func(ctx context.Context) []string {
+				return jobs.LoadAllSources(ctx, models.JobPriorityNormal)
+			},
+			func(ctx context.Context) []string {
+				return jobs.LoadAllCommits(ctx, models.JobPriorityNormal)
+			},
 		)
 		if err != nil && err != context.Canceled {
 			log.ErrorWithOwner(

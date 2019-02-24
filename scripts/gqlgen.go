@@ -23,6 +23,7 @@ import (
 	"github.com/99designs/gqlgen/api"
 	"github.com/99designs/gqlgen/codegen/config"
 
+	"groundcontrol/plugin/jobgen"
 	"groundcontrol/plugin/modelgen"
 	"groundcontrol/plugin/subscriptiongen"
 )
@@ -37,6 +38,7 @@ func main() {
 	opts := []api.Option{
 		api.NoPlugins(),
 		api.AddPlugin(modelgen.New()),
+		api.AddPlugin(jobgen.New("resolvers/auto_jobs.go", "resolvers")),
 		api.AddPlugin(subscriptiongen.New("resolvers/auto_subscriptions.go", "resolvers")),
 	}
 

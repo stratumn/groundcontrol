@@ -20,9 +20,9 @@ import (
 	"groundcontrol/models"
 )
 
-// LoadCommits loads the commits of a project from a remote repo and updates the project.
-func LoadCommits(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
-	if err := startLoadingCommits(ctx, projectID); err != nil {
+// LoadProjectCommits loads the commits of a project from a remote repo and updates the project.
+func LoadProjectCommits(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
+	if err := startLoadingProjectCommits(ctx, projectID); err != nil {
 		return "", err
 	}
 
@@ -30,16 +30,16 @@ func LoadCommits(ctx context.Context, projectID string, priority models.JobPrior
 
 	return modelCtx.Jobs.Add(
 		ctx,
-		LoadCommitsJob,
+		JobNameLoadProjectCommits,
 		projectID,
 		priority,
 		func(ctx context.Context) error {
-			return doLoadCommits(ctx, projectID)
+			return doLoadProjectCommits(ctx, projectID)
 		},
 	), nil
 }
 
-func startLoadingCommits(ctx context.Context, projectID string) error {
+func startLoadingProjectCommits(ctx context.Context, projectID string) error {
 	return models.LockProjectE(ctx, projectID, func(project *models.Project) error {
 		if project.IsLoadingCommits {
 			return ErrDuplicate
@@ -52,7 +52,7 @@ func startLoadingCommits(ctx context.Context, projectID string) error {
 	})
 }
 
-func doLoadCommits(ctx context.Context, projectID string) error {
+func doLoadProjectCommits(ctx context.Context, projectID string) error {
 	return models.MustLockProjectE(ctx, projectID, func(project *models.Project) error {
 		return project.Update(ctx)
 	})

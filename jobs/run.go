@@ -45,7 +45,7 @@ func Run(ctx context.Context, taskID string, env []string, priority models.JobPr
 
 	return modelCtx.Jobs.Add(
 		ctx,
-		RunJob,
+		JobNameRun,
 		workspaceID,
 		priority,
 		func(ctx context.Context) error {

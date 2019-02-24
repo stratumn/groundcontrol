@@ -12,38 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resolvers
+package jobs
 
 import (
 	"context"
 
-	"groundcontrol/jobs"
 	"groundcontrol/models"
 )
 
-// Note: hopefully we can return a slice of pointers in the future.
-func (r *mutationResolver) PullWorkspace(ctx context.Context, id string) ([]models.Job, error) {
-	workspace, err := models.LoadWorkspace(ctx, id)
+// LoadWorkspaceCommits creates jobs to load the commits of every project in a workspace.
+func LoadWorkspaceCommits(ctx context.Context, workspaceID string, priority models.JobPriority) ([]string, error) {
+	modelCtx := models.GetModelContext(ctx)
+	workspace, err := models.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
 		return nil, err
 	}
 
-	var slice []models.Job
+	var jobIDs []string
 
 	for _, projectID := range workspace.ProjectsIDs {
 		project := models.MustLoadProject(ctx, projectID)
 
-		if project.IsPulling || !project.IsCloned(ctx) || !project.IsBehind {
+		if project.IsLoadingCommits || len(project.RemoteCommitsIDs) > 0 {
 			continue
 		}
 
-		jobID, err := jobs.Pull(ctx, project.ID, models.JobPriorityHigh)
+		jobID, err := LoadProjectCommits(ctx, project.ID, priority)
 		if err != nil {
-			return nil, err
+			modelCtx.Log.ErrorWithOwner(
+				ctx,
+				project.ID,
+				"LoadProjectCommits failed because %s",
+				err.Error(),
+			)
+			continue
 		}
 
-		slice = append(slice, *models.MustLoadJob(ctx, jobID))
+		jobIDs = append(jobIDs, jobID)
 	}
 
-	return slice, nil
+	return jobIDs, nil
 }

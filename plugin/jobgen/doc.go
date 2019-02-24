@@ -12,20 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resolvers
-
-import (
-	"context"
-
-	"groundcontrol/jobs"
-	"groundcontrol/models"
-)
-
-func (r *mutationResolver) CloneProject(ctx context.Context, id string) (*models.Job, error) {
-	jobID, err := jobs.Clone(ctx, id, models.JobPriorityHigh)
-	if err != nil {
-		return nil, err
-	}
-
-	return models.LoadJob(ctx, jobID)
-}
+// Package jobgen contains a plugin to generate mutations for jobs.
+package jobgen

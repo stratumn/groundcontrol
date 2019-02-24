@@ -30,7 +30,7 @@ func LoadDirectorySource(ctx context.Context, sourceID string, priority models.J
 
 	return modelCtx.Jobs.Add(
 		ctx,
-		LoadDirectorySourceJob,
+		JobNameLoadDirectorySource,
 		sourceID,
 		priority,
 		func(ctx context.Context) error {

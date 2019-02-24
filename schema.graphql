@@ -4,6 +4,8 @@ directive @dynamic on FIELD_DEFINITION
 directive @relate(goIdFieldName: String) on FIELD_DEFINITION
 """Paginate indicate a field hat references a collection of Nodes using Relay pagination."""
 directive @paginate(goIdsFieldName: String) on FIELD_DEFINITION
+"""Job indicate a mutation that queues one or multiple jobs."""
+directive @job on FIELD_DEFINITION
 """Stored indicate a subscription that emits a message when a Node is stored."""
 directive @stored on FIELD_DEFINITION
 """Deleted indicate a subscription that emits a message when a Node is deleted."""
@@ -427,7 +429,7 @@ type Workspace implements Node {
 type Project implements Node {
   """ID is the global ID of the Node."""
   id: ID!
-  """Slug is the unique, URL friendly identifier within the workspace."""
+  """Slug is the unique URL friendly identifier within the Workspace."""
   slug: String!
   """Repository is the Git repository to track."""
   repository: String!
@@ -676,17 +678,17 @@ type Mutation {
   """DeleteSource deletes a Source."""
   deleteSource(id: ID!): DeletedNode!
   """LoadProjectCommits queues a Job to load the Commits of a Project."""
-  loadProjectCommits(id: String!): Job!
+  loadProjectCommits(id: String!): Job! @job
   """loadWorkspaceCommits queues a Job to load the commits of all the Projects of a Workspace."""
-  loadWorkspaceCommits(id: String!): [Job!]!
+  loadWorkspaceCommits(id: String!): [Job!]! @job
   """CloneProject queues a Job to clone a Project."""
-  cloneProject(id: String!): Job!
+  cloneProject(id: String!): Job! @job
   """CloneWorkspace queues a Job to clone all the Projects of a Workspace."""
-  cloneWorkspace(id: String!): [Job!]!
+  cloneWorkspace(id: String!): [Job!]! @job
   """PullProject queues a Job to pull a Project."""
-  pullProject(id: String!): Job!
+  pullProject(id: String!): Job! @job
   """PullWorkspace queues a Job to pull all the Projects of a Workspace."""
-  pullWorkspace(id: String!): [Job!]!
+  pullWorkspace(id: String!): [Job!]! @job
   """Run queues a Job to run a Task."""
   run(id: String!, variables: [VariableInput!]): Job!
   """SetKey sets a Key."""

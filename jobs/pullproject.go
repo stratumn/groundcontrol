@@ -20,9 +20,9 @@ import (
 	"groundcontrol/models"
 )
 
-// Pull pulls a repository from origin.
-func Pull(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
-	if err := startPulling(ctx, projectID); err != nil {
+// PullProject pulls a repository from origin.
+func PullProject(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
+	if err := startPullingProject(ctx, projectID); err != nil {
 		return "", err
 	}
 
@@ -30,16 +30,16 @@ func Pull(ctx context.Context, projectID string, priority models.JobPriority) (s
 
 	return modelCtx.Jobs.Add(
 		ctx,
-		PullJob,
+		JobNamePullProject,
 		projectID,
 		priority,
 		func(ctx context.Context) error {
-			return doPull(ctx, projectID)
+			return doPullProject(ctx, projectID)
 		},
 	), nil
 }
 
-func startPulling(ctx context.Context, projectID string) error {
+func startPullingProject(ctx context.Context, projectID string) error {
 	return models.LockProjectE(ctx, projectID, func(project *models.Project) error {
 		if project.IsPulling {
 			return ErrDuplicate
@@ -52,7 +52,7 @@ func startPulling(ctx context.Context, projectID string) error {
 	})
 }
 
-func doPull(ctx context.Context, projectID string) error {
+func doPullProject(ctx context.Context, projectID string) error {
 	return models.MustLockProjectE(ctx, projectID, func(project *models.Project) error {
 		return project.Pull(ctx)
 	})

@@ -20,9 +20,9 @@ import (
 	"groundcontrol/models"
 )
 
-// Clone clones a remote repository locally.
-func Clone(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
-	if err := startCloning(ctx, projectID); err != nil {
+// CloneProject clones a remote repository locally.
+func CloneProject(ctx context.Context, projectID string, priority models.JobPriority) (string, error) {
+	if err := startCloningProject(ctx, projectID); err != nil {
 		return "", err
 	}
 
@@ -30,16 +30,16 @@ func Clone(ctx context.Context, projectID string, priority models.JobPriority) (
 
 	return modelCtx.Jobs.Add(
 		ctx,
-		CloneJob,
+		JobNameCloneProject,
 		projectID,
 		priority,
 		func(ctx context.Context) error {
-			return doClone(ctx, projectID)
+			return doCloneProject(ctx, projectID)
 		},
 	), nil
 }
 
-func startCloning(ctx context.Context, projectID string) error {
+func startCloningProject(ctx context.Context, projectID string) error {
 	return models.LockProjectE(ctx, projectID, func(project *models.Project) error {
 		if project.IsCloning {
 			return ErrDuplicate
@@ -52,7 +52,7 @@ func startCloning(ctx context.Context, projectID string) error {
 	})
 }
 
-func doClone(ctx context.Context, projectID string) error {
+func doCloneProject(ctx context.Context, projectID string) error {
 	return models.MustLockProjectE(ctx, projectID, func(project *models.Project) error {
 		return project.Clone(ctx)
 	})
