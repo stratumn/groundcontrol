@@ -41,5 +41,5 @@ func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) (*mo
 		}
 	}
 
-	return &processGroup, nil
+	return processGroup, nil
 }

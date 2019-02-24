@@ -49,7 +49,7 @@ type GitSourceConfig struct {
 func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
 	modelCtx := GetModelContext(ctx)
 
-	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
+	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
 		var sourcesIDs []string
 
 		for i, sourceConfig := range c.DirectorySources {
@@ -102,7 +102,7 @@ func (c *SourcesConfig) UpsertDirectorySource(ctx context.Context, input Directo
 		Directory: input.Directory,
 	}
 
-	MustLockUser(ctx, modelCtx.ViewerID, func(viewer User) {
+	MustLockUser(ctx, modelCtx.ViewerID, func(viewer *User) {
 		for _, sourceID := range viewer.SourcesIDs {
 			if sourceID == source.ID {
 				return
@@ -142,7 +142,7 @@ func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInpu
 		Reference:  input.Reference,
 	}
 
-	MustLockUser(ctx, modelCtx.ViewerID, func(viewer User) {
+	MustLockUser(ctx, modelCtx.ViewerID, func(viewer *User) {
 		for _, sourceID := range viewer.SourcesIDs {
 			if sourceID == source.ID {
 				return
@@ -171,7 +171,7 @@ func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInpu
 func (c *SourcesConfig) DeleteSource(ctx context.Context, id string) error {
 	modelCtx := GetModelContext(ctx)
 
-	return LockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
+	return LockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
 		parts, err := relay.DecodeID(id)
 		if err != nil {
 			return err

@@ -17,7 +17,7 @@ package models
 import "context"
 
 // GetWorkspacesIDs returns the IDs of the workspaces.
-func (n DirectorySource) GetWorkspacesIDs() []string {
+func (n *DirectorySource) GetWorkspacesIDs() []string {
 	return n.WorkspacesIDs
 }
 

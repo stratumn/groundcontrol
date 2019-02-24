@@ -28,6 +28,5 @@ func (r *mutationResolver) StopJob(ctx context.Context, id string) (*models.Job,
 		return nil, err
 	}
 
-	node := models.MustLoadJob(ctx, id)
-	return &node, nil
+	return models.LoadJob(ctx, id)
 }

@@ -100,7 +100,7 @@ func (l *Logger) Add(
 	l.matchSourceFile(ctx, &logEntry)
 	logEntry.MustStore(ctx)
 
-	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
+	MustLockSystem(ctx, modelCtx.SystemID, func(system *System) {
 		if l.head >= l.cap*2 {
 			copy(l.logEntriesIDs, l.logEntriesIDs[l.cap:])
 			l.head = l.cap
@@ -243,7 +243,7 @@ func (l *Logger) updateMetrics(ctx context.Context) {
 	modelCtx := GetModelContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
-	MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics LogMetrics) {
+	MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *LogMetrics) {
 		metrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
 		metrics.Info = int(atomic.LoadInt64(&l.infoCounter))
 		metrics.Warning = int(atomic.LoadInt64(&l.warningCounter))
@@ -264,7 +264,7 @@ func (l *Logger) matchSourceFile(ctx context.Context, entry *LogEntry) {
 		return
 	}
 
-	project, ok := node.(Project)
+	project, ok := node.(*Project)
 	if !ok {
 		return
 	}

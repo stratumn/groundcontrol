@@ -243,16 +243,16 @@ func (a *App) createBaseNodes(ctx context.Context) {
 		logMetricsID     = relay.EncodeID(models.NodeTypeLogMetrics)
 	)
 
-	models.User{ID: viewerID}.MustStore(ctx)
-	models.LogMetrics{ID: logMetricsID}.MustStore(ctx)
-	models.JobMetrics{ID: jobMetricsID}.MustStore(ctx)
-	models.ProcessMetrics{ID: processMetricsID}.MustStore(ctx)
-	models.System{
+	(&models.User{ID: viewerID}).MustStore(ctx)
+	(&models.LogMetrics{ID: logMetricsID}).MustStore(ctx)
+	(&models.JobMetrics{ID: jobMetricsID}).MustStore(ctx)
+	(&models.ProcessMetrics{ID: processMetricsID}).MustStore(ctx)
+	(&models.System{
 		ID:               systemID,
 		JobMetricsID:     jobMetricsID,
 		LogMetricsID:     logMetricsID,
 		ProcessMetricsID: processMetricsID,
-	}.MustStore(ctx)
+	}).MustStore(ctx)
 
 	modelCtx := models.GetModelContext(ctx)
 	modelCtx.ViewerID = viewerID

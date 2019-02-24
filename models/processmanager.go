@@ -60,7 +60,7 @@ func (p *ProcessManager) CreateGroup(ctx context.Context, taskID string) string 
 
 	group.MustStore(ctx)
 
-	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
+	MustLockSystem(ctx, modelCtx.SystemID, func(system *System) {
 		system.ProcessGroupsIDs = append(
 			[]string{id},
 			system.ProcessGroupsIDs...,
@@ -94,7 +94,7 @@ func (p *ProcessManager) Run(
 	}
 
 	process.MustStore(ctx)
-	MustLockProcessGroup(ctx, processGroupID, func(processGroup ProcessGroup) {
+	MustLockProcessGroup(ctx, processGroupID, func(processGroup *ProcessGroup) {
 		processGroup.ProcessesIDs = append([]string{id}, processGroup.ProcessesIDs...)
 		processGroup.MustStore(ctx)
 	})
@@ -106,7 +106,7 @@ func (p *ProcessManager) Run(
 
 // Start starts a process that was stopped.
 func (p *ProcessManager) Start(ctx context.Context, processID string) error {
-	err := LockProcessE(ctx, processID, func(process Process) error {
+	err := LockProcessE(ctx, processID, func(process *Process) error {
 		switch process.Status {
 		case ProcessStatusRunning, ProcessStatusStopping:
 			return ErrNotStopped
@@ -128,7 +128,7 @@ func (p *ProcessManager) Start(ctx context.Context, processID string) error {
 
 // Stop stops a running process.
 func (p *ProcessManager) Stop(ctx context.Context, processID string) error {
-	return LockProcessE(ctx, processID, func(process Process) error {
+	return LockProcessE(ctx, processID, func(process *Process) error {
 		if process.Status != ProcessStatusRunning {
 			return ErrNotRunning
 		}
@@ -204,7 +204,7 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 func (p *ProcessManager) exec(ctx context.Context, id string) {
 	modelCtx := GetModelContext(ctx)
 
-	MustLockProcess(ctx, id, func(process Process) {
+	MustLockProcess(ctx, id, func(process *Process) {
 		project := process.Project(ctx)
 		workspace := project.Workspace(ctx)
 
@@ -249,7 +249,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 		go func() {
 			err := cmd.Wait()
 
-			MustLockProcess(ctx, id, func(process Process) {
+			MustLockProcess(ctx, id, func(process *Process) {
 				p.commands.Delete(id)
 
 				if err == nil {
@@ -283,7 +283,7 @@ func (p *ProcessManager) updateMetrics(ctx context.Context) {
 	modelCtx := GetModelContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
-	MustLockProcessMetrics(ctx, system.ProcessMetricsID, func(metrics ProcessMetrics) {
+	MustLockProcessMetrics(ctx, system.ProcessMetricsID, func(metrics *ProcessMetrics) {
 		metrics.Running = int(atomic.LoadInt64(&p.runningCounter))
 		metrics.Done = int(atomic.LoadInt64(&p.doneCounter))
 		metrics.Failed = int(atomic.LoadInt64(&p.failedCounter))

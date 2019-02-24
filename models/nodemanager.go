@@ -54,7 +54,7 @@ func (n *NodeManager) MustLoad(id string) Node {
 	return node
 }
 
-// Delete delets a node.
+// Delete deletes a node.
 func (n *NodeManager) Delete(id string) {
 	n.store.Delete(id)
 }

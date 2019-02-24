@@ -7,9 +7,9 @@
 {{ $root := . }}
 
 {{- range $subscription := .Stored }}
-func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan *{{ .Type | ref }}, error) {
+func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ .Type | ref }}, error) {
 	ctx = models.WithModelContext(ctx, r.ModelCtx)
-	ch := make(chan *{{ .Type | ref }}, SubscriptionChannelSize)
+	ch := make(chan {{ .Type | ref }}, SubscriptionChannelSize)
 
 	last := uint64(0)
 	if lastMessageID != nil {
@@ -25,9 +25,8 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 		if id != nil && *id != nodeID {
 			return
 		}
-		node := models.MustLoad{{ .TypeName }}(ctx, nodeID)
 		select {
-		case ch <- &node:
+		case ch <- models.MustLoad{{ .TypeName }}(ctx, nodeID):
 		default:
 		}
 	})
@@ -37,9 +36,9 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 {{- end }}
 
 {{- range $subscription := .Stored }}
-func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan *{{ $root.DeletedType | ref }}, error) {
+func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ $root.DeletedType | ref }}, error) {
 	ctx = models.WithModelContext(ctx, r.ModelCtx)
-	ch := make(chan *{{ $root.DeletedType | ref }}, SubscriptionChannelSize)
+	ch := make(chan {{ $root.DeletedType | ref }}, SubscriptionChannelSize)
 
 	last := uint64(0)
 	if lastMessageID != nil {
@@ -56,7 +55,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *s
 			return
 		}
 		select {
-		case ch <- &{{ $root.DeletedType | ref }}{ID: nodeID}:
+		case ch <- &{{ $root.DeletedName }}{ID: nodeID}:
 		default:
 		}
 	})

@@ -43,3 +43,26 @@ func GoType(cfg *config.Config, schema *ast.Schema, binder *config.Binder, name 
 
 	return types.NewNamed(types.NewTypeName(0, cfg.Model.Pkg(), templates.ToGo(name), nil), nil, nil), nil
 }
+
+func CopyModifiersFromAst(t *ast.Type, d *ast.Definition, base types.Type) types.Type {
+	if t.Elem != nil {
+		return types.NewSlice(CopyModifiersFromAst(t.Elem, d, base))
+	}
+
+	if usePtr(t, d) {
+		return types.NewPointer(base)
+	}
+
+	return base
+}
+
+func usePtr(t *ast.Type, d *ast.Definition) bool {
+	switch d.Kind {
+	case ast.Object, ast.InputObject:
+		return true
+	case ast.Interface:
+		return false
+	}
+
+	return !t.NonNull
+}

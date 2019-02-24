@@ -35,7 +35,7 @@ type KeysConfig struct {
 func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
 	modelCtx := GetModelContext(ctx)
 
-	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
+	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
 		var keysIDs []string
 
 		for name, value := range c.Keys {
@@ -70,7 +70,7 @@ func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
 		Value: input.Value,
 	}
 
-	MustLockUser(ctx, modelCtx.ViewerID, func(viewer User) {
+	MustLockUser(ctx, modelCtx.ViewerID, func(viewer *User) {
 		c.Keys[input.Name] = input.Value
 
 		exists := false
@@ -95,8 +95,8 @@ func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
 func (c *KeysConfig) DeleteKey(ctx context.Context, id string) error {
 	modelCtx := GetModelContext(ctx)
 
-	return LockUserE(ctx, modelCtx.ViewerID, func(viewer User) error {
-		return LockKey(ctx, id, func(key Key) {
+	return LockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
+		return LockKey(ctx, id, func(key *Key) {
 			for i, v := range viewer.KeysIDs {
 				if v == id {
 					viewer.KeysIDs = append(

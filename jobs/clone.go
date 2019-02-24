@@ -40,7 +40,7 @@ func Clone(ctx context.Context, projectID string, priority models.JobPriority) (
 }
 
 func startCloning(ctx context.Context, projectID string) error {
-	return models.LockProjectE(ctx, projectID, func(project models.Project) error {
+	return models.LockProjectE(ctx, projectID, func(project *models.Project) error {
 		if project.IsCloning {
 			return ErrDuplicate
 		}
@@ -53,7 +53,7 @@ func startCloning(ctx context.Context, projectID string) error {
 }
 
 func doClone(ctx context.Context, projectID string) error {
-	return models.MustLockProjectE(ctx, projectID, func(project models.Project) error {
+	return models.MustLockProjectE(ctx, projectID, func(project *models.Project) error {
 		return project.Clone(ctx)
 	})
 }

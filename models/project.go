@@ -29,76 +29,76 @@ import (
 )
 
 // IsCloned checks if the project is cloned.
-func (p Project) IsCloned(ctx context.Context) bool {
-	return util.FileExists(p.Path(ctx))
+func (n *Project) IsCloned(ctx context.Context) bool {
+	return util.FileExists(n.Path(ctx))
 }
 
 // IsCached checks if the project is cached.
-func (p Project) IsCached(ctx context.Context) bool {
-	return util.FileExists(p.CachePath(ctx))
+func (n *Project) IsCached(ctx context.Context) bool {
+	return util.FileExists(n.CachePath(ctx))
 }
 
 // ReferenceShort returns the short name of the reference.
-func (p Project) ReferenceShort() string {
-	return plumbing.ReferenceName(p.Reference).Short()
+func (n *Project) ReferenceShort() string {
+	return plumbing.ReferenceName(n.Reference).Short()
 }
 
 // RemoteReferenceShort returns the short name of the remote reference.
-func (p Project) RemoteReferenceShort() string {
-	return plumbing.ReferenceName(p.RemoteReference).Short()
+func (n *Project) RemoteReferenceShort() string {
+	return plumbing.ReferenceName(n.RemoteReference).Short()
 }
 
 // LocalReferenceShort returns the short name of the local reference.
-func (p Project) LocalReferenceShort() string {
-	return plumbing.ReferenceName(p.LocalReference).Short()
+func (n *Project) LocalReferenceShort() string {
+	return plumbing.ReferenceName(n.LocalReference).Short()
 }
 
 // Path returns the path to the project.
-func (p Project) Path(ctx context.Context) string {
+func (n *Project) Path(ctx context.Context) string {
 	modelCtx := GetModelContext(ctx)
-	return modelCtx.GetProjectPath(p.Workspace(ctx).Slug, p.Slug)
+	return modelCtx.GetProjectPath(n.Workspace(ctx).Slug, n.Slug)
 }
 
 // CachePath returns the path to the project's cache.
-func (p Project) CachePath(ctx context.Context) string {
+func (n *Project) CachePath(ctx context.Context) string {
 	modelCtx := GetModelContext(ctx)
-	return modelCtx.GetProjectCachePath(p.Workspace(ctx).Slug, p.Slug)
+	return modelCtx.GetProjectCachePath(n.Workspace(ctx).Slug, n.Slug)
 }
 
 // Clone clones and upserts the project.
-func (p *Project) Clone(ctx context.Context) error {
-	p.IsCloning = true
-	p.MustStore(ctx)
+func (n *Project) Clone(ctx context.Context) error {
+	n.IsCloning = true
+	n.MustStore(ctx)
 
 	defer func() {
-		p.IsCloning = false
-		p.MustStore(ctx)
+		n.IsCloning = false
+		n.MustStore(ctx)
 	}()
 
-	path := p.Path(ctx)
+	path := n.Path(ctx)
 	options := &git.CloneOptions{
-		URL:           p.Repository,
-		ReferenceName: plumbing.ReferenceName(p.RemoteReference),
+		URL:           n.Repository,
+		ReferenceName: plumbing.ReferenceName(n.RemoteReference),
 	}
 
 	if _, err := git.PlainCloneContext(ctx, path, false, options); err != nil {
 		return err
 	}
 
-	return p.Update(ctx)
+	return n.Update(ctx)
 }
 
 // Pull pulls and upserts the project.
-func (p *Project) Pull(ctx context.Context) error {
-	p.IsPulling = true
-	p.MustStore(ctx)
+func (n *Project) Pull(ctx context.Context) error {
+	n.IsPulling = true
+	n.MustStore(ctx)
 
 	defer func() {
-		p.IsPulling = false
-		p.MustStore(ctx)
+		n.IsPulling = false
+		n.MustStore(ctx)
 	}()
 
-	repo, err := p.openRepository(ctx)
+	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (p *Project) Pull(ctx context.Context) error {
 
 	options := &git.PullOptions{
 		RemoteName:    "origin",
-		ReferenceName: plumbing.ReferenceName(p.RemoteReference),
+		ReferenceName: plumbing.ReferenceName(n.RemoteReference),
 	}
 
 	err = worktree.PullContext(ctx, options)
@@ -121,75 +121,75 @@ func (p *Project) Pull(ctx context.Context) error {
 		return err
 	}
 
-	return p.Update(ctx)
+	return n.Update(ctx)
 }
 
 // Update loads the latest commits and upserts the project.
-func (p *Project) Update(ctx context.Context) error {
-	p.IsLoadingCommits = true
-	p.MustStore(ctx)
+func (n *Project) Update(ctx context.Context) error {
+	n.IsLoadingCommits = true
+	n.MustStore(ctx)
 
 	defer func() {
-		p.IsLoadingCommits = false
-		p.MustStore(ctx)
+		n.IsLoadingCommits = false
+		n.MustStore(ctx)
 	}()
 
-	if !p.IsCloned(ctx) && !p.IsCached(ctx) {
-		if err := p.cloneCache(ctx); err != nil {
+	if !n.IsCloned(ctx) && !n.IsCached(ctx) {
+		if err := n.cloneCache(ctx); err != nil {
 			return err
 		}
 	} else {
-		if err := p.fetch(ctx); err != nil {
+		if err := n.fetch(ctx); err != nil {
 			return nil
 		}
 	}
 
-	if err := p.updateReferences(ctx); err != nil {
+	if err := n.updateReferences(ctx); err != nil {
 		return err
 	}
 
-	remoteCommitsIDs, err := p.loadCommits(ctx, p.localRemoteReferenceName())
+	remoteCommitsIDs, err := n.loadCommits(ctx, n.localRemoteReferenceName())
 	if err != nil {
 		return err
 	}
 
-	localCommitsIDs, err := p.loadCommits(ctx, plumbing.ReferenceName(p.LocalReference))
+	localCommitsIDs, err := n.loadCommits(ctx, plumbing.ReferenceName(n.LocalReference))
 	if err != nil {
 		return err
 	}
 
 	if len(remoteCommitsIDs) > 0 {
-		p.RemoteCommitsIDs = remoteCommitsIDs
+		n.RemoteCommitsIDs = remoteCommitsIDs
 	}
 
 	if len(localCommitsIDs) > 0 {
-		p.LocalCommitsIDs = localCommitsIDs
+		n.LocalCommitsIDs = localCommitsIDs
 	}
 
-	return p.updateStatus(ctx)
+	return n.updateStatus(ctx)
 }
 
 // openRepository opens the repository of the project.
 // If the project isn't cloned it will be a bare repository.
 // It returns nil if the project isn't cloned or cached.
-func (p Project) openRepository(ctx context.Context) (*git.Repository, error) {
-	if p.IsCloned(ctx) {
-		return git.PlainOpen(p.Path(ctx))
+func (n *Project) openRepository(ctx context.Context) (*git.Repository, error) {
+	if n.IsCloned(ctx) {
+		return git.PlainOpen(n.Path(ctx))
 	}
 
-	if p.IsCached(ctx) {
-		return git.PlainOpen(p.CachePath(ctx))
+	if n.IsCached(ctx) {
+		return git.PlainOpen(n.CachePath(ctx))
 	}
 
 	return nil, nil
 }
 
 // cloneCache bare clones the repository into the cache.
-func (p Project) cloneCache(ctx context.Context) error {
-	cachePath := p.CachePath(ctx)
+func (n *Project) cloneCache(ctx context.Context) error {
+	cachePath := n.CachePath(ctx)
 	options := &git.CloneOptions{
-		URL:           p.Repository,
-		ReferenceName: plumbing.ReferenceName(p.RemoteReference),
+		URL:           n.Repository,
+		ReferenceName: plumbing.ReferenceName(n.RemoteReference),
 	}
 
 	_, err := git.PlainCloneContext(ctx, cachePath, true, options)
@@ -197,14 +197,14 @@ func (p Project) cloneCache(ctx context.Context) error {
 }
 
 // fetch fetches either the cloned or the cached repository.
-func (p Project) fetch(ctx context.Context) error {
-	repo, err := p.openRepository(ctx)
+func (n *Project) fetch(ctx context.Context) error {
+	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return err
 	}
 
 	options := &git.FetchOptions{
-		Force: !p.IsCloned(ctx),
+		Force: !n.IsCloned(ctx),
 	}
 
 	err = repo.FetchContext(ctx, options)
@@ -216,13 +216,13 @@ func (p Project) fetch(ctx context.Context) error {
 }
 
 // loadCommits loads the commits of a reference.
-func (p Project) loadCommits(
+func (n *Project) loadCommits(
 	ctx context.Context,
 	refName plumbing.ReferenceName,
 ) ([]string, error) {
 	var commitIDs []string
 
-	iter, err := p.iterateCommits(ctx, refName)
+	iter, err := n.iterateCommits(ctx, refName)
 	if err != nil {
 		return nil, err
 	}
@@ -252,47 +252,47 @@ func (p Project) loadCommits(
 }
 
 // updateReferences sets the local and remote references according to the current branch.
-func (p *Project) updateReferences(ctx context.Context) error {
-	branch, err := p.currentBranch(ctx)
+func (n *Project) updateReferences(ctx context.Context) error {
+	branch, err := n.currentBranch(ctx)
 	if err != nil {
 		return err
 	}
 
 	if branch != nil {
-		p.RemoteReference = branch.Merge.String()
-		p.LocalReference = plumbing.NewBranchReferenceName(branch.Name).String()
+		n.RemoteReference = branch.Merge.String()
+		n.LocalReference = plumbing.NewBranchReferenceName(branch.Name).String()
 
 	} else {
-		p.RemoteReference = p.Reference
-		p.LocalReference = p.Reference
+		n.RemoteReference = n.Reference
+		n.LocalReference = n.Reference
 	}
 
 	return nil
 }
 
 // updateStatus updates the status of the project according to the local branch.
-func (p *Project) updateStatus(ctx context.Context) error {
-	repo, err := p.openRepository(ctx)
+func (n *Project) updateStatus(ctx context.Context) error {
+	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return err
 	}
 
-	remoteRef, err := repo.Reference(p.localRemoteReferenceName(), true)
+	remoteRef, err := repo.Reference(n.localRemoteReferenceName(), true)
 	if err != nil {
 		return err
 	}
 
-	localRef, err := repo.Reference(plumbing.ReferenceName(p.LocalReference), true)
+	localRef, err := repo.Reference(plumbing.ReferenceName(n.LocalReference), true)
 	if err != nil {
 		return err
 	}
 
-	p.IsBehind, err = gitutil.HasAncestor(ctx, repo, remoteRef.Hash(), localRef.Hash())
+	n.IsBehind, err = gitutil.HasAncestor(ctx, repo, remoteRef.Hash(), localRef.Hash())
 	if err != nil {
 		return err
 	}
 
-	p.IsAhead, err = gitutil.HasAncestor(ctx, repo, localRef.Hash(), remoteRef.Hash())
+	n.IsAhead, err = gitutil.HasAncestor(ctx, repo, localRef.Hash(), remoteRef.Hash())
 	if err != nil {
 		return err
 	}
@@ -301,11 +301,11 @@ func (p *Project) updateStatus(ctx context.Context) error {
 }
 
 // iterateCommits creates an iterator for the commits of a reference.
-func (p Project) iterateCommits(
+func (n *Project) iterateCommits(
 	ctx context.Context,
 	refName plumbing.ReferenceName,
 ) (object.CommitIter, error) {
-	repo, err := p.openRepository(ctx)
+	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return nil, nil
 	}
@@ -323,22 +323,22 @@ func (p Project) iterateCommits(
 
 // currentBranch returns the current branch of the repository.
 // It returns nil if there isn't one.
-func (p Project) currentBranch(ctx context.Context) (*config.Branch, error) {
-	if !p.IsCloned(ctx) {
+func (n *Project) currentBranch(ctx context.Context) (*config.Branch, error) {
+	if !n.IsCloned(ctx) {
 		return nil, nil
 	}
 
-	repo, err := p.openRepository(ctx)
+	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return gitutil.CurrentBranch(repo, plumbing.ReferenceName(p.Reference))
+	return gitutil.CurrentBranch(repo, plumbing.ReferenceName(n.Reference))
 }
 
 // localRemoteReferenceName returns the name of the local reference that points to the remote.
-func (p Project) localRemoteReferenceName() plumbing.ReferenceName {
-	parts := strings.Split(p.RemoteReference, "/")
+func (n *Project) localRemoteReferenceName() plumbing.ReferenceName {
+	parts := strings.Split(n.RemoteReference, "/")
 	name := strings.Join(parts[2:], "/")
 	return plumbing.NewRemoteReferenceName("origin", name)
 }

@@ -23,11 +23,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-// createSettingsFileCmd represents the createSettingsFile command.
-var createSettingsFileCmd = &cobra.Command{
-	Use:   fmt.Sprintf("create-settings-file [%s]", app.DefaultSettingsFile),
-	Short: "Create a settings file",
-	Long: `Create a settings file to avoid having to specify flags when Ground Control is launched.
+// saveSettingsCmd represents the save-settings command.
+var saveSettingsCmd = &cobra.Command{
+	Use:   fmt.Sprintf("save-settings [%s]", app.DefaultSettingsFile),
+	Short: "Save settings to a file",
+	Long: `Save settings to a file to avoid having to specify flags when Ground Control is launched.
 
 It will overwrite the file if it exists.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -40,5 +40,5 @@ It will overwrite the file if it exists.`,
 }
 
 func init() {
-	rootCmd.AddCommand(createSettingsFileCmd)
+	rootCmd.AddCommand(saveSettingsCmd)
 }

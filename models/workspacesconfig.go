@@ -89,7 +89,7 @@ func (c WorkspacesConfig) UpsertNodes(ctx context.Context, sourceID string) ([]s
 func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (string, error) {
 	id := relay.EncodeID(NodeTypeWorkspace, c.Slug)
 
-	err := MustLockOrNewWorkspaceE(ctx, id, func(workspace Workspace) error {
+	err := MustLockOrNewWorkspaceE(ctx, id, func(workspace *Workspace) error {
 		workspace.Slug = c.Slug
 		workspace.Name = c.Name
 		workspace.Description = c.Description
@@ -141,7 +141,7 @@ func (c ProjectConfig) UpsertNodes(
 		c.Slug,
 	)
 
-	MustLockOrNewProject(ctx, id, func(project Project) {
+	MustLockOrNewProject(ctx, id, func(project *Project) {
 		project.Slug = c.Slug
 		project.Repository = c.Repository
 		project.Reference = c.Reference
@@ -176,7 +176,7 @@ func (c TaskConfig) UpsertNodes(
 		c.Name,
 	)
 
-	err := MustLockOrNewTaskE(ctx, id, func(task Task) error {
+	err := MustLockOrNewTaskE(ctx, id, func(task *Task) error {
 		task.Name = c.Name
 		task.WorkspaceID = workspaceID
 		task.VariablesIDs = nil
@@ -240,7 +240,7 @@ func (c VariableConfig) UpsertNodes(
 		fmt.Sprint(stepIndex),
 	)
 
-	MustLockOrNewVariable(ctx, id, func(variable Variable) {
+	MustLockOrNewVariable(ctx, id, func(variable *Variable) {
 		variable.Name = c.Name
 		variable.Default = c.Default
 
@@ -267,7 +267,7 @@ func (c StepConfig) UpsertNodes(
 		fmt.Sprint(stepIndex),
 	)
 
-	err := MustLockOrNewStepE(ctx, id, func(step Step) error {
+	err := MustLockOrNewStepE(ctx, id, func(step *Step) error {
 		step.TaskID = taskID
 		step.ProjectsIDs = nil
 		step.CommandsIDs = nil
@@ -288,7 +288,7 @@ func (c StepConfig) UpsertNodes(
 				fmt.Sprint(stepIndex),
 				fmt.Sprint(commandIndex),
 			)
-			Command{ID: id, Command: command}.MustStore(ctx)
+			(&Command{ID: id, Command: command}).MustStore(ctx)
 			step.CommandsIDs = append(step.CommandsIDs, id)
 		}
 

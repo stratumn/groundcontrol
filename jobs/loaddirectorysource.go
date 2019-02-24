@@ -40,7 +40,7 @@ func LoadDirectorySource(ctx context.Context, sourceID string, priority models.J
 }
 
 func startLoadingDirectorySource(ctx context.Context, sourceID string) error {
-	return models.LockDirectorySourceE(ctx, sourceID, func(source models.DirectorySource) error {
+	return models.LockDirectorySourceE(ctx, sourceID, func(source *models.DirectorySource) error {
 		if source.IsLoading {
 			return ErrDuplicate
 		}
@@ -53,7 +53,7 @@ func startLoadingDirectorySource(ctx context.Context, sourceID string) error {
 }
 
 func doLoadDirectorySource(ctx context.Context, sourceID string) error {
-	return models.MustLockDirectorySourceE(ctx, sourceID, func(source models.DirectorySource) error {
+	return models.MustLockDirectorySourceE(ctx, sourceID, func(source *models.DirectorySource) error {
 		return source.Update(ctx)
 	})
 }

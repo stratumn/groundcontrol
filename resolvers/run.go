@@ -58,6 +58,5 @@ func (r *mutationResolver) Run(
 		return nil, err
 	}
 
-	node := models.MustLoadJob(ctx, jobID)
-	return &node, nil
+	return models.LoadJob(ctx, jobID)
 }

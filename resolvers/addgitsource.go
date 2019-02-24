@@ -38,6 +38,5 @@ func (r *mutationResolver) AddGitSource(
 		return nil, err
 	}
 
-	node := models.MustLoadGitSource(ctx, id)
-	return &node, err
+	return models.LoadGitSource(ctx, id)
 }

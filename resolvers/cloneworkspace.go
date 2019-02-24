@@ -21,6 +21,7 @@ import (
 	"groundcontrol/models"
 )
 
+// Note: hopefully we can return a slice of pointers in the future.
 func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]models.Job, error) {
 	workspace, err := models.LoadWorkspace(ctx, id)
 	if err != nil {
@@ -41,7 +42,7 @@ func (r *mutationResolver) CloneWorkspace(ctx context.Context, id string) ([]mod
 			return nil, err
 		}
 
-		slice = append(slice, models.MustLoadJob(ctx, jobID))
+		slice = append(slice, *models.MustLoadJob(ctx, jobID))
 	}
 
 	return slice, nil

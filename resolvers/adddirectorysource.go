@@ -38,6 +38,5 @@ func (r *mutationResolver) AddDirectorySource(
 		return nil, err
 	}
 
-	node := models.MustLoadDirectorySource(ctx, id)
-	return &node, nil
+	return models.LoadDirectorySource(ctx, id)
 }

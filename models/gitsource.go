@@ -24,12 +24,12 @@ import (
 )
 
 // GetWorkspacesIDs returns the IDs of the workspaces.
-func (n GitSource) GetWorkspacesIDs() []string {
+func (n *GitSource) GetWorkspacesIDs() []string {
 	return n.WorkspacesIDs
 }
 
 // IsCloned checks if the project is cloned.
-func (n GitSource) IsCloned(ctx context.Context) bool {
+func (n *GitSource) IsCloned(ctx context.Context) bool {
 	getGitSourcePath := GetModelContext(ctx).GetGitSourcePath
 	directory := getGitSourcePath(n.Repository, n.Reference)
 
@@ -37,12 +37,12 @@ func (n GitSource) IsCloned(ctx context.Context) bool {
 }
 
 // ReferenceShort returns the short name of the reference.
-func (n GitSource) ReferenceShort() string {
+func (n *GitSource) ReferenceShort() string {
 	return plumbing.ReferenceName(n.Reference).Short()
 }
 
 // Path returns the path to the source.
-func (n GitSource) Path(ctx context.Context) string {
+func (n *GitSource) Path(ctx context.Context) string {
 	modelCtx := GetModelContext(ctx)
 	return modelCtx.GetGitSourcePath(n.Repository, n.Reference)
 }
@@ -73,7 +73,7 @@ func (n *GitSource) Update(ctx context.Context) error {
 }
 
 // pullOrClone pulls the directory if already cloned, otherwise it clones it.
-func (n GitSource) pullOrClone(ctx context.Context) error {
+func (n *GitSource) pullOrClone(ctx context.Context) error {
 	if n.IsCloned(ctx) {
 		return n.pull(ctx)
 	}
@@ -82,7 +82,7 @@ func (n GitSource) pullOrClone(ctx context.Context) error {
 }
 
 // clone clones the remote repository.
-func (n GitSource) clone(ctx context.Context) error {
+func (n *GitSource) clone(ctx context.Context) error {
 	options := &git.CloneOptions{
 		URL:           n.Repository,
 		ReferenceName: plumbing.ReferenceName(n.Reference),
@@ -94,7 +94,7 @@ func (n GitSource) clone(ctx context.Context) error {
 }
 
 // pull pulls the remote repository.
-func (n GitSource) pull(ctx context.Context) error {
+func (n *GitSource) pull(ctx context.Context) error {
 	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return err
@@ -119,6 +119,6 @@ func (n GitSource) pull(ctx context.Context) error {
 }
 
 // openRepository opens the repository of the source.
-func (n GitSource) openRepository(ctx context.Context) (*git.Repository, error) {
+func (n *GitSource) openRepository(ctx context.Context) (*git.Repository, error) {
 	return git.PlainOpen(n.Path(ctx))
 }

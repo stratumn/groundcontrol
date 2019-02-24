@@ -27,6 +27,5 @@ func (r *mutationResolver) PullProject(ctx context.Context, id string) (*models.
 		return nil, err
 	}
 
-	node := models.MustLoadJob(ctx, jobID)
-	return &node, nil
+	return models.LoadJob(ctx, jobID)
 }

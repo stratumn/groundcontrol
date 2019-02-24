@@ -17,8 +17,8 @@ package models
 import "context"
 
 // IsCloning returns true if any of the projects is cloning.
-func (w Workspace) IsCloning(ctx context.Context) bool {
-	for _, id := range w.ProjectsIDs {
+func (n *Workspace) IsCloning(ctx context.Context) bool {
+	for _, id := range n.ProjectsIDs {
 		node := MustLoadProject(ctx, id)
 		if node.IsCloning {
 			return true
@@ -29,8 +29,8 @@ func (w Workspace) IsCloning(ctx context.Context) bool {
 }
 
 // IsCloned returns true if all the projects are cloned.
-func (w Workspace) IsCloned(ctx context.Context) bool {
-	for _, id := range w.ProjectsIDs {
+func (n *Workspace) IsCloned(ctx context.Context) bool {
+	for _, id := range n.ProjectsIDs {
 		node := MustLoadProject(ctx, id)
 		if !node.IsCloned(ctx) {
 			return false
@@ -41,8 +41,8 @@ func (w Workspace) IsCloned(ctx context.Context) bool {
 }
 
 // IsPulling returns true if any of the projects is pulling.
-func (w Workspace) IsPulling(ctx context.Context) bool {
-	for _, id := range w.ProjectsIDs {
+func (n *Workspace) IsPulling(ctx context.Context) bool {
+	for _, id := range n.ProjectsIDs {
 		node := MustLoadProject(ctx, id)
 		if node.IsPulling {
 			return true
@@ -53,8 +53,8 @@ func (w Workspace) IsPulling(ctx context.Context) bool {
 }
 
 // IsBehind returns true if any of the projects is behind origin.
-func (w Workspace) IsBehind(ctx context.Context) bool {
-	for _, id := range w.ProjectsIDs {
+func (n *Workspace) IsBehind(ctx context.Context) bool {
+	for _, id := range n.ProjectsIDs {
 		node := MustLoadProject(ctx, id)
 		if node.IsBehind {
 			return true
@@ -65,8 +65,8 @@ func (w Workspace) IsBehind(ctx context.Context) bool {
 }
 
 // IsAhead returns true if any of the projects is ahead origin.
-func (w Workspace) IsAhead(ctx context.Context) bool {
-	for _, id := range w.ProjectsIDs {
+func (n *Workspace) IsAhead(ctx context.Context) bool {
+	for _, id := range n.ProjectsIDs {
 		node := MustLoadProject(ctx, id)
 		if node.IsAhead {
 			return true

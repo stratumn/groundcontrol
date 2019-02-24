@@ -29,6 +29,5 @@ func (r *mutationResolver) StopProcess(ctx context.Context, id string) (*models.
 		return nil, err
 	}
 
-	node := models.MustLoadProcess(ctx, id)
-	return &node, nil
+	return models.LoadProcess(ctx, id)
 }

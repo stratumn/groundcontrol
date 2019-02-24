@@ -33,6 +33,7 @@ type Plugin struct {
 // SubscriptionBuild contains data about the subscriptions to build.
 type SubscriptionBuild struct {
 	DeletedType types.Type
+	DeletedName string
 	Stored      []*Stored
 	Deleted     []*Deleted
 }
@@ -83,7 +84,8 @@ func (p *Plugin) MutateConfig(cfg *config.Config) error {
 	}
 
 	build := &SubscriptionBuild{
-		DeletedType: deletedType,
+		DeletedType: types.NewPointer(deletedType),
+		DeletedName: "models.DeletedNode",
 	}
 
 	subscriptions := schema.Types["Subscription"]
@@ -132,8 +134,8 @@ func (p *Plugin) stored(
 	}
 
 	build.Stored = append(build.Stored, &Stored{
-		Type:     binder.CopyModifiersFromAst(gqlType, def.Kind != ast.Interface, goType),
-		TypeName: name,
+		Type:     util.CopyModifiersFromAst(gqlType, def, goType),
+		TypeName: templates.ToGo(name),
 	})
 
 	return nil
@@ -156,8 +158,8 @@ func (p *Plugin) deleted(
 	}
 
 	build.Deleted = append(build.Deleted, &Deleted{
-		Type:     binder.CopyModifiersFromAst(gqlType, def.Kind != ast.Interface, goType),
-		TypeName: name,
+		Type:     util.CopyModifiersFromAst(gqlType, def, goType),
+		TypeName: templates.ToGo(name),
 	})
 
 	return nil

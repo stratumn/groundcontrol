@@ -32,6 +32,5 @@ func (r *mutationResolver) SetKey(
 		return nil, err
 	}
 
-	node := models.MustLoadKey(ctx, id)
-	return &node, nil
+	return models.LoadKey(ctx, id)
 }

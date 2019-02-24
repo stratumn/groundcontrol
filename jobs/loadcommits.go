@@ -40,7 +40,7 @@ func LoadCommits(ctx context.Context, projectID string, priority models.JobPrior
 }
 
 func startLoadingCommits(ctx context.Context, projectID string) error {
-	return models.LockProjectE(ctx, projectID, func(project models.Project) error {
+	return models.LockProjectE(ctx, projectID, func(project *models.Project) error {
 		if project.IsLoadingCommits {
 			return ErrDuplicate
 		}
@@ -53,7 +53,7 @@ func startLoadingCommits(ctx context.Context, projectID string) error {
 }
 
 func doLoadCommits(ctx context.Context, projectID string) error {
-	return models.MustLockProjectE(ctx, projectID, func(project models.Project) error {
+	return models.MustLockProjectE(ctx, projectID, func(project *models.Project) error {
 		return project.Update(ctx)
 	})
 }

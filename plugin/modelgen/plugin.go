@@ -45,6 +45,7 @@ type Field struct {
 	Name        string
 	Type        types.Type
 	Tag         string
+	Slice       bool
 }
 
 // Enum contains data about an enum to build.
@@ -66,7 +67,9 @@ type EnumValue struct {
 type Relate struct {
 	Description   string
 	Name          string
+	TypeName      string
 	Type          types.Type
+	NonNull       bool
 	GoIDFieldName string
 }
 
@@ -74,6 +77,7 @@ type Relate struct {
 type Paginate struct {
 	Description    string
 	Name           string
+	NodeName       string
 	Connection     types.Type
 	Edge           types.Type
 	Node           types.Type
@@ -89,9 +93,11 @@ type Argument struct {
 
 // Connection contains data about a connection to build.
 type Connection struct {
-	Name string
-	Edge types.Type
-	Node types.Type
+	Name     string
+	NodeName string
+	EdgeName string
+	Edge     types.Type
+	Node     types.Type
 }
 
 // New creates a new plugin to build models.
@@ -195,9 +201,10 @@ func (m *Plugin) MutateConfig(cfg *config.Config) error {
 				fd := schema.Types[field.Type.Name()]
 				it.Fields = append(it.Fields, &Field{
 					Name:        templates.ToGo(name),
-					Type:        binder.CopyModifiersFromAst(field.Type, fd.Kind != ast.Interface, typ),
+					Type:        util.CopyModifiersFromAst(field.Type, fd, typ),
 					Description: field.Description,
 					Tag:         `json:"` + field.Name + `"`,
+					Slice:       field.Type.Elem != nil,
 				})
 			}
 
@@ -294,9 +301,11 @@ func (m *Plugin) connection(
 	}
 
 	build.Connections = append(build.Connections, &Connection{
-		Name: connectionName,
-		Edge: binder.CopyModifiersFromAst(edgeType, edgeDef.Kind != ast.Interface, edgeGoType),
-		Node: binder.CopyModifiersFromAst(nodeType, nodeDef.Kind != ast.Interface, nodeGoType),
+		Name:     templates.ToGo(connectionName),
+		NodeName: templates.ToGo(nodeName),
+		EdgeName: templates.ToGo(edgeName),
+		Edge:     util.CopyModifiersFromAst(edgeType, edgeDef, edgeGoType),
+		Node:     util.CopyModifiersFromAst(nodeType, nodeDef, nodeGoType),
 	})
 
 	return nil
@@ -332,9 +341,11 @@ func (m *Plugin) relate(
 	fd := schema.Types[field.Type.Name()]
 
 	obj.Relates = append(obj.Relates, &Relate{
-		Name:          templates.ToGo(name),
-		Type:          binder.CopyModifiersFromAst(field.Type, fd.Kind != ast.Interface, relateGoType),
 		Description:   field.Description,
+		Name:          templates.ToGo(name),
+		TypeName:      templates.ToGo(field.Type.Name()),
+		Type:          util.CopyModifiersFromAst(field.Type, fd, relateGoType),
+		NonNull:       field.Type.NonNull,
 		GoIDFieldName: idName,
 	})
 
@@ -362,6 +373,7 @@ func (m *Plugin) paginate(
 		Type:        types.NewSlice(types.Typ[types.String]),
 		Description: idsName + " contains the IDs of all the " + name + " related to the " + schemaType.Name + ".",
 		Tag:         `json:"` + idsName + `"`,
+		Slice:       true,
 	})
 
 	connectionName := field.Type.Name()
@@ -407,9 +419,10 @@ func (m *Plugin) paginate(
 
 	paginates := &Paginate{
 		Name:           templates.ToGo(name),
-		Connection:     binder.CopyModifiersFromAst(connectionType, connectionDef.Kind != ast.Interface, connectionGoType),
-		Edge:           binder.CopyModifiersFromAst(edgeType, edgeDef.Kind != ast.Interface, edgeGoType),
-		Node:           binder.CopyModifiersFromAst(nodeType, nodeDef.Kind != ast.Interface, nodeGoType),
+		NodeName:       templates.ToGo(nodeName),
+		Connection:     util.CopyModifiersFromAst(connectionType, connectionDef, connectionGoType),
+		Edge:           util.CopyModifiersFromAst(edgeType, edgeDef, edgeGoType),
+		Node:           util.CopyModifiersFromAst(nodeType, nodeDef, nodeGoType),
 		Description:    field.Description,
 		GoIDsFieldName: idsName,
 	}
@@ -424,7 +437,7 @@ func (m *Plugin) paginate(
 
 		paginates.Filters = append(paginates.Filters, &Argument{
 			Name: argument.Name,
-			Type: binder.CopyModifiersFromAst(argument.Type, argumentDef.Kind != ast.Interface, argumentGoType),
+			Type: util.CopyModifiersFromAst(argument.Type, argumentDef, argumentGoType),
 		})
 	}
 

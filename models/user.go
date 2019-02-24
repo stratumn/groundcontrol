@@ -17,21 +17,21 @@ package models
 import "context"
 
 // Workspaces returns the user's projects.
-func (u User) Workspaces(
+func (n *User) Workspaces(
 	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
-) (WorkspaceConnection, error) {
-	return PaginateWorkspaceIDSlice(ctx, u.WorkspacesIDs(ctx), after, before, first, last, nil)
+) (*WorkspaceConnection, error) {
+	return PaginateWorkspaceIDSlice(ctx, n.WorkspacesIDs(ctx), after, before, first, last, nil)
 }
 
 // WorkspacesIDs returns the user's workspaces IDs.
-func (u User) WorkspacesIDs(ctx context.Context) []string {
+func (n *User) WorkspacesIDs(ctx context.Context) []string {
 	var slice []string
 
-	for _, sourceID := range u.SourcesIDs {
+	for _, sourceID := range n.SourcesIDs {
 		source := MustLoadSource(ctx, sourceID)
 		slice = append(slice, source.GetWorkspacesIDs()...)
 	}
@@ -40,12 +40,12 @@ func (u User) WorkspacesIDs(ctx context.Context) []string {
 }
 
 // Workspace finds a workspace.
-func (u User) Workspace(ctx context.Context, slug string) *Workspace {
-	for _, id := range u.WorkspacesIDs(ctx) {
+func (n *User) Workspace(ctx context.Context, slug string) *Workspace {
+	for _, id := range n.WorkspacesIDs(ctx) {
 		node := MustLoadWorkspace(ctx, id)
 
 		if node.Slug == slug {
-			return &node
+			return node
 		}
 	}
 
@@ -53,16 +53,16 @@ func (u User) Workspace(ctx context.Context, slug string) *Workspace {
 }
 
 // Projects returns the user's projects.
-func (u User) Projects(
+func (n *User) Projects(
 	ctx context.Context,
 	after *string,
 	before *string,
 	first *int,
 	last *int,
-) (ProjectConnection, error) {
+) (*ProjectConnection, error) {
 	var slice []string
 
-	for _, workspaceID := range u.WorkspacesIDs(ctx) {
+	for _, workspaceID := range n.WorkspacesIDs(ctx) {
 		workspace := MustLoadWorkspace(ctx, workspaceID)
 		slice = append(slice, workspace.ProjectsIDs...)
 	}

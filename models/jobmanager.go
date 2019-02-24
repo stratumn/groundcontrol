@@ -76,7 +76,7 @@ func (j *JobManager) Add(
 	log.DebugWithOwner(ctx, job.ID, "job queued")
 	job.MustStore(ctx)
 
-	MustLockSystem(ctx, modelCtx.SystemID, func(system System) {
+	MustLockSystem(ctx, modelCtx.SystemID, func(system *System) {
 		system.JobsIDs = append([]string{job.ID}, system.JobsIDs...)
 		system.MustStore(ctx)
 	})
@@ -129,7 +129,7 @@ func (j *JobManager) Add(
 
 // Stop cancels a running job.
 func (j *JobManager) Stop(ctx context.Context, id string) error {
-	return LockJobE(ctx, id, func(job Job) error {
+	return LockJobE(ctx, id, func(job *Job) error {
 		if job.Status != JobStatusRunning {
 			return ErrNotRunning
 		}
@@ -154,7 +154,7 @@ func (j *JobManager) updateMetrics(ctx context.Context) {
 	modelCtx := GetModelContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
-	MustLockJobMetrics(ctx, system.JobMetricsID, func(metrics JobMetrics) {
+	MustLockJobMetrics(ctx, system.JobMetricsID, func(metrics *JobMetrics) {
 		metrics.Queued = int(atomic.LoadInt64(&j.queuedCounter))
 		metrics.Running = int(atomic.LoadInt64(&j.runningCounter))
 		metrics.Done = int(atomic.LoadInt64(&j.doneCounter))

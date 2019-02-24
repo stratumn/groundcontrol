@@ -29,7 +29,7 @@ type Source interface {
 	IsSource()
 
 	// User returns the user who owns the source.
-	User(context.Context) User
+	User(context.Context) *User
 
 	// GetWorkspacesIDs returns the IDs of the workspaces.
 	GetWorkspacesIDs() []string
@@ -41,7 +41,7 @@ type Source interface {
 		before *string,
 		first *int,
 		last *int,
-	) (WorkspaceConnection, error)
+	) (*WorkspaceConnection, error)
 }
 
 // MustLoadSource loads a Source or panics on failure.

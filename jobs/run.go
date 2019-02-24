@@ -28,7 +28,7 @@ func Run(ctx context.Context, taskID string, env []string, priority models.JobPr
 	modelCtx := models.GetModelContext(ctx)
 	workspaceID := ""
 
-	err := models.LockTaskE(ctx, taskID, func(task models.Task) error {
+	err := models.LockTaskE(ctx, taskID, func(task *models.Task) error {
 		if task.IsRunning {
 			return ErrDuplicate
 		}
@@ -60,7 +60,7 @@ func doRun(ctx context.Context, taskID string, env []string, workspaceID string,
 	pm := modelCtx.PM
 
 	defer func() {
-		models.MustLockTask(ctx, taskID, func(task models.Task) {
+		models.MustLockTask(ctx, taskID, func(task *models.Task) {
 			task.IsRunning = false
 			task.MustStore(ctx)
 		})

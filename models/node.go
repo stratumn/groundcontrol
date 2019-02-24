@@ -20,6 +20,17 @@ import "context"
 type Node interface {
 	IsNode()
 	GetID() string
+	Copy() Node
+}
+
+// LoadNode loads a Node.
+func LoadNode(ctx context.Context, id string) (Node, error) {
+	node, ok := GetModelContext(ctx).Nodes.Load(id)
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	return node, nil
 }
 
 // MustLoadNode loads a Node or panics on failure.

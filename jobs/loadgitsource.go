@@ -40,7 +40,7 @@ func LoadGitSource(ctx context.Context, sourceID string, priority models.JobPrio
 }
 
 func startLoadingGitSource(ctx context.Context, sourceID string) error {
-	return models.LockGitSourceE(ctx, sourceID, func(source models.GitSource) error {
+	return models.LockGitSourceE(ctx, sourceID, func(source *models.GitSource) error {
 		if source.IsLoading {
 			return ErrDuplicate
 		}
@@ -53,7 +53,7 @@ func startLoadingGitSource(ctx context.Context, sourceID string) error {
 }
 
 func doLoadGitSource(ctx context.Context, sourceID string) error {
-	return models.MustLockGitSourceE(ctx, sourceID, func(source models.GitSource) error {
+	return models.MustLockGitSourceE(ctx, sourceID, func(source *models.GitSource) error {
 		return source.Update(ctx)
 	})
 }

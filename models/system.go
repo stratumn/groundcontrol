@@ -20,7 +20,7 @@ import (
 	"fmt"
 )
 
-func (s System) filterJobsNode(ctx context.Context, node Job, status []JobStatus) bool {
+func (n *System) filterJobsNode(ctx context.Context, node *Job, status []JobStatus) bool {
 	match := len(status) == 0
 
 	for _, v := range status {
@@ -33,7 +33,7 @@ func (s System) filterJobsNode(ctx context.Context, node Job, status []JobStatus
 	return match
 }
 
-func (s System) filterProcessGroupsNode(ctx context.Context, node ProcessGroup, status []ProcessStatus) bool {
+func (n *System) filterProcessGroupsNode(ctx context.Context, node *ProcessGroup, status []ProcessStatus) bool {
 	match := len(status) == 0
 
 	for _, v := range status {
@@ -46,7 +46,7 @@ func (s System) filterProcessGroupsNode(ctx context.Context, node ProcessGroup, 
 	return match
 }
 
-func (s System) filterLogEntriesNode(ctx context.Context, node LogEntry, level []LogLevel, ownerID *string) bool {
+func (n *System) filterLogEntriesNode(ctx context.Context, node *LogEntry, level []LogLevel, ownerID *string) bool {
 	if ownerID != nil && *ownerID != node.OwnerID {
 		return false
 	}
@@ -64,7 +64,7 @@ func (s System) filterLogEntriesNode(ctx context.Context, node LogEntry, level [
 }
 
 // LastMessageID is the ID of the last message which can be used for subscriptions.
-func (s System) LastMessageID(ctx context.Context) string {
+func (n *System) LastMessageID(ctx context.Context) string {
 	modelCtx := GetModelContext(ctx)
 	lastMessageID := modelCtx.Subs.LastMessageID()
 	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprint(lastMessageID)))

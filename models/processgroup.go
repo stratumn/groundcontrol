@@ -17,10 +17,10 @@ package models
 import "context"
 
 // Status returns the status of the ProcessGroup.
-func (p ProcessGroup) Status(ctx context.Context) ProcessStatus {
+func (n *ProcessGroup) Status(ctx context.Context) ProcessStatus {
 	status := ProcessStatusDone
 
-	for _, id := range p.ProcessesIDs {
+	for _, id := range n.ProcessesIDs {
 		node := MustLoadProcess(ctx, id)
 
 		if node.Status == ProcessStatusFailed {
