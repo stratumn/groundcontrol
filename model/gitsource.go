@@ -44,13 +44,13 @@ func (n *GitSource) Path(ctx context.Context) string {
 
 // Update loads the latest commits and upserts the source.
 func (n *GitSource) Update(ctx context.Context) error {
-	n.IsLoading = true
-	n.MustStore(ctx)
-
 	defer func() {
 		n.IsLoading = false
 		n.MustStore(ctx)
 	}()
+
+	n.IsLoading = true
+	n.MustStore(ctx)
 
 	if err := n.pullOrClone(ctx); err != nil {
 		return err

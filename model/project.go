@@ -103,13 +103,13 @@ func (n *Project) Clone(ctx context.Context) error {
 
 // Pull pulls and upserts the project.
 func (n *Project) Pull(ctx context.Context) error {
-	n.IsPulling = true
-	n.MustStore(ctx)
-
 	defer func() {
 		n.IsPulling = false
 		n.MustStore(ctx)
 	}()
+
+	n.IsPulling = true
+	n.MustStore(ctx)
 
 	repo, err := n.openRepository(ctx)
 	if err != nil {
@@ -139,13 +139,13 @@ func (n *Project) Pull(ctx context.Context) error {
 
 // Update loads the latest commits and upserts the project.
 func (n *Project) Update(ctx context.Context) error {
-	n.IsLoadingCommits = true
-	n.MustStore(ctx)
-
 	defer func() {
 		n.IsLoadingCommits = false
 		n.MustStore(ctx)
 	}()
+
+	n.IsLoadingCommits = true
+	n.MustStore(ctx)
 
 	if !n.IsCloned(ctx) && !n.IsCached(ctx) {
 		if err := n.cloneCache(ctx); err != nil {
