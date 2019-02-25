@@ -17,8 +17,10 @@ package model
 import (
 	"context"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
+	homedir "github.com/mitchellh/go-homedir"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -44,6 +46,22 @@ func (n *Project) LocalReferenceShort() string {
 	return plumbing.ReferenceName(n.LocalReference).Short()
 }
 
+// Path is the path to the project.
+func (n *Project) Path(ctx context.Context) string {
+	modelCtx := GetContext(ctx)
+	return modelCtx.GetProjectPath(n.Workspace(ctx).Slug, n.Slug)
+}
+
+// ShortPath is the path to the project relative to the home directory.
+func (n *Project) ShortPath(ctx context.Context) (string, error) {
+	home, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Rel(home, n.Path(ctx))
+}
+
 // IsCloned indicates whether the repository is cloned.
 func (n *Project) IsCloned(ctx context.Context) bool {
 	return util.FileExists(n.Path(ctx))
@@ -52,12 +70,6 @@ func (n *Project) IsCloned(ctx context.Context) bool {
 // IsCached checks if the project is cached.
 func (n *Project) IsCached(ctx context.Context) bool {
 	return util.FileExists(n.CachePath(ctx))
-}
-
-// Path returns the path to the project.
-func (n *Project) Path(ctx context.Context) string {
-	modelCtx := GetContext(ctx)
-	return modelCtx.GetProjectPath(n.Workspace(ctx).Slug, n.Slug)
 }
 
 // CachePath returns the path to the project's cache.

@@ -455,6 +455,10 @@ type Project implements Node {
   localReferenceShort: String! @dynamic
   """Description is an optional description."""
   description: String
+  """Path is the path to the project."""
+  path: String! @dynamic
+  """Path is the path to the project relative to the home directory."""
+  shortPath: String! @dynamic
   """RemoteCommits lists the remote Commits using Relay pagination."""
   remoteCommits(after: String, before: String, first: Int, last: Int): CommitConnection! @paginate
   """LocalCommits lists the local Commits using Relay pagination."""
