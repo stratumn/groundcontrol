@@ -21,7 +21,7 @@ import (
 )
 
 func (r *mutationResolver) StartProcessGroup(ctx context.Context, id string) (*model.ProcessGroup, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	pm := modelCtx.PM
 
 	processGroup, err := model.LoadProcessGroup(ctx, id)

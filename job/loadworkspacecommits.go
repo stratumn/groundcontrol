@@ -22,7 +22,7 @@ import (
 
 // LoadWorkspaceCommits creates jobs to load the commits of every project in a workspace.
 func LoadWorkspaceCommits(ctx context.Context, workspaceID string, priority model.JobPriority) ([]string, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
 		return nil, err

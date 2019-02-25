@@ -33,7 +33,7 @@ type KeysConfig struct {
 
 // UpsertNodes upserts nodes for the content of the keys config.
 func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
 		var keysIDs []string
@@ -59,7 +59,7 @@ func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
 // UpsertKey upserts a key.
 // It returns the ID of the key.
 func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	key := Key{
 		ID: relay.EncodeID(
@@ -93,7 +93,7 @@ func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
 
 // DeleteKey deletes a key.
 func (c *KeysConfig) DeleteKey(ctx context.Context, id string) error {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	return LockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
 		return LockKey(ctx, id, func(key *Key) {

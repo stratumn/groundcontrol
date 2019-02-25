@@ -21,7 +21,7 @@ import (
 )
 
 func (r *mutationResolver) StartProcess(ctx context.Context, id string) (*model.Process, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	pm := modelCtx.PM
 
 	err := pm.Start(ctx, id)

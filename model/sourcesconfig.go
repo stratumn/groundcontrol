@@ -47,7 +47,7 @@ type GitSourceConfig struct {
 
 // UpsertNodes upserts nodes for the content of the sources config.
 func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
 		var sourcesIDs []string
@@ -91,7 +91,7 @@ func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
 // UpsertDirectorySource upserts a directory source.
 // It returns the ID of the source.
 func (c *SourcesConfig) UpsertDirectorySource(ctx context.Context, input DirectorySourceInput) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	source := DirectorySource{
 		ID: relay.EncodeID(
@@ -129,7 +129,7 @@ func (c *SourcesConfig) UpsertDirectorySource(ctx context.Context, input Directo
 // UpsertGitSource upserts a repository source.
 // It returns the ID of the source.
 func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInput) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	source := GitSource{
 		ID: relay.EncodeID(
@@ -169,7 +169,7 @@ func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInpu
 
 // DeleteSource deletes a source.
 func (c *SourcesConfig) DeleteSource(ctx context.Context, id string) error {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	return LockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
 		parts, err := relay.DecodeID(id)

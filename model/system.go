@@ -65,7 +65,7 @@ func (n *System) filterLogEntriesNode(ctx context.Context, node *LogEntry, level
 
 // LastMessageID is the ID of the last PubSub message and can be used to not miss any message when subscribing.
 func (n *System) LastMessageID(ctx context.Context) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	lastMessageID := modelCtx.Subs.LastMessageID()
 	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprint(lastMessageID)))
 }

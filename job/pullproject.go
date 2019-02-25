@@ -26,7 +26,7 @@ func PullProject(ctx context.Context, projectID string, priority model.JobPriori
 		return "", err
 	}
 
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	return modelCtx.Jobs.Add(
 		ctx,

@@ -28,7 +28,7 @@ func initHooks(ctx context.Context) error {
 }
 
 func incNoFile(ctx context.Context) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 	limit := syscall.Rlimit{}

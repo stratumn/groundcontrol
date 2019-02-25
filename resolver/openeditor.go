@@ -27,7 +27,7 @@ func (r *mutationResolver) OpenEditor(
 	ctx context.Context,
 	filename string,
 ) (*model.Ok, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	command := fmt.Sprintf(modelCtx.OpenEditorCommand, filename)
 	parts := strings.Split(command, " ")

@@ -24,7 +24,7 @@ func (r *mutationResolver) SetKey(
 	ctx context.Context,
 	input model.KeyInput,
 ) (*model.Key, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	id := modelCtx.Keys.UpsertKey(ctx, input)
 

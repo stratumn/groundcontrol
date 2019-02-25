@@ -22,8 +22,8 @@ import (
 	"groundcontrol/model"
 )
 
-func modelContextResolverMiddleware(modelCtx *model.ModelContext) graphql.FieldMiddleware {
+func modelContextMiddleware(modelCtx *model.Context) graphql.FieldMiddleware {
 	return func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
-		return next(model.WithModelContext(ctx, modelCtx))
+		return next(model.WithContext(ctx, modelCtx))
 	}
 }

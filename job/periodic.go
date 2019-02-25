@@ -17,6 +17,7 @@ package job
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"groundcontrol/model"
@@ -32,9 +33,11 @@ func StartPeriodic(
 	waitTime time.Duration,
 	chain ...func(context.Context) []string,
 ) error {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	round := func(fn func(context.Context) []string) {
+		lastMsgID := modelCtx.Subs.LastMessageID()
+
 		jobIDs := fn(ctx)
 		if len(jobIDs) < 1 {
 			return
@@ -46,26 +49,31 @@ func StartPeriodic(
 		jobMap := sync.Map{}
 
 		for _, jobID := range jobIDs {
-			jobMap.Store(jobID, true)
+			done := new(int32)
+			jobMap.Store(jobID, done)
 		}
 
-		subsCtx, cancel := context.WithCancel(ctx)
+		subsCtx, cancel := context.WithCancel(
+			model.WithContext(context.Background(), modelCtx),
+		)
+		defer cancel()
 
-		modelCtx.Subs.Subscribe(subsCtx, model.MessageTypeJobStored, 0, func(msg interface{}) {
+		modelCtx.Subs.Subscribe(subsCtx, model.MessageTypeJobStored, lastMsgID, func(msg interface{}) {
 			id := msg.(string)
-			_, ok := jobMap.Load(id)
+			done, ok := jobMap.Load(id)
 			if !ok {
 				return
 			}
 
 			switch model.MustLoadJob(subsCtx, id).Status {
 			case model.JobStatusDone, model.JobStatusFailed:
-				waitGroup.Done()
+				if atomic.AddInt32(done.(*int32), 1) == 1 {
+					waitGroup.Done()
+				}
 			}
 		})
 
 		waitGroup.Wait()
-		cancel()
 	}
 
 	for _, fn := range chain {

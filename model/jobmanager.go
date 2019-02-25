@@ -36,6 +36,8 @@ type JobManager struct {
 	runningCounter int64
 	doneCounter    int64
 	failedCounter  int64
+
+	done int32
 }
 
 // NewJobManager creates a JobManager with given concurrency.
@@ -47,7 +49,25 @@ func NewJobManager(concurrency int) *JobManager {
 
 // Work starts running jobs and blocks until the context is done.
 func (j *JobManager) Work(ctx context.Context) error {
-	return j.queue.Work(ctx)
+	err := j.queue.Work(ctx)
+
+	atomic.StoreInt32(&j.done, 1)
+
+	// Fail all queued jobs.
+	MustLockSystem(ctx, GetContext(ctx).SystemID, func(system *System) {
+		for _, id := range system.JobsIDs {
+			MustLockJob(ctx, id, func(job *Job) {
+				if job.Status != JobStatusQueued {
+					return
+				}
+
+				job.Status = JobStatusFailed
+				job.MustStore(ctx)
+			})
+		}
+	})
+
+	return err
 }
 
 // Add adds a job to the queue and returns the job's ID.
@@ -58,7 +78,7 @@ func (j *JobManager) Add(
 	priority JobPriority,
 	fn func(ctx context.Context) error,
 ) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	log := modelCtx.Log
 
 	id := atomic.AddUint64(&j.lastID, 1)
@@ -73,7 +93,10 @@ func (j *JobManager) Add(
 		OwnerID:   ownerID,
 	}
 
-	log.DebugWithOwner(ctx, job.ID, "job queued")
+	if atomic.LoadInt32(&j.done) > 0 {
+		job.Status = JobStatusFailed
+	}
+
 	job.MustStore(ctx)
 
 	MustLockSystem(ctx, modelCtx.SystemID, func(system *System) {
@@ -81,6 +104,15 @@ func (j *JobManager) Add(
 		system.MustStore(ctx)
 	})
 
+	if job.Status == JobStatusFailed {
+		log.DebugWithOwner(ctx, job.ID, "job failed because job manager is stopped")
+		atomic.AddInt64(&j.failedCounter, 1)
+		j.updateMetrics(ctx)
+
+		return job.ID
+	}
+
+	log.DebugWithOwner(ctx, job.ID, "job queued")
 	atomic.AddInt64(&j.queuedCounter, 1)
 	j.updateMetrics(ctx)
 
@@ -93,7 +125,7 @@ func (j *JobManager) Add(
 		log.DebugWithOwner(ctx, job.ID, "job running")
 
 		// We must create a new context because the other one closes after a request.
-		ctx := WithModelContext(context.Background(), modelCtx)
+		ctx := WithContext(context.Background(), modelCtx)
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
@@ -151,7 +183,7 @@ func (j *JobManager) Stop(ctx context.Context, id string) error {
 }
 
 func (j *JobManager) updateMetrics(ctx context.Context) {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
 	MustLockJobMetrics(ctx, system.JobMetricsID, func(metrics *JobMetrics) {

@@ -30,7 +30,7 @@ func (n *GitSource) ReferenceShort() string {
 
 // IsCloned indicates whether the repository is cloned.
 func (n *GitSource) IsCloned(ctx context.Context) bool {
-	getGitSourcePath := GetModelContext(ctx).GetGitSourcePath
+	getGitSourcePath := GetContext(ctx).GetGitSourcePath
 	directory := getGitSourcePath(n.Repository, n.Reference)
 
 	return util.FileExists(directory)
@@ -38,7 +38,7 @@ func (n *GitSource) IsCloned(ctx context.Context) bool {
 
 // Path returns the path to the source.
 func (n *GitSource) Path(ctx context.Context) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	return modelCtx.GetGitSourcePath(n.Repository, n.Reference)
 }
 

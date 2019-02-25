@@ -25,7 +25,7 @@ func CloneProject(ctx context.Context, projectID string, priority model.JobPrior
 		return "", err
 	}
 
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	return modelCtx.Jobs.Add(
 		ctx,

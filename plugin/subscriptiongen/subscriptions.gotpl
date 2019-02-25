@@ -8,7 +8,7 @@
 
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ .Type | ref }}, error) {
-	ctx = model.WithModelContext(ctx, r.ModelCtx)
+	ctx = model.WithContext(ctx, r.ModelCtx)
 	ch := make(chan {{ .Type | ref }}, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -37,7 +37,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ $root.DeletedType | ref }}, error) {
-	ctx = model.WithModelContext(ctx, r.ModelCtx)
+	ctx = model.WithContext(ctx, r.ModelCtx)
 	ch := make(chan {{ $root.DeletedType | ref }}, SubscriptionChannelSize)
 
 	last := uint64(0)

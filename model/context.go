@@ -22,7 +22,7 @@ import (
 
 type contextKey string
 
-const modelContextKey contextKey = "model_context"
+const ContextKey contextKey = "model_context"
 
 // ProjectGitSourcePathGetter is a function that returns the path to a Git source.
 type ProjectGitSourcePathGetter func(repo, reference string) string
@@ -33,8 +33,8 @@ type ProjectPathGetter func(workspaceSlug, projectSlug string) string
 // ProjectCachePathGetter is a function that returns the path to a project's cache.
 type ProjectCachePathGetter func(workspaceSlug, projectSlug string) string
 
-// ModelContext contains variables that are passed to model functions.
-type ModelContext struct {
+// Context contains variables that are passed to model functions.
+type Context struct {
 	Nodes               *NodeManager
 	Log                 *Logger
 	Jobs                *JobManager
@@ -50,14 +50,14 @@ type ModelContext struct {
 	SystemID            string
 }
 
-// WithModelContext adds a model context to a Go context.
-func WithModelContext(ctx context.Context, mc *ModelContext) context.Context {
-	return context.WithValue(ctx, modelContextKey, mc)
+// WithContext adds a model context to a Go context.
+func WithContext(ctx context.Context, mc *Context) context.Context {
+	return context.WithValue(ctx, ContextKey, mc)
 }
 
-// GetModelContext retrieves the model context from a Go context.
-func GetModelContext(ctx context.Context) *ModelContext {
-	if val, ok := ctx.Value(modelContextKey).(*ModelContext); ok {
+// GetContext retrieves the model context from a Go context.
+func GetContext(ctx context.Context) *Context {
+	if val, ok := ctx.Value(ContextKey).(*Context); ok {
 		return val
 	}
 

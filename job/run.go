@@ -25,7 +25,7 @@ import (
 
 // Run runs a task.
 func Run(ctx context.Context, taskID string, env []string, priority model.JobPriority) (string, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	workspaceID := ""
 
 	err := model.LockTaskE(ctx, taskID, func(task *model.Task) error {
@@ -55,7 +55,7 @@ func Run(ctx context.Context, taskID string, env []string, priority model.JobPri
 }
 
 func doRun(ctx context.Context, taskID string, env []string, workspaceID string, systemID string) error {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
 	pm := modelCtx.PM
 

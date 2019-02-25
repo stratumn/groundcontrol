@@ -45,7 +45,7 @@ func NewProcessManager() *ProcessManager {
 
 // CreateGroup creates a new ProcessGroup and returns its ID.
 func (p *ProcessManager) CreateGroup(ctx context.Context, taskID string) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	id := relay.EncodeID(
 		NodeTypeProcessGroup,
@@ -153,7 +153,7 @@ func (p *ProcessManager) Stop(ctx context.Context, processID string) error {
 
 // Clean terminates all running processes.
 func (p *ProcessManager) Clean(ctx context.Context) {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	waitGroup := sync.WaitGroup{}
 
 	p.commands.Range(func(k, _ interface{}) bool {
@@ -202,7 +202,7 @@ func (p *ProcessManager) Clean(ctx context.Context) {
 }
 
 func (p *ProcessManager) exec(ctx context.Context, id string) {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	MustLockProcess(ctx, id, func(process *Process) {
 		project := process.Project(ctx)
@@ -280,7 +280,7 @@ func (p *ProcessManager) exec(ctx context.Context, id string) {
 }
 
 func (p *ProcessManager) updateMetrics(ctx context.Context) {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
 	MustLockProcessMetrics(ctx, system.ProcessMetricsID, func(metrics *ProcessMetrics) {

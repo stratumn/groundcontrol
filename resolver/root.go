@@ -23,7 +23,7 @@ import (
 // Resolver is the root GraphQL resolver.
 type Resolver struct {
 	// We need this here because gqlgen doesn't currently pass it in the context of subscriptions.
-	ModelCtx *model.ModelContext
+	ModelCtx *model.Context
 }
 
 // Query returns the resolver for queries.
@@ -54,16 +54,16 @@ type queryResolver struct {
 }
 
 func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
-	node, _ := model.GetModelContext(ctx).Nodes.Load(id)
+	node, _ := model.GetContext(ctx).Nodes.Load(id)
 	return node, nil
 }
 
 func (r *queryResolver) Viewer(ctx context.Context) (*model.User, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	return model.LoadUser(ctx, modelCtx.ViewerID)
 }
 
 func (r *queryResolver) System(ctx context.Context) (*model.System, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	return model.LoadSystem(ctx, modelCtx.SystemID)
 }

@@ -25,7 +25,7 @@ func (r *mutationResolver) AddDirectorySource(
 	ctx context.Context,
 	input model.DirectorySourceInput,
 ) (*model.DirectorySource, error) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	id := modelCtx.Sources.UpsertDirectorySource(ctx, input)
 

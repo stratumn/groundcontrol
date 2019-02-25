@@ -97,7 +97,7 @@ func New(opts ...Opt) *App {
 // Start starts the app. It blocks until an error occurs or the app exits.
 func (a *App) Start(ctx context.Context) error {
 	modelCtx := a.createModelContext()
-	ctx, cancel := context.WithCancel(model.WithModelContext(ctx, modelCtx))
+	ctx, cancel := context.WithCancel(model.WithContext(ctx, modelCtx))
 	defer cancel()
 
 	a.createBaseNodes(ctx)
@@ -137,15 +137,15 @@ func (a *App) Start(ctx context.Context) error {
 		a.addUI(router)
 	}
 
-	a.startJobs(ctx)
-	a.startPeriodicJobs(ctx)
+	a.startJobs(ctx, cancel)
+	a.startPeriodicJobs(ctx, cancel)
 
 	server := &http.Server{
 		Addr:    a.listenAddress,
 		Handler: router,
 	}
 
-	a.serve(ctx, server)
+	a.serve(ctx, server, cancel)
 
 	if a.enableSignalHandling {
 		a.handleSignals(ctx, server, cancel)
@@ -162,8 +162,8 @@ func (a *App) Start(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (a *App) createModelContext() *model.ModelContext {
-	return &model.ModelContext{
+func (a *App) createModelContext() *model.Context {
+	return &model.Context{
 		Nodes:               model.NewNodeManager(),
 		Log:                 model.NewLogger(a.logCap, a.logLevel),
 		Jobs:                model.NewJobManager(a.jobConcurrency),
@@ -196,13 +196,13 @@ func (a *App) createBaseNodes(ctx context.Context) {
 		ProcessMetricsID: processMetricsID,
 	}).MustStore(ctx)
 
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	modelCtx.ViewerID = viewerID
 	modelCtx.SystemID = systemID
 }
 
 func (a *App) createSources(ctx context.Context) error {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	config, err := model.LoadSourcesConfigYAML(a.sourcesFile)
 	if err != nil {
@@ -219,7 +219,7 @@ func (a *App) createSources(ctx context.Context) error {
 }
 
 func (a *App) createKeys(ctx context.Context) error {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	config, err := model.LoadKeysConfigYAML(a.keysFile)
 	if err != nil {
@@ -243,7 +243,7 @@ func (a *App) addCORS(router *chi.Mux) {
 }
 
 func (a *App) addGQL(ctx context.Context, router *chi.Mux) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	gqlConfig := gql.Config{
 		Resolvers: &resolver.Resolver{ModelCtx: modelCtx},
@@ -253,7 +253,7 @@ func (a *App) addGQL(ctx context.Context, router *chi.Mux) {
 		handler.WebsocketUpgrader(websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		}),
-		handler.ResolverMiddleware(modelContextResolverMiddleware(modelCtx)),
+		handler.ResolverMiddleware(modelContextMiddleware(modelCtx)),
 	}
 
 	if a.enableApolloTracing {
@@ -285,8 +285,8 @@ func (a *App) addUI(router *chi.Mux) {
 	})
 }
 
-func (a *App) startJobs(ctx context.Context) {
-	modelCtx := model.GetModelContext(ctx)
+func (a *App) startJobs(ctx context.Context, cancel func()) {
+	modelCtx := model.GetContext(ctx)
 	jobs := modelCtx.Jobs
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
@@ -295,6 +295,7 @@ func (a *App) startJobs(ctx context.Context) {
 
 	go func() {
 		defer a.waitGroup.Done()
+		log.DebugWithOwner(ctx, systemID, "starting jobs")
 
 		if err := jobs.Work(ctx); err != nil && err != context.Canceled {
 			log.ErrorWithOwner(
@@ -303,12 +304,15 @@ func (a *App) startJobs(ctx context.Context) {
 				"job manager crashed because %s",
 				err.Error(),
 			)
+			cancel()
 		}
+
+		log.DebugWithOwner(ctx, systemID, "jobs terminated")
 	}()
 }
 
-func (a *App) startPeriodicJobs(ctx context.Context) {
-	modelCtx := model.GetModelContext(ctx)
+func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
+	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 
@@ -316,6 +320,7 @@ func (a *App) startPeriodicJobs(ctx context.Context) {
 
 	go func() {
 		defer a.waitGroup.Done()
+		log.DebugWithOwner(ctx, systemID, "starting periodic jobs")
 
 		err := job.StartPeriodic(
 			ctx,
@@ -331,16 +336,19 @@ func (a *App) startPeriodicJobs(ctx context.Context) {
 			log.ErrorWithOwner(
 				ctx,
 				systemID,
-				"job manager crashed because %s",
+				"periodic jobs crashed because %s",
 				err.Error(),
 			)
+			cancel()
 		}
+
+		log.DebugWithOwner(ctx, systemID, "periodic jobs terminated")
 	}()
 
 }
 
-func (a *App) serve(ctx context.Context, server *http.Server) {
-	modelCtx := model.GetModelContext(ctx)
+func (a *App) serve(ctx context.Context, server *http.Server, cancel func()) {
+	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 
@@ -348,6 +356,7 @@ func (a *App) serve(ctx context.Context, server *http.Server) {
 
 	go func() {
 		defer a.waitGroup.Done()
+		log.DebugWithOwner(ctx, systemID, "starting server")
 
 		log.InfoWithOwner(ctx, systemID, "app ready")
 		if a.ui != nil {
@@ -367,12 +376,15 @@ func (a *App) serve(ctx context.Context, server *http.Server) {
 				"server crashed because %s",
 				err.Error(),
 			)
+			cancel()
 		}
+
+		log.DebugWithOwner(ctx, systemID, "server terminated")
 	}()
 }
 
 func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel func()) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 
@@ -382,19 +394,18 @@ func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel fun
 
 	go func() {
 		log.DebugWithOwner(ctx, systemID, "received signal %d", <-signalCh)
-
 		cancel()
 	}()
 }
 
 func (a *App) shutdown(ctx context.Context, server *http.Server) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
 	pm := modelCtx.PM
 	systemID := modelCtx.SystemID
 
 	cleanCtx, cancel := context.WithTimeout(
-		model.WithModelContext(context.Background(), modelCtx),
+		model.WithContext(context.Background(), modelCtx),
 		a.gracefulShutdownTimeout,
 	)
 	defer cancel()
@@ -442,7 +453,7 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 }
 
 func (a *App) openAddressInBrowser(ctx context.Context) {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
 	systemID := modelCtx.SystemID
 

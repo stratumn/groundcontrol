@@ -28,7 +28,7 @@ func (r *mutationResolver) Run(
 	id string,
 	variables []model.VariableInput,
 ) (*model.Job, error) {
-	keys := model.GetModelContext(ctx).Keys
+	keys := model.GetContext(ctx).Keys
 	env := os.Environ()
 	save := false
 

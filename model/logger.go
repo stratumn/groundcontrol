@@ -71,7 +71,7 @@ func (l *Logger) Add(
 	ownerID string,
 	message string,
 ) (string, error) {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	if logLevelPriorities[level] < logLevelPriorities[l.level] {
 		return "", nil
@@ -240,7 +240,7 @@ func (l *Logger) ErrorWithOwner(
 }
 
 func (l *Logger) updateMetrics(ctx context.Context) {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	system := MustLoadSystem(ctx, modelCtx.SystemID)
 
 	MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *LogMetrics) {
@@ -253,7 +253,7 @@ func (l *Logger) updateMetrics(ctx context.Context) {
 }
 
 func (l *Logger) matchSourceFile(ctx context.Context, entry *LogEntry) {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 
 	if entry.OwnerID == "" {
 		return

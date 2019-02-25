@@ -26,7 +26,7 @@ func LoadDirectorySource(ctx context.Context, sourceID string, priority model.Jo
 		return "", err
 	}
 
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	return modelCtx.Jobs.Add(
 		ctx,

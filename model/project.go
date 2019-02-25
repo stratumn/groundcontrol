@@ -56,13 +56,13 @@ func (n *Project) IsCached(ctx context.Context) bool {
 
 // Path returns the path to the project.
 func (n *Project) Path(ctx context.Context) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	return modelCtx.GetProjectPath(n.Workspace(ctx).Slug, n.Slug)
 }
 
 // CachePath returns the path to the project's cache.
 func (n *Project) CachePath(ctx context.Context) string {
-	modelCtx := GetModelContext(ctx)
+	modelCtx := GetContext(ctx)
 	return modelCtx.GetProjectCachePath(n.Workspace(ctx).Slug, n.Slug)
 }
 

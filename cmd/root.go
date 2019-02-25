@@ -124,18 +124,15 @@ func init() {
 // initSettings reads in settings file and ENV variables if set.
 func initSettings() {
 	if settingsFile != "" {
-		// Use settings file from the flag.
 		viper.SetConfigFile(settingsFile)
 	} else {
-		// Search settings in home directory with name ".test" (without extension).
 		viper.AddConfigPath(filepath.Dir(app.DefaultSettingsFile))
 		viper.SetConfigName(filepath.Base(app.DefaultSettingsFile))
 		viper.SetConfigType(filepath.Ext(app.DefaultSettingsFile))
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv()
 
-	// If a settings file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		log.Println("INFO\tusing settings file", viper.ConfigFileUsed())
 	}

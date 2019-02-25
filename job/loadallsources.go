@@ -23,7 +23,7 @@ import (
 // LoadAllSources creates jobs to load the workspaces of every source.
 // It doesn't return errors but will output a log message when errors happen.
 func LoadAllSources(ctx context.Context, priority model.JobPriority) []string {
-	modelCtx := model.GetModelContext(ctx)
+	modelCtx := model.GetContext(ctx)
 	viewer := model.MustLoadUser(ctx, modelCtx.ViewerID)
 
 	var jobIDs []string
