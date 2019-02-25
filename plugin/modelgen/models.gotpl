@@ -307,12 +307,15 @@ const (
 			}
 			
 			// LockOrNew{{ $model.Name }} loads or initializes a {{ $model.Name }} and locks it until the callback returns.
-			func LockOrNew{{ $model.Name }}(ctx context.Context, id string, fn func(*{{ $model.Name }})) error {
+			// The second argument of the callback is true if the model is new.
+			func LockOrNew{{ $model.Name }}(ctx context.Context, id string, fn func(*{{ $model.Name }}, bool)) error {
 				nodes := GetContext(ctx).Nodes
 				nodes.Lock(id)
 			
+				isNew := false
 				node, err := Load{{ $model.Name }}(ctx, id)
 				if err == ErrNotFound {
+					isNew = true
 					node = &{{ $model.Name }}{
 						ID: id,
 					}
@@ -320,19 +323,21 @@ const (
 					return err
 				}
 			
-				fn(node)
+				fn(node, isNew)
 				nodes.Unlock(id)
 			
 				return nil
 			}
 			
 			// LockOrNew{{ $model.Name }}E is like LockOrNew{{ $model.Name }}, but the callback can return an error.
-			func LockOrNew{{ $model.Name }}E(ctx context.Context, id string, fn func(*{{ $model.Name }}) error) error {
+			func LockOrNew{{ $model.Name }}E(ctx context.Context, id string, fn func(*{{ $model.Name }}, bool) error) error {
 				nodes := GetContext(ctx).Nodes
 				nodes.Lock(id)
 			
+				isNew := false
 				node, err := Load{{ $model.Name }}(ctx, id)
 				if err == ErrNotFound {
+					isNew = true
 					node = &{{ $model.Name }}{
 						ID: id,
 					}
@@ -340,19 +345,21 @@ const (
 					return err
 				}
 			
-				err = fn(node)
+				err = fn(node, isNew)
 				nodes.Unlock(id)
 			
 				return err
 			}
 			
 			// MustLockOrNew{{ $model.Name }} loads or initializes a {{ $model.Name }} or panics on error and locks it until the callback returns.
-			func MustLockOrNew{{ $model.Name }}(ctx context.Context, id string, fn func(*{{ $model.Name }})) {
+			func MustLockOrNew{{ $model.Name }}(ctx context.Context, id string, fn func(*{{ $model.Name }}, bool)) {
 				nodes := GetContext(ctx).Nodes
 				nodes.Lock(id)
 			
+				isNew := false
 				node, err := Load{{ $model.Name }}(ctx, id)
 				if err == ErrNotFound {
+					isNew = true
 					node = &{{ $model.Name }}{
 						ID: id,
 					}
@@ -360,17 +367,19 @@ const (
 					panic(err)
 				}
 			
-				fn(node)
+				fn(node, isNew)
 				nodes.Unlock(id)
 			}
 			
 			// MustLockOrNew{{ $model.Name }}E is like MustLockOrNew{{ $model.Name }}, but the callback can return an error.
-			func MustLockOrNew{{ $model.Name }}E(ctx context.Context, id string, fn func(*{{ $model.Name }}) error) error {
+			func MustLockOrNew{{ $model.Name }}E(ctx context.Context, id string, fn func(*{{ $model.Name }}, bool) error) error {
 				nodes := GetContext(ctx).Nodes
 				nodes.Lock(id)
 			
+				isNew := false
 				node, err := Load{{ $model.Name }}(ctx, id)
 				if err == ErrNotFound {
+					isNew = true
 					node = &{{ $model.Name }}{
 						ID: id,
 					}
@@ -378,7 +387,7 @@ const (
 					panic(err)
 				}
 			
-				err = fn(node)
+				err = fn(node, isNew)
 				nodes.Unlock(id)
 			
 				return err

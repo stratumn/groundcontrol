@@ -89,7 +89,7 @@ func (c WorkspacesConfig) UpsertNodes(ctx context.Context, sourceID string) ([]s
 func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (string, error) {
 	id := relay.EncodeID(NodeTypeWorkspace, c.Slug)
 
-	err := MustLockOrNewWorkspaceE(ctx, id, func(workspace *Workspace) error {
+	err := MustLockOrNewWorkspaceE(ctx, id, func(workspace *Workspace, isNew bool) error {
 		workspace.Slug = c.Slug
 		workspace.Name = c.Name
 		workspace.Description = c.Description
@@ -99,8 +99,10 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 		workspace.TasksIDs = nil
 		projectSlugToID := map[string]string{}
 
-		// We need to make sure the workspace exists before child nodes refer to it.
-		workspace.MustStore(ctx)
+		if isNew {
+			// We need to make sure the workspace exists before child nodes refer to it.
+			workspace.MustStore(ctx)
+		}
 
 		for _, projectConfig := range c.Projects {
 			projectID := projectConfig.UpsertNodes(ctx, id, c.Slug)
@@ -141,14 +143,14 @@ func (c ProjectConfig) UpsertNodes(
 		c.Slug,
 	)
 
-	MustLockOrNewProject(ctx, id, func(project *Project) {
+	MustLockOrNewProject(ctx, id, func(project *Project, isNew bool) {
 		project.Slug = c.Slug
 		project.Repository = c.Repository
 		project.Reference = c.Reference
 		project.Description = c.Description
 		project.WorkspaceID = workspaceID
 
-		if _, err := LoadProject(ctx, id); err == ErrNotFound {
+		if isNew {
 			project.RemoteReference = c.Reference
 			project.LocalReference = c.Reference
 			project.IsClean = true
@@ -174,14 +176,16 @@ func (c TaskConfig) UpsertNodes(
 		c.Name,
 	)
 
-	err := MustLockOrNewTaskE(ctx, id, func(task *Task) error {
+	err := MustLockOrNewTaskE(ctx, id, func(task *Task, isNew bool) error {
 		task.Name = c.Name
 		task.WorkspaceID = workspaceID
 		task.VariablesIDs = nil
 		task.StepsIDs = nil
 
-		// We need to make sure the task exists before child nodes refer to it.
-		task.MustStore(ctx)
+		if isNew {
+			// We need to make sure the task exists before child nodes refer to it.
+			task.MustStore(ctx)
+		}
 
 		for variableIndex, variableConfig := range c.Variables {
 			variableID := variableConfig.UpsertNodes(
@@ -238,7 +242,7 @@ func (c VariableConfig) UpsertNodes(
 		fmt.Sprint(stepIndex),
 	)
 
-	MustLockOrNewVariable(ctx, id, func(variable *Variable) {
+	MustLockOrNewVariable(ctx, id, func(variable *Variable, _ bool) {
 		variable.Name = c.Name
 		variable.Default = c.Default
 
@@ -265,7 +269,7 @@ func (c StepConfig) UpsertNodes(
 		fmt.Sprint(stepIndex),
 	)
 
-	err := MustLockOrNewStepE(ctx, id, func(step *Step) error {
+	err := MustLockOrNewStepE(ctx, id, func(step *Step, _ bool) error {
 		step.TaskID = taskID
 		step.ProjectsIDs = nil
 		step.CommandsIDs = nil
