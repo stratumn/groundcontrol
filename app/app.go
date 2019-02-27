@@ -137,9 +137,6 @@ func (a *App) Start(ctx context.Context) error {
 		a.addUI(router)
 	}
 
-	a.startJobs(ctx, cancel)
-	a.startPeriodicJobs(ctx, cancel)
-
 	server := &http.Server{
 		Addr:    a.listenAddress,
 		Handler: router,
@@ -150,6 +147,9 @@ func (a *App) Start(ctx context.Context) error {
 	if a.enableSignalHandling {
 		a.handleSignals(ctx, server, cancel)
 	}
+
+	a.startJobs(ctx, cancel)
+	a.startPeriodicJobs(ctx, cancel)
 
 	if a.openBrowser && a.ui != nil {
 		a.openAddressInBrowser(ctx)
@@ -285,6 +285,59 @@ func (a *App) addUI(router *chi.Mux) {
 	})
 }
 
+func (a *App) serve(ctx context.Context, server *http.Server, cancel func()) {
+	modelCtx := model.GetContext(ctx)
+	log := modelCtx.Log
+	systemID := modelCtx.SystemID
+
+	a.waitGroup.Add(1)
+
+	go func() {
+		defer a.waitGroup.Done()
+
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.ErrorWithOwner(
+				ctx,
+				systemID,
+				"server crashed because %s",
+				err.Error(),
+			)
+			cancel()
+		}
+
+		log.DebugWithOwner(ctx, systemID, "server terminated")
+	}()
+
+	log.DebugWithOwner(ctx, systemID, "starting server")
+
+	log.InfoWithOwner(ctx, systemID, "app ready")
+	if a.ui != nil {
+		log.InfoWithOwner(ctx, systemID, "user interface on %s", a.listenAddress)
+	}
+	log.InfoWithOwner(
+		ctx,
+		systemID,
+		"GraphQL playground on %s/graphql",
+		a.listenAddress,
+	)
+
+}
+
+func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel func()) {
+	modelCtx := model.GetContext(ctx)
+	log := modelCtx.Log
+	systemID := modelCtx.SystemID
+
+	signalCh := make(chan os.Signal, 2)
+	signal.Notify(signalCh, syscall.SIGTERM)
+	signal.Notify(signalCh, syscall.SIGINT)
+
+	go func() {
+		log.DebugWithOwner(ctx, systemID, "received signal %d", <-signalCh)
+		cancel()
+	}()
+}
+
 func (a *App) startJobs(ctx context.Context, cancel func()) {
 	modelCtx := model.GetContext(ctx)
 	jobs := modelCtx.Jobs
@@ -345,57 +398,6 @@ func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
 		log.DebugWithOwner(ctx, systemID, "periodic jobs terminated")
 	}()
 
-}
-
-func (a *App) serve(ctx context.Context, server *http.Server, cancel func()) {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
-
-	a.waitGroup.Add(1)
-
-	go func() {
-		defer a.waitGroup.Done()
-		log.DebugWithOwner(ctx, systemID, "starting server")
-
-		log.InfoWithOwner(ctx, systemID, "app ready")
-		if a.ui != nil {
-			log.InfoWithOwner(ctx, systemID, "user interface on %s", a.listenAddress)
-		}
-		log.InfoWithOwner(
-			ctx,
-			systemID,
-			"GraphQL playground on %s/graphql",
-			a.listenAddress,
-		)
-
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.ErrorWithOwner(
-				ctx,
-				systemID,
-				"server crashed because %s",
-				err.Error(),
-			)
-			cancel()
-		}
-
-		log.DebugWithOwner(ctx, systemID, "server terminated")
-	}()
-}
-
-func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel func()) {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
-
-	signalCh := make(chan os.Signal, 2)
-	signal.Notify(signalCh, syscall.SIGTERM)
-	signal.Notify(signalCh, syscall.SIGINT)
-
-	go func() {
-		log.DebugWithOwner(ctx, systemID, "received signal %d", <-signalCh)
-		cancel()
-	}()
 }
 
 func (a *App) shutdown(ctx context.Context, server *http.Server) {
