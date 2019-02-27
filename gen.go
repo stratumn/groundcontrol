@@ -12,19 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate go run script/gqlgen.go
+
 package main
-
-import (
-	"log"
-	"net/http"
-	"os"
-
-	"groundcontrol/cmd"
-)
-
-var ui http.FileSystem
-
-func main() {
-	log.SetOutput(os.Stdout)
-	cmd.Execute(ui)
-}

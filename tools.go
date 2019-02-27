@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build tools
+
 package main
 
 // Import all the tools to include them in dependencies.

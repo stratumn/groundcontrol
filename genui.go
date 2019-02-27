@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build release
+// +build release
 
 //go:generate go run -tags=ui script/uigen.go
 
