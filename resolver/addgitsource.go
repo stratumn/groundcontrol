@@ -27,7 +27,7 @@ func (r *mutationResolver) AddGitSource(
 ) (*model.GitSource, error) {
 	modelCtx := model.GetContext(ctx)
 
-	id := modelCtx.Sources.UpsertGitSource(ctx, input)
+	id := modelCtx.Sources.SetGitSource(ctx, input)
 
 	if err := modelCtx.Sources.Save(); err != nil {
 		return nil, err

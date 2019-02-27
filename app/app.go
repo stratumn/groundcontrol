@@ -209,7 +209,7 @@ func (a *App) createSources(ctx context.Context) error {
 		return err
 	}
 
-	if err := config.UpsertNodes(ctx); err != nil {
+	if err := config.Store(ctx); err != nil {
 		return err
 	}
 
@@ -226,7 +226,7 @@ func (a *App) createKeys(ctx context.Context) error {
 		return err
 	}
 
-	if err := config.UpsertNodes(ctx); err != nil {
+	if err := config.Store(ctx); err != nil {
 		return err
 	}
 

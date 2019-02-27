@@ -27,7 +27,7 @@ func (r *mutationResolver) AddDirectorySource(
 ) (*model.DirectorySource, error) {
 	modelCtx := model.GetContext(ctx)
 
-	id := modelCtx.Sources.UpsertDirectorySource(ctx, input)
+	id := modelCtx.Sources.SetDirectorySource(ctx, input)
 
 	if err := modelCtx.Sources.Save(); err != nil {
 		return nil, err

@@ -31,8 +31,8 @@ type KeysConfig struct {
 	Keys     map[string]string `json:"keys" yaml:"keys"`
 }
 
-// UpsertNodes upserts nodes for the content of the keys config.
-func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
+// Store stores nodes for the content of the keys config.
+func (c *KeysConfig) Store(ctx context.Context) error {
 	modelCtx := GetContext(ctx)
 
 	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
@@ -56,9 +56,9 @@ func (c *KeysConfig) UpsertNodes(ctx context.Context) error {
 	})
 }
 
-// UpsertKey upserts a key.
+// Set sets a key and stores the corresponding node.
 // It returns the ID of the key.
-func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
+func (c *KeysConfig) Set(ctx context.Context, input KeyInput) string {
 	modelCtx := GetContext(ctx)
 
 	key := Key{
@@ -91,8 +91,8 @@ func (c *KeysConfig) UpsertKey(ctx context.Context, input KeyInput) string {
 	return key.ID
 }
 
-// DeleteKey deletes a key.
-func (c *KeysConfig) DeleteKey(ctx context.Context, id string) error {
+// Delete deletes a key and the corresponding node.
+func (c *KeysConfig) Delete(ctx context.Context, id string) error {
 	modelCtx := GetContext(ctx)
 
 	return LockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
@@ -116,7 +116,7 @@ func (c *KeysConfig) DeleteKey(ctx context.Context, id string) error {
 }
 
 // Save saves the config to disk, overwriting the file if it exists.
-func (c KeysConfig) Save() error {
+func (c *KeysConfig) Save() error {
 	bytes, err := yaml.Marshal(c)
 	if err != nil {
 		return err

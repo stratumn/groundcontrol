@@ -45,8 +45,8 @@ type GitSourceConfig struct {
 	ID         string `json:"-" yaml:"-"`
 }
 
-// UpsertNodes upserts nodes for the content of the sources config.
-func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
+// Store stores nodes for the content of the sources config.
+func (c *SourcesConfig) Store(ctx context.Context) error {
 	modelCtx := GetContext(ctx)
 
 	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
@@ -88,9 +88,9 @@ func (c *SourcesConfig) UpsertNodes(ctx context.Context) error {
 	})
 }
 
-// UpsertDirectorySource upserts a directory source.
+// SetDirectorySource sets a directory source and stores the corresponding node.
 // It returns the ID of the source.
-func (c *SourcesConfig) UpsertDirectorySource(ctx context.Context, input DirectorySourceInput) string {
+func (c *SourcesConfig) SetDirectorySource(ctx context.Context, input DirectorySourceInput) string {
 	modelCtx := GetContext(ctx)
 
 	source := DirectorySource{
@@ -126,9 +126,9 @@ func (c *SourcesConfig) UpsertDirectorySource(ctx context.Context, input Directo
 	return source.ID
 }
 
-// UpsertGitSource upserts a repository source.
+// SetGitSource sets a Git source and stores the corresponding node.
 // It returns the ID of the source.
-func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInput) string {
+func (c *SourcesConfig) SetGitSource(ctx context.Context, input GitSourceInput) string {
 	modelCtx := GetContext(ctx)
 
 	source := GitSource{
@@ -167,8 +167,8 @@ func (c *SourcesConfig) UpsertGitSource(ctx context.Context, input GitSourceInpu
 	return source.ID
 }
 
-// DeleteSource deletes a source.
-func (c *SourcesConfig) DeleteSource(ctx context.Context, id string) error {
+// Delete deletes a source.
+func (c *SourcesConfig) Delete(ctx context.Context, id string) error {
 	modelCtx := GetContext(ctx)
 
 	return LockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
@@ -221,7 +221,7 @@ func (c *SourcesConfig) DeleteSource(ctx context.Context, id string) error {
 }
 
 // Save saves the config to disk, overwriting the file if it exists.
-func (c SourcesConfig) Save() error {
+func (c *SourcesConfig) Save() error {
 	bytes, err := yaml.Marshal(c)
 	if err != nil {
 		return err

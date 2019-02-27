@@ -41,7 +41,7 @@ func (r *mutationResolver) StartService(
 
 		save = true
 
-		keys.UpsertKey(ctx, model.KeyInput{
+		keys.Set(ctx, model.KeyInput{
 			Name:  variable.Name,
 			Value: variable.Value,
 		})
