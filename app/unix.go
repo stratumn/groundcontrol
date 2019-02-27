@@ -19,9 +19,6 @@ package app
 import (
 	"context"
 	"groundcontrol/model"
-	"os/exec"
-	"strconv"
-	"strings"
 	"syscall"
 )
 
@@ -46,19 +43,8 @@ func incNoFile(ctx context.Context) {
 		return
 	}
 
-	max, err := maxNoFile()
-	if err != nil {
-		log.WarningWithOwner(
-			ctx,
-			systemID,
-			"failed to get maximum number of open files because %s",
-			err.Error(),
-		)
-		return
-	}
-
 	was := limit.Cur
-	limit.Cur = max
+	limit.Cur = limit.Max
 
 	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
 		log.WarningWithOwner(
@@ -87,32 +73,4 @@ func incNoFile(ctx context.Context) {
 		was,
 		limit.Cur,
 	)
-}
-
-func maxNoFile() (uint64, error) {
-	n, err := ulimit()
-	if err != nil {
-		limit := syscall.Rlimit{}
-		if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
-			return 0, err
-		}
-		n = limit.Max
-	}
-
-	return n, nil
-}
-
-func ulimit() (uint64, error) {
-	cmd := exec.Command("ulimit", "-n")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return 0, err
-	}
-
-	n, err := strconv.ParseUint(strings.TrimSpace(string(out)), 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return n, nil
 }
