@@ -285,6 +285,14 @@ func (n *Project) updateReferences(ctx context.Context) error {
 
 // updateStatus updates the status of the project according to the local branch.
 func (n *Project) updateStatus(ctx context.Context) error {
+	if !n.IsCloned(ctx) {
+		n.IsBehind = false
+		n.IsAhead = false
+		n.IsClean = true
+
+		return nil
+	}
+
 	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return err
@@ -321,10 +329,6 @@ func (n *Project) updateStatus(ctx context.Context) error {
 // checkIfClean checks if there are uncommited changes.
 // We currently call git because go-git can't do it efficiently.
 func (n *Project) checkIfClean(ctx context.Context) (bool, error) {
-	if !n.IsCloned(ctx) {
-		return true, nil
-	}
-
 	cmd := exec.Command("git", "status", "--porcelain")
 	cmd.Dir = n.Path(ctx)
 
