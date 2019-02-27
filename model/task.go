@@ -23,12 +23,19 @@ import (
 // Run executes the commands in the task.
 // Env is the environment of the Task. Each entry is of the form 'key=value'.
 func (n *Task) Run(ctx context.Context, env []string) error {
+	var err error
+
 	defer func() {
-		n.IsRunning = false
+		if err == nil {
+			n.Status = TaskStatusStopped
+		} else {
+			n.Status = TaskStatusFailed
+		}
+
 		n.MustStore(ctx)
 	}()
 
-	n.IsRunning = true
+	n.Status = TaskStatusRunning
 	n.MustStore(ctx)
 
 	modelCtx := GetContext(ctx)
@@ -37,25 +44,30 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 
 	for _, stepID := range n.StepsIDs {
 		step := MustLoadStep(ctx, stepID)
+		n.CurrentStepID = stepID
 
-		for _, commandID := range step.CommandsIDs {
-			command := MustLoadCommand(ctx, commandID)
+		for _, projectID := range step.ProjectsIDs {
+			project := MustLoadProject(ctx, projectID)
+			n.CurrentProjectID = projectID
 
-			for _, projectID := range step.ProjectsIDs {
+			for _, commandID := range step.CommandsIDs {
+				command := MustLoadCommand(ctx, commandID)
+				n.CurrentCommandID = commandID
+				n.MustStore(ctx)
+
 				select {
 				case <-ctx.Done():
-					return ctx.Err()
+					err = ctx.Err()
+					return err
 				default:
 				}
-
-				project := MustLoadProject(ctx, projectID)
 
 				log.InfoWithOwner(ctx, project.ID, command.Command)
 
 				projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
 				stdout := CreateLineWriter(ctx, log.InfoWithOwner, project.ID)
 				stderr := CreateLineWriter(ctx, log.WarningWithOwner, project.ID)
-				err := n.runCmd(ctx, command.Command, projectPath, env, stdout, stderr)
+				err = n.runCmd(ctx, command.Command, projectPath, env, stdout, stderr)
 
 				stdout.Close()
 				stderr.Close()

@@ -41,11 +41,11 @@ func RunTask(ctx context.Context, taskID string, env []string, priority model.Jo
 
 func startRunningTask(ctx context.Context, taskID string) error {
 	return model.LockTaskE(ctx, taskID, func(task *model.Task) error {
-		if task.IsRunning {
+		if task.Status != model.TaskStatusRunning && task.Status != model.TaskStatusStopped {
 			return ErrDuplicate
 		}
 
-		task.IsRunning = true
+		task.Status = model.TaskStatusQueued
 		task.MustStore(ctx)
 
 		return nil

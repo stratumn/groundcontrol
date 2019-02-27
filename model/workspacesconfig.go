@@ -229,6 +229,8 @@ func (c TaskConfig) UpsertNodes(
 		task.StepsIDs = nil
 
 		if isNew {
+			task.Status = TaskStatusStopped
+
 			// We need to make sure the task exists before child nodes refer to it.
 			task.MustStore(ctx)
 		}

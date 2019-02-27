@@ -45,6 +45,18 @@ enum JobPriority {
   HIGH
 }
 
+"""TaskStatus is the status of a Task."""
+enum TaskStatus {
+  """STOPPED indicates the Task is stopped or exited successfully."""
+  STOPPED
+  """QUEUED indicates the Task is in waiting in the queue."""
+  QUEUED
+  """STARTING indicates the Task was asked to start."""
+  RUNNING
+  """FAILED indicates the Task exited with an error."""
+  FAILED
+}
+
 """ServiceStatus is the status of a Service."""
 enum ServiceStatus {
   """STOPPED indicates the Service is stopped or exited successfully."""
@@ -497,8 +509,14 @@ type Task implements Node {
   steps(after: String, before: String, first: Int, last: Int): StepConnection! @paginate
   """Workspace is the Workspace that defines this Task."""
   workspace: Workspace! @relate
-  """IsRunning indicates whether the task is currently running."""
-  isRunning: Boolean!
+  """Status is the TaskStatus."""
+  status: TaskStatus!
+  """CurrentStep is the Step currently being executed, if any."""
+  currentStep: Step @relate
+  """CurrentProject is the Project the current Step is currently being executed on, if any."""
+  currentProject: Project @relate
+  """CurrentCommand is the Command currently being executed, if any."""
+  currentCommand: Command @relate
 }
 
 """Variable is a value that can be set before executing a Task."""
