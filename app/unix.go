@@ -19,6 +19,7 @@ package app
 import (
 	"context"
 	"groundcontrol/model"
+	"runtime"
 	"syscall"
 )
 
@@ -45,6 +46,10 @@ func incNoFile(ctx context.Context) {
 
 	was := limit.Cur
 	limit.Cur = limit.Max
+
+	if runtime.GOOS == "darwin" {
+		limit.Cur = 12288
+	}
 
 	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
 		log.WarningWithOwner(
