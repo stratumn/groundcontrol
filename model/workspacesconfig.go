@@ -158,6 +158,13 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 			}
 		}
 
+		for _, serviceConfig := range c.Services {
+			err := serviceConfig.SetDependencies(ctx, workspace.Slug)
+			if err != nil {
+				return err
+			}
+		}
+
 		workspace.MustStore(ctx)
 
 		return nil
@@ -441,6 +448,22 @@ func (c ServiceConfig) SetNeeds(
 			service.NeedsIDs = append(service.NeedsIDs, serviceID)
 		}
 
+		service.MustStore(ctx)
+
+		return nil
+	})
+}
+
+// SetDependencies sets nodes with the Services and Variables it depends on.
+// It must be called after SetNeeds has been called on all the Services of the Workspace.
+func (c ServiceConfig) SetDependencies(ctx context.Context, workspaceSlug string) error {
+	id := relay.EncodeID(
+		NodeTypeService,
+		workspaceSlug,
+		c.Name,
+	)
+
+	return MustLockServiceE(ctx, id, func(service *Service) error {
 		if err := service.ComputeDependencies(ctx); err != nil {
 			return err
 		}
