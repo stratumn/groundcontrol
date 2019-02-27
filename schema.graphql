@@ -45,15 +45,17 @@ enum JobPriority {
   HIGH
 }
 
-"""ProcessStatus is the status of a Process."""
-enum ProcessStatus {
-  """RUNNING indicates the Process is currently running."""
+"""ServiceStatus is the status of a Service."""
+enum ServiceStatus {
+  """STOPPED indicates the Service is stopped or exited successfully."""
+  STOPPED
+  """STARTING indicates the Service was asked to start."""
+  STARTING
+  """RUNNING indicates the Service is currently running."""
   RUNNING
-  """STOPPING indicates the Process was asked to stop."""
+  """STOPPING indicates the Service was asked to stop."""
   STOPPING
-  """DONE indicates the Process exited successfully."""
-  DONE
-  """FAILED indicates the Process exited with an error."""
+  """FAILED indicates the Service exited with an error."""
   FAILED
 }
 
@@ -251,6 +253,22 @@ type CommandEdge {
   node: Command!
 }
 
+"""ServiceConnection is a Relay Connection for a page of Services."""
+type ServiceConnection {
+  """Edges contains an array of Edge in the current page."""
+  edges: [ServiceEdge!]!
+  """PaginationInfo contains metadata about the current page."""
+  pageInfo: PageInfo!
+}
+
+"""ServiceEdge is a Relay Edge for a Service."""
+type ServiceEdge {
+  """Cursor is used to paginate Nodes relative to this Edge."""
+  cursor: String!
+  """Node is the Node pointed by the Edge."""
+  node: Service!
+}
+
 """KeyConnection is a Relay Connection for a page of Keys."""
 type KeyConnection {
   """Edges contains an array of Edge in the current page."""
@@ -283,38 +301,6 @@ type JobEdge {
   node: Job!
 }
 
-"""ProcessGroupConnection is a Relay Connection for a page of ProcessGroups."""
-type ProcessGroupConnection {
-  """Edges contains an array of Edge in the current page."""
-  edges: [ProcessGroupEdge!]!
-  """PaginationInfo contains metadata about the current page."""
-  pageInfo: PageInfo!
-}
-
-"""ProcessGroupEdge is a Relay Edge for a ProcessGroup."""
-type ProcessGroupEdge {
-  """Cursor is used to paginate Nodes relative to this Edge."""
-  cursor: String!
-  """Node is the Node pointed by the Edge."""
-  node: ProcessGroup!
-}
-
-"""ProcessConnection is a Relay Connection for a page of Processes."""
-type ProcessConnection {
-  """Edges contains an array of Edge in the current page."""
-  edges: [ProcessEdge!]!
-  """PaginationInfo contains metadata about the current page."""
-  pageInfo: PageInfo!
-}
-
-"""ProcessEdge is a Relay Edge for a Process."""
-type ProcessEdge {
-  """Cursor is used to paginate Nodes relative to this Edge."""
-  cursor: String!
-  """Node is the Node pointed by the Edge."""
-  node: Process!
-}
-
 """LogEntryConnection is a Relay Connection for a page of LogEntries."""
 type LogEntryConnection {
   """Edges contains an array of Edge in the current page."""
@@ -335,16 +321,18 @@ type LogEntryEdge {
 type User implements Node {
   """ID is the global ID of the Node."""
   id: ID!
-  """Sources lists the sources belonging to the User using Relay pagination."""
+  """Sources lists the Sources belonging to the User using Relay pagination."""
   sources(after: String, before: String, first: Int, last: Int): SourceConnection! @paginate
-  """Workspaces lists the workspaces belonging to the User using Relay pagination."""
+  """Workspaces lists the Workspaces belonging to the User using Relay pagination."""
   workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection! @dynamic
-  """Workspace find a workspace by its slug."""
+  """Workspace find a Workspace by its slug."""
   workspace(slug: String!): Workspace @dynamic
-  """Projects lists the projects belonging to the User using Relay pagination."""
+  """Projects lists the Projects belonging to the User using Relay pagination."""
   projects(after: String, before: String, first: Int, last: Int): ProjectConnection! @dynamic
-  """Keys lists the keys belonging to the User using Relay pagination."""
+  """Keys lists the Keys belonging to the User using Relay pagination."""
   keys(after: String, before: String, first: Int, last: Int): KeyConnection! @paginate
+  """Services lists the Services belonging to the User using Relay pagination optionally filtered by ServiceStatus."""
+  services(after: String, before: String, first: Int, last: Int, status: [ServiceStatus!]): ServiceConnection! @dynamic
 }
 
 """System contains information about Ground Control."""
@@ -353,14 +341,12 @@ type System implements Node {
   id: ID!
   """Jobs lists the Jobs using Relay pagination optionally filtered by JobStatus."""
   jobs(after: String, before: String, first: Int, last: Int, status: [JobStatus!]): JobConnection! @paginate
-  """ProcessGroups lists the ProcessGroups using Relay pagination optionally filtered by ProcessStatus."""
-  processGroups(after: String, before: String, first: Int, last: Int, status: [ProcessStatus!]): ProcessGroupConnection! @paginate
   """LogEntries lists the LogEntries using Relay pagination optionally filtered by Level and by the Node who owns the LogEntry."""
   logEntries(after: String, before: String, first: Int, last: Int, level: [LogLevel!], ownerId: ID): LogEntryConnection! @paginate
   """JobMetrics are the JobMetrics for the System."""
   jobMetrics: JobMetrics! @relate
-  """ProcessMetrics are the ProcessMetrics for the System."""
-  processMetrics: ProcessMetrics! @relate
+  """ServiceMetrics are the ServiceMetrics for the System."""
+  serviceMetrics: ServiceMetrics! @relate
   """JobMetrics are the JobMetrics for the System."""
   logMetrics: LogMetrics! @relate
   """LastMessageID is the ID of the last PubSub message and can be used to not miss any message when subscribing."""
@@ -415,6 +401,8 @@ type Workspace implements Node {
   projects(after: String, before: String, first: Int, last: Int): ProjectConnection! @paginate
   """Tasks lists the tasks of the Workspace using Relay pagination."""
   tasks(after: String, before: String, first: Int, last: Int): TaskConnection! @paginate
+  """Services lists the services of the Workspace using Relay pagination."""
+  services(after: String, before: String, first: Int, last: Int): ServiceConnection! @paginate
   """Description is an optional description."""
   description: String
   """Notes contains optional notes."""
@@ -507,7 +495,7 @@ type Task implements Node {
   variables(after: String, before: String, first: Int, last: Int): VariableConnection! @paginate
   """Steps lists the Steps using Relay pagination."""
   steps(after: String, before: String, first: Int, last: Int): StepConnection! @paginate
-  """Workspace is Workspace that defines this Task."""
+  """Workspace is the Workspace that defines this Task."""
   workspace: Workspace! @relate
   """IsRunning indicates whether the task is currently running."""
   isRunning: Boolean!
@@ -543,6 +531,34 @@ type Command implements Node {
   command: String!
 }
 
+"""Service is a long running process that runs in the background."""
+type Service implements Node {
+  """ID is the global ID of the Node."""
+  id: ID!
+  """Name is the human friendly name."""
+  name: String!
+  """Variables lists the Variables using Relay pagination."""
+  variables(after: String, before: String, first: Int, last: Int): VariableConnection! @paginate
+  """AllVariables lists the Variables of the Service and its dependencies using Relay pagination."""
+  allVariables(after: String, before: String, first: Int, last: Int): VariableConnection! @paginate
+  """Project is the project related to this Service, if any."""
+	project: Project @relate
+  """Needs lists the Services directly needed by this Service using Relay pagination."""
+  needs(after: String, before: String, first: Int, last: Int): ServiceConnection! @paginate
+  """Dependencies lists the Services directly and indirectly needed by this Service in topological order using Relay pagination."""
+  dependencies(after: String, before: String, first: Int, last: Int): ServiceConnection! @paginate
+  """Command is the shell command to launch the process."""
+  command: String!
+  """Before lists the Tasks to execute before running the Service using Relay pagination."""
+	before(after: String, before: String, first: Int, last: Int): TaskConnection! @paginate
+  """After lists the Tasks to execute after Service exits using Relay pagination."""
+	after(after: String, before: String, first: Int, last: Int): TaskConnection! @paginate
+  """Status is the ServiceStatus."""
+  status: ServiceStatus!
+  """Workspace is the Workspace that defines this Service."""
+  workspace: Workspace! @relate
+}
+
 """Key stores a value that can be used to set and save Task Variables."""
 type Key implements Node {
   """ID is the global ID of the Node."""
@@ -571,36 +587,6 @@ type Job implements Node {
   owner: Node! @relate
 }
 
-"""ProcessGroup groups processes launched by a Task."""
-type ProcessGroup implements Node {
-  """ID is the global ID of the Node."""
-  id: ID!
-  """CreatedAt is the date it was created."""
-  createdAt: DateTime!
-  """Status is the ProcessStatus."""
-  status: ProcessStatus! @dynamic
-  """Task is the Task that created the Processes."""
-  task: Task! @relate
-  """Processes lists the processes using Relay pagination."""
-  processes(after: String, before: String, first: Int, last: Int): ProcessConnection! @paginate
-}
-
-"""Process is a program running in the background."""
-type Process implements Node {
-  """ID is the global ID of the Node."""
-  id: ID!
-  """Command is the shell command used to launch the Process."""
-  command: String!
-  """Env is the environment of the Process. Each entry is of the form 'key=value'."""
-  env: [String!]
-  """Status is the ProcessStatus."""
-  status: ProcessStatus!
-  """ProcessGroup is the ProcessGroup this Process is part of."""
-  processGroup: ProcessGroup! @relate
-  """Project is the Project this Process was launched in."""
-  project: Project! @relate
-}
-
 """LogEntry is an entry in the logs."""
 type LogEntry implements Node {
   """ID is the global ID of the Node."""
@@ -621,7 +607,23 @@ type LogEntry implements Node {
   sourceFileEnd: Int
 }
 
-"""JobMetrics contains metrics related to job."""
+"""ServiceMetrics contains metrics related to Services."""
+type ServiceMetrics implements Node {
+  """ID is the global ID of the Node."""
+  id: ID!
+  """Stopped tracks how many Services are STOPPED."""
+  stopped: Int!
+  """Stating tracks how many Services are STARTING."""
+  starting: Int!
+  """Running tracks how many Services are RUNNING."""
+  running: Int!
+  """Stopping tracks how many Services are STOPPING."""
+  stopping: Int!
+  """Failed tracks how many Services FAILED."""
+  failed: Int!
+}
+
+"""JobMetrics contains metrics related to Jobs."""
 type JobMetrics implements Node {
   """ID is the global ID of the Node."""
   id: ID!
@@ -632,18 +634,6 @@ type JobMetrics implements Node {
   """Done tracks how many Jobs are DONE."""
   done: Int!
   """Failed tracks wow many Jobs FAILED."""
-  failed: Int!
-}
-
-"""ProcessMetrics contains metrics related to Processes."""
-type ProcessMetrics implements Node {
-  """ID is the global ID of the Node."""
-  id: ID!
-  """Running tracks how many Processes are RUNNING."""
-  running: Int!
-  """Done tracks how many Processes are DONE."""
-  done: Int!
-  """Failed tracks wow many Processes FAILED."""
   failed: Int!
 }
 
@@ -703,22 +693,18 @@ type Mutation {
   pullProject(id: String!): Job! @job
   """PullWorkspace queues a Job to pull all the Projects of a Workspace."""
   pullWorkspace(id: String!): [Job!]! @job
-  """Run queues a Job to run a Task."""
-  run(id: String!, variables: [VariableInput!]): Job!
+  """RunTask queues a Job to run a Task."""
+  runTask(id: String!, variables: [VariableInput!]): Job!
+  """StartService queues a Job to start a Service."""
+  startService(id: String!, variables: [VariableInput!]): Job!
+  """StopService queues a Job to stop a Service."""
+  stopService(id: String!): Job! @job
   """SetKey sets a Key."""
   setKey(input: KeyInput!): Key!
   """DeleteKey deletes a Key."""
   deleteKey(id: ID!): DeletedNode!
   """StopJob stops a RUNNING Job."""
   stopJob(id: String!): Job!
-  """StartProcessGroup starts all the Processes of a ProcessGroup."""
-  startProcessGroup(id: String!): ProcessGroup!
-  """StopProcessGroup stops all the Processes of a ProcessGroup."""
-  stopProcessGroup(id: String!): ProcessGroup!
-  """StartProcess starts a Process."""
-  startProcess(id: String!): Process!
-  """StopProcess stops a Process."""
-  stopProcess(id: String!): Process!
   """OpenEditor opens the text editor."""
   openEditor(filename: String!): Ok!
 }
@@ -753,22 +739,22 @@ type Subscription {
   taskStored(id: ID, lastMessageId: ID): Task! @stored
   """TaskDeleted sends a Message when a Task is deleted."""
   taskDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  """ServiceStored sends a Service when added or updated."""
+  serviceStored(id: ID, lastMessageId: ID): Service! @stored
+  """ServiceDeleted sends a Message when a Service is deleted."""
+  serviceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
   """KeyStored sends a Key when added or updated."""
   keyStored(id: ID, lastMessageId: ID): Key! @stored
   """KeyDeleted sends a message when a Key is deleted."""
   keyDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
   """JobStored sends a Job when added or updated."""
   jobStored(id: ID, lastMessageId: ID): Job! @stored
-  """ProcessGroupStored sends a ProcessGroup when added or updated."""
-  processGroupStored(id: ID, lastMessageId: ID): ProcessGroup! @stored
-  """ProcessStored sends a Process when added or updated."""
-  processStored(id: ID, lastMessageId: ID): Process! @stored
   """LogEntryStored sends a LogEntry when added or updated."""
   logEntryStored(id: ID, lastMessageId: ID): LogEntry! @stored
+  """ServiceMetricsStored sends a ServiceMetrics when added or updated."""
+  serviceMetricsStored(id: ID, lastMessageId: ID): ServiceMetrics! @stored
   """JobMetricsStored sends a JobMetrics when added or updated."""
   jobMetricsStored(id: ID, lastMessageId: ID): JobMetrics! @stored
-  """ProcessMetricsStored sends a ProcessMetrics when added or updated."""
-  processMetricsStored(id: ID, lastMessageId: ID): ProcessMetrics! @stored
   """LogMetricsStored sends a LogMetrics when added or updated."""
   logMetricsStored(id: ID, lastMessageId: ID): LogMetrics! @stored
 }

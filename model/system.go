@@ -33,19 +33,6 @@ func (n *System) filterJobsNode(ctx context.Context, node *Job, status []JobStat
 	return match
 }
 
-func (n *System) filterProcessGroupsNode(ctx context.Context, node *ProcessGroup, status []ProcessStatus) bool {
-	match := len(status) == 0
-
-	for _, v := range status {
-		if node.Status(ctx) == v {
-			match = true
-			break
-		}
-	}
-
-	return match
-}
-
 func (n *System) filterLogEntriesNode(ctx context.Context, node *LogEntry, level []LogLevel, ownerID *string) bool {
 	if ownerID != nil && *ownerID != node.OwnerID {
 		return false

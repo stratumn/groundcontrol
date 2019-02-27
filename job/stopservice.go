@@ -20,9 +20,9 @@ import (
 	"groundcontrol/model"
 )
 
-// Run runs a task.
-func Run(ctx context.Context, taskID string, env []string, priority model.JobPriority) (string, error) {
-	if err := startRunning(ctx, taskID); err != nil {
+// StopService starts a Service.
+func StopService(ctx context.Context, serviceID string, priority model.JobPriority) (string, error) {
+	if _, err := model.LoadService(ctx, serviceID); err != nil {
 		return "", err
 	}
 
@@ -30,30 +30,11 @@ func Run(ctx context.Context, taskID string, env []string, priority model.JobPri
 
 	return modelCtx.Jobs.Add(
 		ctx,
-		JobNameRun,
-		model.MustLoadTask(ctx, taskID).WorkspaceID,
+		JobNameStopService,
+		model.MustLoadService(ctx, serviceID).WorkspaceID,
 		priority,
 		func(ctx context.Context) error {
-			return doRun(ctx, taskID, env)
+			return modelCtx.Services.Stop(ctx, serviceID)
 		},
 	), nil
-}
-
-func startRunning(ctx context.Context, taskID string) error {
-	return model.LockTaskE(ctx, taskID, func(task *model.Task) error {
-		if task.IsRunning {
-			return ErrDuplicate
-		}
-
-		task.IsRunning = true
-		task.MustStore(ctx)
-
-		return nil
-	})
-}
-
-func doRun(ctx context.Context, taskID string, env []string) error {
-	return model.MustLockTaskE(ctx, taskID, func(task *model.Task) error {
-		return task.Run(ctx, env)
-	})
 }

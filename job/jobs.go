@@ -21,5 +21,7 @@ const (
 	JobNameLoadProjectCommits  = "Load Project Commits"
 	JobNameCloneProject        = "Clone Project"
 	JobNamePullProject         = "Pull Project"
-	JobNameRun                 = "Run"
+	JobNameRunTask             = "Run Task"
+	JobNameStartService        = "Start Service"
+	JobNameStopService         = "Stop Service"
 )

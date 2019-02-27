@@ -18,11 +18,10 @@ import (
 	"context"
 	"io"
 	"os/exec"
-	"strings"
 )
 
-// Run executes the commands in the task.taskID
-// Env is the environment of the Process. Each entry is of the form 'key=value'.
+// Run executes the commands in the task.
+// Env is the environment of the Task. Each entry is of the form 'key=value'.
 func (n *Task) Run(ctx context.Context, env []string) error {
 	defer func() {
 		n.IsRunning = false
@@ -34,9 +33,7 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 
 	modelCtx := GetContext(ctx)
 	log := modelCtx.Log
-	pm := modelCtx.PM
 	workspace := n.Workspace(ctx)
-	processGroupID := ""
 
 	for _, stepID := range n.StepsIDs {
 		step := MustLoadStep(ctx, stepID)
@@ -56,20 +53,6 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 				log.InfoWithOwner(ctx, project.ID, command.Command)
 
 				projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
-				parts := strings.Split(command.Command, " ")
-
-				// TODO: this will be gone once services are implemented.
-				if len(parts) > 0 && parts[0] == "spawn" {
-					if processGroupID == "" {
-						processGroupID = pm.CreateGroup(ctx, n.ID)
-					}
-
-					rest := strings.Join(parts[1:], " ")
-					pm.Run(ctx, rest, env, processGroupID, project.ID)
-
-					continue
-				}
-
 				stdout := CreateLineWriter(ctx, log.InfoWithOwner, project.ID)
 				stderr := CreateLineWriter(ctx, log.WarningWithOwner, project.ID)
 				err := n.runCmd(ctx, command.Command, projectPath, env, stdout, stderr)

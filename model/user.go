@@ -48,7 +48,7 @@ func (n *User) BeforeStore(ctx context.Context) {
 	})
 }
 
-// Workspaces lists the workspaces belonging to the User sorted by Name
+// Workspaces lists the Workspaces belonging to the User sorted by Name
 // using Relay pagination.
 func (n *User) Workspaces(
 	ctx context.Context,
@@ -60,7 +60,7 @@ func (n *User) Workspaces(
 	return PaginateWorkspaceIDSlice(ctx, n.WorkspacesIDs(ctx), after, before, first, last, nil)
 }
 
-// WorkspacesIDs returns the IDs of the workspaces belonging to the User
+// WorkspacesIDs returns the IDs of the Workspaces belonging to the User
 // sorted by Name.
 func (n *User) WorkspacesIDs(ctx context.Context) []string {
 	var slice []string
@@ -79,7 +79,7 @@ func (n *User) WorkspacesIDs(ctx context.Context) []string {
 	return slice
 }
 
-// Workspace find a workspace by its slug.
+// Workspace find a Workspace by its slug.
 func (n *User) Workspace(ctx context.Context, slug string) *Workspace {
 	for _, id := range n.WorkspacesIDs(ctx) {
 		node := MustLoadWorkspace(ctx, id)
@@ -92,7 +92,7 @@ func (n *User) Workspace(ctx context.Context, slug string) *Workspace {
 	return nil
 }
 
-// Projects lists the projects belonging to the User using Relay pagination.
+// Projects lists the Projects belonging to the User using Relay pagination.
 func (n *User) Projects(
 	ctx context.Context,
 	after *string,
@@ -108,4 +108,41 @@ func (n *User) Projects(
 	}
 
 	return PaginateProjectIDSlice(ctx, slice, after, before, first, last, nil)
+}
+
+// Services lists the Services belonging to the User using Relay pagination
+// optionally filtered by ServiceStatus.
+func (n *User) Services(
+	ctx context.Context,
+	after *string,
+	before *string,
+	first *int,
+	last *int,
+	status []ServiceStatus,
+) (*ServiceConnection, error) {
+	var slice []string
+
+	for _, workspaceID := range n.WorkspacesIDs(ctx) {
+		workspace := MustLoadWorkspace(ctx, workspaceID)
+		slice = append(slice, workspace.ServicesIDs...)
+	}
+
+	filter := func(node *Service) bool {
+		return n.filterServiceNode(ctx, node, status)
+	}
+
+	return PaginateServiceIDSlice(ctx, slice, after, before, first, last, filter)
+}
+
+func (n *User) filterServiceNode(ctx context.Context, node *Service, status []ServiceStatus) bool {
+	match := len(status) == 0
+
+	for _, v := range status {
+		if node.Status == v {
+			match = true
+			break
+		}
+	}
+
+	return match
 }

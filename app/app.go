@@ -167,7 +167,7 @@ func (a *App) createModelContext() *model.Context {
 		Nodes:               model.NewNodeManager(),
 		Log:                 model.NewLogger(a.logCap, a.logLevel),
 		Jobs:                model.NewJobManager(a.jobConcurrency),
-		PM:                  model.NewProcessManager(),
+		Services:            model.NewServiceManager(),
 		Subs:                pubsub.New(a.pubSubHistoryCap),
 		GetGitSourcePath:    a.getGitSourcePath,
 		GetProjectPath:      a.getProjectPath,
@@ -181,19 +181,19 @@ func (a *App) createBaseNodes(ctx context.Context) {
 		viewerID         = relay.EncodeID(model.NodeTypeUser)
 		systemID         = relay.EncodeID(model.NodeTypeSystem)
 		jobMetricsID     = relay.EncodeID(model.NodeTypeJobMetrics)
-		processMetricsID = relay.EncodeID(model.NodeTypeProcessMetrics)
+		serviceMetricsID = relay.EncodeID(model.NodeTypeServiceMetrics)
 		logMetricsID     = relay.EncodeID(model.NodeTypeLogMetrics)
 	)
 
 	(&model.User{ID: viewerID}).MustStore(ctx)
 	(&model.LogMetrics{ID: logMetricsID}).MustStore(ctx)
 	(&model.JobMetrics{ID: jobMetricsID}).MustStore(ctx)
-	(&model.ProcessMetrics{ID: processMetricsID}).MustStore(ctx)
+	(&model.ServiceMetrics{ID: serviceMetricsID}).MustStore(ctx)
 	(&model.System{
 		ID:               systemID,
 		JobMetricsID:     jobMetricsID,
 		LogMetricsID:     logMetricsID,
-		ProcessMetricsID: processMetricsID,
+		ServiceMetricsID: serviceMetricsID,
 	}).MustStore(ctx)
 
 	modelCtx := model.GetContext(ctx)
@@ -401,7 +401,7 @@ func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel fun
 func (a *App) shutdown(ctx context.Context, server *http.Server) {
 	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
-	pm := modelCtx.PM
+	services := modelCtx.Services
 	systemID := modelCtx.SystemID
 
 	cleanCtx, cancel := context.WithTimeout(
@@ -415,7 +415,7 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 	a.waitGroup.Add(2)
 
 	go func() {
-		pm.Clean(cleanCtx)
+		services.Clean(cleanCtx)
 		a.waitGroup.Done()
 	}()
 

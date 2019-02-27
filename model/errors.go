@@ -20,10 +20,11 @@ import (
 
 // Errors.
 var (
-	ErrNotFound      = errors.New("not found")
-	ErrType          = errors.New("wrong type")
+	ErrNotFound      = errors.New("it wasn't found")
+	ErrType          = errors.New("it has the wrong type")
 	ErrFirstNegative = errors.New("first cannot be negative")
 	ErrLastNegative  = errors.New("last cannot be negative")
-	ErrNotRunning    = errors.New("project isn't running")
-	ErrNotStopped    = errors.New("project isn't stopped")
+	ErrNotRunning    = errors.New("the service isn't running")
+	ErrNotStopped    = errors.New("the service isn't stopped")
+	ErrCyclic        = errors.New("there are cyclic dependencies")
 )

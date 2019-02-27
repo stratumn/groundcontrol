@@ -16,30 +16,47 @@ package resolver
 
 import (
 	"context"
+	"fmt"
+	"os"
 
+	"groundcontrol/job"
 	"groundcontrol/model"
 )
 
-func (r *mutationResolver) StopProcessGroup(ctx context.Context, id string) (*model.ProcessGroup, error) {
-	modelCtx := model.GetContext(ctx)
-	pm := modelCtx.PM
+func (r *mutationResolver) RunTask(
+	ctx context.Context,
+	id string,
+	variables []model.VariableInput,
+) (*model.Job, error) {
+	keys := model.GetContext(ctx).Keys
+	env := os.Environ()
+	save := false
 
-	processGroup, err := model.LoadProcessGroup(ctx, id)
-	if err != nil {
-		return nil, err
-	}
+	for _, variable := range variables {
+		env = append(env, fmt.Sprintf("%s=%s", variable.Name, variable.Value))
 
-	for _, processID := range processGroup.ProcessesIDs {
-		process := model.MustLoadProcess(ctx, processID)
-
-		if process.Status != model.ProcessStatusRunning {
+		if !variable.Save {
 			continue
 		}
 
-		if err := pm.Stop(ctx, process.ID); err != nil {
+		save = true
+
+		keys.UpsertKey(ctx, model.KeyInput{
+			Name:  variable.Name,
+			Value: variable.Value,
+		})
+	}
+
+	if save {
+		if err := keys.Save(); err != nil {
 			return nil, err
 		}
 	}
 
-	return processGroup, nil
+	jobID, err := job.RunTask(ctx, id, env, model.JobPriorityHigh)
+	if err != nil {
+		return nil, err
+	}
+
+	return model.LoadJob(ctx, jobID)
 }

@@ -5,7 +5,9 @@ require (
 	github.com/99designs/gqlgen-contrib v0.0.0-20181214005309-52113d2e3f08
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/go-chi/chi v4.0.1+incompatible
+	github.com/google/pprof v0.0.0-20190208070709-b421f19a5c07 // indirect
 	github.com/gorilla/websocket v1.4.0
+	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
@@ -15,6 +17,7 @@ require (
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0
 	github.com/vektah/gqlparser v1.1.0
+	golang.org/x/arch v0.0.0-20181203225421-5a4828bb7045 // indirect
 	golang.org/x/sys v0.0.0-20181217223516-dcdaa6325bcb // indirect
 	golang.org/x/tools v0.0.0-20190221204921-83362c3779f5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.9.1

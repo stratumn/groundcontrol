@@ -22,7 +22,7 @@ import (
 
 type contextKey string
 
-const ContextKey contextKey = "model_context"
+const modelCtxKey contextKey = "model_context"
 
 // ProjectGitSourcePathGetter is a function that returns the path to a Git source.
 type ProjectGitSourcePathGetter func(repo, reference string) string
@@ -38,7 +38,7 @@ type Context struct {
 	Nodes               *NodeManager
 	Log                 *Logger
 	Jobs                *JobManager
-	PM                  *ProcessManager
+	Services            *ServiceManager
 	Subs                *pubsub.PubSub
 	Sources             *SourcesConfig
 	Keys                *KeysConfig
@@ -52,12 +52,12 @@ type Context struct {
 
 // WithContext adds a model context to a Go context.
 func WithContext(ctx context.Context, mc *Context) context.Context {
-	return context.WithValue(ctx, ContextKey, mc)
+	return context.WithValue(ctx, modelCtxKey, mc)
 }
 
 // GetContext retrieves the model context from a Go context.
 func GetContext(ctx context.Context) *Context {
-	if val, ok := ctx.Value(ContextKey).(*Context); ok {
+	if val, ok := ctx.Value(modelCtxKey).(*Context); ok {
 		return val
 	}
 

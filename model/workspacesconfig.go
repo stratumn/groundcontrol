@@ -38,6 +38,7 @@ type WorkspaceConfig struct {
 	Notes       *string         `json:"notes"`
 	Projects    []ProjectConfig `json:"projects" yaml:",flow"`
 	Tasks       []TaskConfig    `json:"tasks"`
+	Services    []ServiceConfig `json:"services"`
 }
 
 // ProjectConfig contains all the data in a YAML project config file.
@@ -65,6 +66,17 @@ type VariableConfig struct {
 type StepConfig struct {
 	Projects []string `json:"projects"`
 	Commands []string `json:"commands"`
+}
+
+// ServiceConfig contains all the data in a YAML service config file.
+type ServiceConfig struct {
+	Name      string           `json:"name"`
+	Variables []VariableConfig `json:"variables"`
+	Project   string           `json:"project"`
+	Needs     []string         `json:"needs"`
+	Command   string           `json:"command"`
+	Before    []string         `json:"before"`
+	After     []string         `json:"after"`
 }
 
 // UpsertNodes upserts nodes for the content of the config.
@@ -97,7 +109,10 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 		workspace.SourceID = sourceID
 		workspace.ProjectsIDs = nil
 		workspace.TasksIDs = nil
+		workspace.ServicesIDs = nil
 		projectSlugToID := map[string]string{}
+		taskNameToID := map[string]string{}
+		serviceNameToID := map[string]string{}
 
 		if isNew {
 			// We need to make sure the workspace exists before child nodes refer to it.
@@ -117,6 +132,30 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 			}
 
 			workspace.TasksIDs = append(workspace.TasksIDs, taskID)
+			taskNameToID[taskConfig.Name] = taskID
+		}
+
+		for _, serviceConfig := range c.Services {
+			serviceID, err := serviceConfig.UpsertNodes(
+				ctx,
+				id,
+				workspace.Slug,
+				projectSlugToID,
+				taskNameToID,
+			)
+			if err != nil {
+				return err
+			}
+
+			workspace.ServicesIDs = append(workspace.ServicesIDs, serviceID)
+			serviceNameToID[serviceConfig.Name] = serviceID
+		}
+
+		for _, serviceConfig := range c.Services {
+			err := serviceConfig.SetNeeds(ctx, workspace.Slug, serviceNameToID)
+			if err != nil {
+				return err
+			}
 		}
 
 		workspace.MustStore(ctx)
@@ -187,13 +226,11 @@ func (c TaskConfig) UpsertNodes(
 			task.MustStore(ctx)
 		}
 
-		for variableIndex, variableConfig := range c.Variables {
+		for _, variableConfig := range c.Variables {
 			variableID := variableConfig.UpsertNodes(
 				ctx,
 				workspaceSlug,
-				id,
 				c.Name,
-				variableIndex,
 			)
 
 			task.VariablesIDs = append(task.VariablesIDs, variableID)
@@ -231,15 +268,13 @@ func (c TaskConfig) UpsertNodes(
 func (c VariableConfig) UpsertNodes(
 	ctx context.Context,
 	workspaceSlug string,
-	taskID string,
-	taskName string,
-	stepIndex int,
+	namespace string,
 ) string {
 	id := relay.EncodeID(
 		NodeTypeVariable,
 		workspaceSlug,
-		taskName,
-		fmt.Sprint(stepIndex),
+		namespace,
+		c.Name,
 	)
 
 	MustLockOrNewVariable(ctx, id, func(variable *Variable, _ bool) {
@@ -303,6 +338,118 @@ func (c StepConfig) UpsertNodes(
 	}
 
 	return id, nil
+}
+
+// UpsertNodes upserts nodes for the content of the config.
+// It returns the ID of the service upserted.
+func (c ServiceConfig) UpsertNodes(
+	ctx context.Context,
+	workspaceID string,
+	workspaceSlug string,
+	projectSlugToID map[string]string,
+	taskNameToID map[string]string,
+) (string, error) {
+	id := relay.EncodeID(
+		NodeTypeService,
+		workspaceSlug,
+		c.Name,
+	)
+
+	err := MustLockOrNewServiceE(ctx, id, func(service *Service, isNew bool) error {
+		service.Name = c.Name
+		service.WorkspaceID = workspaceID
+		service.Command = c.Command
+		service.VariablesIDs = nil
+		service.NeedsIDs = nil
+		service.BeforeIDs = nil
+		service.AfterIDs = nil
+
+		if isNew {
+			service.Status = ServiceStatusStopped
+		}
+
+		if c.Project != "" {
+			projectID, ok := projectSlugToID[c.Project]
+			if !ok {
+				return ErrNotFound
+			}
+
+			service.ProjectID = projectID
+		}
+
+		for _, variableConfig := range c.Variables {
+			variableID := variableConfig.UpsertNodes(
+				ctx,
+				workspaceSlug,
+				c.Name,
+			)
+
+			service.VariablesIDs = append(service.VariablesIDs, variableID)
+		}
+
+		for _, taskName := range c.Before {
+			taskID, ok := taskNameToID[taskName]
+			if !ok {
+				return ErrNotFound
+			}
+
+			service.BeforeIDs = append(service.BeforeIDs, taskID)
+		}
+
+		for _, taskName := range c.After {
+			taskID, ok := taskNameToID[taskName]
+			if !ok {
+				return ErrNotFound
+			}
+
+			service.AfterIDs = append(service.AfterIDs, taskID)
+		}
+
+		service.MustStore(ctx)
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
+// SetNeeds sets nodes with the Services it needs.
+// It must be called after all the Service nodes have been created.
+func (c ServiceConfig) SetNeeds(
+	ctx context.Context,
+	workspaceSlug string,
+	serviceNameToID map[string]string,
+) error {
+	id := relay.EncodeID(
+		NodeTypeService,
+		workspaceSlug,
+		c.Name,
+	)
+
+	return MustLockServiceE(ctx, id, func(service *Service) error {
+		service.NeedsIDs = nil
+
+		for _, serviceName := range c.Needs {
+			serviceID, ok := serviceNameToID[serviceName]
+			if !ok {
+				return ErrNotFound
+			}
+
+			service.NeedsIDs = append(service.NeedsIDs, serviceID)
+		}
+
+		if err := service.ComputeDependencies(ctx); err != nil {
+			return err
+		}
+
+		service.ComputeAllVariables(ctx)
+		service.MustStore(ctx)
+
+		return nil
+	})
 }
 
 // LoadWorkspacesConfigYAML loads a config from a YAML file.
