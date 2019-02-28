@@ -19,15 +19,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync/atomic"
 	"time"
 
 	"groundcontrol/appcontext"
 	"groundcontrol/model"
 	"groundcontrol/relay"
-	"groundcontrol/util"
 )
 
 var logLevelPriorities = map[model.LogLevel]int{
@@ -138,7 +135,84 @@ func (l *Logger) ErrorWithOwner(ctx context.Context, ownerID string, message str
 	return id
 }
 
-func (l *Logger) updateMetrics(ctx context.Context) {
+func (l *Logger) add(ctx context.Context, level model.LogLevel, ownerID string, message string) (string, error) {
+	if logLevelPriorities[level] < logLevelPriorities[l.level] {
+		return "", nil
+	}
+	l.printToStdLog(level, ownerID, message)
+	id := atomic.AddUint64(&l.lastID, 1)
+	relayID := relay.EncodeID(model.NodeTypeLogEntry, fmt.Sprint(id))
+	now := model.DateTime(time.Now())
+	l.append(ctx, &model.LogEntry{
+		ID:        relayID,
+		Level:     level,
+		CreatedAt: now,
+		Message:   message,
+		OwnerID:   ownerID,
+	})
+	return relayID, nil
+}
+
+func (l *Logger) append(ctx context.Context, entry *model.LogEntry) {
+	entry.MustStore(ctx)
+	systemID := appcontext.Get(ctx).SystemID
+	model.MustLockSystem(ctx, systemID, func(system *model.System) {
+		if l.head >= l.cap*2 {
+			l.deleteOldEntries(ctx)
+		}
+		l.logEntriesIDs[l.head] = entry.ID
+		l.head++
+		system.LogEntriesIDs = l.logEntriesIDs[:l.head]
+		system.MustStore(ctx)
+	})
+	l.incCounter(entry.Level)
+	l.storeMetrics(ctx)
+}
+
+func (l *Logger) deleteOldEntries(ctx context.Context) {
+	copy(l.logEntriesIDs, l.logEntriesIDs[l.cap:])
+	l.head = l.cap
+	for _, oldEntryID := range l.logEntriesIDs[l.head:] {
+		oldEntry := model.MustLoadLogEntry(ctx, oldEntryID)
+		model.MustDeleteLogEntry(ctx, oldEntryID)
+		l.decCounter(oldEntry.Level)
+	}
+}
+
+func (l *Logger) printToStdLog(level model.LogLevel, ownerID, message string) {
+	log := l.stdoutLog
+	if logLevelPriorities[level] >= logLevelPriorities[model.LogLevelWarning] {
+		log = l.stderrLog
+	}
+	if ownerID != "" {
+		log.Printf("%s\t<%s> %s", level, ownerID, message)
+		return
+	}
+	log.Printf("%s\t%s", level, message)
+}
+
+func (l *Logger) incCounter(level model.LogLevel) {
+	l.addToCounter(level, 1)
+}
+
+func (l *Logger) decCounter(level model.LogLevel) {
+	l.addToCounter(level, -1)
+}
+
+func (l *Logger) addToCounter(level model.LogLevel, delta int64) {
+	switch level {
+	case model.LogLevelDebug:
+		atomic.AddInt64(&l.debugCounter, delta)
+	case model.LogLevelInfo:
+		atomic.AddInt64(&l.infoCounter, delta)
+	case model.LogLevelWarning:
+		atomic.AddInt64(&l.warningCounter, delta)
+	case model.LogLevelError:
+		atomic.AddInt64(&l.errorCounter, delta)
+	}
+}
+
+func (l *Logger) storeMetrics(ctx context.Context) {
 	appCtx := appcontext.Get(ctx)
 	system := model.MustLoadSystem(ctx, appCtx.SystemID)
 	model.MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *model.LogMetrics) {
@@ -148,132 +222,4 @@ func (l *Logger) updateMetrics(ctx context.Context) {
 		metrics.Error = int(atomic.LoadInt64(&l.errorCounter))
 		metrics.MustStore(ctx)
 	})
-}
-
-func (l *Logger) matchSourceFile(ctx context.Context, entry *model.LogEntry) {
-	appCtx := appcontext.Get(ctx)
-
-	if entry.OwnerID == "" {
-		return
-	}
-
-	node, ok := appCtx.Nodes.Load(entry.OwnerID)
-	if !ok {
-		return
-	}
-
-	project, ok := node.(*model.Project)
-	if !ok {
-		return
-	}
-
-	sourceFile, begin, end, err := util.MatchSourceFile(entry.Message)
-	if err != nil {
-		return
-	}
-
-	sourceParts := strings.Split(sourceFile, ":")
-	fileName := sourceParts[0]
-
-	workspace := model.MustLoadWorkspace(ctx, project.WorkspaceID)
-	projectPath := appCtx.GetProjectPath(workspace.Slug, project.Slug)
-
-	if !filepath.IsAbs(fileName) {
-		fileName, err = filepath.Abs(filepath.Join(projectPath, fileName))
-		if err != nil {
-			return
-		}
-	}
-
-	fileName = filepath.Clean(fileName)
-	sourceFile = strings.Join(append([]string{fileName}, sourceParts[1:]...), ":")
-
-	if !util.FileExists(fileName) {
-		return
-	}
-
-	if util.IsDirectory(fileName) {
-		return
-	}
-
-	entry.SourceFile = &sourceFile
-	entry.SourceFileBegin = &begin
-	entry.SourceFileEnd = &end
-}
-
-func (l *Logger) add(ctx context.Context, level model.LogLevel, ownerID string, message string) (string, error) {
-	appCtx := appcontext.Get(ctx)
-
-	if logLevelPriorities[level] < logLevelPriorities[l.level] {
-		return "", nil
-	}
-
-	log := l.stdoutLog
-	if logLevelPriorities[level] >= logLevelPriorities[model.LogLevelWarning] {
-		log = l.stderrLog
-	}
-
-	if ownerID != "" {
-		log.Printf("%s\t<%s> %s", level, ownerID, message)
-	} else {
-		log.Printf("%s\t%s", level, message)
-	}
-
-	id := atomic.AddUint64(&l.lastID, 1)
-	now := model.DateTime(time.Now())
-	logEntry := model.LogEntry{
-		ID:        relay.EncodeID(model.NodeTypeLogEntry, fmt.Sprint(id)),
-		Level:     level,
-		CreatedAt: now,
-		Message:   message,
-		OwnerID:   ownerID,
-	}
-	l.matchSourceFile(ctx, &logEntry)
-	logEntry.MustStore(ctx)
-
-	model.MustLockSystem(ctx, appCtx.SystemID, func(system *model.System) {
-		if l.head >= l.cap*2 {
-			copy(l.logEntriesIDs, l.logEntriesIDs[l.cap:])
-			l.head = l.cap
-
-			for _, oldEntryID := range l.logEntriesIDs[l.head:] {
-				oldEntry := model.MustLoadLogEntry(ctx, oldEntryID)
-
-				switch oldEntry.Level {
-				case model.LogLevelDebug:
-					atomic.AddInt64(&l.debugCounter, -1)
-				case model.LogLevelInfo:
-					atomic.AddInt64(&l.infoCounter, -1)
-				case model.LogLevelWarning:
-					atomic.AddInt64(&l.warningCounter, -1)
-				case model.LogLevelError:
-					atomic.AddInt64(&l.errorCounter, -1)
-				}
-
-				model.MustDeleteLogEntry(ctx, oldEntryID)
-			}
-		}
-
-		l.logEntriesIDs[l.head] = logEntry.ID
-
-		l.head++
-
-		system.LogEntriesIDs = l.logEntriesIDs[:l.head]
-		system.MustStore(ctx)
-	})
-
-	switch level {
-	case model.LogLevelDebug:
-		atomic.AddInt64(&l.debugCounter, 1)
-	case model.LogLevelInfo:
-		atomic.AddInt64(&l.infoCounter, 1)
-	case model.LogLevelWarning:
-		atomic.AddInt64(&l.warningCounter, 1)
-	case model.LogLevelError:
-		atomic.AddInt64(&l.errorCounter, 1)
-	}
-
-	l.updateMetrics(ctx)
-
-	return logEntry.ID, nil
 }

@@ -90,11 +90,9 @@ func New(opts ...Opt) *App {
 		enableApolloTracing:     DefaultEnableApolloTracing,
 		enableSignalHandling:    DefaultEnableSignalHandling,
 	}
-
 	for _, opt := range opts {
 		opt(app)
 	}
-
 	return app
 }
 
