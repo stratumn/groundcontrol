@@ -41,6 +41,7 @@ import (
 	"groundcontrol/pubsub"
 	"groundcontrol/relay"
 	"groundcontrol/resolver"
+	"groundcontrol/service"
 )
 
 // App starts Ground Control.
@@ -167,7 +168,7 @@ func (a *App) createModelContext() *model.Context {
 		Nodes:               model.NewNodeManager(),
 		Log:                 model.NewLogger(a.logCap, a.logLevel),
 		Jobs:                model.NewJobManager(a.jobConcurrency),
-		Services:            model.NewServiceManager(),
+		Services:            service.NewManager(),
 		Subs:                pubsub.New(a.pubSubHistoryCap),
 		GetGitSourcePath:    a.getGitSourcePath,
 		GetProjectPath:      a.getProjectPath,

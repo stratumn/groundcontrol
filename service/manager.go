@@ -12,21 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package model
+package service
 
 import (
-	"bufio"
 	"context"
-	"io"
+	"groundcontrol/model"
+	"groundcontrol/util"
 	"os/exec"
 	"sync"
 	"sync/atomic"
 	"syscall"
-	"time"
 )
 
-// ServiceManager manages creating and running job.
-type ServiceManager struct {
+// Manager manages running and stopping services.
+type Manager struct {
 	commands sync.Map
 
 	stoppedCounter  int64
@@ -36,14 +35,14 @@ type ServiceManager struct {
 	failedCounter   int64
 }
 
-// NewServiceManager creates a ServiceManager.
-func NewServiceManager() *ServiceManager {
-	return &ServiceManager{}
+// NewManager creates a Manager.
+func NewManager() *Manager {
+	return &Manager{}
 }
 
 // Start starts a Service and its dependencies.
-func (s *ServiceManager) Start(ctx context.Context, serviceID string, env []string) error {
-	service, err := LoadService(ctx, serviceID)
+func (s *Manager) Start(ctx context.Context, serviceID string, env []string) error {
+	service, err := model.LoadService(ctx, serviceID)
 	if err != nil {
 		return err
 	}
@@ -58,13 +57,13 @@ func (s *ServiceManager) Start(ctx context.Context, serviceID string, env []stri
 }
 
 // Stop stops a running Service.
-func (s *ServiceManager) Stop(ctx context.Context, serviceID string) error {
-	return LockServiceE(ctx, serviceID, func(service *Service) error {
-		if service.Status != ServiceStatusRunning {
-			return ErrNotRunning
+func (s *Manager) Stop(ctx context.Context, serviceID string) error {
+	return model.LockServiceE(ctx, serviceID, func(service *model.Service) error {
+		if service.Status != model.ServiceStatusRunning {
+			return model.ErrNotRunning
 		}
 
-		service.Status = ServiceStatusStopping
+		service.Status = model.ServiceStatusStopping
 		service.MustStore(ctx)
 
 		actual, ok := s.commands.Load(serviceID)
@@ -83,8 +82,8 @@ func (s *ServiceManager) Stop(ctx context.Context, serviceID string) error {
 }
 
 // Clean terminates all running Services.
-func (s *ServiceManager) Clean(ctx context.Context) {
-	modelCtx := GetContext(ctx)
+func (s *Manager) Clean(ctx context.Context) {
+	modelCtx := model.GetContext(ctx)
 	lastMsgID := modelCtx.Subs.LastMessageID()
 	waitGroup := sync.WaitGroup{}
 
@@ -112,16 +111,16 @@ func (s *ServiceManager) Clean(ctx context.Context) {
 			waitGroup.Done()
 		}()
 
-		modelCtx.Subs.Subscribe(serviceCtx, MessageTypeServiceStored, lastMsgID, func(msg interface{}) {
+		modelCtx.Subs.Subscribe(serviceCtx, model.MessageTypeServiceStored, lastMsgID, func(msg interface{}) {
 			id := msg.(string)
 			if id != serviceID {
 				return
 			}
 
-			service := MustLoadService(ctx, id)
+			service := model.MustLoadService(ctx, id)
 
 			switch service.Status {
-			case ServiceStatusStopped, ServiceStatusFailed:
+			case model.ServiceStatusStopped, model.ServiceStatusFailed:
 				cancel()
 			}
 		})
@@ -132,22 +131,22 @@ func (s *ServiceManager) Clean(ctx context.Context) {
 	waitGroup.Wait()
 }
 
-func (s *ServiceManager) startService(ctx context.Context, serviceID string, env []string) error {
-	modelCtx := GetContext(ctx)
+func (s *Manager) startService(ctx context.Context, serviceID string, env []string) error {
+	modelCtx := model.GetContext(ctx)
 
-	return LockServiceE(ctx, serviceID, func(service *Service) error {
+	return model.LockServiceE(ctx, serviceID, func(service *model.Service) error {
 		switch service.Status {
-		case ServiceStatusStarting, ServiceStatusStopping:
-			return ErrNotStopped
-		case ServiceStatusRunning:
+		case model.ServiceStatusStarting, model.ServiceStatusStopping:
+			return model.ErrNotStopped
+		case model.ServiceStatusRunning:
 			return nil
-		case ServiceStatusStopped:
+		case model.ServiceStatusStopped:
 			atomic.AddInt64(&s.stoppedCounter, -1)
-		case ServiceStatusFailed:
+		case model.ServiceStatusFailed:
 			atomic.AddInt64(&s.failedCounter, -1)
 		}
 
-		service.Status = ServiceStatusStarting
+		service.Status = model.ServiceStatusStarting
 		service.MustStore(ctx)
 		atomic.AddInt64(&s.startingCounter, 1)
 		s.updateMetrics(ctx)
@@ -162,8 +161,8 @@ func (s *ServiceManager) startService(ctx context.Context, serviceID string, env
 			cmd.Dir = modelCtx.GetProjectPath(workspace.Slug, project.Slug)
 		}
 
-		stdout := CreateLineWriter(ctx, modelCtx.Log.InfoWithOwner, ownerID)
-		stderr := CreateLineWriter(ctx, modelCtx.Log.WarningWithOwner, ownerID)
+		stdout := util.CreateLineWriter(ctx, modelCtx.Log.InfoWithOwner, ownerID)
+		stderr := util.CreateLineWriter(ctx, modelCtx.Log.WarningWithOwner, ownerID)
 
 		cmd.Env = env
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -171,11 +170,11 @@ func (s *ServiceManager) startService(ctx context.Context, serviceID string, env
 		cmd.Stderr = stderr
 
 		for _, taskID := range service.BeforeIDs {
-			err := MustLockTaskE(ctx, taskID, func(task *Task) error {
+			err := model.MustLockTaskE(ctx, taskID, func(task *model.Task) error {
 				return task.Run(ctx, env)
 			})
 			if err != nil {
-				service.Status = ServiceStatusFailed
+				service.Status = model.ServiceStatusFailed
 				service.MustStore(ctx)
 				atomic.AddInt64(&s.startingCounter, -1)
 				atomic.AddInt64(&s.failedCounter, 1)
@@ -187,10 +186,10 @@ func (s *ServiceManager) startService(ctx context.Context, serviceID string, env
 
 		err := cmd.Start()
 		if err == nil {
-			service.Status = ServiceStatusRunning
+			service.Status = model.ServiceStatusRunning
 			atomic.AddInt64(&s.runningCounter, 1)
 		} else {
-			service.Status = ServiceStatusFailed
+			service.Status = model.ServiceStatusFailed
 			atomic.AddInt64(&s.failedCounter, 1)
 		}
 
@@ -216,11 +215,11 @@ func (s *ServiceManager) startService(ctx context.Context, serviceID string, env
 		go func() {
 			err := cmd.Wait()
 
-			MustLockService(ctx, serviceID, func(service *Service) {
+			model.MustLockService(ctx, serviceID, func(service *model.Service) {
 				s.commands.Delete(serviceID)
 
 				for _, taskID := range service.AfterIDs {
-					taskError := MustLockTaskE(ctx, taskID, func(task *Task) error {
+					taskError := model.MustLockTaskE(ctx, taskID, func(task *model.Task) error {
 						return task.Run(ctx, env)
 					})
 					if err == nil {
@@ -229,11 +228,11 @@ func (s *ServiceManager) startService(ctx context.Context, serviceID string, env
 				}
 
 				if err == nil {
-					service.Status = ServiceStatusStopped
+					service.Status = model.ServiceStatusStopped
 					atomic.AddInt64(&s.stoppedCounter, 1)
 					modelCtx.Log.DebugWithOwner(ctx, ownerID, "service done")
 				} else {
-					service.Status = ServiceStatusFailed
+					service.Status = model.ServiceStatusFailed
 					atomic.AddInt64(&s.failedCounter, 1)
 					modelCtx.Log.ErrorWithOwner(
 						ctx,
@@ -257,11 +256,11 @@ func (s *ServiceManager) startService(ctx context.Context, serviceID string, env
 	})
 }
 
-func (s *ServiceManager) updateMetrics(ctx context.Context) {
-	modelCtx := GetContext(ctx)
-	system := MustLoadSystem(ctx, modelCtx.SystemID)
+func (s *Manager) updateMetrics(ctx context.Context) {
+	modelCtx := model.GetContext(ctx)
+	system := model.MustLoadSystem(ctx, modelCtx.SystemID)
 
-	MustLockServiceMetrics(ctx, system.ServiceMetricsID, func(metrics *ServiceMetrics) {
+	model.MustLockServiceMetrics(ctx, system.ServiceMetricsID, func(metrics *model.ServiceMetrics) {
 		metrics.Stopped = int(atomic.LoadInt64(&s.stoppedCounter))
 		metrics.Starting = int(atomic.LoadInt64(&s.startingCounter))
 		metrics.Running = int(atomic.LoadInt64(&s.runningCounter))
@@ -269,32 +268,4 @@ func (s *ServiceManager) updateMetrics(ctx context.Context) {
 		metrics.Failed = int(atomic.LoadInt64(&s.failedCounter))
 		metrics.MustStore(ctx)
 	})
-}
-
-// CreateLineWriter creates a writer with a line splitter.
-// Remember to call close().
-func CreateLineWriter(
-	ctx context.Context,
-	write func(
-		ctx context.Context,
-		ownerID,
-		message string,
-		a ...interface{},
-	) string,
-	ownerID string,
-	a ...interface{},
-) io.WriteCloser {
-	r, w := io.Pipe()
-	scanner := bufio.NewScanner(r)
-
-	go func() {
-		for scanner.Scan() {
-			write(ctx, ownerID, scanner.Text(), a...)
-
-			// Don't kill the poor browser.
-			time.Sleep(10 * time.Millisecond)
-		}
-	}()
-
-	return w
 }

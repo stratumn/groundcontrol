@@ -16,6 +16,7 @@ package model
 
 import (
 	"context"
+	"groundcontrol/util"
 	"io"
 	"os/exec"
 )
@@ -65,8 +66,8 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 				log.InfoWithOwner(ctx, project.ID, command.Command)
 
 				projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
-				stdout := CreateLineWriter(ctx, log.InfoWithOwner, project.ID)
-				stderr := CreateLineWriter(ctx, log.WarningWithOwner, project.ID)
+				stdout := util.CreateLineWriter(ctx, log.InfoWithOwner, project.ID)
+				stderr := util.CreateLineWriter(ctx, log.WarningWithOwner, project.ID)
 				err = n.runCmd(ctx, command.Command, projectPath, env, stdout, stderr)
 
 				stdout.Close()
