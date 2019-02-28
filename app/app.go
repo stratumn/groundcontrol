@@ -43,6 +43,7 @@ import (
 	"groundcontrol/resolver"
 	"groundcontrol/service"
 	"groundcontrol/store"
+	"groundcontrol/work"
 )
 
 // App starts Ground Control.
@@ -168,7 +169,7 @@ func (a *App) createModelContext() *model.Context {
 	return &model.Context{
 		Nodes:               store.NewMemory(),
 		Log:                 model.NewLogger(a.logCap, a.logLevel),
-		Jobs:                model.NewJobManager(a.jobConcurrency),
+		Jobs:                work.NewQueue(a.jobConcurrency),
 		Services:            service.NewManager(),
 		Subs:                pubsub.New(a.pubSubHistoryCap),
 		GetGitSourcePath:    a.getGitSourcePath,
