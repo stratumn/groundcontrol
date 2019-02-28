@@ -21,30 +21,20 @@ import (
 	"time"
 )
 
-// CreateLineWriter creates a writer with a line splitter.
-// Remember to call close().
-func CreateLineWriter(
-	ctx context.Context,
-	write func(
-		ctx context.Context,
-		ownerID,
-		message string,
-		a ...interface{},
-	) string,
-	ownerID string,
-	a ...interface{},
-) io.WriteCloser {
+// LineWriter is used by LineSplitter to output a single line of text to a Logger.
+type LineWriter func(ctx context.Context, ownerID, msg string, a ...interface{}) string
+
+// LineSplitter creates a writer with a line splitter that can be used to output lines
+// one at a time to a Logger. Remember to call close().
+func LineSplitter(ctx context.Context, write LineWriter, ownerID string) io.WriteCloser {
 	r, w := io.Pipe()
 	scanner := bufio.NewScanner(r)
-
 	go func() {
 		for scanner.Scan() {
-			write(ctx, ownerID, scanner.Text(), a...)
-
+			write(ctx, ownerID, scanner.Text())
 			// Don't kill the poor browser.
 			time.Sleep(10 * time.Millisecond)
 		}
 	}()
-
 	return w
 }

@@ -28,7 +28,6 @@ import (
 
 	"groundcontrol/appcontext"
 	"groundcontrol/gitutil"
-	"groundcontrol/relay"
 	"groundcontrol/util"
 )
 
@@ -59,7 +58,6 @@ func (n *Project) ShortPath(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return filepath.Rel(home, n.Path(ctx))
 }
 
@@ -81,24 +79,19 @@ func (n *Project) CachePath(ctx context.Context) string {
 
 // Clone clones and upserts the project.
 func (n *Project) Clone(ctx context.Context) error {
-	n.IsCloning = true
-	n.MustStore(ctx)
-
 	defer func() {
 		n.IsCloning = false
 		n.MustStore(ctx)
 	}()
+	n.IsCloning = true
+	n.MustStore(ctx)
 
 	path := n.Path(ctx)
-	options := &git.CloneOptions{
-		URL:           n.Repository,
-		ReferenceName: plumbing.ReferenceName(n.RemoteReference),
-	}
-
-	if _, err := git.PlainCloneContext(ctx, path, false, options); err != nil {
+	refName := plumbing.ReferenceName(n.RemoteReference)
+	opts := git.CloneOptions{URL: n.Repository, ReferenceName: refName}
+	if _, err := git.PlainCloneContext(ctx, path, false, &opts); err != nil {
 		return err
 	}
-
 	return n.Update(ctx)
 }
 
@@ -108,7 +101,6 @@ func (n *Project) Pull(ctx context.Context) error {
 		n.IsPulling = false
 		n.MustStore(ctx)
 	}()
-
 	n.IsPulling = true
 	n.MustStore(ctx)
 
@@ -116,25 +108,19 @@ func (n *Project) Pull(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	worktree, err := repo.Worktree()
 	if err != nil {
 		return err
 	}
-
-	options := &git.PullOptions{
-		RemoteName:    "origin",
-		ReferenceName: plumbing.ReferenceName(n.RemoteReference),
-	}
-
-	err = worktree.PullContext(ctx, options)
+	refName := plumbing.ReferenceName(n.RemoteReference)
+	opts := git.PullOptions{RemoteName: "origin", ReferenceName: refName}
+	err = worktree.PullContext(ctx, &opts)
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-
 	return n.Update(ctx)
 }
 
@@ -144,43 +130,34 @@ func (n *Project) Update(ctx context.Context) error {
 		n.IsLoadingCommits = false
 		n.MustStore(ctx)
 	}()
-
 	n.IsLoadingCommits = true
 	n.MustStore(ctx)
-
-	if !n.IsCloned(ctx) && !n.IsCached(ctx) {
-		if err := n.cloneCache(ctx); err != nil {
-			return err
-		}
-	} else {
-		if err := n.fetch(ctx); err != nil {
-			return nil
-		}
-	}
 
 	if err := n.updateReferences(ctx); err != nil {
 		return err
 	}
-
+	if err := n.fetchOrClone(ctx); err != nil {
+		return err
+	}
 	remoteCommitsIDs, err := n.loadCommits(ctx, n.localRemoteReferenceName())
 	if err != nil {
 		return err
 	}
-
+	n.RemoteCommitsIDs = remoteCommitsIDs
 	localCommitsIDs, err := n.loadCommits(ctx, plumbing.ReferenceName(n.LocalReference))
 	if err != nil {
 		return err
 	}
+	n.LocalCommitsIDs = localCommitsIDs
+	return n.updateState(ctx)
+}
 
-	if len(remoteCommitsIDs) > 0 {
-		n.RemoteCommitsIDs = remoteCommitsIDs
+// fetchOrClone fetches the repo if cloned or cached, otherwise it clones it.
+func (n *Project) fetchOrClone(ctx context.Context) error {
+	if !n.IsCloned(ctx) && !n.IsCached(ctx) {
+		return n.cloneCache(ctx)
 	}
-
-	if len(localCommitsIDs) > 0 {
-		n.LocalCommitsIDs = localCommitsIDs
-	}
-
-	return n.updateStatus(ctx)
+	return n.fetch(ctx)
 }
 
 // openRepository opens the repository of the project.
@@ -190,23 +167,18 @@ func (n *Project) openRepository(ctx context.Context) (*git.Repository, error) {
 	if n.IsCloned(ctx) {
 		return git.PlainOpen(n.Path(ctx))
 	}
-
 	if n.IsCached(ctx) {
 		return git.PlainOpen(n.CachePath(ctx))
 	}
-
 	return nil, nil
 }
 
 // cloneCache bare clones the repository into the cache.
 func (n *Project) cloneCache(ctx context.Context) error {
 	cachePath := n.CachePath(ctx)
-	options := &git.CloneOptions{
-		URL:           n.Repository,
-		ReferenceName: plumbing.ReferenceName(n.RemoteReference),
-	}
-
-	_, err := git.PlainCloneContext(ctx, cachePath, true, options)
+	refName := plumbing.ReferenceName(n.RemoteReference)
+	opts := git.CloneOptions{URL: n.Repository, ReferenceName: refName}
+	_, err := git.PlainCloneContext(ctx, cachePath, true, &opts)
 	return err
 }
 
@@ -216,51 +188,32 @@ func (n *Project) fetch(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	options := &git.FetchOptions{
-		Force: !n.IsCloned(ctx),
-	}
-
-	err = repo.FetchContext(ctx, options)
+	opts := git.FetchOptions{Force: !n.IsCloned(ctx)}
+	err = repo.FetchContext(ctx, &opts)
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return err
 	}
-
 	return nil
 }
 
 // loadCommits loads the commits of a reference.
-func (n *Project) loadCommits(
-	ctx context.Context,
-	refName plumbing.ReferenceName,
-) ([]string, error) {
-	var commitIDs []string
-
+func (n *Project) loadCommits(ctx context.Context, refName plumbing.ReferenceName) ([]string, error) {
 	iter, err := n.iterateCommits(ctx, refName)
 	if err != nil {
 		return nil, err
 	}
 	defer iter.Close()
 
+	var commitIDs []string
 	return commitIDs, iter.ForEach(func(c *object.Commit) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
-
-		commit := Commit{
-			ID:       relay.EncodeID(NodeTypeCommit, c.Hash.String()),
-			Hash:     Hash(c.Hash.String()),
-			Headline: strings.Split(c.Message, "\n")[0],
-			Message:  c.Message,
-			Author:   c.Author.Name,
-			Date:     DateTime(c.Author.When),
-		}
-
+		commit := NewCommitFromGit(c)
 		commit.MustStore(ctx)
 		commitIDs = append(commitIDs, commit.ID)
-
 		return nil
 	})
 }
@@ -271,59 +224,48 @@ func (n *Project) updateReferences(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	if branch != nil {
 		n.RemoteReference = branch.Merge.String()
 		n.LocalReference = plumbing.NewBranchReferenceName(branch.Name).String()
-
 	} else {
 		n.RemoteReference = n.Reference
 		n.LocalReference = n.Reference
 	}
-
 	return nil
 }
 
-// updateStatus updates the status of the project according to the local branch.
-func (n *Project) updateStatus(ctx context.Context) error {
+// updateState updates the state of project according to the local branch.
+func (n *Project) updateState(ctx context.Context) error {
 	if !n.IsCloned(ctx) {
 		n.IsBehind = false
 		n.IsAhead = false
 		n.IsClean = true
-
 		return nil
 	}
-
 	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return err
 	}
-
 	remoteRef, err := repo.Reference(n.localRemoteReferenceName(), true)
 	if err != nil {
 		return err
 	}
-
 	localRef, err := repo.Reference(plumbing.ReferenceName(n.LocalReference), true)
 	if err != nil {
 		return err
 	}
-
 	n.IsBehind, err = gitutil.HasAncestor(ctx, repo, remoteRef.Hash(), localRef.Hash())
 	if err != nil {
 		return err
 	}
-
 	n.IsAhead, err = gitutil.HasAncestor(ctx, repo, localRef.Hash(), remoteRef.Hash())
 	if err != nil {
 		return err
 	}
-
 	n.IsClean, err = n.checkIfClean(ctx)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -332,30 +274,22 @@ func (n *Project) updateStatus(ctx context.Context) error {
 func (n *Project) checkIfClean(ctx context.Context) (bool, error) {
 	cmd := exec.Command("git", "status", "--porcelain")
 	cmd.Dir = n.Path(ctx)
-
 	out, err := cmd.CombinedOutput()
 	return len(out) < 1, err
 }
 
 // iterateCommits creates an iterator for the commits of a reference.
-func (n *Project) iterateCommits(
-	ctx context.Context,
-	refName plumbing.ReferenceName,
-) (object.CommitIter, error) {
+func (n *Project) iterateCommits(ctx context.Context, refName plumbing.ReferenceName) (object.CommitIter, error) {
 	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return nil, nil
 	}
-
 	ref, err := repo.Reference(refName, true)
 	if err != nil {
 		return nil, err
 	}
-
-	return repo.Log(&git.LogOptions{
-		From:  ref.Hash(),
-		Order: git.LogOrderCommitterTime,
-	})
+	opts := git.LogOptions{From: ref.Hash(), Order: git.LogOrderCommitterTime}
+	return repo.Log(&opts)
 }
 
 // currentBranch returns the current branch of the repository.
@@ -364,12 +298,10 @@ func (n *Project) currentBranch(ctx context.Context) (*config.Branch, error) {
 	if !n.IsCloned(ctx) {
 		return nil, nil
 	}
-
 	repo, err := n.openRepository(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	return gitutil.CurrentBranch(repo, plumbing.ReferenceName(n.Reference))
 }
 

@@ -163,8 +163,8 @@ func (s *Manager) startService(ctx context.Context, serviceID string, env []stri
 			cmd.Dir = appCtx.GetProjectPath(workspace.Slug, project.Slug)
 		}
 
-		stdout := util.CreateLineWriter(ctx, appCtx.Log.InfoWithOwner, ownerID)
-		stderr := util.CreateLineWriter(ctx, appCtx.Log.WarningWithOwner, ownerID)
+		stdout := util.LineSplitter(ctx, appCtx.Log.InfoWithOwner, ownerID)
+		stderr := util.LineSplitter(ctx, appCtx.Log.WarningWithOwner, ownerID)
 
 		cmd.Env = env
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}

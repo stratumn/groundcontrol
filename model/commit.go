@@ -12,21 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+package model
 
-import "os"
+import (
+	"strings"
 
-// FileExists returns whether a file exists.
-func FileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	return !os.IsNotExist(err)
-}
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
-// IsDirectory returns whether a file is a directory.
-func IsDirectory(filename string) bool {
-	info, err := os.Stat(filename)
-	if err != nil {
-		return false
+	"groundcontrol/relay"
+)
+
+// NewCommitFromGit creates a new Commit model from a Git commit.
+func NewCommitFromGit(commit *object.Commit) *Commit {
+	return &Commit{
+		ID:       relay.EncodeID(NodeTypeCommit, commit.Hash.String()),
+		Hash:     Hash(commit.Hash.String()),
+		Headline: strings.Split(commit.Message, "\n")[0],
+		Message:  commit.Message,
+		Author:   commit.Author.Name,
+		Date:     DateTime(commit.Author.When),
 	}
-	return info.Mode().IsDir()
 }

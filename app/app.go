@@ -23,7 +23,6 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
-	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -101,73 +100,39 @@ func New(opts ...Opt) *App {
 
 // Start starts the app. It blocks until an error occurs or the app exits.
 func (a *App) Start(ctx context.Context) error {
-	appCtx := a.createModelContext()
+	appCtx := a.createAppContext()
 	ctx, cancel := context.WithCancel(appcontext.With(ctx, appCtx))
 	defer cancel()
 
-	a.createBaseNodes(ctx)
-
-	log := appCtx.Log
-	systemID := appCtx.SystemID
-
-	log.InfoWithOwner(ctx, systemID, "starting app")
-	log.InfoWithOwner(
-		ctx,
-		systemID,
-		"runtime %s %s %s",
-		runtime.GOOS,
-		runtime.GOARCH,
-		runtime.Version(),
-	)
-
+	a.createBaseNodes(ctx) // sets appCtx.systemID
+	appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "starting app")
 	if err := a.createSources(ctx); err != nil {
 		return err
 	}
-
 	if err := a.createKeys(ctx); err != nil {
 		return err
 	}
-
 	if err := initHooks(ctx); err != nil {
 		return err
 	}
-
-	router := chi.NewRouter()
-
-	a.addCORS(router)
-	a.addGQL(ctx, router)
-	a.addPlayground(router)
-
-	if a.ui != nil {
-		a.addUI(router)
-	}
-
-	server := &http.Server{
-		Addr:    a.listenAddress,
-		Handler: router,
-	}
-
+	server := a.createServer(ctx)
 	a.serve(ctx, server, cancel)
-
 	if a.enableSignalHandling {
 		a.handleSignals(ctx, server, cancel)
 	}
-
 	a.startJobs(ctx, cancel)
 	a.startPeriodicJobs(ctx, cancel)
-
 	if a.openBrowser && a.ui != nil {
 		a.openAddressInBrowser(ctx)
 	}
+	appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "app ready")
 
 	<-ctx.Done()
-
 	a.shutdown(ctx, server)
-
 	return ctx.Err()
 }
 
-func (a *App) createModelContext() *appcontext.Context {
+func (a *App) createAppContext() *appcontext.Context {
 	return &appcontext.Context{
 		Nodes:               store.NewMemory(),
 		Log:                 log.NewLogger(a.logCap, a.logLevel),
@@ -207,72 +172,70 @@ func (a *App) createBaseNodes(ctx context.Context) {
 }
 
 func (a *App) createSources(ctx context.Context) error {
-	appCtx := appcontext.Get(ctx)
-
 	config, err := model.LoadSourcesConfigYAML(a.sourcesFile)
 	if err != nil {
 		return err
 	}
-
 	if err := config.Store(ctx); err != nil {
 		return err
 	}
-
-	appCtx.Sources = config
-
+	appcontext.Get(ctx).Sources = config
 	return nil
 }
 
 func (a *App) createKeys(ctx context.Context) error {
-	appCtx := appcontext.Get(ctx)
-
 	config, err := model.LoadKeysConfigYAML(a.keysFile)
 	if err != nil {
 		return err
 	}
-
 	if err := config.Store(ctx); err != nil {
 		return err
 	}
-
-	appCtx.Keys = config
-
+	appcontext.Get(ctx).Keys = config
 	return nil
 }
 
+func (a *App) createServer(ctx context.Context) *http.Server {
+	router := chi.NewRouter()
+	a.addCORS(router)
+	a.addGQL(ctx, router)
+	a.addPlayground(router)
+	if a.ui != nil {
+		a.addUI(router)
+	}
+	return &http.Server{
+		Addr:    a.listenAddress,
+		Handler: router,
+	}
+}
+
 func (a *App) addCORS(router *chi.Mux) {
-	router.Use(cors.New(cors.Options{
-		AllowCredentials: true,
-		Debug:            false,
-	}).Handler)
+	opts := cors.Options{AllowCredentials: true, Debug: false}
+	handler := cors.New(opts).Handler
+	router.Use(handler)
 }
 
 func (a *App) addGQL(ctx context.Context, router *chi.Mux) {
 	appCtx := appcontext.Get(ctx)
-
-	gqlConfig := gql.Config{
-		Resolvers: &resolver.Resolver{AppCtx: appCtx},
-	}
-
-	gqlOptions := []handler.Option{
+	root := resolver.Resolver{AppCtx: appCtx}
+	config := gql.Config{Resolvers: &root}
+	opts := []handler.Option{
 		handler.WebsocketUpgrader(websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		}),
 		handler.ResolverMiddleware(modelContextMiddleware(appCtx)),
 	}
-
 	if a.enableApolloTracing {
-		gqlOptions = append(
-			gqlOptions,
+		opts = append(
+			opts,
+			// Currently crashes with subscriptions.
 			handler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
 			handler.Tracer(gqlapollotracing.NewTracer()),
 		)
 	}
-
-	router.Handle("/query", handler.GraphQL(
-		gql.NewExecutableSchema(gqlConfig),
-		gqlOptions...,
-	))
+	schema := gql.NewExecutableSchema(config)
+	graphql := handler.GraphQL(schema, opts...)
+	router.Handle("/query", graphql)
 }
 
 func (a *App) addPlayground(router *chi.Mux) {
@@ -294,77 +257,50 @@ func (a *App) serve(ctx context.Context, server *http.Server, cancel func()) {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
 	systemID := appCtx.SystemID
+	log.DebugWithOwner(ctx, systemID, "starting server")
 
 	a.waitGroup.Add(1)
-
 	go func() {
 		defer a.waitGroup.Done()
-
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.ErrorWithOwner(
-				ctx,
-				systemID,
-				"server crashed because %s",
-				err.Error(),
-			)
+			log.ErrorWithOwner(ctx, systemID, "server crashed because %s", err.Error())
 			cancel()
 		}
-
 		log.DebugWithOwner(ctx, systemID, "server terminated")
 	}()
 
-	log.DebugWithOwner(ctx, systemID, "starting server")
-
-	log.InfoWithOwner(ctx, systemID, "app ready")
 	if a.ui != nil {
 		log.InfoWithOwner(ctx, systemID, "user interface on %s", a.listenAddress)
 	}
-	log.InfoWithOwner(
-		ctx,
-		systemID,
-		"GraphQL playground on %s/graphql",
-		a.listenAddress,
-	)
-
+	log.InfoWithOwner(ctx, systemID, "GraphQL playground on %s/graphql", a.listenAddress)
 }
 
 func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel func()) {
-	appCtx := appcontext.Get(ctx)
-	log := appCtx.Log
-	systemID := appCtx.SystemID
-
 	signalCh := make(chan os.Signal, 2)
 	signal.Notify(signalCh, syscall.SIGTERM)
 	signal.Notify(signalCh, syscall.SIGINT)
 
 	go func() {
-		log.DebugWithOwner(ctx, systemID, "received signal %d", <-signalCh)
+		appCtx := appcontext.Get(ctx)
+		sig := <-signalCh
+		appCtx.Log.DebugWithOwner(ctx, appCtx.SystemID, "received signal %d", sig)
 		cancel()
 	}()
 }
 
 func (a *App) startJobs(ctx context.Context, cancel func()) {
 	appCtx := appcontext.Get(ctx)
-	jobs := appCtx.Jobs
 	log := appCtx.Log
 	systemID := appCtx.SystemID
+	log.DebugWithOwner(ctx, systemID, "starting jobs")
 
 	a.waitGroup.Add(1)
-
 	go func() {
 		defer a.waitGroup.Done()
-		log.DebugWithOwner(ctx, systemID, "starting jobs")
-
-		if err := jobs.Work(ctx); err != nil && err != context.Canceled {
-			log.ErrorWithOwner(
-				ctx,
-				systemID,
-				"job manager crashed because %s",
-				err.Error(),
-			)
+		if err := appCtx.Jobs.Work(ctx); err != nil && err != context.Canceled {
+			log.ErrorWithOwner(ctx, systemID, "job manager crashed because %s", err.Error())
 			cancel()
 		}
-
 		log.DebugWithOwner(ctx, systemID, "jobs terminated")
 	}()
 }
@@ -373,13 +309,11 @@ func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
 	systemID := appCtx.SystemID
+	log.DebugWithOwner(ctx, systemID, "starting periodic jobs")
 
 	a.waitGroup.Add(1)
-
 	go func() {
 		defer a.waitGroup.Done()
-		log.DebugWithOwner(ctx, systemID, "starting periodic jobs")
-
 		err := job.StartPeriodic(
 			ctx,
 			a.periodicJobsInterval,
@@ -391,15 +325,9 @@ func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
 			},
 		)
 		if err != nil && err != context.Canceled {
-			log.ErrorWithOwner(
-				ctx,
-				systemID,
-				"periodic jobs crashed because %s",
-				err.Error(),
-			)
+			log.ErrorWithOwner(ctx, systemID, "periodic jobs crashed because %s", err.Error())
 			cancel()
 		}
-
 		log.DebugWithOwner(ctx, systemID, "periodic jobs terminated")
 	}()
 
@@ -408,8 +336,8 @@ func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
 func (a *App) shutdown(ctx context.Context, server *http.Server) {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
-	services := appCtx.Services
 	systemID := appCtx.SystemID
+	log.InfoWithOwner(ctx, systemID, "starting shutdown")
 
 	cleanCtx, cancel := context.WithTimeout(
 		appcontext.With(context.Background(), appCtx),
@@ -417,23 +345,14 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 	)
 	defer cancel()
 
-	log.InfoWithOwner(ctx, systemID, "starting shutdown")
-
 	a.waitGroup.Add(2)
-
 	go func() {
-		services.Clean(cleanCtx)
+		appCtx.Services.Clean(cleanCtx)
 		a.waitGroup.Done()
 	}()
-
 	go func() {
 		if err := server.Shutdown(cleanCtx); err != nil && err != context.Canceled {
-			log.ErrorWithOwner(
-				ctx,
-				systemID,
-				"server shutdown failed because %s",
-				err.Error(),
-			)
+			log.ErrorWithOwner(ctx, systemID, "server shutdown failed because %s", err.Error())
 		}
 		a.waitGroup.Done()
 	}()
@@ -446,12 +365,7 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 
 	select {
 	case <-cleanCtx.Done():
-		log.ErrorWithOwner(
-			ctx,
-			systemID,
-			"clean shutdown failed because %s",
-			ctx.Err().Error(),
-		)
+		log.ErrorWithOwner(ctx, systemID, "clean shutdown failed because %s", ctx.Err().Error())
 		os.Exit(1)
 	case <-doneCh:
 		log.InfoWithOwner(ctx, systemID, "clean shutdown complete, goodbye!")
@@ -463,37 +377,22 @@ func (a *App) openAddressInBrowser(ctx context.Context) {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
 	systemID := appCtx.SystemID
-
 	addr, err := net.ResolveTCPAddr("tcp", a.listenAddress)
 	if err != nil {
-		log.WarningWithOwner(
-			ctx,
-			systemID,
-			"could not resolve address because %s",
-			err.Error(),
-		)
+		log.WarningWithOwner(ctx, systemID, "could not resolve address because %s", err.Error())
 		return
 	}
-
 	url := "http://"
-
 	if addr.IP == nil {
 		url += "localhost"
 	} else {
 		url += addr.IP.String()
 	}
-
 	if addr.Port != 0 {
 		url += fmt.Sprintf(":%d", addr.Port)
 	}
-
 	if err := browser.OpenURL(url); err != nil {
-		log.WarningWithOwner(
-			ctx,
-			systemID,
-			"could not resolve address because %s",
-			err.Error(),
-		)
+		log.WarningWithOwner(ctx, systemID, "could not resolve address because %s", err.Error())
 	}
 }
 
@@ -501,7 +400,6 @@ func (a *App) getGitSourcePath(repo, reference string) string {
 	name := path.Base(repo)
 	ext := path.Ext(name)
 	name = name[:len(name)-len(ext)]
-
 	return filepath.Join(a.gitSourcesDirectory, name, reference)
 }
 

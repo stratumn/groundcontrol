@@ -15,7 +15,6 @@
 package model
 
 import (
-	"fmt"
 	"io"
 	"strconv"
 	"time"
@@ -31,7 +30,7 @@ type DateTime time.Time
 func (d *DateTime) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("DateTime must be string")
+		return ErrType
 	}
 
 	str, err := strconv.Unquote(str)
@@ -62,7 +61,7 @@ type Hash string
 func (h *Hash) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("Hash must be string")
+		return ErrType
 	}
 
 	*h = Hash(str)

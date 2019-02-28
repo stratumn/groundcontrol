@@ -103,12 +103,7 @@ func (l *Logger) Error(ctx context.Context, message string, a ...interface{}) st
 }
 
 // DebugWithOwner adds a debug entry with an owner.
-func (l *Logger) DebugWithOwner(
-	ctx context.Context,
-	ownerID string,
-	message string,
-	a ...interface{},
-) string {
+func (l *Logger) DebugWithOwner(ctx context.Context, ownerID string, message string, a ...interface{}) string {
 	id, err := l.add(ctx, model.LogLevelDebug, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
@@ -117,12 +112,7 @@ func (l *Logger) DebugWithOwner(
 }
 
 // InfoWithOwner adds an info entry with an owner.
-func (l *Logger) InfoWithOwner(
-	ctx context.Context,
-	ownerID string,
-	message string,
-	a ...interface{},
-) string {
+func (l *Logger) InfoWithOwner(ctx context.Context, ownerID string, message string, a ...interface{}) string {
 	id, err := l.add(ctx, model.LogLevelInfo, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
@@ -131,12 +121,7 @@ func (l *Logger) InfoWithOwner(
 }
 
 // WarningWithOwner adds a warning entry with an owner.
-func (l *Logger) WarningWithOwner(
-	ctx context.Context,
-	ownerID string,
-	message string,
-	a ...interface{},
-) string {
+func (l *Logger) WarningWithOwner(ctx context.Context, ownerID string, message string, a ...interface{}) string {
 	id, err := l.add(ctx, model.LogLevelWarning, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
@@ -145,12 +130,7 @@ func (l *Logger) WarningWithOwner(
 }
 
 // ErrorWithOwner adds an error entry with an owner.
-func (l *Logger) ErrorWithOwner(
-	ctx context.Context,
-	ownerID string,
-	message string,
-	a ...interface{},
-) string {
+func (l *Logger) ErrorWithOwner(ctx context.Context, ownerID string, message string, a ...interface{}) string {
 	id, err := l.add(ctx, model.LogLevelError, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
@@ -161,7 +141,6 @@ func (l *Logger) ErrorWithOwner(
 func (l *Logger) updateMetrics(ctx context.Context) {
 	appCtx := appcontext.Get(ctx)
 	system := model.MustLoadSystem(ctx, appCtx.SystemID)
-
 	model.MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *model.LogMetrics) {
 		metrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
 		metrics.Info = int(atomic.LoadInt64(&l.infoCounter))
@@ -222,12 +201,7 @@ func (l *Logger) matchSourceFile(ctx context.Context, entry *model.LogEntry) {
 	entry.SourceFileEnd = &end
 }
 
-func (l *Logger) add(
-	ctx context.Context,
-	level model.LogLevel,
-	ownerID string,
-	message string,
-) (string, error) {
+func (l *Logger) add(ctx context.Context, level model.LogLevel, ownerID string, message string) (string, error) {
 	appCtx := appcontext.Get(ctx)
 
 	if logLevelPriorities[level] < logLevelPriorities[l.level] {

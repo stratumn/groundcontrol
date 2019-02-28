@@ -16,6 +16,7 @@ package appcontext
 
 import (
 	"context"
+
 	"groundcontrol/store"
 )
 
@@ -112,6 +113,8 @@ type Services interface {
 
 // Subs exposes functions to subscribe and publish messages.
 type Subs interface {
+	// Subscribe register a function that will receive messages of the given type.
+	// To unsubscribe the context must be closed.
 	Subscribe(ctx context.Context, messageType string, since uint64, fn func(interface{}))
 	// Publish will publish a message of the given type to all subscribers for that type.
 	Publish(messageType string, message interface{})

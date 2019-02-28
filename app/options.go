@@ -28,34 +28,24 @@ import (
 const (
 	// DefaultListenAddress is the default listen address.
 	DefaultListenAddress = ":3333"
-
 	// DefaultJobConcurrency is the default concurrency of the job manager.
 	DefaultJobConcurrency = 2
-
 	// DefaultLogLevel is the default log level.
 	DefaultLogLevel = model.LogLevelInfo
-
 	// DefaultLogCap is the default capacity of the logger.
 	DefaultLogCap = 10000
-
 	// DefaultPubSubHistoryCap is the default capacity of the PubSub history.
 	DefaultPubSubHistoryCap = 1000
-
 	// DefaultPeriodicJobsInterval is the default periodic jobs interval.
 	DefaultPeriodicJobsInterval = time.Minute
-
 	// DefaultGracefulShutdownTimeout is the default graceful shutdown timeout.
 	DefaultGracefulShutdownTimeout = 20 * time.Second
-
 	// DefaultOpenBrowser is whether to open the user interface in a browser by default.
 	DefaultOpenBrowser = true
-
 	// DefaultEnableApolloTracing is whether to enable Apollo tracing by default.
 	DefaultEnableApolloTracing = false
-
 	// DefaultEnableSignalHandling is whether to enable signal handling by default.
 	DefaultEnableSignalHandling = true
-
 	// DefaultOpenEditorCommand is the default open editor command.
 	DefaultOpenEditorCommand = "code --goto %s"
 )
@@ -63,19 +53,14 @@ const (
 var (
 	// DefaultSettingsFile is the default settings file.
 	DefaultSettingsFile = "settings.yml"
-
 	// DefaultSourcesFile is the default sources file.
 	DefaultSourcesFile = "sources.yml"
-
 	// DefaultKeysFile is the default keys file.
 	DefaultKeysFile = "keys.yml"
-
 	// DefaultGitSourcesDirectory is the default Git sources directory.
 	DefaultGitSourcesDirectory = "git-sources"
-
 	// DefaultWorkspacesDirectory is the default workspace directory.
 	DefaultWorkspacesDirectory = "workspaces"
-
 	// DefaultCacheDirectory is the default cache directory.
 	DefaultCacheDirectory = "cache"
 )
@@ -86,7 +71,6 @@ func init() {
 		log.Printf("WARNING\tcould not resolve home directory because %s", err.Error())
 		return
 	}
-
 	DefaultSettingsFile = filepath.Join(home, "groundcontrol", DefaultSettingsFile)
 	DefaultSourcesFile = filepath.Join(home, "groundcontrol", DefaultSourcesFile)
 	DefaultKeysFile = filepath.Join(home, "groundcontrol", DefaultKeysFile)

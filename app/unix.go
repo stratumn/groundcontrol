@@ -33,50 +33,23 @@ func incNoFile(ctx context.Context) {
 	log := appCtx.Log
 	systemID := appCtx.SystemID
 	limit := syscall.Rlimit{}
-
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
-		log.WarningWithOwner(
-			ctx,
-			systemID,
-			"failed to get maximum number of open files because %s",
-			err.Error(),
-		)
+		log.WarningWithOwner(ctx, systemID, "failed to get maximum number of open files because %s", err.Error())
 		return
 	}
-
 	was := limit.Cur
 	limit.Cur = limit.Max
-
 	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
 		// Max on some macOS.
 		limit.Cur = 12288
-
 		if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
-			log.WarningWithOwner(
-				ctx,
-				systemID,
-				"failed to set maximum number of open files because %s",
-				err.Error(),
-			)
+			log.WarningWithOwner(ctx, systemID, "failed to set maximum number of open files because %s", err.Error())
 			return
 		}
 	}
-
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
-		log.WarningWithOwner(
-			ctx,
-			systemID,
-			"failed to get maximum number of open files because %s",
-			err.Error(),
-		)
+		log.WarningWithOwner(ctx, systemID, "failed to get maximum number of open files because %s", err.Error())
 		return
 	}
-
-	log.InfoWithOwner(
-		ctx,
-		systemID,
-		"maximum number of open files increased from %d to %d",
-		was,
-		limit.Cur,
-	)
+	log.InfoWithOwner(ctx, systemID, "maximum number of open files increased from %d to %d", was, limit.Cur)
 }

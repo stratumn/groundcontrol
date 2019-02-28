@@ -27,17 +27,14 @@ import (
 // Env is the environment of the Task. Each entry is of the form 'key=value'.
 func (n *Task) Run(ctx context.Context, env []string) error {
 	var err error
-
 	defer func() {
 		if err == nil {
 			n.Status = TaskStatusStopped
 		} else {
 			n.Status = TaskStatusFailed
 		}
-
 		n.MustStore(ctx)
 	}()
-
 	n.Status = TaskStatusRunning
 	n.MustStore(ctx)
 
@@ -68,8 +65,8 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 				log.InfoWithOwner(ctx, project.ID, command.Command)
 
 				projectPath := appCtx.GetProjectPath(workspace.Slug, project.Slug)
-				stdout := util.CreateLineWriter(ctx, log.InfoWithOwner, project.ID)
-				stderr := util.CreateLineWriter(ctx, log.WarningWithOwner, project.ID)
+				stdout := util.LineSplitter(ctx, log.InfoWithOwner, project.ID)
+				stderr := util.LineSplitter(ctx, log.WarningWithOwner, project.ID)
 				err = n.runCmd(ctx, command.Command, projectPath, env, stdout, stderr)
 
 				stdout.Close()
