@@ -21,7 +21,7 @@ import (
 )
 
 // RunTask runs a task.
-func RunTask(ctx context.Context, taskID string, env []string, priority model.JobPriority) (string, error) {
+func RunTask(ctx context.Context, taskID string, env []string, highPriority bool) (string, error) {
 	if err := startRunningTask(ctx, taskID); err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func RunTask(ctx context.Context, taskID string, env []string, priority model.Jo
 		ctx,
 		JobNameRunTask,
 		model.MustLoadTask(ctx, taskID).WorkspaceID,
-		priority,
+		highPriority,
 		func(ctx context.Context) error {
 			return doRunTask(ctx, taskID, env)
 		},

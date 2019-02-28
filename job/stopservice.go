@@ -21,7 +21,7 @@ import (
 )
 
 // StopService starts a Service.
-func StopService(ctx context.Context, serviceID string, priority model.JobPriority) (string, error) {
+func StopService(ctx context.Context, serviceID string, highPriority bool) (string, error) {
 	if _, err := model.LoadService(ctx, serviceID); err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func StopService(ctx context.Context, serviceID string, priority model.JobPriori
 		ctx,
 		JobNameStopService,
 		model.MustLoadService(ctx, serviceID).WorkspaceID,
-		priority,
+		highPriority,
 		func(ctx context.Context) error {
 			return modelCtx.Services.Stop(ctx, serviceID)
 		},

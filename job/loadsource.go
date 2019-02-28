@@ -22,7 +22,7 @@ import (
 )
 
 // LoadSource loads the workspaces of the source and updates it.
-func LoadSource(ctx context.Context, sourceID string, priority model.JobPriority) (string, error) {
+func LoadSource(ctx context.Context, sourceID string, highPriority bool) (string, error) {
 	parts, err := relay.DecodeID(sourceID)
 	if err != nil {
 		return "", err
@@ -30,9 +30,9 @@ func LoadSource(ctx context.Context, sourceID string, priority model.JobPriority
 
 	switch parts[0] {
 	case model.NodeTypeDirectorySource:
-		return LoadDirectorySource(ctx, sourceID, priority)
+		return LoadDirectorySource(ctx, sourceID, highPriority)
 	case model.NodeTypeGitSource:
-		return LoadGitSource(ctx, sourceID, priority)
+		return LoadGitSource(ctx, sourceID, highPriority)
 	}
 
 	return "", model.ErrType

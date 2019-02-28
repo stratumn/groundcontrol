@@ -21,7 +21,7 @@ import (
 )
 
 // LoadDirectorySource loads the workspaces of the source and updates it.
-func LoadDirectorySource(ctx context.Context, sourceID string, priority model.JobPriority) (string, error) {
+func LoadDirectorySource(ctx context.Context, sourceID string, highPriority bool) (string, error) {
 	if err := startLoadingDirectorySource(ctx, sourceID); err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func LoadDirectorySource(ctx context.Context, sourceID string, priority model.Jo
 		ctx,
 		JobNameLoadDirectorySource,
 		sourceID,
-		priority,
+		highPriority,
 		func(ctx context.Context) error {
 			return doLoadDirectorySource(ctx, sourceID)
 		},

@@ -53,7 +53,7 @@ func (r *mutationResolver) StartService(
 		}
 	}
 
-	jobID, err := job.StartService(ctx, id, env, model.JobPriorityHigh)
+	jobID, err := job.StartService(ctx, id, env, true)
 	if err != nil {
 		return nil, err
 	}

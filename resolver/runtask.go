@@ -53,7 +53,7 @@ func (r *mutationResolver) RunTask(
 		}
 	}
 
-	jobID, err := job.RunTask(ctx, id, env, model.JobPriorityHigh)
+	jobID, err := job.RunTask(ctx, id, env, true)
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,7 @@ import (
 )
 
 // PullWorkspace creates jobs to pull all the projects in a workspace.
-func PullWorkspace(ctx context.Context, workspaceID string, priority model.JobPriority) ([]string, error) {
+func PullWorkspace(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
 	modelCtx := model.GetContext(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
@@ -37,7 +37,7 @@ func PullWorkspace(ctx context.Context, workspaceID string, priority model.JobPr
 			continue
 		}
 
-		jobID, err := PullProject(ctx, project.ID, priority)
+		jobID, err := PullProject(ctx, project.ID, highPriority)
 		if err != nil {
 			modelCtx.Log.ErrorWithOwner(
 				ctx,

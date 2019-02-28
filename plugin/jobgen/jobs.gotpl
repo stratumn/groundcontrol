@@ -9,7 +9,7 @@
 	{{ if .Multi }}
 		// Note: hopefully we can return a slice of pointers in the future.
 		func (r *mutationResolver) {{ .Name }}(ctx context.Context, id string) ([]model.Job, error) {
-			jobIDs, err := job.{{ .Name }}(ctx, id, model.JobPriorityHigh)
+			jobIDs, err := job.{{ .Name }}(ctx, id, true)
 			if err != nil {
 				return nil, err
 			}
@@ -24,7 +24,7 @@
 		}
 	{{- else -}}
 		func (r *mutationResolver) {{ .Name }}(ctx context.Context, id string) ({{ $root.JobType | ref }}, error) {
-			jobID, err := job.{{ .Name }}(ctx, id, model.JobPriorityHigh)
+			jobID, err := job.{{ .Name }}(ctx, id, true)
 			if err != nil {
 				return nil, err
 			}

@@ -21,7 +21,7 @@ import (
 )
 
 // LoadProjectCommits loads the commits of a project from a remote repo and updates the project.
-func LoadProjectCommits(ctx context.Context, projectID string, priority model.JobPriority) (string, error) {
+func LoadProjectCommits(ctx context.Context, projectID string, highPriority bool) (string, error) {
 	if err := startLoadingProjectCommits(ctx, projectID); err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func LoadProjectCommits(ctx context.Context, projectID string, priority model.Jo
 		ctx,
 		JobNameLoadProjectCommits,
 		projectID,
-		priority,
+		highPriority,
 		func(ctx context.Context) error {
 			return doLoadProjectCommits(ctx, projectID)
 		},

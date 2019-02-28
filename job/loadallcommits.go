@@ -22,7 +22,7 @@ import (
 
 // LoadAllCommits creates jobs to load the commits of every project.
 // It doesn't return errors but will output a log message when errors happen.
-func LoadAllCommits(ctx context.Context, priority model.JobPriority) []string {
+func LoadAllCommits(ctx context.Context, highPriority bool) []string {
 	modelCtx := model.GetContext(ctx)
 	viewer := model.MustLoadUser(ctx, modelCtx.ViewerID)
 
@@ -38,7 +38,7 @@ func LoadAllCommits(ctx context.Context, priority model.JobPriority) []string {
 				continue
 			}
 
-			jobID, err := LoadProjectCommits(ctx, project.ID, priority)
+			jobID, err := LoadProjectCommits(ctx, project.ID, highPriority)
 			if err != nil {
 				modelCtx.Log.ErrorWithOwner(
 					ctx,

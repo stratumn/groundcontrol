@@ -21,7 +21,7 @@ import (
 )
 
 // PullProject pulls a repository from origin.
-func PullProject(ctx context.Context, projectID string, priority model.JobPriority) (string, error) {
+func PullProject(ctx context.Context, projectID string, highPriority bool) (string, error) {
 	if err := startPullingProject(ctx, projectID); err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func PullProject(ctx context.Context, projectID string, priority model.JobPriori
 		ctx,
 		JobNamePullProject,
 		projectID,
-		priority,
+		highPriority,
 		func(ctx context.Context) error {
 			return doPullProject(ctx, projectID)
 		},

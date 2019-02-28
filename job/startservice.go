@@ -21,7 +21,7 @@ import (
 )
 
 // StartService starts a Service.
-func StartService(ctx context.Context, serviceID string, env []string, priority model.JobPriority) (string, error) {
+func StartService(ctx context.Context, serviceID string, env []string, highPriority bool) (string, error) {
 	if _, err := model.LoadService(ctx, serviceID); err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func StartService(ctx context.Context, serviceID string, env []string, priority 
 		ctx,
 		JobNameStartService,
 		model.MustLoadService(ctx, serviceID).WorkspaceID,
-		priority,
+		highPriority,
 		func(ctx context.Context) error {
 			return modelCtx.Services.Start(ctx, serviceID, env)
 		},

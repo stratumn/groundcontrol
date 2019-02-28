@@ -94,7 +94,7 @@ type Log interface {
 type Jobs interface {
 	Work(ctx context.Context) error
 	// Add adds a job to the queue and returns the job's ID.
-	Add(ctx context.Context, name string, ownerID string, priority JobPriority, fn func(ctx context.Context) error) string
+	Add(ctx context.Context, name string, ownerID string, highPriority bool, fn func(ctx context.Context) error) string
 	// Stop cancels a running job.
 	Stop(ctx context.Context, id string) error
 }
@@ -124,10 +124,10 @@ type Sources interface {
 	Store(ctx context.Context) error
 	// SetDirectorySource sets a directory source and stores the corresponding node.
 	// It returns the ID of the source.
-	SetDirectorySource(ctx context.Context, input DirectorySourceInput) string
+	SetDirectorySource(ctx context.Context, directory string) string
 	// SetGitSource sets a Git source and stores the corresponding node.
 	// It returns the ID of the source.
-	SetGitSource(ctx context.Context, input GitSourceInput) string
+	SetGitSource(ctx context.Context, repository, reference string) string
 	// Delete deletes a source.
 	Delete(ctx context.Context, id string) error
 	// Save saves the config to disk, overwriting the file if it exists.

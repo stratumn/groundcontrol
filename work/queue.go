@@ -76,11 +76,16 @@ func (q *Queue) Add(
 	ctx context.Context,
 	name string,
 	ownerID string,
-	priority model.JobPriority,
+	highPriority bool,
 	fn func(ctx context.Context) error,
 ) string {
 	modelCtx := model.GetContext(ctx)
 	log := modelCtx.Log
+
+	priority := model.JobPriorityNormal
+	if highPriority {
+		priority = model.JobPriorityHigh
+	}
 
 	id := atomic.AddUint64(&q.lastID, 1)
 	now := model.DateTime(time.Now())

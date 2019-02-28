@@ -20,7 +20,7 @@ import (
 )
 
 // CloneProject clones a remote repository locally.
-func CloneProject(ctx context.Context, projectID string, priority model.JobPriority) (string, error) {
+func CloneProject(ctx context.Context, projectID string, highPriority bool) (string, error) {
 	if err := startCloningProject(ctx, projectID); err != nil {
 		return "", err
 	}
@@ -31,7 +31,7 @@ func CloneProject(ctx context.Context, projectID string, priority model.JobPrior
 		ctx,
 		JobNameCloneProject,
 		projectID,
-		priority,
+		highPriority,
 		func(ctx context.Context) error {
 			return doCloneProject(ctx, projectID)
 		},

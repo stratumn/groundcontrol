@@ -90,16 +90,13 @@ func (c *SourcesConfig) Store(ctx context.Context) error {
 
 // SetDirectorySource sets a directory source and stores the corresponding node.
 // It returns the ID of the source.
-func (c *SourcesConfig) SetDirectorySource(ctx context.Context, input DirectorySourceInput) string {
+func (c *SourcesConfig) SetDirectorySource(ctx context.Context, directory string) string {
 	modelCtx := GetContext(ctx)
 
 	source := DirectorySource{
-		ID: relay.EncodeID(
-			NodeTypeDirectorySource,
-			input.Directory,
-		),
+		ID:        relay.EncodeID(NodeTypeDirectorySource, directory),
 		UserID:    modelCtx.ViewerID,
-		Directory: input.Directory,
+		Directory: directory,
 	}
 
 	MustLockUser(ctx, modelCtx.ViewerID, func(viewer *User) {
@@ -117,7 +114,7 @@ func (c *SourcesConfig) SetDirectorySource(ctx context.Context, input DirectoryS
 		c.DirectorySources = append(
 			c.DirectorySources,
 			DirectorySourceConfig{
-				Directory: input.Directory,
+				Directory: directory,
 				ID:        source.ID,
 			},
 		)
@@ -128,18 +125,14 @@ func (c *SourcesConfig) SetDirectorySource(ctx context.Context, input DirectoryS
 
 // SetGitSource sets a Git source and stores the corresponding node.
 // It returns the ID of the source.
-func (c *SourcesConfig) SetGitSource(ctx context.Context, input GitSourceInput) string {
+func (c *SourcesConfig) SetGitSource(ctx context.Context, repository, reference string) string {
 	modelCtx := GetContext(ctx)
 
 	source := GitSource{
-		ID: relay.EncodeID(
-			NodeTypeGitSource,
-			input.Repository,
-			input.Reference,
-		),
+		ID:         relay.EncodeID(NodeTypeGitSource, repository, reference),
 		UserID:     modelCtx.ViewerID,
-		Repository: input.Repository,
-		Reference:  input.Reference,
+		Repository: repository,
+		Reference:  reference,
 	}
 
 	MustLockUser(ctx, modelCtx.ViewerID, func(viewer *User) {
@@ -157,8 +150,8 @@ func (c *SourcesConfig) SetGitSource(ctx context.Context, input GitSourceInput) 
 		c.GitSources = append(
 			c.GitSources,
 			GitSourceConfig{
-				Repository: input.Repository,
-				Reference:  input.Reference,
+				Repository: repository,
+				Reference:  reference,
 				ID:         source.ID,
 			},
 		)

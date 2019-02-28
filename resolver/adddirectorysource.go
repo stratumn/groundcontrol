@@ -27,13 +27,13 @@ func (r *mutationResolver) AddDirectorySource(
 ) (*model.DirectorySource, error) {
 	modelCtx := model.GetContext(ctx)
 
-	id := modelCtx.Sources.SetDirectorySource(ctx, input)
+	id := modelCtx.Sources.SetDirectorySource(ctx, input.Directory)
 
 	if err := modelCtx.Sources.Save(); err != nil {
 		return nil, err
 	}
 
-	_, err := job.LoadDirectorySource(ctx, id, model.JobPriorityHigh)
+	_, err := job.LoadDirectorySource(ctx, id, true)
 	if err != nil {
 		return nil, err
 	}

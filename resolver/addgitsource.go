@@ -27,13 +27,13 @@ func (r *mutationResolver) AddGitSource(
 ) (*model.GitSource, error) {
 	modelCtx := model.GetContext(ctx)
 
-	id := modelCtx.Sources.SetGitSource(ctx, input)
+	id := modelCtx.Sources.SetGitSource(ctx, input.Repository, input.Reference)
 
 	if err := modelCtx.Sources.Save(); err != nil {
 		return nil, err
 	}
 
-	_, err := job.LoadGitSource(ctx, id, model.JobPriorityHigh)
+	_, err := job.LoadGitSource(ctx, id, true)
 	if err != nil {
 		return nil, err
 	}

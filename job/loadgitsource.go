@@ -21,7 +21,7 @@ import (
 )
 
 // LoadGitSource loads the workspaces of the source and updates it.
-func LoadGitSource(ctx context.Context, sourceID string, priority model.JobPriority) (string, error) {
+func LoadGitSource(ctx context.Context, sourceID string, highPriority bool) (string, error) {
 	if err := startLoadingGitSource(ctx, sourceID); err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func LoadGitSource(ctx context.Context, sourceID string, priority model.JobPrior
 		ctx,
 		JobNameLoadGitSource,
 		sourceID,
-		priority,
+		highPriority,
 		func(ctx context.Context) error {
 			return doLoadGitSource(ctx, sourceID)
 		},

@@ -383,10 +383,10 @@ func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
 			ctx,
 			a.periodicJobsInterval,
 			func(ctx context.Context) []string {
-				return job.LoadAllSources(ctx, model.JobPriorityNormal)
+				return job.LoadAllSources(ctx, false)
 			},
 			func(ctx context.Context) []string {
-				return job.LoadAllCommits(ctx, model.JobPriorityNormal)
+				return job.LoadAllCommits(ctx, false)
 			},
 		)
 		if err != nil && err != context.Canceled {

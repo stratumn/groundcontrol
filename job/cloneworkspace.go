@@ -21,7 +21,7 @@ import (
 )
 
 // CloneWorkspace creates jobs to clone all the projects in a workspace.
-func CloneWorkspace(ctx context.Context, workspaceID string, priority model.JobPriority) ([]string, error) {
+func CloneWorkspace(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
 	modelCtx := model.GetContext(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
@@ -37,7 +37,7 @@ func CloneWorkspace(ctx context.Context, workspaceID string, priority model.JobP
 			continue
 		}
 
-		jobID, err := CloneProject(ctx, project.ID, priority)
+		jobID, err := CloneProject(ctx, project.ID, highPriority)
 		if err != nil {
 			modelCtx.Log.ErrorWithOwner(
 				ctx,
