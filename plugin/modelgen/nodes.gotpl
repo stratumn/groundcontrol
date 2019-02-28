@@ -27,24 +27,6 @@ const (
 	{{- end}}
 )
 
-// LoadNode loads a Node.
-func LoadNode(ctx context.Context, id string) (store.Node, error) {
-	node, ok := appcontext.Get(ctx).Nodes.Load(id)
-	if !ok {
-		return nil, ErrNotFound
-	}
-	return node, nil
-}
-
-// MustLoadNode loads a Node or panics on failure.
-func MustLoadNode(ctx context.Context, id string) store.Node {
-	node, ok := appcontext.Get(ctx).Nodes.Load(id)
-	if !ok {
-		panic(ErrNotFound)
-	}
-	return node
-}
-
 {{ range $model := .Models }}
 	{{- range $iface := .Implements }}
 		{{- if (eq $iface "Node") }}
