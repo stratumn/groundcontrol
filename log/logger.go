@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package model
+package log
 
 import (
 	"context"
@@ -24,21 +24,22 @@ import (
 	"sync/atomic"
 	"time"
 
+	"groundcontrol/model"
 	"groundcontrol/relay"
 	"groundcontrol/util"
 )
 
-var logLevelPriorities = map[LogLevel]int{
-	LogLevelDebug:   0,
-	LogLevelInfo:    1,
-	LogLevelWarning: 2,
-	LogLevelError:   3,
+var logLevelPriorities = map[model.LogLevel]int{
+	model.LogLevelDebug:   0,
+	model.LogLevelInfo:    1,
+	model.LogLevelWarning: 2,
+	model.LogLevelError:   3,
 }
 
 // Logger logs messages.
 type Logger struct {
 	cap   int
-	level LogLevel
+	level model.LogLevel
 
 	lastID        uint64
 	logEntriesIDs []string
@@ -54,7 +55,7 @@ type Logger struct {
 }
 
 // NewLogger creates a Logger with given capacity and level.
-func NewLogger(cap int, level LogLevel) *Logger {
+func NewLogger(cap int, level model.LogLevel) *Logger {
 	return &Logger{
 		cap:           cap,
 		level:         level,
@@ -67,18 +68,18 @@ func NewLogger(cap int, level LogLevel) *Logger {
 // Add adds a log entry.
 func (l *Logger) Add(
 	ctx context.Context,
-	level LogLevel,
+	level model.LogLevel,
 	ownerID string,
 	message string,
 ) (string, error) {
-	modelCtx := GetContext(ctx)
+	modelCtx := model.GetContext(ctx)
 
 	if logLevelPriorities[level] < logLevelPriorities[l.level] {
 		return "", nil
 	}
 
 	log := l.stdoutLog
-	if logLevelPriorities[level] >= logLevelPriorities[LogLevelWarning] {
+	if logLevelPriorities[level] >= logLevelPriorities[model.LogLevelWarning] {
 		log = l.stderrLog
 	}
 
@@ -89,9 +90,9 @@ func (l *Logger) Add(
 	}
 
 	id := atomic.AddUint64(&l.lastID, 1)
-	now := DateTime(time.Now())
-	logEntry := LogEntry{
-		ID:        relay.EncodeID(NodeTypeLogEntry, fmt.Sprint(id)),
+	now := model.DateTime(time.Now())
+	logEntry := model.LogEntry{
+		ID:        relay.EncodeID(model.NodeTypeLogEntry, fmt.Sprint(id)),
 		Level:     level,
 		CreatedAt: now,
 		Message:   message,
@@ -100,26 +101,26 @@ func (l *Logger) Add(
 	l.matchSourceFile(ctx, &logEntry)
 	logEntry.MustStore(ctx)
 
-	MustLockSystem(ctx, modelCtx.SystemID, func(system *System) {
+	model.MustLockSystem(ctx, modelCtx.SystemID, func(system *model.System) {
 		if l.head >= l.cap*2 {
 			copy(l.logEntriesIDs, l.logEntriesIDs[l.cap:])
 			l.head = l.cap
 
 			for _, oldEntryID := range l.logEntriesIDs[l.head:] {
-				oldEntry := MustLoadLogEntry(ctx, oldEntryID)
+				oldEntry := model.MustLoadLogEntry(ctx, oldEntryID)
 
 				switch oldEntry.Level {
-				case LogLevelDebug:
+				case model.LogLevelDebug:
 					atomic.AddInt64(&l.debugCounter, -1)
-				case LogLevelInfo:
+				case model.LogLevelInfo:
 					atomic.AddInt64(&l.infoCounter, -1)
-				case LogLevelWarning:
+				case model.LogLevelWarning:
 					atomic.AddInt64(&l.warningCounter, -1)
-				case LogLevelError:
+				case model.LogLevelError:
 					atomic.AddInt64(&l.errorCounter, -1)
 				}
 
-				MustDeleteLogEntry(ctx, oldEntryID)
+				model.MustDeleteLogEntry(ctx, oldEntryID)
 			}
 		}
 
@@ -132,13 +133,13 @@ func (l *Logger) Add(
 	})
 
 	switch level {
-	case LogLevelDebug:
+	case model.LogLevelDebug:
 		atomic.AddInt64(&l.debugCounter, 1)
-	case LogLevelInfo:
+	case model.LogLevelInfo:
 		atomic.AddInt64(&l.infoCounter, 1)
-	case LogLevelWarning:
+	case model.LogLevelWarning:
 		atomic.AddInt64(&l.warningCounter, 1)
-	case LogLevelError:
+	case model.LogLevelError:
 		atomic.AddInt64(&l.errorCounter, 1)
 	}
 
@@ -149,7 +150,7 @@ func (l *Logger) Add(
 
 // Debug adds a debug entry.
 func (l *Logger) Debug(ctx context.Context, message string, a ...interface{}) string {
-	id, err := l.Add(ctx, LogLevelDebug, "", fmt.Sprintf(message, a...))
+	id, err := l.Add(ctx, model.LogLevelDebug, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -158,7 +159,7 @@ func (l *Logger) Debug(ctx context.Context, message string, a ...interface{}) st
 
 // Info adds an info entry.
 func (l *Logger) Info(ctx context.Context, message string, a ...interface{}) string {
-	id, err := l.Add(ctx, LogLevelInfo, "", fmt.Sprintf(message, a...))
+	id, err := l.Add(ctx, model.LogLevelInfo, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -167,7 +168,7 @@ func (l *Logger) Info(ctx context.Context, message string, a ...interface{}) str
 
 // Warning adds a warning entry.
 func (l *Logger) Warning(ctx context.Context, message string, a ...interface{}) string {
-	id, err := l.Add(ctx, LogLevelWarning, "", fmt.Sprintf(message, a...))
+	id, err := l.Add(ctx, model.LogLevelWarning, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -176,7 +177,7 @@ func (l *Logger) Warning(ctx context.Context, message string, a ...interface{}) 
 
 // Error adds an error entry.
 func (l *Logger) Error(ctx context.Context, message string, a ...interface{}) string {
-	id, err := l.Add(ctx, LogLevelError, "", fmt.Sprintf(message, a...))
+	id, err := l.Add(ctx, model.LogLevelError, "", fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -190,7 +191,7 @@ func (l *Logger) DebugWithOwner(
 	message string,
 	a ...interface{},
 ) string {
-	id, err := l.Add(ctx, LogLevelDebug, ownerID, fmt.Sprintf(message, a...))
+	id, err := l.Add(ctx, model.LogLevelDebug, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -204,7 +205,7 @@ func (l *Logger) InfoWithOwner(
 	message string,
 	a ...interface{},
 ) string {
-	id, err := l.Add(ctx, LogLevelInfo, ownerID, fmt.Sprintf(message, a...))
+	id, err := l.Add(ctx, model.LogLevelInfo, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -218,7 +219,7 @@ func (l *Logger) WarningWithOwner(
 	message string,
 	a ...interface{},
 ) string {
-	id, err := l.Add(ctx, LogLevelWarning, ownerID, fmt.Sprintf(message, a...))
+	id, err := l.Add(ctx, model.LogLevelWarning, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -232,7 +233,7 @@ func (l *Logger) ErrorWithOwner(
 	message string,
 	a ...interface{},
 ) string {
-	id, err := l.Add(ctx, LogLevelError, ownerID, fmt.Sprintf(message, a...))
+	id, err := l.Add(ctx, model.LogLevelError, ownerID, fmt.Sprintf(message, a...))
 	if err != nil {
 		panic(err)
 	}
@@ -240,10 +241,10 @@ func (l *Logger) ErrorWithOwner(
 }
 
 func (l *Logger) updateMetrics(ctx context.Context) {
-	modelCtx := GetContext(ctx)
-	system := MustLoadSystem(ctx, modelCtx.SystemID)
+	modelCtx := model.GetContext(ctx)
+	system := model.MustLoadSystem(ctx, modelCtx.SystemID)
 
-	MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *LogMetrics) {
+	model.MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *model.LogMetrics) {
 		metrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
 		metrics.Info = int(atomic.LoadInt64(&l.infoCounter))
 		metrics.Warning = int(atomic.LoadInt64(&l.warningCounter))
@@ -252,8 +253,8 @@ func (l *Logger) updateMetrics(ctx context.Context) {
 	})
 }
 
-func (l *Logger) matchSourceFile(ctx context.Context, entry *LogEntry) {
-	modelCtx := GetContext(ctx)
+func (l *Logger) matchSourceFile(ctx context.Context, entry *model.LogEntry) {
+	modelCtx := model.GetContext(ctx)
 
 	if entry.OwnerID == "" {
 		return
@@ -264,7 +265,7 @@ func (l *Logger) matchSourceFile(ctx context.Context, entry *LogEntry) {
 		return
 	}
 
-	project, ok := node.(*Project)
+	project, ok := node.(*model.Project)
 	if !ok {
 		return
 	}
@@ -277,7 +278,7 @@ func (l *Logger) matchSourceFile(ctx context.Context, entry *LogEntry) {
 	sourceParts := strings.Split(sourceFile, ":")
 	fileName := sourceParts[0]
 
-	workspace := MustLoadWorkspace(ctx, project.WorkspaceID)
+	workspace := model.MustLoadWorkspace(ctx, project.WorkspaceID)
 	projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
 
 	if !filepath.IsAbs(fileName) {

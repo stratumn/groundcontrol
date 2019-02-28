@@ -37,6 +37,7 @@ import (
 
 	"groundcontrol/gql"
 	"groundcontrol/job"
+	"groundcontrol/log"
 	"groundcontrol/model"
 	"groundcontrol/pubsub"
 	"groundcontrol/relay"
@@ -168,7 +169,7 @@ func (a *App) Start(ctx context.Context) error {
 func (a *App) createModelContext() *model.Context {
 	return &model.Context{
 		Nodes:               store.NewMemory(),
-		Log:                 model.NewLogger(a.logCap, a.logLevel),
+		Log:                 log.NewLogger(a.logCap, a.logLevel),
 		Jobs:                work.NewQueue(a.jobConcurrency),
 		Services:            service.NewManager(),
 		Subs:                pubsub.New(a.pubSubHistoryCap),
