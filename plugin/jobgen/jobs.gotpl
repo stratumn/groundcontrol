@@ -13,13 +13,10 @@
 			if err != nil {
 				return nil, err
 			}
-		
 			var jobs []model.Job
-		
 			for _, id := range jobIDs {
 				jobs = append(jobs, *model.MustLoadJob(ctx, id))
 			}
-		
 			return jobs, nil
 		}
 	{{- else -}}
@@ -28,7 +25,6 @@
 			if err != nil {
 				return nil, err
 			}
-		
 			return model.LoadJob(ctx, jobID)
 		}
 	{{- end }}

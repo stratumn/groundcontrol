@@ -1,0 +1,32 @@
+{{ reserveImport "context" }}
+
+{{ range $model := .Models }}
+	{{- range $iface := .Implements }}
+		{{- if (eq $iface "Node") }}
+			{{- range $paginate := $model.Paginates }}
+				{{- with .Description }}
+					{{.|prefixLines "// "}}
+				{{- end}}
+				func (n *{{ $model.Name }}){{ $paginate.Name }}(
+					ctx context.Context,
+					after,
+					before *string,
+					first,
+					last *int,
+					{{- range $argument := $paginate.Filters }}
+						{{ $argument.Name }} {{ $argument.Type | ref }},
+					{{- end }}
+				) ({{ $paginate.Connection | ref }}, error) {
+					{{- if $paginate.Filters }}
+						filter := func(node {{ $paginate.Node | ref }}) bool {
+							return n.filter{{ $paginate.Name }}Node(ctx, node{{range $argument := $paginate.Filters}}, {{ $argument.Name }}{{ end }})
+						}
+						return Paginate{{ $paginate.NodeName }}IDSlice(ctx, n.{{ $paginate.GoIDsFieldName }}, after, before, first, last, filter)
+					{{- else }}
+						return Paginate{{ $paginate.NodeName }}IDSlice(ctx, n.{{ $paginate.GoIDsFieldName }}, after, before, first, last, nil)
+					{{- end }}
+				}
+			{{- end }}
+		{{- end }}
+	{{- end }}
+{{- end }}

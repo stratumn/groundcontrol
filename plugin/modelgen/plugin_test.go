@@ -12,7 +12,6 @@ func TestModelGeneration(t *testing.T) {
 	require.NoError(t, err)
 	p := Plugin{}
 	require.NoError(t, p.MutateConfig(cfg))
-
 	require.True(t, cfg.Models.UserDefined("MissingType"))
 	require.True(t, cfg.Models.UserDefined("MissingEnum"))
 	require.True(t, cfg.Models.UserDefined("MissingUnion"))

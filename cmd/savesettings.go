@@ -17,10 +17,10 @@ package cmd
 import (
 	"fmt"
 
-	"groundcontrol/app"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"groundcontrol/app"
 )
 
 // saveSettingsCmd represents the save-settings command.

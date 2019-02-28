@@ -1,0 +1,24 @@
+{{ reserveImport "context" }}
+
+{{ range $model := .Models }}
+	{{- range $iface := .Implements }}
+		{{- if (eq $iface "Node") }}
+			{{- range $relate := $model.Relates }}
+				{{- with .Description }}
+					{{.|prefixLines "// "}}
+				{{- end}}
+				func (n *{{ $model.Name }}){{ $relate.Name }}(ctx context.Context) {{ $relate.Type | ref }} {
+				{{ if $relate.NonNull -}}
+						return MustLoad{{ $relate.TypeName }}(ctx, n.{{ $relate.GoIDFieldName }})
+				{{- else -}}
+						node, err := Load{{ $relate.TypeName }}(ctx, n.{{ $relate.GoIDFieldName }})
+						if err != nil {
+							return nil
+						}
+						return node
+				{{- end }}
+				}
+			{{- end }}
+		{{- end }}
+	{{- end }}
+{{- end }}

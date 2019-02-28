@@ -1,0 +1,115 @@
+{{ reserveImport "context" }}
+
+{{ range $connection := .Connections }}
+	// {{ $connection.NodeName }}Filter filters a {{ $connection.Node | ref }}.
+	type {{ $connection.NodeName }}Filter func({{ $connection.Node | ref }}) bool
+
+	// Paginate{{ $connection.NodeName }}Slice paginates a slice of {{ $connection.Node | ref }} given query parameters.
+	func Paginate{{ $connection.NodeName }}Slice(slice []{{ $connection.Node | ref }}, after, before *string, first, last *int, filter {{ $connection.NodeName }}Filter) (*{{ $connection.Name }}, error) {
+		edgeSlice, hadMore := applyCursorsTo{{ $connection.NodeName }}Slice(slice, after, before, filter)
+		edgeSliceLen := len(edgeSlice)
+		pageInfo := &PageInfo{}
+		if first != nil {
+			firstValue := *first
+			if firstValue < 0 {
+				return nil, ErrFirstNegative
+			}
+			if firstValue > edgeSliceLen {
+				firstValue = edgeSliceLen
+			}
+			if firstValue < edgeSliceLen {
+				pageInfo.HasNextPage = true
+			} else if before != nil {
+				pageInfo.HasNextPage = hadMore
+			}
+			edgeSlice = edgeSlice[0:firstValue]
+			edgeSliceLen = len(edgeSlice)
+		} else if before != nil {
+			pageInfo.HasNextPage = hadMore
+		}
+		if last != nil {
+			lastValue := *last
+			if lastValue < 0 {
+				return nil, ErrLastNegative
+			}
+			if lastValue > edgeSliceLen {
+				lastValue = edgeSliceLen
+			}
+			if lastValue < edgeSliceLen {
+				pageInfo.HasPreviousPage = true
+			} else if after != nil {
+				pageInfo.HasPreviousPage = hadMore
+			}
+			end := edgeSliceLen - lastValue
+			edgeSlice = edgeSlice[end:]
+			edgeSliceLen = len(edgeSlice)
+		} else if after != nil {
+			pageInfo.HasPreviousPage = hadMore
+		}
+		if edgeSliceLen > 0 {
+			pageInfo.StartCursor = edgeSlice[0].Cursor
+			pageInfo.EndCursor = edgeSlice[edgeSliceLen-1].Cursor
+		}
+		return &{{ $connection.Name }}{
+			Edges:    edgeSlice,
+			PageInfo: pageInfo,
+		}, nil
+	}
+
+	// Paginate{{ $connection.NodeName }}IDSlice paginates a slice of {{ $connection.Node | ref }} given their IDs and query parameters.
+	func Paginate{{ $connection.NodeName }}IDSlice(ctx context.Context, ids []string, after, before *string, first, last *int, filter {{ $connection.NodeName }}Filter) (*{{ $connection.Name }}, error) {
+		var slice []{{ $connection.Node | ref }}
+		for _, id := range ids {
+			slice = append(slice, MustLoad{{ $connection.NodeName }}(ctx, id))
+		}
+		return Paginate{{ $connection.NodeName }}Slice(slice, after, before, first, last, filter)
+	}
+
+	func applyCursorsTo{{ $connection.NodeName }}Slice(slice []{{ $connection.Node | ref }}, after, before *string, filter {{ $connection.NodeName }}Filter) ([]{{ $connection.Edge | ref }}, bool) {
+		var edges []{{ $connection.Edge | ref }}
+		hadMore := false
+		if after != nil {
+			index := indexOf{{ $connection.NodeName }}InSlice(slice, *after)
+			if index < 0 {
+				return nil, false
+			}
+			hadMore = index > 0
+			for _, node := range slice[index+1:] {
+				if filter != nil && !filter(node) {
+					continue
+				}
+				edges = append(edges, &{{ $connection.EdgeName }}{Cursor: node.GetID(), Node: node})
+			}
+			return edges, hadMore
+		}
+		if before != nil {
+			index := indexOf{{ $connection.NodeName }}InSlice(slice, *before)
+			if index < 0 {
+				return nil, false
+			}
+			hadMore = index < len(slice)-1
+			for _, node := range slice[:index] {
+				if filter != nil && !filter(node) {
+					continue
+				}
+				edges = append(edges, &{{ $connection.EdgeName }}{Cursor: node.GetID(), Node: node})
+			}
+			return edges, hadMore
+		}
+		for _, node := range slice {
+			if filter != nil && !filter(node) {
+				continue
+			}
+			edges = append(edges, &{{ $connection.EdgeName }}{Cursor: node.GetID(), Node: node})
+		}
+		return edges, hadMore
+	}
+	func indexOf{{ $connection.NodeName }}InSlice(slice []{{ $connection.Node | ref }}, id string) int {
+		for i := range slice {
+			if slice[i].GetID() == id {
+				return i
+			}
+		}
+		return -1
+	}
+{{- end }}
