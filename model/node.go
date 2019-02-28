@@ -14,17 +14,14 @@
 
 package model
 
-import "context"
+import (
+	"context"
 
-// Node represents a Relay node.
-type Node interface {
-	IsNode()
-	GetID() string
-	Copy() Node
-}
+	"groundcontrol/store"
+)
 
 // LoadNode loads a Node.
-func LoadNode(ctx context.Context, id string) (Node, error) {
+func LoadNode(ctx context.Context, id string) (store.Node, error) {
 	node, ok := GetContext(ctx).Nodes.Load(id)
 	if !ok {
 		return nil, ErrNotFound
@@ -34,7 +31,7 @@ func LoadNode(ctx context.Context, id string) (Node, error) {
 }
 
 // MustLoadNode loads a Node or panics on failure.
-func MustLoadNode(ctx context.Context, id string) Node {
+func MustLoadNode(ctx context.Context, id string) store.Node {
 	node, ok := GetContext(ctx).Nodes.Load(id)
 	if !ok {
 		panic(ErrNotFound)

@@ -12,5 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package service contains types to help deal with services.
-package service
+package store
+
+import "errors"
+
+// Errors.
+var (
+	ErrNotFound = errors.New("it wasn't found")
+)

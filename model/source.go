@@ -20,11 +20,12 @@ import (
 	"path/filepath"
 
 	"groundcontrol/relay"
+	"groundcontrol/store"
 )
 
 // Source is a collection of workspaces.
 type Source interface {
-	Node
+	store.Node
 
 	IsSource()
 

@@ -16,6 +16,6 @@ models:
   Hash:
     model: groundcontrol/model.Hash
   Node:
-    model: groundcontrol/model.Node
+    model: groundcontrol/store.Node
   Source:
     model: groundcontrol/model.Source

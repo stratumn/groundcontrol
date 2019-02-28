@@ -18,6 +18,7 @@ import (
 	"context"
 	"groundcontrol/gql"
 	"groundcontrol/model"
+	"groundcontrol/store"
 )
 
 // Resolver is the root GraphQL resolver.
@@ -53,7 +54,7 @@ type queryResolver struct {
 	*Resolver
 }
 
-func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
+func (r *queryResolver) Node(ctx context.Context, id string) (store.Node, error) {
 	node, _ := model.GetContext(ctx).Nodes.Load(id)
 	return node, nil
 }

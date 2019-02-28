@@ -42,6 +42,7 @@ import (
 	"groundcontrol/relay"
 	"groundcontrol/resolver"
 	"groundcontrol/service"
+	"groundcontrol/store"
 )
 
 // App starts Ground Control.
@@ -165,7 +166,7 @@ func (a *App) Start(ctx context.Context) error {
 
 func (a *App) createModelContext() *model.Context {
 	return &model.Context{
-		Nodes:               model.NewNodeManager(),
+		Nodes:               store.NewMemory(),
 		Log:                 model.NewLogger(a.logCap, a.logLevel),
 		Jobs:                model.NewJobManager(a.jobConcurrency),
 		Services:            service.NewManager(),

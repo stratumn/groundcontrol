@@ -12,31 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package model
+package store
 
 import (
 	"sync"
 )
 
-// NodeManager helps manage nodes with global IDs.
-type NodeManager struct {
+// Memory stores nodes indexed by their ID using an in-memory map.
+type Memory struct {
 	store sync.Map
 	locks sync.Map
 }
 
-// NewNodeManager creates a NodeManager.
-func NewNodeManager() *NodeManager {
-	return &NodeManager{}
+// NewMemory creates a Memory.
+func NewMemory() *Memory {
+	return &Memory{}
 }
 
 // Store stores a node.
-func (n *NodeManager) Store(id string, node Node) {
-	n.store.Store(id, node)
+func (s *Memory) Store(id string, node Node) {
+	s.store.Store(id, node)
 }
 
 // Load loads a node.
-func (n *NodeManager) Load(id string) (Node, bool) {
-	node, ok := n.store.Load(id)
+func (s *Memory) Load(id string) (Node, bool) {
+	node, ok := s.store.Load(id)
 	if ok {
 		return node.(Node), true
 	}
@@ -45,8 +45,8 @@ func (n *NodeManager) Load(id string) (Node, bool) {
 }
 
 // MustLoad loads a node or panics if it doesn't exist.
-func (n *NodeManager) MustLoad(id string) Node {
-	node, ok := n.Load(id)
+func (s *Memory) MustLoad(id string) Node {
+	node, ok := s.Load(id)
 	if !ok {
 		panic(ErrNotFound)
 	}
@@ -55,22 +55,22 @@ func (n *NodeManager) MustLoad(id string) Node {
 }
 
 // Delete deletes a node.
-func (n *NodeManager) Delete(id string) {
-	n.store.Delete(id)
+func (s *Memory) Delete(id string) {
+	s.store.Delete(id)
 }
 
 // Lock locks the given IDs.
-func (n *NodeManager) Lock(ids ...string) {
+func (s *Memory) Lock(ids ...string) {
 	for _, id := range ids {
-		actual, _ := n.locks.LoadOrStore(id, &sync.Mutex{})
+		actual, _ := s.locks.LoadOrStore(id, &sync.Mutex{})
 		actual.(*sync.Mutex).Lock()
 	}
 }
 
 // Unlock unlocks the given IDs.
-func (n *NodeManager) Unlock(ids ...string) {
+func (s *Memory) Unlock(ids ...string) {
 	for _, id := range ids {
-		actual, ok := n.locks.Load(id)
+		actual, ok := s.locks.Load(id)
 		if !ok {
 			panic("attempted to unlock unlocked ID")
 		}

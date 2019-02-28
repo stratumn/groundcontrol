@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package service contains types to help deal with services.
-package service
+// Package store contains low-level types to store Nodes.
+package store

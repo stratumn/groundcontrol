@@ -16,6 +16,7 @@ package model
 
 import (
 	"context"
+	"groundcontrol/store"
 )
 
 type contextKey string
@@ -53,14 +54,14 @@ func GetContext(ctx context.Context) *Context {
 	return nil
 }
 
-// Nodes exposes low-level functions to load, store, and lock nodes.
+// Nodes exposes low-level functions to load, store, and lock Nodes.
 type Nodes interface {
 	// Store stores a node.
-	Store(id string, node Node)
+	Store(id string, node store.Node)
 	// Load loads a node.
-	Load(id string) (Node, bool)
+	Load(id string) (store.Node, bool)
 	// MustLoad loads a node or panics if it doesn't exist.
-	MustLoad(id string) Node
+	MustLoad(id string) store.Node
 	// Delete deletes a node.
 	Delete(id string)
 	// Lock locks the given IDs.

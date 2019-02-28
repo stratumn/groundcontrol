@@ -13,6 +13,7 @@
 {{ reserveImport "github.com/99designs/gqlgen/graphql/introspection" }}
 
 {{ reserveImport "groundcontrol/relay" }}
+{{ reserveImport "groundcontrol/store" }}
 
 {{- range $model := .Interfaces }}
 	{{ with .Description }} {{.|prefixLines "// "}} {{ end }}
@@ -75,7 +76,7 @@ const (
 	{{- range $iface := .Implements }}
 		{{- if (eq $iface "Node") }}
 			// Copy create a copy of the node.
-			func (n *{{ $model.Name }})Copy() Node {
+			func (n *{{ $model.Name }})Copy() store.Node {
 				c := &{{ $model.Name }} {
 					{{- range $field := $model.Fields }}
 						{{- if (not .Slice) }}
