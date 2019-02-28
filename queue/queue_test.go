@@ -29,17 +29,13 @@ func TestPriorities(t *testing.T) {
 	defer cancel()
 
 	var results []int
-
 	q := New(1)
-
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-
 	go q.Do(func() {
 		results = append(results, 1)
 		wg.Done()
 	})
-
 	go q.DoHi(func() {
 		results = append(results, 2)
 		wg.Done()
@@ -48,18 +44,15 @@ func TestPriorities(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	go func() { _ = q.Work(ctx) }()
-
 	go func() {
 		wg.Wait()
 		cancel()
 	}()
-
 	select {
 	case <-ctx.Done():
 	case <-time.After(time.Second):
 		t.Fatal("jobs didn't run")
 	}
-
 	assert.Equal(t, []int{2, 1}, results, "job order")
 }
 
@@ -69,15 +62,12 @@ func TestDoError(t *testing.T) {
 
 	q := New(1)
 	go func() { _ = q.Work(ctx) }()
-
 	errCh := make(chan error)
-
 	go func() {
 		errCh <- q.DoError(func() error {
 			return errors.New("")
 		})
 	}()
-
 	select {
 	case <-time.After(time.Second):
 		t.Fatal("jobs didn't run")
@@ -92,15 +82,12 @@ func TestDoErrorHi(t *testing.T) {
 
 	q := New(1)
 	go func() { _ = q.Work(ctx) }()
-
 	errCh := make(chan error)
-
 	go func() {
 		errCh <- q.DoErrorHi(func() error {
 			return errors.New("")
 		})
 	}()
-
 	select {
 	case <-time.After(time.Second):
 		t.Fatal("jobs didn't run")

@@ -30,6 +30,5 @@ func DecodeID(id string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return strings.Split(string(bytes), ":"), nil
 }

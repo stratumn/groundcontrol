@@ -43,8 +43,6 @@ var rootCmd = &cobra.Command{
 
 Complete documentation is available at https://github.com/stratumn/groundcontrol.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := context.Background()
-
 		app := app.New(
 			app.OptSourcesFile(viper.GetString("sources-file")),
 			app.OptKeysFile(viper.GetString("keys-file")),
@@ -63,8 +61,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptEnableApolloTracing(viper.GetBool("enable-apollo-tracing")),
 			app.OptUI(userInterface),
 		)
-
-		return app.Start(ctx)
+		return app.Start(context.Background())
 	},
 }
 
@@ -72,7 +69,6 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(ui http.FileSystem) {
 	userInterface = ui
-
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
@@ -80,7 +76,6 @@ func Execute(ui http.FileSystem) {
 
 func init() {
 	cobra.OnInitialize(initSettings)
-
 	rootCmd.PersistentFlags().StringVar(&settingsFile, "settings-file", app.DefaultSettingsFile, "settings file")
 	rootCmd.PersistentFlags().String("sources-file", app.DefaultSourcesFile, "sources config file")
 	rootCmd.PersistentFlags().String("keys-file", app.DefaultKeysFile, "keys config file")
@@ -97,7 +92,6 @@ func init() {
 	rootCmd.PersistentFlags().String("cache-directory", app.DefaultCacheDirectory, "directory for the cache")
 	rootCmd.PersistentFlags().String("open-editor-command", app.DefaultOpenEditorCommand, "command issued to open a text editor")
 	rootCmd.PersistentFlags().Bool("enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
-
 	for _, flagName := range []string{
 		"sources-file",
 		"keys-file",
@@ -130,9 +124,7 @@ func initSettings() {
 		viper.SetConfigName(filepath.Base(app.DefaultSettingsFile))
 		viper.SetConfigType(filepath.Ext(app.DefaultSettingsFile))
 	}
-
 	viper.AutomaticEnv()
-
 	if err := viper.ReadInConfig(); err == nil {
 		log.Println("INFO\tusing settings file", viper.ConfigFileUsed())
 	}

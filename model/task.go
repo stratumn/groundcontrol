@@ -16,7 +16,6 @@ package model
 
 import (
 	"context"
-	"io"
 	"os/exec"
 
 	"groundcontrol/appcontext"
@@ -38,63 +37,51 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 	n.Status = TaskStatusRunning
 	n.MustStore(ctx)
 
-	appCtx := appcontext.Get(ctx)
-	log := appCtx.Log
-	workspace := n.Workspace(ctx)
-
 	for _, stepID := range n.StepsIDs {
 		step := MustLoadStep(ctx, stepID)
 		n.CurrentStepID = stepID
-
-		for _, projectID := range step.ProjectsIDs {
-			project := MustLoadProject(ctx, projectID)
-			n.CurrentProjectID = projectID
-
-			for _, commandID := range step.CommandsIDs {
-				command := MustLoadCommand(ctx, commandID)
-				n.CurrentCommandID = commandID
-				n.MustStore(ctx)
-
-				select {
-				case <-ctx.Done():
-					err = ctx.Err()
-					return err
-				default:
-				}
-
-				log.InfoWithOwner(ctx, project.ID, command.Command)
-
-				projectPath := appCtx.GetProjectPath(workspace.Slug, project.Slug)
-				stdout := util.LineSplitter(ctx, log.InfoWithOwner, project.ID)
-				stderr := util.LineSplitter(ctx, log.WarningWithOwner, project.ID)
-				err = n.runCmd(ctx, command.Command, projectPath, env, stdout, stderr)
-
-				stdout.Close()
-				stderr.Close()
-
-				if err != nil {
-					return err
-				}
-			}
+		if err = n.runStep(ctx, step, env); err != nil {
+			return err
 		}
 	}
-
 	return nil
 }
 
-func (n *Task) runCmd(
-	ctx context.Context,
-	command string,
-	dir string,
-	env []string,
-	stdout io.Writer,
-	stderr io.Writer,
-) error {
-	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command)
-	cmd.Dir = dir
+func (n *Task) runStep(ctx context.Context, step *Step, env []string) error {
+	for _, projectID := range step.ProjectsIDs {
+		project := MustLoadProject(ctx, projectID)
+		n.CurrentProjectID = projectID
+		if err := n.runStepOnProject(ctx, step, project, env); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *Task) runStepOnProject(ctx context.Context, step *Step, project *Project, env []string) error {
+	for _, commandID := range step.CommandsIDs {
+		command := MustLoadCommand(ctx, commandID)
+		n.CurrentCommandID = commandID
+		n.MustStore(ctx)
+		if err := n.runCommand(ctx, project, command, env); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *Task) runCommand(ctx context.Context, project *Project, command *Command, env []string) error {
+	log := appcontext.Get(ctx).Log
+	log.InfoWithOwner(ctx, project.ID, command.Command)
+	stdout := util.LineSplitter(ctx, log.InfoWithOwner, project.ID)
+	stderr := util.LineSplitter(ctx, log.WarningWithOwner, project.ID)
+	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command.Command)
+	cmd.Dir = project.Path(ctx)
 	cmd.Env = env
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
-
-	return cmd.Run()
+	err := cmd.Run()
+	stdout.Close()
+	stderr.Close()
+	return err
 }

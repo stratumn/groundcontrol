@@ -26,38 +26,27 @@ import (
 
 // HasAncestor returns whether a commit contains another commit in its history.
 // It returns false if the two hashes are the same.
-func HasAncestor(
-	ctx context.Context,
-	repo *git.Repository,
-	child plumbing.Hash,
-	ancestor plumbing.Hash,
-) (bool, error) {
+func HasAncestor(ctx context.Context, repo *git.Repository, child plumbing.Hash, ancestor plumbing.Hash) (bool, error) {
 	if bytes.Equal(child[:], ancestor[:]) {
 		return false, nil
 	}
-
 	iter, err := repo.Log(&git.LogOptions{From: child})
 	if err != nil {
 		return false, err
 	}
 	defer iter.Close()
-
 	has := false
-
 	err = iter.ForEach(func(commit *object.Commit) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
-
 		if bytes.Equal(ancestor[:], commit.Hash[:]) {
 			has = true
 			return storer.ErrStop
 		}
-
 		return nil
 	})
-
 	return has, err
 }

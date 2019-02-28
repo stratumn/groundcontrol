@@ -32,19 +32,15 @@ func (d *DateTime) UnmarshalGQL(v interface{}) error {
 	if !ok {
 		return ErrType
 	}
-
 	str, err := strconv.Unquote(str)
 	if err != nil {
 		return err
 	}
-
 	t, err := time.Parse(DateFormat, str)
 	if err != nil {
 		return err
 	}
-
 	*d = DateTime(t)
-
 	return nil
 }
 
@@ -63,9 +59,7 @@ func (h *Hash) UnmarshalGQL(v interface{}) error {
 	if !ok {
 		return ErrType
 	}
-
 	*h = Hash(str)
-
 	return nil
 }
 

@@ -24,19 +24,13 @@ import (
 	"groundcontrol/model"
 )
 
-func (r *mutationResolver) OpenEditor(
-	ctx context.Context,
-	filename string,
-) (*model.Ok, error) {
+func (r *mutationResolver) OpenEditor(ctx context.Context, filename string) (*model.Ok, error) {
 	appCtx := appcontext.Get(ctx)
-
 	command := fmt.Sprintf(appCtx.OpenEditorCommand, filename)
 	parts := strings.Split(command, " ")
 	cmd := exec.Command(parts[0], parts[1:]...)
-
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
-
 	return &model.Ok{Ok: true}, nil
 }

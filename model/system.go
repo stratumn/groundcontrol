@@ -24,14 +24,12 @@ import (
 
 func (n *System) filterJobsNode(ctx context.Context, node *Job, status []JobStatus) bool {
 	match := len(status) == 0
-
 	for _, v := range status {
 		if node.Status == v {
 			match = true
 			break
 		}
 	}
-
 	return match
 }
 
@@ -39,16 +37,13 @@ func (n *System) filterLogEntriesNode(ctx context.Context, node *LogEntry, level
 	if ownerID != nil && *ownerID != node.OwnerID {
 		return false
 	}
-
 	match := len(level) == 0
-
 	for _, v := range level {
 		if node.Level == v {
 			match = true
 			break
 		}
 	}
-
 	return match
 }
 

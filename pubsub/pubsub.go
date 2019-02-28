@@ -42,27 +42,18 @@ func New(historyCap int) *PubSub {
 
 // Subscribe register a function that will receive messages of the given type.
 // To unsubscribe the context must be closed.
-func (p *PubSub) Subscribe(
-	ctx context.Context,
-	messageType string,
-	since uint64,
-	fn func(interface{}),
-) {
+func (p *PubSub) Subscribe(ctx context.Context, messageType string, since uint64, fn func(interface{})) {
 	id := atomic.AddUint64(&p.lastID, 1)
-
 	actual, _ := p.subs.LoadOrStore(messageType, &sync.Map{})
 	subs := actual.(*sync.Map)
 	subs.Store(id, fn)
-
 	if since > 0 {
 		actual, _ = p.lastMessages.LoadOrStore(messageType, newHistory(p.historyCap))
 		history := actual.(*history)
-
 		for _, message := range history.Since(since) {
 			fn(message)
 		}
 	}
-
 	go func() {
 		<-ctx.Done()
 		subs.Delete(id)
@@ -72,14 +63,11 @@ func (p *PubSub) Subscribe(
 // Publish will publish a message of the given type to all subscribers for that type.
 func (p *PubSub) Publish(messageType string, message interface{}) {
 	messageID := atomic.AddUint64(&p.lastMessageID, 1)
-
 	actual, _ := p.lastMessages.LoadOrStore(messageType, newHistory(p.historyCap))
 	history := actual.(*history)
 	history.Add(messageID, message)
-
 	actual, _ = p.subs.LoadOrStore(messageType, &sync.Map{})
 	messageTypeMap := actual.(*sync.Map)
-
 	messageTypeMap.Range(func(_, v interface{}) bool {
 		fn := v.(func(interface{}))
 		fn(message)

@@ -22,6 +22,69 @@ import (
 
 // BeforeStore sorts collections before storing the user.
 func (n *User) BeforeStore(ctx context.Context) {
+	n.SortSources(ctx)
+	n.SortKeys(ctx)
+}
+
+// Workspaces lists the Workspaces belonging to the User sorted by Name
+// using Relay pagination.
+func (n *User) Workspaces(ctx context.Context, after, before *string, first, last *int) (*WorkspaceConnection, error) {
+	return PaginateWorkspaceIDSlice(ctx, n.WorkspacesIDs(ctx), after, before, first, last, nil)
+}
+
+// WorkspacesIDs returns the IDs of the Workspaces belonging to the User
+// sorted by Name.
+func (n *User) WorkspacesIDs(ctx context.Context) []string {
+	var slice []string
+	for _, sourceID := range n.SourcesIDs {
+		source := MustLoadSource(ctx, sourceID)
+		slice = append(slice, source.GetWorkspacesIDs()...)
+	}
+	sort.Slice(slice, func(i, j int) bool {
+		a := MustLoadWorkspace(ctx, slice[i])
+		b := MustLoadWorkspace(ctx, slice[j])
+		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+	})
+	return slice
+}
+
+// Workspace find a Workspace by its slug.
+func (n *User) Workspace(ctx context.Context, slug string) *Workspace {
+	for _, id := range n.WorkspacesIDs(ctx) {
+		node := MustLoadWorkspace(ctx, id)
+		if node.Slug == slug {
+			return node
+		}
+	}
+	return nil
+}
+
+// Projects lists the Projects belonging to the User using Relay pagination.
+func (n *User) Projects(ctx context.Context, after, before *string, first, last *int) (*ProjectConnection, error) {
+	var slice []string
+	for _, workspaceID := range n.WorkspacesIDs(ctx) {
+		workspace := MustLoadWorkspace(ctx, workspaceID)
+		slice = append(slice, workspace.ProjectsIDs...)
+	}
+	return PaginateProjectIDSlice(ctx, slice, after, before, first, last, nil)
+}
+
+// Services lists the Services belonging to the User using Relay pagination
+// optionally filtered by ServiceStatus.
+func (n *User) Services(ctx context.Context, after, before *string, first, last *int, status []ServiceStatus) (*ServiceConnection, error) {
+	var slice []string
+	for _, workspaceID := range n.WorkspacesIDs(ctx) {
+		workspace := MustLoadWorkspace(ctx, workspaceID)
+		slice = append(slice, workspace.ServicesIDs...)
+	}
+	filter := func(node *Service) bool {
+		return n.filterServiceNode(ctx, node, status)
+	}
+	return PaginateServiceIDSlice(ctx, slice, after, before, first, last, filter)
+}
+
+// SortSources sorts the Sources alphabetically.
+func (n *User) SortSources(ctx context.Context) {
 	sort.Slice(n.SourcesIDs, func(i, j int) bool {
 		a := MustLoadSource(ctx, n.SourcesIDs[i])
 		b := MustLoadSource(ctx, n.SourcesIDs[j])
@@ -40,7 +103,10 @@ func (n *User) BeforeStore(ctx context.Context) {
 		}
 		return strings.ToLower(u) < strings.ToLower(v)
 	})
+}
 
+// SortKeys sorts the Keys alphabetically.
+func (n *User) SortKeys(ctx context.Context) {
 	sort.Slice(n.KeysIDs, func(i, j int) bool {
 		a := MustLoadKey(ctx, n.KeysIDs[i])
 		b := MustLoadKey(ctx, n.KeysIDs[j])
@@ -48,101 +114,13 @@ func (n *User) BeforeStore(ctx context.Context) {
 	})
 }
 
-// Workspaces lists the Workspaces belonging to the User sorted by Name
-// using Relay pagination.
-func (n *User) Workspaces(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-) (*WorkspaceConnection, error) {
-	return PaginateWorkspaceIDSlice(ctx, n.WorkspacesIDs(ctx), after, before, first, last, nil)
-}
-
-// WorkspacesIDs returns the IDs of the Workspaces belonging to the User
-// sorted by Name.
-func (n *User) WorkspacesIDs(ctx context.Context) []string {
-	var slice []string
-
-	for _, sourceID := range n.SourcesIDs {
-		source := MustLoadSource(ctx, sourceID)
-		slice = append(slice, source.GetWorkspacesIDs()...)
-	}
-
-	sort.Slice(slice, func(i, j int) bool {
-		a := MustLoadWorkspace(ctx, slice[i])
-		b := MustLoadWorkspace(ctx, slice[j])
-		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
-	})
-
-	return slice
-}
-
-// Workspace find a Workspace by its slug.
-func (n *User) Workspace(ctx context.Context, slug string) *Workspace {
-	for _, id := range n.WorkspacesIDs(ctx) {
-		node := MustLoadWorkspace(ctx, id)
-
-		if node.Slug == slug {
-			return node
-		}
-	}
-
-	return nil
-}
-
-// Projects lists the Projects belonging to the User using Relay pagination.
-func (n *User) Projects(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-) (*ProjectConnection, error) {
-	var slice []string
-
-	for _, workspaceID := range n.WorkspacesIDs(ctx) {
-		workspace := MustLoadWorkspace(ctx, workspaceID)
-		slice = append(slice, workspace.ProjectsIDs...)
-	}
-
-	return PaginateProjectIDSlice(ctx, slice, after, before, first, last, nil)
-}
-
-// Services lists the Services belonging to the User using Relay pagination
-// optionally filtered by ServiceStatus.
-func (n *User) Services(
-	ctx context.Context,
-	after *string,
-	before *string,
-	first *int,
-	last *int,
-	status []ServiceStatus,
-) (*ServiceConnection, error) {
-	var slice []string
-
-	for _, workspaceID := range n.WorkspacesIDs(ctx) {
-		workspace := MustLoadWorkspace(ctx, workspaceID)
-		slice = append(slice, workspace.ServicesIDs...)
-	}
-
-	filter := func(node *Service) bool {
-		return n.filterServiceNode(ctx, node, status)
-	}
-
-	return PaginateServiceIDSlice(ctx, slice, after, before, first, last, filter)
-}
-
 func (n *User) filterServiceNode(ctx context.Context, node *Service, status []ServiceStatus) bool {
 	match := len(status) == 0
-
 	for _, v := range status {
 		if node.Status == v {
 			match = true
 			break
 		}
 	}
-
 	return match
 }

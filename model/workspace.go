@@ -37,7 +37,6 @@ func (n *Workspace) IsCloning(ctx context.Context) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -49,7 +48,6 @@ func (n *Workspace) IsCloned(ctx context.Context) bool {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -61,7 +59,6 @@ func (n *Workspace) IsPulling(ctx context.Context) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -73,7 +70,6 @@ func (n *Workspace) IsBehind(ctx context.Context) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -85,7 +81,6 @@ func (n *Workspace) IsAhead(ctx context.Context) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -97,6 +92,5 @@ func (n *Workspace) IsClean(ctx context.Context) bool {
 			return false
 		}
 	}
-
 	return true
 }

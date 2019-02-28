@@ -34,14 +34,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(2)
 	}
-
 	opts := []api.Option{
 		api.NoPlugins(),
 		api.AddPlugin(modelgen.New()),
 		api.AddPlugin(jobgen.New("resolver/auto_job.go", "resolver")),
 		api.AddPlugin(subscriptiongen.New("resolver/auto_subscriptions.go", "resolver")),
 	}
-
 	if err = api.Generate(cfg, opts...); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(3)

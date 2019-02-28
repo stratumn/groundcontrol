@@ -23,10 +23,8 @@ import (
 
 func (r *mutationResolver) StopJob(ctx context.Context, id string) (*model.Job, error) {
 	appCtx := appcontext.Get(ctx)
-
 	if err := appCtx.Jobs.Stop(ctx, id); err != nil {
 		return nil, err
 	}
-
 	return model.LoadJob(ctx, id)
 }

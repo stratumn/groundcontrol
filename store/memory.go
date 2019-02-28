@@ -40,7 +40,6 @@ func (s *Memory) Load(id string) (Node, bool) {
 	if ok {
 		return node.(Node), true
 	}
-
 	return nil, false
 }
 
@@ -50,7 +49,6 @@ func (s *Memory) MustLoad(id string) Node {
 	if !ok {
 		panic(ErrNotFound)
 	}
-
 	return node
 }
 
@@ -74,7 +72,6 @@ func (s *Memory) Unlock(ids ...string) {
 		if !ok {
 			panic("attempted to unlock unlocked ID")
 		}
-
 		actual.(*sync.Mutex).Unlock()
 	}
 }

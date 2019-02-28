@@ -24,37 +24,26 @@ import (
 	"groundcontrol/model"
 )
 
-func (r *mutationResolver) StartService(
-	ctx context.Context,
-	id string,
-	variables []model.VariableInput,
-) (*model.Job, error) {
+func (r *mutationResolver) StartService(ctx context.Context, id string, variables []model.VariableInput) (*model.Job, error) {
 	keys := appcontext.Get(ctx).Keys
 	env := os.Environ()
 	save := false
-
 	for _, variable := range variables {
 		env = append(env, fmt.Sprintf("%s=%s", variable.Name, variable.Value))
-
 		if !variable.Save {
 			continue
 		}
-
 		save = true
-
 		keys.Set(ctx, variable.Name, variable.Value)
 	}
-
 	if save {
 		if err := keys.Save(); err != nil {
 			return nil, err
 		}
 	}
-
 	jobID, err := job.StartService(ctx, id, env, true)
 	if err != nil {
 		return nil, err
 	}
-
 	return model.LoadJob(ctx, jobID)
 }

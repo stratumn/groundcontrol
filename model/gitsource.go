@@ -33,7 +33,6 @@ func (n *GitSource) ReferenceShort() string {
 func (n *GitSource) IsCloned(ctx context.Context) bool {
 	getGitSourcePath := appcontext.Get(ctx).GetGitSourcePath
 	directory := getGitSourcePath(n.Repository, n.Reference)
-
 	return util.FileExists(directory)
 }
 
@@ -49,22 +48,18 @@ func (n *GitSource) Update(ctx context.Context) error {
 		n.IsLoading = false
 		n.MustStore(ctx)
 	}()
-
 	n.IsLoading = true
 	n.MustStore(ctx)
 
 	if err := n.pullOrClone(ctx); err != nil {
 		return err
 	}
-
 	workspaceIDs, err := LoadWorkspacesInSource(ctx, n.Path(ctx), n.ID)
 	if err != nil {
 		return err
 	}
-
 	n.WorkspacesIDs = workspaceIDs
 	n.MustStore(ctx)
-
 	return nil
 }
 
@@ -73,19 +68,16 @@ func (n *GitSource) pullOrClone(ctx context.Context) error {
 	if n.IsCloned(ctx) {
 		return n.pull(ctx)
 	}
-
 	return n.clone(ctx)
 }
 
 // clone clones the remote repository.
 func (n *GitSource) clone(ctx context.Context) error {
-	options := &git.CloneOptions{
+	opts := git.CloneOptions{
 		URL:           n.Repository,
 		ReferenceName: plumbing.ReferenceName(n.Reference),
 	}
-
-	_, err := git.PlainCloneContext(ctx, n.Path(ctx), false, options)
-
+	_, err := git.PlainCloneContext(ctx, n.Path(ctx), false, &opts)
 	return err
 }
 
@@ -95,22 +87,18 @@ func (n *GitSource) pull(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	worktree, err := repo.Worktree()
 	if err != nil {
 		return err
 	}
-
-	options := &git.PullOptions{
+	opts := git.PullOptions{
 		RemoteName:    "origin",
 		ReferenceName: plumbing.ReferenceName(n.Reference),
 	}
-
-	err = worktree.PullContext(ctx, options)
+	err = worktree.PullContext(ctx, &opts)
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
 	}
-
 	return err
 }
 

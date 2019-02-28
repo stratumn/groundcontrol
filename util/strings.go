@@ -43,7 +43,6 @@ func MatchSourceFile(str string) (filename string, begin, end int, err error) {
 		filename = str[begin:end]
 		return
 	}
-
 	err = ErrNoMatch
 	return
 }

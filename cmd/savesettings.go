@@ -34,7 +34,6 @@ It will overwrite the file if it exists.`,
 		if len(args) > 0 {
 			return viper.WriteConfigAs(args[0])
 		}
-
 		return viper.WriteConfigAs(app.DefaultSettingsFile)
 	},
 }

@@ -33,10 +33,8 @@ func checkError(err error) {
 
 func main() {
 	var fs http.FileSystem = http.Dir("../groundcontrol-ui/build")
-
 	err := os.Remove("auto_ui.go")
 	checkError(err)
-
 	err = vfsgen.Generate(fs, vfsgen.Options{
 		PackageName:  "main",
 		BuildTags:    "release",

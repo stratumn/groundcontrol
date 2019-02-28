@@ -25,14 +25,11 @@ func (r *subscriptionResolver) SourceStored(ctx context.Context, id *string, las
 	if err != nil {
 		return nil, err
 	}
-
 	gitCh, err := r.GitSourceStored(ctx, id, lastMessageID)
 	if err != nil {
 		return nil, err
 	}
-
 	ch := make(chan model.Source, SubscriptionChannelSize)
-
 	go func() {
 		for {
 			select {
@@ -51,6 +48,5 @@ func (r *subscriptionResolver) SourceStored(ctx context.Context, id *string, las
 			}
 		}
 	}()
-
 	return ch, nil
 }

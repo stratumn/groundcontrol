@@ -22,7 +22,6 @@ func (n *DirectorySource) Update(ctx context.Context) error {
 		n.IsLoading = false
 		n.MustStore(ctx)
 	}()
-
 	n.IsLoading = true
 	n.MustStore(ctx)
 
@@ -30,9 +29,7 @@ func (n *DirectorySource) Update(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	n.WorkspacesIDs = workspaceIDs
 	n.MustStore(ctx)
-
 	return nil
 }

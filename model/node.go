@@ -27,7 +27,6 @@ func LoadNode(ctx context.Context, id string) (store.Node, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
-
 	return node, nil
 }
 
@@ -37,6 +36,5 @@ func MustLoadNode(ctx context.Context, id string) store.Node {
 	if !ok {
 		panic(ErrNotFound)
 	}
-
 	return node
 }

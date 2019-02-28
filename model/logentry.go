@@ -23,7 +23,7 @@ import (
 	"groundcontrol/util"
 )
 
-// BeforeStore parse a source file in the message before storing the node.
+// BeforeStore parses a source file in the message before storing the node.
 func (n *LogEntry) BeforeStore(ctx context.Context) {
 	if err := n.ParseSourceFile(ctx); err != nil {
 		log := appcontext.Get(ctx).Log
@@ -34,9 +34,11 @@ func (n *LogEntry) BeforeStore(ctx context.Context) {
 // ParseSourceFile looks for a source file in the message and sets the source file fields.
 func (n *LogEntry) ParseSourceFile(ctx context.Context) error {
 	sourceFile, begin, end, err := util.MatchSourceFile(n.Message)
-	if err != nil {
-		// Don't need to report util.ErrNoMatch.
+	if err == util.ErrNoMatch {
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 	sourceParts := strings.Split(sourceFile, ":")
 	absFilename, err := n.AbsolutePath(ctx, sourceParts[0])

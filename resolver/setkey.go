@@ -21,17 +21,11 @@ import (
 	"groundcontrol/model"
 )
 
-func (r *mutationResolver) SetKey(
-	ctx context.Context,
-	input model.KeyInput,
-) (*model.Key, error) {
+func (r *mutationResolver) SetKey(ctx context.Context, input model.KeyInput) (*model.Key, error) {
 	appCtx := appcontext.Get(ctx)
-
 	id := appCtx.Keys.Set(ctx, input.Name, input.Value)
-
 	if err := appCtx.Keys.Save(); err != nil {
 		return nil, err
 	}
-
 	return model.LoadKey(ctx, id)
 }

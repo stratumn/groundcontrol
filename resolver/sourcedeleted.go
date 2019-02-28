@@ -25,14 +25,11 @@ func (r *subscriptionResolver) SourceDeleted(ctx context.Context, id *string, la
 	if err != nil {
 		return nil, err
 	}
-
 	gitCh, err := r.GitSourceDeleted(ctx, id, lastMessageID)
 	if err != nil {
 		return nil, err
 	}
-
 	ch := make(chan *model.DeletedNode, SubscriptionChannelSize)
-
 	go func() {
 		for {
 			select {
@@ -51,6 +48,5 @@ func (r *subscriptionResolver) SourceDeleted(ctx context.Context, id *string, la
 			}
 		}
 	}()
-
 	return ch, nil
 }

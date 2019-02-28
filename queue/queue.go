@@ -41,11 +41,9 @@ func New(concurrency int) *Queue {
 func (q *Queue) Work(ctx context.Context) error {
 	wg := sync.WaitGroup{}
 	wg.Add(q.concurrency)
-
 	for i := 0; i < q.concurrency; i++ {
 		go func() {
 			defer wg.Done()
-
 			for {
 				select {
 				case <-ctx.Done():
@@ -55,7 +53,6 @@ func (q *Queue) Work(ctx context.Context) error {
 					continue
 				default:
 				}
-
 				select {
 				case <-ctx.Done():
 					return
@@ -67,7 +64,6 @@ func (q *Queue) Work(ctx context.Context) error {
 			}
 		}()
 	}
-
 	wg.Wait()
 	return ctx.Err()
 }

@@ -22,22 +22,15 @@ import (
 	"groundcontrol/model"
 )
 
-func (r *mutationResolver) AddDirectorySource(
-	ctx context.Context,
-	input model.DirectorySourceInput,
-) (*model.DirectorySource, error) {
+func (r *mutationResolver) AddDirectorySource(ctx context.Context, input model.DirectorySourceInput) (*model.DirectorySource, error) {
 	appCtx := appcontext.Get(ctx)
-
 	id := appCtx.Sources.SetDirectorySource(ctx, input.Directory)
-
 	if err := appCtx.Sources.Save(); err != nil {
 		return nil, err
 	}
-
 	_, err := job.LoadDirectorySource(ctx, id, true)
 	if err != nil {
 		return nil, err
 	}
-
 	return model.LoadDirectorySource(ctx, id)
 }

@@ -29,15 +29,11 @@ func CurrentBranch(repo *git.Repository, defaultMerge plumbing.ReferenceName) (*
 	if err != nil {
 		return nil, err
 	}
-
 	if !head.Name().IsBranch() {
 		return nil, nil
 	}
-
 	branchName := RefBranchName(head)
-
 	branch, err := repo.Branch(branchName)
-
 	if err == git.ErrBranchNotFound {
 		// Branch tracking is not configured.
 		return &config.Branch{
@@ -46,7 +42,6 @@ func CurrentBranch(repo *git.Repository, defaultMerge plumbing.ReferenceName) (*
 			Merge:  defaultMerge,
 		}, nil
 	}
-
 	return branch, err
 }
 

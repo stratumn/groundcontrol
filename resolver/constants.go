@@ -16,4 +16,5 @@ package resolver
 
 // SubscriptionChannelSize is the size of a subscription channel.
 // If a channel is full new messages will be dropped and the client won't receive them.
+// TODO: make options
 const SubscriptionChannelSize = 1024
