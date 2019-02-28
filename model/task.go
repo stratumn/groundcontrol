@@ -48,38 +48,61 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 }
 
 func (n *Task) runStep(ctx context.Context, step *Step, env []string) error {
+	if len(step.ProjectsIDs) < 0 {
+		return n.runStepWithoutProject(ctx, step, env)
+	}
 	for _, projectID := range step.ProjectsIDs {
 		project := MustLoadProject(ctx, projectID)
 		n.CurrentProjectID = projectID
-		if err := n.runStepOnProject(ctx, step, project, env); err != nil {
+		if err := n.runStepWithProject(ctx, step, project, env); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (n *Task) runStepOnProject(ctx context.Context, step *Step, project *Project, env []string) error {
+func (n *Task) runStepWithoutProject(ctx context.Context, step *Step, env []string) error {
+	for _, commandID := range step.CommandsIDs {
+		command := MustLoadCommand(ctx, commandID)
+		n.CurrentProjectID = ""
+		n.CurrentCommandID = commandID
+		n.MustStore(ctx)
+		if err := n.runCommandWithoutProject(ctx, command, env); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *Task) runCommandWithoutProject(ctx context.Context, command *Command, env []string) error {
+	return n.exec(ctx, command.Command, n.WorkspaceID, "", env)
+}
+
+func (n *Task) runStepWithProject(ctx context.Context, step *Step, project *Project, env []string) error {
 	for _, commandID := range step.CommandsIDs {
 		command := MustLoadCommand(ctx, commandID)
 		n.CurrentCommandID = commandID
 		n.MustStore(ctx)
-		if err := n.runCommand(ctx, project, command, env); err != nil {
+		if err := n.runCommandWithProject(ctx, project, command, env); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (n *Task) runCommand(ctx context.Context, project *Project, command *Command, env []string) error {
+func (n *Task) runCommandWithProject(ctx context.Context, project *Project, command *Command, env []string) error {
+	return n.exec(ctx, command.Command, project.ID, project.Path(ctx), env)
+}
+
+func (n *Task) exec(ctx context.Context, command, ownerID, dir string, env []string) error {
 	log := appcontext.Get(ctx).Log
-	log.InfoWithOwner(ctx, project.ID, command.Command)
-	stdout := util.LineSplitter(ctx, log.InfoWithOwner, project.ID)
-	stderr := util.LineSplitter(ctx, log.WarningWithOwner, project.ID)
-	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command.Command)
-	cmd.Dir = project.Path(ctx)
+	stdout := util.LineSplitter(ctx, log.InfoWithOwner, ownerID)
+	stderr := util.LineSplitter(ctx, log.WarningWithOwner, ownerID)
+	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command)
 	cmd.Env = env
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	log.InfoWithOwner(ctx, ownerID, command)
 	err := cmd.Run()
 	stdout.Close()
 	stderr.Close()

@@ -69,7 +69,7 @@ func (c *KeysConfig) Set(ctx context.Context, name, value string) string {
 	}
 
 	MustLockUser(ctx, appCtx.ViewerID, func(viewer *User) {
-		c.Keys[name] = name
+		c.Keys[name] = value
 
 		exists := false
 		for _, keysID := range viewer.KeysIDs {
