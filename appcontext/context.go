@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package model
+package appcontext
 
 import (
 	"context"
 	"groundcontrol/store"
 )
 
-type contextKey string
+type key string
 
-const modelCtxKey contextKey = "model_context"
+const contextKey key = "groundcontrol_app_context"
 
-// Context contains variables that are passed to model functions.
+// Context contains variables that are passed to most app functions.
 type Context struct {
 	Nodes               Nodes
 	Log                 Log
@@ -40,14 +40,14 @@ type Context struct {
 	SystemID            string
 }
 
-// WithContext adds a model context to a Go context.
-func WithContext(ctx context.Context, mc *Context) context.Context {
-	return context.WithValue(ctx, modelCtxKey, mc)
+// With adds an app context to a Go context.
+func With(ctx context.Context, c *Context) context.Context {
+	return context.WithValue(ctx, contextKey, c)
 }
 
-// GetContext retrieves the model context from a Go context.
-func GetContext(ctx context.Context) *Context {
-	if val, ok := ctx.Value(modelCtxKey).(*Context); ok {
+// Get retrieves the app context from a Go context.
+func Get(ctx context.Context) *Context {
+	if val, ok := ctx.Value(contextKey).(*Context); ok {
 		return val
 	}
 
@@ -92,6 +92,7 @@ type Log interface {
 
 // Jobs exposes functions to queue jobs.
 type Jobs interface {
+	// Work starts running jobs and blocks until the context is done.
 	Work(ctx context.Context) error
 	// Add adds a job to the queue and returns the job's ID.
 	Add(ctx context.Context, name string, ownerID string, highPriority bool, fn func(ctx context.Context) error) string
@@ -140,7 +141,7 @@ type Keys interface {
 	Store(ctx context.Context) error
 	// Set sets a key and stores the corresponding node.
 	// It returns the ID of the key.
-	Set(ctx context.Context, input KeyInput) string
+	Set(ctx context.Context, name, value string) string
 	// Delete deletes a key and the corresponding node.
 	Delete(ctx context.Context, id string) error
 	// Save saves the config to disk, overwriting the file if it exists.

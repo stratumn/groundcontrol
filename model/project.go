@@ -26,6 +26,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/gitutil"
 	"groundcontrol/relay"
 	"groundcontrol/util"
@@ -48,8 +49,8 @@ func (n *Project) LocalReferenceShort() string {
 
 // Path is the path to the project.
 func (n *Project) Path(ctx context.Context) string {
-	modelCtx := GetContext(ctx)
-	return modelCtx.GetProjectPath(n.Workspace(ctx).Slug, n.Slug)
+	appCtx := appcontext.Get(ctx)
+	return appCtx.GetProjectPath(n.Workspace(ctx).Slug, n.Slug)
 }
 
 // ShortPath is the path to the project relative to the home directory.
@@ -74,8 +75,8 @@ func (n *Project) IsCached(ctx context.Context) bool {
 
 // CachePath returns the path to the project's cache.
 func (n *Project) CachePath(ctx context.Context) string {
-	modelCtx := GetContext(ctx)
-	return modelCtx.GetProjectCachePath(n.Workspace(ctx).Slug, n.Slug)
+	appCtx := appcontext.Get(ctx)
+	return appCtx.GetProjectCachePath(n.Workspace(ctx).Slug, n.Slug)
 }
 
 // Clone clones and upserts the project.

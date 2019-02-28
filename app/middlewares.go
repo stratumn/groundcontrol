@@ -19,11 +19,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 
-	"groundcontrol/model"
+	"groundcontrol/appcontext"
 )
 
-func modelContextMiddleware(modelCtx *model.Context) graphql.FieldMiddleware {
+func modelContextMiddleware(appCtx *appcontext.Context) graphql.FieldMiddleware {
 	return func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
-		return next(model.WithContext(ctx, modelCtx))
+		return next(appcontext.With(ctx, appCtx))
 	}
 }

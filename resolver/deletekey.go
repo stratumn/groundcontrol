@@ -17,18 +17,19 @@ package resolver
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
 func (r *mutationResolver) DeleteKey(ctx context.Context, id string) (*model.DeletedNode, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	err := modelCtx.Keys.Delete(ctx, id)
+	err := appCtx.Keys.Delete(ctx, id)
 	if err != nil {
 		return nil, nil
 	}
 
-	if err := modelCtx.Keys.Save(); err != nil {
+	if err := appCtx.Keys.Save(); err != nil {
 		return nil, err
 	}
 

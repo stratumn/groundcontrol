@@ -20,6 +20,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
@@ -33,10 +34,10 @@ func StartPeriodic(
 	waitTime time.Duration,
 	chain ...func(context.Context) []string,
 ) error {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	round := func(fn func(context.Context) []string) {
-		lastMsgID := modelCtx.Subs.LastMessageID()
+		lastMsgID := appCtx.Subs.LastMessageID()
 
 		jobIDs := fn(ctx)
 		if len(jobIDs) < 1 {
@@ -53,12 +54,10 @@ func StartPeriodic(
 			jobMap.Store(jobID, done)
 		}
 
-		subsCtx, cancel := context.WithCancel(
-			model.WithContext(context.Background(), modelCtx),
-		)
+		subsCtx, cancel := context.WithCancel(appcontext.With(context.Background(), appCtx))
 		defer cancel()
 
-		modelCtx.Subs.Subscribe(subsCtx, model.MessageTypeJobStored, lastMsgID, func(msg interface{}) {
+		appCtx.Subs.Subscribe(subsCtx, model.MessageTypeJobStored, lastMsgID, func(msg interface{}) {
 			id := msg.(string)
 			done, ok := jobMap.Load(id)
 			if !ok {

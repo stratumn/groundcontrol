@@ -22,6 +22,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/relay"
 )
 
@@ -47,15 +48,15 @@ type GitSourceConfig struct {
 
 // Store stores nodes for the content of the sources config.
 func (c *SourcesConfig) Store(ctx context.Context) error {
-	modelCtx := GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
+	return MustLockUserE(ctx, appCtx.ViewerID, func(viewer *User) error {
 		var sourcesIDs []string
 
 		for i, sourceConfig := range c.DirectorySources {
 			source := DirectorySource{
 				ID:        relay.EncodeID(NodeTypeDirectorySource, sourceConfig.Directory),
-				UserID:    modelCtx.ViewerID,
+				UserID:    appCtx.ViewerID,
 				Directory: sourceConfig.Directory,
 			}
 
@@ -71,7 +72,7 @@ func (c *SourcesConfig) Store(ctx context.Context) error {
 					sourceConfig.Repository,
 					sourceConfig.Reference,
 				),
-				UserID:     modelCtx.ViewerID,
+				UserID:     appCtx.ViewerID,
 				Repository: sourceConfig.Repository,
 				Reference:  sourceConfig.Reference,
 			}
@@ -91,15 +92,15 @@ func (c *SourcesConfig) Store(ctx context.Context) error {
 // SetDirectorySource sets a directory source and stores the corresponding node.
 // It returns the ID of the source.
 func (c *SourcesConfig) SetDirectorySource(ctx context.Context, directory string) string {
-	modelCtx := GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	source := DirectorySource{
 		ID:        relay.EncodeID(NodeTypeDirectorySource, directory),
-		UserID:    modelCtx.ViewerID,
+		UserID:    appCtx.ViewerID,
 		Directory: directory,
 	}
 
-	MustLockUser(ctx, modelCtx.ViewerID, func(viewer *User) {
+	MustLockUser(ctx, appCtx.ViewerID, func(viewer *User) {
 		for _, sourceID := range viewer.SourcesIDs {
 			if sourceID == source.ID {
 				return
@@ -126,16 +127,16 @@ func (c *SourcesConfig) SetDirectorySource(ctx context.Context, directory string
 // SetGitSource sets a Git source and stores the corresponding node.
 // It returns the ID of the source.
 func (c *SourcesConfig) SetGitSource(ctx context.Context, repository, reference string) string {
-	modelCtx := GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	source := GitSource{
 		ID:         relay.EncodeID(NodeTypeGitSource, repository, reference),
-		UserID:     modelCtx.ViewerID,
+		UserID:     appCtx.ViewerID,
 		Repository: repository,
 		Reference:  reference,
 	}
 
-	MustLockUser(ctx, modelCtx.ViewerID, func(viewer *User) {
+	MustLockUser(ctx, appCtx.ViewerID, func(viewer *User) {
 		for _, sourceID := range viewer.SourcesIDs {
 			if sourceID == source.ID {
 				return
@@ -162,9 +163,9 @@ func (c *SourcesConfig) SetGitSource(ctx context.Context, repository, reference 
 
 // Delete deletes a source.
 func (c *SourcesConfig) Delete(ctx context.Context, id string) error {
-	modelCtx := GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	return LockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
+	return LockUserE(ctx, appCtx.ViewerID, func(viewer *User) error {
 		parts, err := relay.DecodeID(id)
 		if err != nil {
 			return err

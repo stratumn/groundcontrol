@@ -17,17 +17,18 @@ package resolver
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
 func (r *mutationResolver) DeleteSource(ctx context.Context, id string) (*model.DeletedNode, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	if err := modelCtx.Sources.Delete(ctx, id); err != nil {
+	if err := appCtx.Sources.Delete(ctx, id); err != nil {
 		return nil, nil
 	}
 
-	if err := modelCtx.Sources.Save(); err != nil {
+	if err := appCtx.Sources.Save(); err != nil {
 		return nil, err
 	}
 

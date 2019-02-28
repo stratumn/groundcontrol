@@ -17,6 +17,7 @@ package resolver
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/job"
 	"groundcontrol/model"
 )
@@ -25,11 +26,11 @@ func (r *mutationResolver) AddDirectorySource(
 	ctx context.Context,
 	input model.DirectorySourceInput,
 ) (*model.DirectorySource, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	id := modelCtx.Sources.SetDirectorySource(ctx, input.Directory)
+	id := appCtx.Sources.SetDirectorySource(ctx, input.Directory)
 
-	if err := modelCtx.Sources.Save(); err != nil {
+	if err := appCtx.Sources.Save(); err != nil {
 		return nil, err
 	}
 

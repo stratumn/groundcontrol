@@ -18,6 +18,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+
+	"groundcontrol/appcontext"
 )
 
 func (n *System) filterJobsNode(ctx context.Context, node *Job, status []JobStatus) bool {
@@ -52,7 +54,7 @@ func (n *System) filterLogEntriesNode(ctx context.Context, node *LogEntry, level
 
 // LastMessageID is the ID of the last PubSub message and can be used to not miss any message when subscribing.
 func (n *System) LastMessageID(ctx context.Context) string {
-	modelCtx := GetContext(ctx)
-	lastMessageID := modelCtx.Subs.LastMessageID()
+	appCtx := appcontext.Get(ctx)
+	lastMessageID := appCtx.Subs.LastMessageID()
 	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprint(lastMessageID)))
 }

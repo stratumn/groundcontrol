@@ -17,21 +17,22 @@ package job
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
 // LoadAllSources creates jobs to load the workspaces of every source.
 // It doesn't return errors but will output a log message when errors happen.
 func LoadAllSources(ctx context.Context, highPriority bool) []string {
-	modelCtx := model.GetContext(ctx)
-	viewer := model.MustLoadUser(ctx, modelCtx.ViewerID)
+	appCtx := appcontext.Get(ctx)
+	viewer := model.MustLoadUser(ctx, appCtx.ViewerID)
 
 	var jobIDs []string
 
 	for _, sourceID := range viewer.SourcesIDs {
 		jobID, err := LoadSource(ctx, sourceID, highPriority)
 		if err != nil {
-			modelCtx.Log.ErrorWithOwner(
+			appCtx.Log.ErrorWithOwner(
 				ctx,
 				sourceID,
 				"LoadSource failed because %s",

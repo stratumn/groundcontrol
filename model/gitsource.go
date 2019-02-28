@@ -17,10 +17,11 @@ package model
 import (
 	"context"
 
-	"groundcontrol/util"
-
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+
+	"groundcontrol/appcontext"
+	"groundcontrol/util"
 )
 
 // ReferenceShort is the short name of the Reference.
@@ -30,7 +31,7 @@ func (n *GitSource) ReferenceShort() string {
 
 // IsCloned indicates whether the repository is cloned.
 func (n *GitSource) IsCloned(ctx context.Context) bool {
-	getGitSourcePath := GetContext(ctx).GetGitSourcePath
+	getGitSourcePath := appcontext.Get(ctx).GetGitSourcePath
 	directory := getGitSourcePath(n.Repository, n.Reference)
 
 	return util.FileExists(directory)
@@ -38,8 +39,8 @@ func (n *GitSource) IsCloned(ctx context.Context) bool {
 
 // Path returns the path to the source.
 func (n *GitSource) Path(ctx context.Context) string {
-	modelCtx := GetContext(ctx)
-	return modelCtx.GetGitSourcePath(n.Repository, n.Reference)
+	appCtx := appcontext.Get(ctx)
+	return appCtx.GetGitSourcePath(n.Repository, n.Reference)
 }
 
 // Update loads the latest commits and upserts the source.

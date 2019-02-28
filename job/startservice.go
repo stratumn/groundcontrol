@@ -17,6 +17,7 @@ package job
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
@@ -26,15 +27,15 @@ func StartService(ctx context.Context, serviceID string, env []string, highPrior
 		return "", err
 	}
 
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	return modelCtx.Jobs.Add(
+	return appCtx.Jobs.Add(
 		ctx,
 		JobNameStartService,
 		model.MustLoadService(ctx, serviceID).WorkspaceID,
 		highPriority,
 		func(ctx context.Context) error {
-			return modelCtx.Services.Start(ctx, serviceID, env)
+			return appCtx.Services.Start(ctx, serviceID, env)
 		},
 	), nil
 }

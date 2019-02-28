@@ -17,6 +17,7 @@ package job
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
@@ -26,9 +27,9 @@ func LoadGitSource(ctx context.Context, sourceID string, highPriority bool) (str
 		return "", err
 	}
 
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	return modelCtx.Jobs.Add(
+	return appCtx.Jobs.Add(
 		ctx,
 		JobNameLoadGitSource,
 		sourceID,

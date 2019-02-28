@@ -14,9 +14,7 @@
 
 package model
 
-import (
-	"context"
-)
+import "context"
 
 // ComputeDependencies computes the dependencies of the Service based on the Services it needs.
 func (n *Service) ComputeDependencies(ctx context.Context) error {

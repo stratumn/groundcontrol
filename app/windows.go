@@ -22,9 +22,9 @@ import (
 )
 
 func initHooks(ctx context.Context) error {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	systemID := appCtx.SystemID
 	log.WarnWithOwner(ctx, systemID, "Ground Control doesn't currently support Windows")
 	return nil
 }

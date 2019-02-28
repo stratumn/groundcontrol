@@ -21,6 +21,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 	"groundcontrol/queue"
 	"groundcontrol/relay"
@@ -55,7 +56,7 @@ func (q *Queue) Work(ctx context.Context) error {
 	atomic.StoreInt32(&q.done, 1)
 
 	// Fail all queued jobs.
-	model.MustLockSystem(ctx, model.GetContext(ctx).SystemID, func(system *model.System) {
+	model.MustLockSystem(ctx, appcontext.Get(ctx).SystemID, func(system *model.System) {
 		for _, id := range system.JobsIDs {
 			model.MustLockJob(ctx, id, func(job *model.Job) {
 				if job.Status != model.JobStatusQueued {
@@ -79,8 +80,8 @@ func (q *Queue) Add(
 	highPriority bool,
 	fn func(ctx context.Context) error,
 ) string {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
 
 	priority := model.JobPriorityNormal
 	if highPriority {
@@ -105,7 +106,7 @@ func (q *Queue) Add(
 
 	job.MustStore(ctx)
 
-	model.MustLockSystem(ctx, modelCtx.SystemID, func(system *model.System) {
+	model.MustLockSystem(ctx, appCtx.SystemID, func(system *model.System) {
 		system.JobsIDs = append([]string{job.ID}, system.JobsIDs...)
 		system.MustStore(ctx)
 	})
@@ -131,8 +132,7 @@ func (q *Queue) Add(
 		log.DebugWithOwner(ctx, job.ID, "job running")
 
 		// We must create a new context because the other one closes after a request.
-		ctx := model.WithContext(context.Background(), modelCtx)
-		ctx, cancel := context.WithCancel(ctx)
+		ctx, cancel := context.WithCancel(appcontext.With(context.Background(), appCtx))
 		defer cancel()
 
 		q.cancels.Store(job.ID, cancel)
@@ -189,8 +189,8 @@ func (q *Queue) Stop(ctx context.Context, id string) error {
 }
 
 func (q *Queue) updateMetrics(ctx context.Context) {
-	modelCtx := model.GetContext(ctx)
-	system := model.MustLoadSystem(ctx, modelCtx.SystemID)
+	appCtx := appcontext.Get(ctx)
+	system := model.MustLoadSystem(ctx, appCtx.SystemID)
 
 	model.MustLockJobMetrics(ctx, system.JobMetricsID, func(metrics *model.JobMetrics) {
 		metrics.Queued = int(atomic.LoadInt64(&q.queuedCounter))

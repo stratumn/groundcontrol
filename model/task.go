@@ -16,9 +16,11 @@ package model
 
 import (
 	"context"
-	"groundcontrol/util"
 	"io"
 	"os/exec"
+
+	"groundcontrol/appcontext"
+	"groundcontrol/util"
 )
 
 // Run executes the commands in the task.
@@ -39,8 +41,8 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 	n.Status = TaskStatusRunning
 	n.MustStore(ctx)
 
-	modelCtx := GetContext(ctx)
-	log := modelCtx.Log
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
 	workspace := n.Workspace(ctx)
 
 	for _, stepID := range n.StepsIDs {
@@ -65,7 +67,7 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 
 				log.InfoWithOwner(ctx, project.ID, command.Command)
 
-				projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
+				projectPath := appCtx.GetProjectPath(workspace.Slug, project.Slug)
 				stdout := util.CreateLineWriter(ctx, log.InfoWithOwner, project.ID)
 				stderr := util.CreateLineWriter(ctx, log.WarningWithOwner, project.ID)
 				err = n.runCmd(ctx, command.Command, projectPath, env, stdout, stderr)

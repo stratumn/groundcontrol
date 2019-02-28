@@ -17,6 +17,7 @@ package resolver
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
@@ -24,11 +25,11 @@ func (r *mutationResolver) SetKey(
 	ctx context.Context,
 	input model.KeyInput,
 ) (*model.Key, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	id := modelCtx.Keys.Set(ctx, input)
+	id := appCtx.Keys.Set(ctx, input.Name, input.Value)
 
-	if err := modelCtx.Keys.Save(); err != nil {
+	if err := appCtx.Keys.Save(); err != nil {
 		return nil, err
 	}
 

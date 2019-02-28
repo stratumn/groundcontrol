@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/browser"
 	"github.com/rs/cors"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/gql"
 	"groundcontrol/job"
 	"groundcontrol/log"
@@ -100,14 +101,14 @@ func New(opts ...Opt) *App {
 
 // Start starts the app. It blocks until an error occurs or the app exits.
 func (a *App) Start(ctx context.Context) error {
-	modelCtx := a.createModelContext()
-	ctx, cancel := context.WithCancel(model.WithContext(ctx, modelCtx))
+	appCtx := a.createModelContext()
+	ctx, cancel := context.WithCancel(appcontext.With(ctx, appCtx))
 	defer cancel()
 
 	a.createBaseNodes(ctx)
 
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
+	log := appCtx.Log
+	systemID := appCtx.SystemID
 
 	log.InfoWithOwner(ctx, systemID, "starting app")
 	log.InfoWithOwner(
@@ -166,8 +167,8 @@ func (a *App) Start(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (a *App) createModelContext() *model.Context {
-	return &model.Context{
+func (a *App) createModelContext() *appcontext.Context {
+	return &appcontext.Context{
 		Nodes:               store.NewMemory(),
 		Log:                 log.NewLogger(a.logCap, a.logLevel),
 		Jobs:                work.NewQueue(a.jobConcurrency),
@@ -200,13 +201,13 @@ func (a *App) createBaseNodes(ctx context.Context) {
 		ServiceMetricsID: serviceMetricsID,
 	}).MustStore(ctx)
 
-	modelCtx := model.GetContext(ctx)
-	modelCtx.ViewerID = viewerID
-	modelCtx.SystemID = systemID
+	appCtx := appcontext.Get(ctx)
+	appCtx.ViewerID = viewerID
+	appCtx.SystemID = systemID
 }
 
 func (a *App) createSources(ctx context.Context) error {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	config, err := model.LoadSourcesConfigYAML(a.sourcesFile)
 	if err != nil {
@@ -217,13 +218,13 @@ func (a *App) createSources(ctx context.Context) error {
 		return err
 	}
 
-	modelCtx.Sources = config
+	appCtx.Sources = config
 
 	return nil
 }
 
 func (a *App) createKeys(ctx context.Context) error {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	config, err := model.LoadKeysConfigYAML(a.keysFile)
 	if err != nil {
@@ -234,7 +235,7 @@ func (a *App) createKeys(ctx context.Context) error {
 		return err
 	}
 
-	modelCtx.Keys = config
+	appCtx.Keys = config
 
 	return nil
 }
@@ -247,17 +248,17 @@ func (a *App) addCORS(router *chi.Mux) {
 }
 
 func (a *App) addGQL(ctx context.Context, router *chi.Mux) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	gqlConfig := gql.Config{
-		Resolvers: &resolver.Resolver{ModelCtx: modelCtx},
+		Resolvers: &resolver.Resolver{AppCtx: appCtx},
 	}
 
 	gqlOptions := []handler.Option{
 		handler.WebsocketUpgrader(websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		}),
-		handler.ResolverMiddleware(modelContextMiddleware(modelCtx)),
+		handler.ResolverMiddleware(modelContextMiddleware(appCtx)),
 	}
 
 	if a.enableApolloTracing {
@@ -290,9 +291,9 @@ func (a *App) addUI(router *chi.Mux) {
 }
 
 func (a *App) serve(ctx context.Context, server *http.Server, cancel func()) {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	systemID := appCtx.SystemID
 
 	a.waitGroup.Add(1)
 
@@ -328,9 +329,9 @@ func (a *App) serve(ctx context.Context, server *http.Server, cancel func()) {
 }
 
 func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel func()) {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	systemID := appCtx.SystemID
 
 	signalCh := make(chan os.Signal, 2)
 	signal.Notify(signalCh, syscall.SIGTERM)
@@ -343,10 +344,10 @@ func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel fun
 }
 
 func (a *App) startJobs(ctx context.Context, cancel func()) {
-	modelCtx := model.GetContext(ctx)
-	jobs := modelCtx.Jobs
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
+	appCtx := appcontext.Get(ctx)
+	jobs := appCtx.Jobs
+	log := appCtx.Log
+	systemID := appCtx.SystemID
 
 	a.waitGroup.Add(1)
 
@@ -369,9 +370,9 @@ func (a *App) startJobs(ctx context.Context, cancel func()) {
 }
 
 func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	systemID := appCtx.SystemID
 
 	a.waitGroup.Add(1)
 
@@ -405,13 +406,13 @@ func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
 }
 
 func (a *App) shutdown(ctx context.Context, server *http.Server) {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	services := modelCtx.Services
-	systemID := modelCtx.SystemID
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	services := appCtx.Services
+	systemID := appCtx.SystemID
 
 	cleanCtx, cancel := context.WithTimeout(
-		model.WithContext(context.Background(), modelCtx),
+		appcontext.With(context.Background(), appCtx),
 		a.gracefulShutdownTimeout,
 	)
 	defer cancel()
@@ -459,9 +460,9 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 }
 
 func (a *App) openAddressInBrowser(ctx context.Context) {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	systemID := appCtx.SystemID
 
 	addr, err := net.ResolveTCPAddr("tcp", a.listenAddress)
 	if err != nil {

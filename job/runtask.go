@@ -17,6 +17,7 @@ package job
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
@@ -26,9 +27,9 @@ func RunTask(ctx context.Context, taskID string, env []string, highPriority bool
 		return "", err
 	}
 
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	return modelCtx.Jobs.Add(
+	return appCtx.Jobs.Add(
 		ctx,
 		JobNameRunTask,
 		model.MustLoadTask(ctx, taskID).WorkspaceID,

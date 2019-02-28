@@ -17,14 +17,15 @@ package job
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
 // LoadAllCommits creates jobs to load the commits of every project.
 // It doesn't return errors but will output a log message when errors happen.
 func LoadAllCommits(ctx context.Context, highPriority bool) []string {
-	modelCtx := model.GetContext(ctx)
-	viewer := model.MustLoadUser(ctx, modelCtx.ViewerID)
+	appCtx := appcontext.Get(ctx)
+	viewer := model.MustLoadUser(ctx, appCtx.ViewerID)
 
 	var jobIDs []string
 
@@ -40,7 +41,7 @@ func LoadAllCommits(ctx context.Context, highPriority bool) []string {
 
 			jobID, err := LoadProjectCommits(ctx, project.ID, highPriority)
 			if err != nil {
-				modelCtx.Log.ErrorWithOwner(
+				appCtx.Log.ErrorWithOwner(
 					ctx,
 					project.ID,
 					"LoadProjectCommits failed because %s",

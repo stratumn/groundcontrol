@@ -20,6 +20,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
@@ -27,9 +28,9 @@ func (r *mutationResolver) OpenEditor(
 	ctx context.Context,
 	filename string,
 ) (*model.Ok, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	command := fmt.Sprintf(modelCtx.OpenEditorCommand, filename)
+	command := fmt.Sprintf(appCtx.OpenEditorCommand, filename)
 	parts := strings.Split(command, " ")
 	cmd := exec.Command(parts[0], parts[1:]...)
 

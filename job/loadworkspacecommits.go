@@ -17,12 +17,13 @@ package job
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
 // LoadWorkspaceCommits creates jobs to load the commits of every project in a workspace.
 func LoadWorkspaceCommits(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func LoadWorkspaceCommits(ctx context.Context, workspaceID string, highPriority 
 
 		jobID, err := LoadProjectCommits(ctx, project.ID, highPriority)
 		if err != nil {
-			modelCtx.Log.ErrorWithOwner(
+			appCtx.Log.ErrorWithOwner(
 				ctx,
 				project.ID,
 				"LoadProjectCommits failed because %s",

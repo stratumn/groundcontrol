@@ -22,6 +22,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/relay"
 )
 
@@ -33,9 +34,9 @@ type KeysConfig struct {
 
 // Store stores nodes for the content of the keys config.
 func (c *KeysConfig) Store(ctx context.Context) error {
-	modelCtx := GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	return MustLockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
+	return MustLockUserE(ctx, appCtx.ViewerID, func(viewer *User) error {
 		var keysIDs []string
 
 		for name, value := range c.Keys {
@@ -58,20 +59,17 @@ func (c *KeysConfig) Store(ctx context.Context) error {
 
 // Set sets a key and stores the corresponding node.
 // It returns the ID of the key.
-func (c *KeysConfig) Set(ctx context.Context, input KeyInput) string {
-	modelCtx := GetContext(ctx)
+func (c *KeysConfig) Set(ctx context.Context, name, value string) string {
+	appCtx := appcontext.Get(ctx)
 
 	key := Key{
-		ID: relay.EncodeID(
-			NodeTypeKey,
-			input.Name,
-		),
-		Name:  input.Name,
-		Value: input.Value,
+		ID:    relay.EncodeID(NodeTypeKey, name),
+		Name:  name,
+		Value: value,
 	}
 
-	MustLockUser(ctx, modelCtx.ViewerID, func(viewer *User) {
-		c.Keys[input.Name] = input.Value
+	MustLockUser(ctx, appCtx.ViewerID, func(viewer *User) {
+		c.Keys[name] = name
 
 		exists := false
 		for _, keysID := range viewer.KeysIDs {
@@ -93,9 +91,9 @@ func (c *KeysConfig) Set(ctx context.Context, input KeyInput) string {
 
 // Delete deletes a key and the corresponding node.
 func (c *KeysConfig) Delete(ctx context.Context, id string) error {
-	modelCtx := GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	return LockUserE(ctx, modelCtx.ViewerID, func(viewer *User) error {
+	return LockUserE(ctx, appCtx.ViewerID, func(viewer *User) error {
 		return LockKey(ctx, id, func(key *Key) {
 			for i, v := range viewer.KeysIDs {
 				if v == id {

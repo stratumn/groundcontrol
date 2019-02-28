@@ -17,12 +17,13 @@ package model
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/store"
 )
 
 // LoadNode loads a Node.
 func LoadNode(ctx context.Context, id string) (store.Node, error) {
-	node, ok := GetContext(ctx).Nodes.Load(id)
+	node, ok := appcontext.Get(ctx).Nodes.Load(id)
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -32,7 +33,7 @@ func LoadNode(ctx context.Context, id string) (store.Node, error) {
 
 // MustLoadNode loads a Node or panics on failure.
 func MustLoadNode(ctx context.Context, id string) store.Node {
-	node, ok := GetContext(ctx).Nodes.Load(id)
+	node, ok := appcontext.Get(ctx).Nodes.Load(id)
 	if !ok {
 		panic(ErrNotFound)
 	}

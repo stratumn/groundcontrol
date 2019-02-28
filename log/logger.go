@@ -24,6 +24,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 	"groundcontrol/relay"
 	"groundcontrol/util"
@@ -158,8 +159,8 @@ func (l *Logger) ErrorWithOwner(
 }
 
 func (l *Logger) updateMetrics(ctx context.Context) {
-	modelCtx := model.GetContext(ctx)
-	system := model.MustLoadSystem(ctx, modelCtx.SystemID)
+	appCtx := appcontext.Get(ctx)
+	system := model.MustLoadSystem(ctx, appCtx.SystemID)
 
 	model.MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *model.LogMetrics) {
 		metrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
@@ -171,13 +172,13 @@ func (l *Logger) updateMetrics(ctx context.Context) {
 }
 
 func (l *Logger) matchSourceFile(ctx context.Context, entry *model.LogEntry) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	if entry.OwnerID == "" {
 		return
 	}
 
-	node, ok := modelCtx.Nodes.Load(entry.OwnerID)
+	node, ok := appCtx.Nodes.Load(entry.OwnerID)
 	if !ok {
 		return
 	}
@@ -196,7 +197,7 @@ func (l *Logger) matchSourceFile(ctx context.Context, entry *model.LogEntry) {
 	fileName := sourceParts[0]
 
 	workspace := model.MustLoadWorkspace(ctx, project.WorkspaceID)
-	projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
+	projectPath := appCtx.GetProjectPath(workspace.Slug, project.Slug)
 
 	if !filepath.IsAbs(fileName) {
 		fileName, err = filepath.Abs(filepath.Join(projectPath, fileName))
@@ -227,7 +228,7 @@ func (l *Logger) add(
 	ownerID string,
 	message string,
 ) (string, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	if logLevelPriorities[level] < logLevelPriorities[l.level] {
 		return "", nil
@@ -256,7 +257,7 @@ func (l *Logger) add(
 	l.matchSourceFile(ctx, &logEntry)
 	logEntry.MustStore(ctx)
 
-	model.MustLockSystem(ctx, modelCtx.SystemID, func(system *model.System) {
+	model.MustLockSystem(ctx, appCtx.SystemID, func(system *model.System) {
 		if l.head >= l.cap*2 {
 			copy(l.logEntriesIDs, l.logEntriesIDs[l.cap:])
 			l.head = l.cap

@@ -17,6 +17,7 @@ package resolver
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/job"
 	"groundcontrol/model"
 )
@@ -25,11 +26,11 @@ func (r *mutationResolver) AddGitSource(
 	ctx context.Context,
 	input model.GitSourceInput,
 ) (*model.GitSource, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	id := modelCtx.Sources.SetGitSource(ctx, input.Repository, input.Reference)
+	id := appCtx.Sources.SetGitSource(ctx, input.Repository, input.Reference)
 
-	if err := modelCtx.Sources.Save(); err != nil {
+	if err := appCtx.Sources.Save(); err != nil {
 		return nil, err
 	}
 

@@ -16,6 +16,7 @@ package resolver
 
 import (
 	"context"
+	"groundcontrol/appcontext"
 	"groundcontrol/gql"
 	"groundcontrol/model"
 	"groundcontrol/store"
@@ -24,7 +25,7 @@ import (
 // Resolver is the root GraphQL resolver.
 type Resolver struct {
 	// We need this here because gqlgen doesn't currently pass it in the context of subscriptions.
-	ModelCtx *model.Context
+	AppCtx *appcontext.Context
 }
 
 // Query returns the resolver for queries.
@@ -55,16 +56,16 @@ type queryResolver struct {
 }
 
 func (r *queryResolver) Node(ctx context.Context, id string) (store.Node, error) {
-	node, _ := model.GetContext(ctx).Nodes.Load(id)
+	node, _ := appcontext.Get(ctx).Nodes.Load(id)
 	return node, nil
 }
 
 func (r *queryResolver) Viewer(ctx context.Context) (*model.User, error) {
-	modelCtx := model.GetContext(ctx)
-	return model.LoadUser(ctx, modelCtx.ViewerID)
+	appCtx := appcontext.Get(ctx)
+	return model.LoadUser(ctx, appCtx.ViewerID)
 }
 
 func (r *queryResolver) System(ctx context.Context) (*model.System, error) {
-	modelCtx := model.GetContext(ctx)
-	return model.LoadSystem(ctx, modelCtx.SystemID)
+	appCtx := appcontext.Get(ctx)
+	return model.LoadSystem(ctx, appCtx.SystemID)
 }

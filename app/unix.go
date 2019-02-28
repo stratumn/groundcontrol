@@ -18,9 +18,9 @@ package app
 
 import (
 	"context"
-	"groundcontrol/model"
-	"runtime"
 	"syscall"
+
+	"groundcontrol/appcontext"
 )
 
 func initHooks(ctx context.Context) error {
@@ -29,9 +29,9 @@ func initHooks(ctx context.Context) error {
 }
 
 func incNoFile(ctx context.Context) {
-	modelCtx := model.GetContext(ctx)
-	log := modelCtx.Log
-	systemID := modelCtx.SystemID
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	systemID := appCtx.SystemID
 	limit := syscall.Rlimit{}
 
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
@@ -47,18 +47,19 @@ func incNoFile(ctx context.Context) {
 	was := limit.Cur
 	limit.Cur = limit.Max
 
-	if runtime.GOOS == "darwin" {
-		limit.Cur = 12288
-	}
-
 	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
-		log.WarningWithOwner(
-			ctx,
-			systemID,
-			"failed to set maximum number of open files because %s",
-			err.Error(),
-		)
-		return
+		// Max on some macOS.
+		limit.Cur = 12288
+
+		if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
+			log.WarningWithOwner(
+				ctx,
+				systemID,
+				"failed to set maximum number of open files because %s",
+				err.Error(),
+			)
+			return
+		}
 	}
 
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {

@@ -17,12 +17,13 @@ package job
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
 // PullWorkspace creates jobs to pull all the projects in a workspace.
 func PullWorkspace(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func PullWorkspace(ctx context.Context, workspaceID string, highPriority bool) (
 
 		jobID, err := PullProject(ctx, project.ID, highPriority)
 		if err != nil {
-			modelCtx.Log.ErrorWithOwner(
+			appCtx.Log.ErrorWithOwner(
 				ctx,
 				project.ID,
 				"PullWorkspace failed because %s",

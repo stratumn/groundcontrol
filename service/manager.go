@@ -16,12 +16,14 @@ package service
 
 import (
 	"context"
-	"groundcontrol/model"
-	"groundcontrol/util"
 	"os/exec"
 	"sync"
 	"sync/atomic"
 	"syscall"
+
+	"groundcontrol/appcontext"
+	"groundcontrol/model"
+	"groundcontrol/util"
 )
 
 // Manager manages running and stopping services.
@@ -83,17 +85,17 @@ func (s *Manager) Stop(ctx context.Context, serviceID string) error {
 
 // Clean terminates all running Services.
 func (s *Manager) Clean(ctx context.Context) {
-	modelCtx := model.GetContext(ctx)
-	lastMsgID := modelCtx.Subs.LastMessageID()
+	appCtx := appcontext.Get(ctx)
+	lastMsgID := appCtx.Subs.LastMessageID()
 	waitGroup := sync.WaitGroup{}
 
 	s.commands.Range(func(k, _ interface{}) bool {
 		serviceID := k.(string)
 
-		modelCtx.Log.DebugWithOwner(ctx, serviceID, "stopping service")
+		appCtx.Log.DebugWithOwner(ctx, serviceID, "stopping service")
 
 		if err := s.Stop(ctx, serviceID); err != nil {
-			modelCtx.Log.ErrorWithOwner(
+			appCtx.Log.ErrorWithOwner(
 				ctx,
 				serviceID,
 				"failed to stop service because %s",
@@ -111,7 +113,7 @@ func (s *Manager) Clean(ctx context.Context) {
 			waitGroup.Done()
 		}()
 
-		modelCtx.Subs.Subscribe(serviceCtx, model.MessageTypeServiceStored, lastMsgID, func(msg interface{}) {
+		appCtx.Subs.Subscribe(serviceCtx, model.MessageTypeServiceStored, lastMsgID, func(msg interface{}) {
 			id := msg.(string)
 			if id != serviceID {
 				return
@@ -132,7 +134,7 @@ func (s *Manager) Clean(ctx context.Context) {
 }
 
 func (s *Manager) startService(ctx context.Context, serviceID string, env []string) error {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
 	return model.LockServiceE(ctx, serviceID, func(service *model.Service) error {
 		switch service.Status {
@@ -158,11 +160,11 @@ func (s *Manager) startService(ctx context.Context, serviceID string, env []stri
 
 		if project := service.Project(ctx); project != nil {
 			ownerID = project.ID
-			cmd.Dir = modelCtx.GetProjectPath(workspace.Slug, project.Slug)
+			cmd.Dir = appCtx.GetProjectPath(workspace.Slug, project.Slug)
 		}
 
-		stdout := util.CreateLineWriter(ctx, modelCtx.Log.InfoWithOwner, ownerID)
-		stderr := util.CreateLineWriter(ctx, modelCtx.Log.WarningWithOwner, ownerID)
+		stdout := util.CreateLineWriter(ctx, appCtx.Log.InfoWithOwner, ownerID)
+		stderr := util.CreateLineWriter(ctx, appCtx.Log.WarningWithOwner, ownerID)
 
 		cmd.Env = env
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -182,7 +184,7 @@ func (s *Manager) startService(ctx context.Context, serviceID string, env []stri
 			}
 		}
 
-		modelCtx.Log.InfoWithOwner(ctx, ownerID, service.Command)
+		appCtx.Log.InfoWithOwner(ctx, ownerID, service.Command)
 
 		err := cmd.Start()
 		if err == nil {
@@ -198,7 +200,7 @@ func (s *Manager) startService(ctx context.Context, serviceID string, env []stri
 		s.updateMetrics(ctx)
 
 		if err != nil {
-			modelCtx.Log.ErrorWithOwner(
+			appCtx.Log.ErrorWithOwner(
 				ctx,
 				ownerID,
 				"service failed because %s",
@@ -230,11 +232,11 @@ func (s *Manager) startService(ctx context.Context, serviceID string, env []stri
 				if err == nil {
 					service.Status = model.ServiceStatusStopped
 					atomic.AddInt64(&s.stoppedCounter, 1)
-					modelCtx.Log.DebugWithOwner(ctx, ownerID, "service done")
+					appCtx.Log.DebugWithOwner(ctx, ownerID, "service done")
 				} else {
 					service.Status = model.ServiceStatusFailed
 					atomic.AddInt64(&s.failedCounter, 1)
-					modelCtx.Log.ErrorWithOwner(
+					appCtx.Log.ErrorWithOwner(
 						ctx,
 						ownerID,
 						"service failed because %s",
@@ -257,8 +259,8 @@ func (s *Manager) startService(ctx context.Context, serviceID string, env []stri
 }
 
 func (s *Manager) updateMetrics(ctx context.Context) {
-	modelCtx := model.GetContext(ctx)
-	system := model.MustLoadSystem(ctx, modelCtx.SystemID)
+	appCtx := appcontext.Get(ctx)
+	system := model.MustLoadSystem(ctx, appCtx.SystemID)
 
 	model.MustLockServiceMetrics(ctx, system.ServiceMetricsID, func(metrics *model.ServiceMetrics) {
 		metrics.Stopped = int(atomic.LoadInt64(&s.stoppedCounter))

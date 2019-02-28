@@ -12,6 +12,7 @@
 {{ reserveImport "github.com/99designs/gqlgen/graphql" }}
 {{ reserveImport "github.com/99designs/gqlgen/graphql/introspection" }}
 
+{{ reserveImport "groundcontrol/appcontext" }}
 {{ reserveImport "groundcontrol/relay" }}
 {{ reserveImport "groundcontrol/store" }}
 
@@ -96,9 +97,9 @@ const (
 			
 			// Store stores the {{ $model.Name }}.
 			func (n *{{ $model.Name }}) Store(ctx context.Context) error {
-				modelCtx := GetContext(ctx)
-				nodes := modelCtx.Nodes
-				subs := modelCtx.Subs
+				appCtx := appcontext.Get(ctx)
+				nodes := appCtx.Nodes
+				subs := appCtx.Subs
 			
 				identifiers, err := relay.DecodeID(n.ID)
 				if err != nil {
@@ -175,7 +176,7 @@ const (
 
 			// Load{{ $model.Name }} loads a {{ $model.Name }}.
 			func Load{{ $model.Name }}(ctx context.Context, id string) (*{{ $model.Name }}, error) {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 			
 				identifiers, err := relay.DecodeID(id)
 				if err != nil {
@@ -204,9 +205,9 @@ const (
 			
 			// Delete{{ $model.Name }} deletes a {{ $model.Name }}.
 			func Delete{{ $model.Name }}(ctx context.Context, id string) error {
-				modelCtx := GetContext(ctx)
-				nodes := modelCtx.Nodes
-				subs := modelCtx.Subs
+				appCtx := appcontext.Get(ctx)
+				nodes := appCtx.Nodes
+				subs := appCtx.Subs
 			
 				identifiers, err := relay.DecodeID(id)
 				if err != nil {
@@ -247,7 +248,7 @@ const (
 			
 			// Lock{{ $model.Name }} loads a {{ $model.Name }} and locks it until the callback returns.
 			func Lock{{ $model.Name }}(ctx context.Context, id string, fn func(*{{ $model.Name }})) error {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 				nodes.Lock(id)
 			
 				node, err := Load{{ $model.Name }}(ctx, id)
@@ -263,7 +264,7 @@ const (
 			
 			// Lock{{ $model.Name }}E is like Lock{{ $model.Name }}, but the callback can return an error.
 			func Lock{{ $model.Name }}E(ctx context.Context, id string, fn func(*{{ $model.Name }}) error) error {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 				nodes.Lock(id)
 			
 				node, err := Load{{ $model.Name }}(ctx, id)
@@ -279,7 +280,7 @@ const (
 			
 			// MustLock{{ $model.Name }} loads a {{ $model.Name }} or panics on error and locks it until the callback returns.
 			func MustLock{{ $model.Name }}(ctx context.Context, id string, fn func(*{{ $model.Name }})) {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 				nodes.Lock(id)
 			
 				node, err := Load{{ $model.Name }}(ctx, id)
@@ -293,7 +294,7 @@ const (
 			
 			// MustLock{{ $model.Name }}E is like MustLock{{ $model.Name }}, but the callback can return an error.
 			func MustLock{{ $model.Name }}E(ctx context.Context, id string, fn func(*{{ $model.Name }}) error) error {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 				nodes.Lock(id)
 			
 				node, err := Load{{ $model.Name }}(ctx, id)
@@ -310,7 +311,7 @@ const (
 			// LockOrNew{{ $model.Name }} loads or initializes a {{ $model.Name }} and locks it until the callback returns.
 			// The second argument of the callback is true if the model is new.
 			func LockOrNew{{ $model.Name }}(ctx context.Context, id string, fn func(*{{ $model.Name }}, bool)) error {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 				nodes.Lock(id)
 			
 				isNew := false
@@ -332,7 +333,7 @@ const (
 			
 			// LockOrNew{{ $model.Name }}E is like LockOrNew{{ $model.Name }}, but the callback can return an error.
 			func LockOrNew{{ $model.Name }}E(ctx context.Context, id string, fn func(*{{ $model.Name }}, bool) error) error {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 				nodes.Lock(id)
 			
 				isNew := false
@@ -354,7 +355,7 @@ const (
 			
 			// MustLockOrNew{{ $model.Name }} loads or initializes a {{ $model.Name }} or panics on error and locks it until the callback returns.
 			func MustLockOrNew{{ $model.Name }}(ctx context.Context, id string, fn func(*{{ $model.Name }}, bool)) {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 				nodes.Lock(id)
 			
 				isNew := false
@@ -374,7 +375,7 @@ const (
 			
 			// MustLockOrNew{{ $model.Name }}E is like MustLockOrNew{{ $model.Name }}, but the callback can return an error.
 			func MustLockOrNew{{ $model.Name }}E(ctx context.Context, id string, fn func(*{{ $model.Name }}, bool) error) error {
-				nodes := GetContext(ctx).Nodes
+				nodes := appcontext.Get(ctx).Nodes
 				nodes.Lock(id)
 			
 				isNew := false

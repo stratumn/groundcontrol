@@ -12,30 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package job
-
-import (
-	"context"
-
-	"groundcontrol/appcontext"
-	"groundcontrol/model"
-)
-
-// StopService starts a Service.
-func StopService(ctx context.Context, serviceID string, highPriority bool) (string, error) {
-	if _, err := model.LoadService(ctx, serviceID); err != nil {
-		return "", err
-	}
-
-	appCtx := appcontext.Get(ctx)
-
-	return appCtx.Jobs.Add(
-		ctx,
-		JobNameStopService,
-		model.MustLoadService(ctx, serviceID).WorkspaceID,
-		highPriority,
-		func(ctx context.Context) error {
-			return appCtx.Services.Stop(ctx, serviceID)
-		},
-	), nil
-}
+// Package appcontext defines a context that is passed to most app functions.
+package appcontext

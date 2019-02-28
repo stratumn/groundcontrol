@@ -2,13 +2,14 @@
 {{ reserveImport "encoding/base64" }}
 {{ reserveImport "strconv" }}
 
+{{ reserveImport "groundcontrol/appcontext" }}
 {{ reserveImport "groundcontrol/model" }}
 
 {{ $root := . }}
 
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ .Type | ref }}, error) {
-	ctx = model.WithContext(ctx, r.ModelCtx)
+	ctx = appcontext.With(ctx, r.AppCtx)
 	ch := make(chan {{ .Type | ref }}, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -20,7 +21,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 		}
 	}
 
-	r.ModelCtx.Subs.Subscribe(ctx, model.MessageType{{ .TypeName }}Stored, last, func(msg interface{}) {
+	r.AppCtx.Subs.Subscribe(ctx, model.MessageType{{ .TypeName }}Stored, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return
@@ -37,7 +38,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ $root.DeletedType | ref }}, error) {
-	ctx = model.WithContext(ctx, r.ModelCtx)
+	ctx = appcontext.With(ctx, r.AppCtx)
 	ch := make(chan {{ $root.DeletedType | ref }}, SubscriptionChannelSize)
 
 	last := uint64(0)
@@ -49,7 +50,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *s
 		}
 	}
 
-	r.ModelCtx.Subs.Subscribe(ctx, model.MessageType{{ .TypeName }}Deleted, last, func(msg interface{}) {
+	r.AppCtx.Subs.Subscribe(ctx, model.MessageType{{ .TypeName }}Deleted, last, func(msg interface{}) {
 		nodeID := msg.(string)
 		if id != nil && *id != nodeID {
 			return

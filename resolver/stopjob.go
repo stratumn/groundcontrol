@@ -17,13 +17,14 @@ package resolver
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
 func (r *mutationResolver) StopJob(ctx context.Context, id string) (*model.Job, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 
-	if err := modelCtx.Jobs.Stop(ctx, id); err != nil {
+	if err := appCtx.Jobs.Stop(ctx, id); err != nil {
 		return nil, err
 	}
 

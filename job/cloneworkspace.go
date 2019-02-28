@@ -17,12 +17,13 @@ package job
 import (
 	"context"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
 )
 
 // CloneWorkspace creates jobs to clone all the projects in a workspace.
 func CloneWorkspace(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
-	modelCtx := model.GetContext(ctx)
+	appCtx := appcontext.Get(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func CloneWorkspace(ctx context.Context, workspaceID string, highPriority bool) 
 
 		jobID, err := CloneProject(ctx, project.ID, highPriority)
 		if err != nil {
-			modelCtx.Log.ErrorWithOwner(
+			appCtx.Log.ErrorWithOwner(
 				ctx,
 				project.ID,
 				"CloneWorkspace failed because %s",

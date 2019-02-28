@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/job"
 	"groundcontrol/model"
 )
@@ -28,7 +29,7 @@ func (r *mutationResolver) RunTask(
 	id string,
 	variables []model.VariableInput,
 ) (*model.Job, error) {
-	keys := model.GetContext(ctx).Keys
+	keys := appcontext.Get(ctx).Keys
 	env := os.Environ()
 	save := false
 
@@ -41,10 +42,7 @@ func (r *mutationResolver) RunTask(
 
 		save = true
 
-		keys.Set(ctx, model.KeyInput{
-			Name:  variable.Name,
-			Value: variable.Value,
-		})
+		keys.Set(ctx, variable.Name, variable.Value)
 	}
 
 	if save {
