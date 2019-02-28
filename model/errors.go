@@ -22,6 +22,7 @@ import (
 var (
 	ErrNotFound      = errors.New("it wasn't found")
 	ErrType          = errors.New("it has the wrong type")
+	ErrClone         = errors.New("it failed to cloned")
 	ErrFirstNegative = errors.New("first cannot be negative")
 	ErrLastNegative  = errors.New("last cannot be negative")
 	ErrNotRunning    = errors.New("the service isn't running")

@@ -53,6 +53,9 @@ func (n *Task) runStep(ctx context.Context, step *Step, env []string) error {
 	}
 	for _, projectID := range step.ProjectsIDs {
 		project := MustLoadProject(ctx, projectID)
+		if err := project.EnsureCloned(ctx); err != nil {
+			return err
+		}
 		n.CurrentProjectID = projectID
 		if err := n.runStepWithProject(ctx, step, project, env); err != nil {
 			return err

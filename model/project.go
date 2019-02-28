@@ -152,6 +152,44 @@ func (n *Project) Update(ctx context.Context) error {
 	return n.updateState(ctx)
 }
 
+// EnsureCloned guarantees the Project to be cloned by the time it returns.
+func (n *Project) EnsureCloned(ctx context.Context) error {
+	subs := appcontext.Get(ctx).Subs
+	lastMsgID := subs.LastMessageID()
+	return MustLockProjectE(ctx, n.ID, func(node *Project) error {
+		*n = *node
+		if n.IsCloning {
+			return n.waitTillCloned(ctx, lastMsgID)
+		}
+		if n.IsCloned(ctx) {
+			return nil
+		}
+		return n.Clone(ctx)
+	})
+}
+
+// waitTillCloned waits for the Project to finish cloning.
+func (n *Project) waitTillCloned(ctx context.Context, lastMsgID uint64) error {
+	subsCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	subs := appcontext.Get(ctx).Subs
+	subs.Subscribe(subsCtx, MessageTypeProjectStored, lastMsgID, func(msg interface{}) {
+		id := msg.(string)
+		if id != n.ID {
+			return
+		}
+		*n = *MustLoadProject(ctx, id)
+		if !n.IsCloning {
+			cancel()
+		}
+	})
+	<-subsCtx.Done()
+	if !n.IsCloned(ctx) {
+		return ErrClone
+	}
+	return nil
+}
+
 // fetchOrClone fetches the repo if cloned or cached, otherwise it clones it.
 func (n *Project) fetchOrClone(ctx context.Context) error {
 	if !n.IsCloned(ctx) && !n.IsCached(ctx) {

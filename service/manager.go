@@ -159,6 +159,14 @@ func (s *Manager) startService(ctx context.Context, serviceID string, env []stri
 		ownerID := workspace.ID
 
 		if project := service.Project(ctx); project != nil {
+			if err := project.EnsureCloned(ctx); err != nil {
+				service.Status = model.ServiceStatusFailed
+				service.MustStore(ctx)
+				atomic.AddInt64(&s.startingCounter, -1)
+				atomic.AddInt64(&s.failedCounter, 1)
+				s.updateMetrics(ctx)
+				return err
+			}
 			ownerID = project.ID
 			cmd.Dir = appCtx.GetProjectPath(workspace.Slug, project.Slug)
 		}
