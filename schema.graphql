@@ -10,7 +10,7 @@ directive @paginate(
   """GoIDSFieldName is the name of the field for the IDs of the referenced Nodes that will be used in the Go Struct."""
   goIdsFieldName: String
 ) on FIELD_DEFINITION
-"""Job indicates a mutation that queues one or multiple job."""
+"""Job indicates a mutation that queues one or multiple jobs."""
 directive @job on FIELD_DEFINITION
 """Stored indicates a subscription that emits a message when a Node is stored."""
 directive @stored on FIELD_DEFINITION
