@@ -72,8 +72,6 @@ type Nodes interface {
 
 // Log exposes functions to emit log messages.
 type Log interface {
-	// Add adds a log entry.
-	Add(ctx context.Context, level LogLevel, ownerID string, message string) (string, error)
 	// Debug adds a debug entry.
 	Debug(ctx context.Context, message string, a ...interface{}) string
 	// Info adds an info entry.

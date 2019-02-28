@@ -65,8 +65,163 @@ func NewLogger(cap int, level model.LogLevel) *Logger {
 	}
 }
 
-// Add adds a log entry.
-func (l *Logger) Add(
+// Debug adds a debug entry.
+func (l *Logger) Debug(ctx context.Context, message string, a ...interface{}) string {
+	id, err := l.add(ctx, model.LogLevelDebug, "", fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// Info adds an info entry.
+func (l *Logger) Info(ctx context.Context, message string, a ...interface{}) string {
+	id, err := l.add(ctx, model.LogLevelInfo, "", fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// Warning adds a warning entry.
+func (l *Logger) Warning(ctx context.Context, message string, a ...interface{}) string {
+	id, err := l.add(ctx, model.LogLevelWarning, "", fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// Error adds an error entry.
+func (l *Logger) Error(ctx context.Context, message string, a ...interface{}) string {
+	id, err := l.add(ctx, model.LogLevelError, "", fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// DebugWithOwner adds a debug entry with an owner.
+func (l *Logger) DebugWithOwner(
+	ctx context.Context,
+	ownerID string,
+	message string,
+	a ...interface{},
+) string {
+	id, err := l.add(ctx, model.LogLevelDebug, ownerID, fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// InfoWithOwner adds an info entry with an owner.
+func (l *Logger) InfoWithOwner(
+	ctx context.Context,
+	ownerID string,
+	message string,
+	a ...interface{},
+) string {
+	id, err := l.add(ctx, model.LogLevelInfo, ownerID, fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// WarningWithOwner adds a warning entry with an owner.
+func (l *Logger) WarningWithOwner(
+	ctx context.Context,
+	ownerID string,
+	message string,
+	a ...interface{},
+) string {
+	id, err := l.add(ctx, model.LogLevelWarning, ownerID, fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+// ErrorWithOwner adds an error entry with an owner.
+func (l *Logger) ErrorWithOwner(
+	ctx context.Context,
+	ownerID string,
+	message string,
+	a ...interface{},
+) string {
+	id, err := l.add(ctx, model.LogLevelError, ownerID, fmt.Sprintf(message, a...))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+func (l *Logger) updateMetrics(ctx context.Context) {
+	modelCtx := model.GetContext(ctx)
+	system := model.MustLoadSystem(ctx, modelCtx.SystemID)
+
+	model.MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *model.LogMetrics) {
+		metrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
+		metrics.Info = int(atomic.LoadInt64(&l.infoCounter))
+		metrics.Warning = int(atomic.LoadInt64(&l.warningCounter))
+		metrics.Error = int(atomic.LoadInt64(&l.errorCounter))
+		metrics.MustStore(ctx)
+	})
+}
+
+func (l *Logger) matchSourceFile(ctx context.Context, entry *model.LogEntry) {
+	modelCtx := model.GetContext(ctx)
+
+	if entry.OwnerID == "" {
+		return
+	}
+
+	node, ok := modelCtx.Nodes.Load(entry.OwnerID)
+	if !ok {
+		return
+	}
+
+	project, ok := node.(*model.Project)
+	if !ok {
+		return
+	}
+
+	sourceFile, begin, end, err := util.MatchSourceFile(entry.Message)
+	if err != nil {
+		return
+	}
+
+	sourceParts := strings.Split(sourceFile, ":")
+	fileName := sourceParts[0]
+
+	workspace := model.MustLoadWorkspace(ctx, project.WorkspaceID)
+	projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
+
+	if !filepath.IsAbs(fileName) {
+		fileName, err = filepath.Abs(filepath.Join(projectPath, fileName))
+		if err != nil {
+			return
+		}
+	}
+
+	fileName = filepath.Clean(fileName)
+	sourceFile = strings.Join(append([]string{fileName}, sourceParts[1:]...), ":")
+
+	if !util.FileExists(fileName) {
+		return
+	}
+
+	if util.IsDirectory(fileName) {
+		return
+	}
+
+	entry.SourceFile = &sourceFile
+	entry.SourceFileBegin = &begin
+	entry.SourceFileEnd = &end
+}
+
+func (l *Logger) add(
 	ctx context.Context,
 	level model.LogLevel,
 	ownerID string,
@@ -146,160 +301,4 @@ func (l *Logger) Add(
 	l.updateMetrics(ctx)
 
 	return logEntry.ID, nil
-}
-
-// Debug adds a debug entry.
-func (l *Logger) Debug(ctx context.Context, message string, a ...interface{}) string {
-	id, err := l.Add(ctx, model.LogLevelDebug, "", fmt.Sprintf(message, a...))
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-// Info adds an info entry.
-func (l *Logger) Info(ctx context.Context, message string, a ...interface{}) string {
-	id, err := l.Add(ctx, model.LogLevelInfo, "", fmt.Sprintf(message, a...))
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-// Warning adds a warning entry.
-func (l *Logger) Warning(ctx context.Context, message string, a ...interface{}) string {
-	id, err := l.Add(ctx, model.LogLevelWarning, "", fmt.Sprintf(message, a...))
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-// Error adds an error entry.
-func (l *Logger) Error(ctx context.Context, message string, a ...interface{}) string {
-	id, err := l.Add(ctx, model.LogLevelError, "", fmt.Sprintf(message, a...))
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-// DebugWithOwner adds a debug entry with an owner.
-func (l *Logger) DebugWithOwner(
-	ctx context.Context,
-	ownerID string,
-	message string,
-	a ...interface{},
-) string {
-	id, err := l.Add(ctx, model.LogLevelDebug, ownerID, fmt.Sprintf(message, a...))
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-// InfoWithOwner adds an info entry with an owner.
-func (l *Logger) InfoWithOwner(
-	ctx context.Context,
-	ownerID string,
-	message string,
-	a ...interface{},
-) string {
-	id, err := l.Add(ctx, model.LogLevelInfo, ownerID, fmt.Sprintf(message, a...))
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-// WarningWithOwner adds a warning entry with an owner.
-func (l *Logger) WarningWithOwner(
-	ctx context.Context,
-	ownerID string,
-	message string,
-	a ...interface{},
-) string {
-	id, err := l.Add(ctx, model.LogLevelWarning, ownerID, fmt.Sprintf(message, a...))
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-// ErrorWithOwner adds an error entry with an owner.
-func (l *Logger) ErrorWithOwner(
-	ctx context.Context,
-	ownerID string,
-	message string,
-	a ...interface{},
-) string {
-	id, err := l.Add(ctx, model.LogLevelError, ownerID, fmt.Sprintf(message, a...))
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-func (l *Logger) updateMetrics(ctx context.Context) {
-	modelCtx := model.GetContext(ctx)
-	system := model.MustLoadSystem(ctx, modelCtx.SystemID)
-
-	model.MustLockLogMetrics(ctx, system.LogMetricsID, func(metrics *model.LogMetrics) {
-		metrics.Debug = int(atomic.LoadInt64(&l.debugCounter))
-		metrics.Info = int(atomic.LoadInt64(&l.infoCounter))
-		metrics.Warning = int(atomic.LoadInt64(&l.warningCounter))
-		metrics.Error = int(atomic.LoadInt64(&l.errorCounter))
-		metrics.MustStore(ctx)
-	})
-}
-
-func (l *Logger) matchSourceFile(ctx context.Context, entry *model.LogEntry) {
-	modelCtx := model.GetContext(ctx)
-
-	if entry.OwnerID == "" {
-		return
-	}
-
-	node, ok := modelCtx.Nodes.Load(entry.OwnerID)
-	if !ok {
-		return
-	}
-
-	project, ok := node.(*model.Project)
-	if !ok {
-		return
-	}
-
-	sourceFile, begin, end, err := util.MatchSourceFile(entry.Message)
-	if err != nil {
-		return
-	}
-
-	sourceParts := strings.Split(sourceFile, ":")
-	fileName := sourceParts[0]
-
-	workspace := model.MustLoadWorkspace(ctx, project.WorkspaceID)
-	projectPath := modelCtx.GetProjectPath(workspace.Slug, project.Slug)
-
-	if !filepath.IsAbs(fileName) {
-		fileName, err = filepath.Abs(filepath.Join(projectPath, fileName))
-		if err != nil {
-			return
-		}
-	}
-
-	fileName = filepath.Clean(fileName)
-	sourceFile = strings.Join(append([]string{fileName}, sourceParts[1:]...), ":")
-
-	if !util.FileExists(fileName) {
-		return
-	}
-
-	if util.IsDirectory(fileName) {
-		return
-	}
-
-	entry.SourceFile = &sourceFile
-	entry.SourceFileBegin = &begin
-	entry.SourceFileEnd = &end
 }
