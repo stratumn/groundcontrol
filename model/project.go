@@ -265,10 +265,10 @@ func (n *Project) updateReferences(ctx context.Context) error {
 	if branch != nil {
 		n.RemoteReference = branch.Merge.String()
 		n.LocalReference = plumbing.NewBranchReferenceName(branch.Name).String()
-	} else {
-		n.RemoteReference = n.Reference
-		n.LocalReference = n.Reference
+		return nil
 	}
+	n.RemoteReference = n.Reference
+	n.LocalReference = n.Reference
 	return nil
 }
 
@@ -301,10 +301,7 @@ func (n *Project) updateState(ctx context.Context) error {
 		return err
 	}
 	n.IsClean, err = n.checkIfClean(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // checkIfClean checks if there are uncommited changes.

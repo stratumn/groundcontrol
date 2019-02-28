@@ -20,7 +20,7 @@ directive @deleted on FIELD_DEFINITION
 """DateTime is a date and time serialized as a string using the format `2006-01-02T15:04:05-0700`."""
 scalar DateTime
 
-"""Hash contains a hash, usually from Git, serialized as a string using base64 encoding."""
+"""Hash contains a hash, usually from Git, serialized as a string using hexadecimal encoding."""
 scalar Hash
 
 """JobStatus is the status of a Job in the queue."""

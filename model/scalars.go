@@ -15,6 +15,7 @@
 package model
 
 import (
+	"encoding/hex"
 	"io"
 	"strconv"
 	"time"
@@ -50,8 +51,7 @@ func (d DateTime) MarshalGQL(w io.Writer) {
 }
 
 // Hash holds a Git hash.
-// TODO: change to bytes.
-type Hash string
+type Hash []byte
 
 // UnmarshalGQL implements the graphql.Marshaler interface.
 func (h *Hash) UnmarshalGQL(v interface{}) error {
@@ -59,11 +59,20 @@ func (h *Hash) UnmarshalGQL(v interface{}) error {
 	if !ok {
 		return ErrType
 	}
-	*h = Hash(str)
+	var err error
+	str, err = strconv.Unquote(str)
+	if err != nil {
+		return err
+	}
+	b, err := hex.DecodeString(str)
+	if err != nil {
+		return err
+	}
+	*h = b
 	return nil
 }
 
 // MarshalGQL implements the graphql.Marshaler interface.
 func (h Hash) MarshalGQL(w io.Writer) {
-	_, _ = w.Write([]byte(strconv.Quote(string(h))))
+	_, _ = w.Write([]byte(strconv.Quote(hex.EncodeToString(h))))
 }

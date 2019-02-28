@@ -26,7 +26,7 @@ import (
 func NewCommitFromGit(commit *object.Commit) *Commit {
 	return &Commit{
 		ID:       relay.EncodeID(NodeTypeCommit, commit.Hash.String()),
-		Hash:     Hash(commit.Hash.String()),
+		Hash:     commit.Hash[:],
 		Headline: strings.Split(commit.Message, "\n")[0],
 		Message:  commit.Message,
 		Author:   commit.Author.Name,
