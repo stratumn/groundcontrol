@@ -48,7 +48,7 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 }
 
 func (n *Task) runStep(ctx context.Context, step *Step, env []string) error {
-	if len(step.ProjectsIDs) < 0 {
+	if len(step.ProjectsIDs) < 1 {
 		return n.runStepWithoutProject(ctx, step, env)
 	}
 	for _, projectID := range step.ProjectsIDs {
@@ -99,9 +99,10 @@ func (n *Task) exec(ctx context.Context, command, ownerID, dir string, env []str
 	stdout := util.LineSplitter(ctx, log.InfoWithOwner, ownerID)
 	stderr := util.LineSplitter(ctx, log.WarningWithOwner, ownerID)
 	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command)
-	cmd.Env = env
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	cmd.Dir = dir
+	cmd.Env = env
 	log.InfoWithOwner(ctx, ownerID, command)
 	err := cmd.Run()
 	stdout.Close()
