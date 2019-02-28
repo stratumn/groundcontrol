@@ -34,6 +34,9 @@ build: gen-ui build-ui gen-go build-go
 install:
 	cp groundcontrol $$GOPATH/bin
 
+snapshot:
+	goreleaser --snapshot
+
 clean-generated:
 	rm -rf $(GO_AUTO) $(UI_AUTO)
 
@@ -48,4 +51,4 @@ test-go:
 
 test: test-ui test-go
 
-.PHONY: deps deps-ui deps-go gen-ui gen-go gen-go-release gen-go-fmt test-ui test-go test build-ui build install clean-generated clean
+.PHONY: deps deps-ui deps-go gen-ui gen-go gen-go-release gen-go-fmt test-ui test-go test build-ui build install snapshot clean-generated clean

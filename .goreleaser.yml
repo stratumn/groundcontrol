@@ -6,17 +6,23 @@ before:
     - make build-ui
     - make gen-go
     - make test
+release:
+  prerelease: auto
 builds:
-- env:
+- goarch:
+  - amd64
+  env:
   - CGO_ENABLED=0
   flags:
   - -tags=release
 archive:
   replacements:
-    darwin: Darwin
+    darwin: macOS
     linux: Linux
     386: i386
     amd64: x86_64
+  files:
+  - LICENSE
 checksum:
   name_template: 'checksums.txt'
 snapshot:
