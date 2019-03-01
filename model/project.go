@@ -174,11 +174,11 @@ func (n *Project) waitTillCloned(ctx context.Context, lastMsgID uint64) error {
 	defer cancel()
 	subs := appcontext.Get(ctx).Subs
 	subs.Subscribe(subsCtx, MessageTypeProjectStored, lastMsgID, func(msg interface{}) {
-		id := msg.(string)
-		if id != n.ID {
+		node := msg.(*Project)
+		if node.ID != n.ID {
 			return
 		}
-		*n = *MustLoadProject(ctx, id)
+		*n = *node
 		if !n.IsCloning {
 			cancel()
 		}

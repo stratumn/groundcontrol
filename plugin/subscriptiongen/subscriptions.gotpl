@@ -20,12 +20,12 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 		}
 	}
 	r.AppCtx.Subs.Subscribe(ctx, model.MessageType{{ .TypeName }}Stored, last, func(msg interface{}) {
-		nodeID := msg.(string)
-		if id != nil && *id != nodeID {
+		node := msg.({{ .Type | ref }})
+		if id != nil && *id != node.ID {
 			return
 		}
 		select {
-		case ch <- model.MustLoad{{ .TypeName }}(ctx, nodeID):
+		case ch <- node:
 		default:
 		}
 	})
@@ -46,12 +46,12 @@ func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *s
 		}
 	}
 	r.AppCtx.Subs.Subscribe(ctx, model.MessageType{{ .TypeName }}Deleted, last, func(msg interface{}) {
-		nodeID := msg.(string)
-		if id != nil && *id != nodeID {
+		node := msg.({{ .Type | ref }})
+		if id != nil && *id != node.ID {
 			return
 		}
 		select {
-		case ch <- &{{ $root.DeletedName }}{ID: nodeID}:
+		case ch <- &{{ $root.DeletedName }}{ID: node.ID}:
 		default:
 		}
 	})

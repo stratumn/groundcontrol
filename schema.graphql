@@ -650,6 +650,8 @@ type JobMetrics implements Node {
   """Running tracks how many Jobs are RUNNING."""
   running: Int!
   """Done tracks how many Jobs are DONE."""
+  stopping: Int!
+  """Stopping tracks how many Jobs are STOPPING."""
   done: Int!
   """Failed tracks wow many Jobs FAILED."""
   failed: Int!

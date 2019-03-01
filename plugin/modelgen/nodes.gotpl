@@ -65,7 +65,7 @@ const (
 					v.BeforeStore(ctx)
 				}
 				nodes.Store(n.ID, n.Copy())
-				subs.Publish(MessageType{{ $model.Name }}Stored, n.ID)
+				subs.Publish(MessageType{{ $model.Name }}Stored, n.Copy())
 				if v, ok := v.(AfterStorer); ok {
 					v.AfterStore(ctx)
 				}
@@ -126,7 +126,7 @@ const (
 					v.BeforeDelete(ctx)
 				}
 				nodes.Delete(id)
-				subs.Publish(MessageType{{ $model.Name }}Deleted, id)
+				subs.Publish(MessageType{{ $model.Name }}Deleted, node.Copy())
 				if v, ok := v.(AfterDeleter); ok {
 					v.AfterDelete(ctx)
 				}

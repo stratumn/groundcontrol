@@ -223,11 +223,10 @@ func (m *Manager) waitTillDone(ctx context.Context, serviceID string, lastMsgID 
 	defer cancel()
 	subs := appcontext.Get(ctx).Subs
 	subs.Subscribe(subsCtx, model.MessageTypeServiceStored, lastMsgID, func(msg interface{}) {
-		id := msg.(string)
-		if id != serviceID {
+		service := msg.(*model.Service)
+		if service.ID != serviceID {
 			return
 		}
-		service := model.MustLoadService(ctx, id)
 		switch service.Status {
 		case model.ServiceStatusStopped, model.ServiceStatusFailed:
 			cancel()

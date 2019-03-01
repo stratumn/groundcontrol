@@ -17,7 +17,6 @@ package job
 import (
 	"context"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"groundcontrol/appcontext"
@@ -50,25 +49,22 @@ func StartPeriodic(
 		jobMap := sync.Map{}
 
 		for _, jobID := range jobIDs {
-			done := new(int32)
-			jobMap.Store(jobID, done)
+			jobMap.Store(jobID, struct{}{})
 		}
 
 		subsCtx, cancel := context.WithCancel(appcontext.With(context.Background(), appCtx))
 		defer cancel()
 
 		appCtx.Subs.Subscribe(subsCtx, model.MessageTypeJobStored, lastMsgID, func(msg interface{}) {
-			id := msg.(string)
-			done, ok := jobMap.Load(id)
+			job := msg.(*model.Job)
+			_, ok := jobMap.Load(job.ID)
 			if !ok {
 				return
 			}
 
-			switch model.MustLoadJob(subsCtx, id).Status {
+			switch job.Status {
 			case model.JobStatusDone, model.JobStatusFailed:
-				if atomic.AddInt32(done.(*int32), 1) == 1 {
-					waitGroup.Done()
-				}
+				waitGroup.Done()
 			}
 		})
 
