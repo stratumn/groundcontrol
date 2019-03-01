@@ -16,6 +16,15 @@ package model
 
 import "context"
 
+// OwnerID returns the ID of the Node that owns the Service.
+func (n *Service) OwnerID() string {
+	ownerID := n.WorkspaceID
+	if n.ProjectID != "" {
+		ownerID = n.ProjectID
+	}
+	return ownerID
+}
+
 // ComputeDependencies computes the dependencies of the Service based on the Services it needs.
 func (n *Service) ComputeDependencies(ctx context.Context) error {
 	deps, err := n.TopologicalSort(ctx)

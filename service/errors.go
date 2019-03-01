@@ -12,19 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package model
+package service
 
-import (
-	"errors"
-)
+import "errors"
 
 // Errors.
 var (
-	ErrNotFound      = errors.New("it wasn't found")
-	ErrType          = errors.New("it has the wrong type")
-	ErrClone         = errors.New("it failed to cloned")
-	ErrFirstNegative = errors.New("first cannot be negative")
-	ErrLastNegative  = errors.New("last cannot be negative")
-	ErrNotRunning    = errors.New("the service isn't running")
-	ErrCyclic        = errors.New("there are cyclic dependencies")
+	ErrNotStopped = errors.New("the service isn't stopped")
 )
