@@ -27,6 +27,9 @@ import (
 	"groundcontrol/relay"
 )
 
+// Worker is a function that is executed once a job is running.
+type Worker = func(ctx context.Context) error
+
 // Queue queues Jobs and executes them.
 type Queue struct {
 	queue   *queue.Queue
@@ -61,7 +64,7 @@ func (q *Queue) Work(ctx context.Context) error {
 }
 
 // Add adds a job to the queue and returns the job's ID.
-func (q *Queue) Add(ctx context.Context, name string, ownerID string, highPriority bool, fn func(ctx context.Context) error) string {
+func (q *Queue) Add(ctx context.Context, name string, ownerID string, highPriority bool, fn Worker) string {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	job := q.buildJob(ctx, name, ownerID, highPriority)
@@ -77,7 +80,7 @@ func (q *Queue) Add(ctx context.Context, name string, ownerID string, highPriori
 	q.setStatus(ctx, job, model.JobStatusQueued)
 	job.MustStore(ctx)
 	f := func() {
-		q.runJob(ctx, job.ID, fn)
+		q.startJob(ctx, job.ID, fn)
 	}
 	if highPriority {
 		go q.queue.DoHi(f)
@@ -142,32 +145,37 @@ func (q *Queue) prepend(ctx context.Context, jobID string) {
 	})
 }
 
-func (q *Queue) runJob(ctx context.Context, jobID string, fn func(context.Context) error) {
+func (q *Queue) startJob(ctx context.Context, jobID string, fn Worker) {
 	model.MustLockJob(ctx, jobID, func(job *model.Job) {
 		if job.Status != model.JobStatusQueued {
 			return
 		}
-		appCtx := appcontext.Get(ctx)
-		log := appCtx.Log
-		log.DebugWithOwner(ctx, job.ID, "job running")
 		// We must create a new context because the other one closes after a request.
-		ctx, cancel := context.WithCancel(appcontext.With(context.Background(), appCtx))
-		defer cancel()
+		appCtx := appcontext.Get(ctx)
+		ctx := appcontext.With(context.Background(), appCtx)
+		ctx, cancel := context.WithCancel(ctx)
 		q.cancels.Store(job.ID, cancel)
-		defer q.cancels.Delete(job.ID)
 		q.setStatus(ctx, job, model.JobStatusRunning)
 		job.UpdatedAt = model.DateTime(time.Now())
 		job.MustStore(ctx)
-		if err := fn(ctx); err != nil {
-			log.ErrorWithOwner(ctx, job.ID, "job failed because %s", err.Error())
-			q.setStatus(ctx, job, model.JobStatusFailed)
-		} else {
-			log.DebugWithOwner(ctx, job.ID, "job done")
-			q.setStatus(ctx, job, model.JobStatusDone)
-		}
-		job.UpdatedAt = model.DateTime(time.Now())
-		job.MustStore(ctx)
+		q.runJob(ctx, job, fn)
+		q.cancels.Delete(job.ID)
+		cancel()
 	})
+}
+
+func (q *Queue) runJob(ctx context.Context, job *model.Job, fn Worker) {
+	log := appcontext.Get(ctx).Log
+	log.DebugWithOwner(ctx, job.ID, "job running")
+	if err := fn(ctx); err != nil {
+		log.ErrorWithOwner(ctx, job.ID, "job failed because %s", err.Error())
+		q.setStatus(ctx, job, model.JobStatusFailed)
+	} else {
+		log.DebugWithOwner(ctx, job.ID, "job done")
+		q.setStatus(ctx, job, model.JobStatusDone)
+	}
+	job.UpdatedAt = model.DateTime(time.Now())
+	job.MustStore(ctx)
 }
 
 func (q *Queue) setStatus(ctx context.Context, job *model.Job, status model.JobStatus) {
