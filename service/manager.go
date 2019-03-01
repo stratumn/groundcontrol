@@ -194,19 +194,15 @@ func (m *Manager) runCmd(ctx context.Context, cmd *exec.Cmd, serviceID string, c
 }
 
 func (m *Manager) runBeforeTasks(ctx context.Context, service *model.Service, env []string) error {
-	for _, taskID := range service.BeforeIDs {
-		err := model.MustLockTaskE(ctx, taskID, func(task *model.Task) error {
-			return task.Run(ctx, env)
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return m.runTasks(ctx, service.BeforeIDs, env)
 }
 
 func (m *Manager) runAfterTasks(ctx context.Context, service *model.Service, env []string) error {
-	for _, taskID := range service.AfterIDs {
+	return m.runTasks(ctx, service.AfterIDs, env)
+}
+
+func (m *Manager) runTasks(ctx context.Context, taskIDs []string, env []string) error {
+	for _, taskID := range taskIDs {
 		err := model.MustLockTaskE(ctx, taskID, func(task *model.Task) error {
 			return task.Run(ctx, env)
 		})
