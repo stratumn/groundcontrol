@@ -213,17 +213,6 @@ func (m *Manager) runTasks(ctx context.Context, taskIDs []string, env []string) 
 	return nil
 }
 
-func (m *Manager) setStatus(ctx context.Context, service *model.Service, status model.ServiceStatus) {
-	was := service.Status
-	if was == status {
-		return
-	}
-	service.Status = status
-	m.decCounter(was)
-	m.incCounter(status)
-	m.storeMetrics(ctx)
-}
-
 // waitTillDone blocks until the Service exists.
 func (m *Manager) waitTillDone(ctx context.Context, serviceID string, lastMsgID uint64) {
 	subsCtx, cancel := context.WithCancel(ctx)
@@ -241,6 +230,17 @@ func (m *Manager) waitTillDone(ctx context.Context, serviceID string, lastMsgID 
 		}
 	})
 	<-subsCtx.Done()
+}
+
+func (m *Manager) setStatus(ctx context.Context, service *model.Service, status model.ServiceStatus) {
+	was := service.Status
+	if was == status {
+		return
+	}
+	service.Status = status
+	m.decCounter(was)
+	m.incCounter(status)
+	m.storeMetrics(ctx)
 }
 
 func (m *Manager) incCounter(status model.ServiceStatus) {
