@@ -91,7 +91,11 @@ func (m *Manager) Clean(ctx context.Context) {
 			log.ErrorWithOwner(ctx, serviceID, "failed to stop service because %s", err.Error())
 			return true
 		}
-		m.waitTillDone(ctx, serviceID, lastMsgID)
+		waitGroup.Add(1)
+		go func() {
+			m.waitTillDone(ctx, serviceID, lastMsgID)
+			waitGroup.Done()
+		}()
 		return true
 	})
 	waitGroup.Wait()
