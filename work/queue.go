@@ -29,16 +29,14 @@ import (
 // Worker is a function that is executed once a job is running.
 type Worker = func(ctx context.Context) error
 
-// ChannelSize is the size for each channel of the queue.
-// A job will fail if the channel of the corresponding priority is full.
-const ChannelSize = 1024
-
 // Queue queues Jobs and executes them.
 type Queue struct {
 	concurrency int
-	hiCh        chan message
-	ch          chan message
-	cancels     sync.Map
+	chSize      int
+
+	hiCh    chan message
+	ch      chan message
+	cancels sync.Map
 
 	lastID uint64
 
@@ -58,11 +56,13 @@ type message struct {
 }
 
 // NewQueue creates a Queue with given concurrency.
-func NewQueue(concurrency int) *Queue {
+// ChannelSize is the size for each channel of the queue.
+// A job will fail if the channel of the corresponding priority is full.
+func NewQueue(concurrency, channelSize int) *Queue {
 	return &Queue{
 		concurrency: concurrency,
-		ch:          make(chan message, ChannelSize),
-		hiCh:        make(chan message, ChannelSize),
+		ch:          make(chan message, channelSize),
+		hiCh:        make(chan message, channelSize),
 	}
 }
 

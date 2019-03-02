@@ -52,10 +52,12 @@ type App struct {
 	sourcesFile             string
 	keysFile                string
 	listenAddress           string
-	jobConcurrency          int
+	jobsConcurrency         int
+	jobsChannelSize         int
 	logLevel                model.LogLevel
 	logCap                  int
 	pubSubHistoryCap        int
+	subscriptionChannelSize int
 	periodicJobsInterval    time.Duration
 	gracefulShutdownTimeout time.Duration
 	ui                      http.FileSystem
@@ -76,10 +78,12 @@ func New(opts ...Opt) *App {
 		sourcesFile:             DefaultSourcesFile,
 		keysFile:                DefaultKeysFile,
 		listenAddress:           DefaultListenAddress,
-		jobConcurrency:          DefaultJobConcurrency,
+		jobsConcurrency:         DefaultJobsConcurrency,
+		jobsChannelSize:         DefaultJobsChannelSize,
 		logLevel:                DefaultLogLevel,
 		logCap:                  DefaultLogCap,
 		pubSubHistoryCap:        DefaultPubSubHistoryCap,
+		subscriptionChannelSize: DefaultSubscriptionChannelSize,
 		periodicJobsInterval:    DefaultPeriodicJobsInterval,
 		gracefulShutdownTimeout: DefaultGracefulShutdownTimeout,
 		openBrowser:             DefaultOpenBrowser,
@@ -134,9 +138,10 @@ func (a *App) createAppContext() *appcontext.Context {
 	return &appcontext.Context{
 		Nodes:               store.NewMemory(),
 		Log:                 log.NewLogger(a.logCap, a.logLevel),
-		Jobs:                work.NewQueue(a.jobConcurrency),
+		Jobs:                work.NewQueue(a.jobsConcurrency, a.jobsChannelSize),
 		Services:            service.NewManager(),
 		Subs:                pubsub.New(a.pubSubHistoryCap),
+		SubChannelSize:      a.subscriptionChannelSize,
 		GetGitSourcePath:    a.getGitSourcePath,
 		GetProjectPath:      a.getProjectPath,
 		GetProjectCachePath: a.getProjectCachePath,

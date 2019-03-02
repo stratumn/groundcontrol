@@ -29,7 +29,7 @@ func (r *subscriptionResolver) SourceStored(ctx context.Context, id *string, las
 	if err != nil {
 		return nil, err
 	}
-	ch := make(chan model.Source, SubscriptionChannelSize)
+	ch := make(chan model.Source, r.AppCtx.SubChannelSize)
 	go func() {
 		for {
 			select {

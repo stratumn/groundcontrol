@@ -28,14 +28,18 @@ import (
 const (
 	// DefaultListenAddress is the default listen address.
 	DefaultListenAddress = ":3333"
-	// DefaultJobConcurrency is the default concurrency of the job manager.
-	DefaultJobConcurrency = 2
+	// DefaultJobsConcurrency is the default jobs concurrency.
+	DefaultJobsConcurrency = 2
+	// DefaultJobsChannelSize is the default jobs channel size.
+	DefaultJobsChannelSize = 1024
 	// DefaultLogLevel is the default log level.
 	DefaultLogLevel = model.LogLevelInfo
 	// DefaultLogCap is the default capacity of the logger.
 	DefaultLogCap = 10000
 	// DefaultPubSubHistoryCap is the default capacity of the PubSub history.
 	DefaultPubSubHistoryCap = 1000
+	// DefaultSubscriptionChannelSize is the default subscription channel size.
+	DefaultSubscriptionChannelSize = 1024
 	// DefaultPeriodicJobsInterval is the default periodic jobs interval.
 	DefaultPeriodicJobsInterval = time.Minute
 	// DefaultGracefulShutdownTimeout is the default graceful shutdown timeout.
@@ -103,10 +107,17 @@ func OptListenAddress(address string) Opt {
 	}
 }
 
-// OptJobConcurrency sets the concurrency of the job manager.
-func OptJobConcurrency(concurrency int) Opt {
+// OptJobsConcurrency sets the concurrency of the work queue.
+func OptJobsConcurrency(concurrency int) Opt {
 	return func(app *App) {
-		app.jobConcurrency = concurrency
+		app.jobsConcurrency = concurrency
+	}
+}
+
+// OptJobsChannelSize sets the size of a priority channel in the work queue.
+func OptJobsChannelSize(size int) Opt {
+	return func(app *App) {
+		app.jobsChannelSize = size
 	}
 }
 
@@ -121,6 +132,13 @@ func OptLogLevel(level model.LogLevel) Opt {
 func OptPubSubHistoryCap(cap int) Opt {
 	return func(app *App) {
 		app.pubSubHistoryCap = cap
+	}
+}
+
+// OptSubscriptionChannelSize sets the size of a subscription channel.
+func OptSubscriptionChannelSize(size int) Opt {
+	return func(app *App) {
+		app.subscriptionChannelSize = size
 	}
 }
 

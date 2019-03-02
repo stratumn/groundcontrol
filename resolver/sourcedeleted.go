@@ -29,7 +29,7 @@ func (r *subscriptionResolver) SourceDeleted(ctx context.Context, id *string, la
 	if err != nil {
 		return nil, err
 	}
-	ch := make(chan *model.DeletedNode, SubscriptionChannelSize)
+	ch := make(chan *model.DeletedNode, r.AppCtx.SubChannelSize)
 	go func() {
 		for {
 			select {

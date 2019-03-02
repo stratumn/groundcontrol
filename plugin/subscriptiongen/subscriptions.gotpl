@@ -10,7 +10,7 @@
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ .Type | ref }}, error) {
 	ctx = appcontext.With(ctx, r.AppCtx)
-	ch := make(chan {{ .Type | ref }}, SubscriptionChannelSize)
+	ch := make(chan {{ .Type | ref }}, r.AppCtx.SubChannelSize)
 	last := uint64(0)
 	if lastMessageID != nil {
 		var err error
@@ -36,7 +36,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ $root.DeletedType | ref }}, error) {
 	ctx = appcontext.With(ctx, r.AppCtx)
-	ch := make(chan {{ $root.DeletedType | ref }}, SubscriptionChannelSize)
+	ch := make(chan {{ $root.DeletedType | ref }}, r.AppCtx.SubChannelSize)
 	last := uint64(0)
 	if lastMessageID != nil {
 		var err error

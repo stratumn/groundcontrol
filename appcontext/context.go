@@ -39,6 +39,7 @@ type Context struct {
 	OpenEditorCommand   string
 	ViewerID            string
 	SystemID            string
+	SubChannelSize      int
 }
 
 // With adds an app context to a Go context.

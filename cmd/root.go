@@ -47,10 +47,12 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptSourcesFile(viper.GetString("sources-file")),
 			app.OptKeysFile(viper.GetString("keys-file")),
 			app.OptListenAddress(viper.GetString("listen-address")),
-			app.OptJobConcurrency(viper.GetInt("job-concurrency")),
+			app.OptJobsConcurrency(viper.GetInt("jobs-concurrency")),
+			app.OptJobsChannelSize(viper.GetInt("jobs-channel-size")),
 			app.OptLogLevel(model.LogLevel(strings.ToUpper(viper.GetString("log-level")))),
 			app.OptLogCap(viper.GetInt("log-cap")),
 			app.OptPubSubHistoryCap(viper.GetInt("pubsub-history-cap")),
+			app.OptSubscriptionChannelSize(viper.GetInt("subscription-channel-size")),
 			app.OptPeriodicJobsInterval(viper.GetDuration("periodic-jobs-interval")),
 			app.OptGracefulShutdownTimeout(viper.GetDuration("graceful-shutdown-timeout")),
 			app.OptOpenBrowser(viper.GetBool("open-browser")),
@@ -80,10 +82,12 @@ func init() {
 	rootCmd.PersistentFlags().String("sources-file", app.DefaultSourcesFile, "sources config file")
 	rootCmd.PersistentFlags().String("keys-file", app.DefaultKeysFile, "keys config file")
 	rootCmd.PersistentFlags().String("listen-address", app.DefaultListenAddress, "address the server should listen on")
-	rootCmd.PersistentFlags().Int("job-concurrency", app.DefaultJobConcurrency, "how many jobs can run concurrency")
+	rootCmd.PersistentFlags().Int("jobs-concurrency", app.DefaultJobsConcurrency, "how many jobs can run concurrency")
+	rootCmd.PersistentFlags().Int("jobs-channel-size", app.DefaultJobsChannelSize, "how many jobs a work queue can hold")
 	rootCmd.PersistentFlags().String("log-level", app.DefaultLogLevel.String(), "minimum level of log messages (debug, info, warning, error)")
 	rootCmd.PersistentFlags().Int("log-cap", app.DefaultLogCap, "maximum number of messages the logger will keep")
 	rootCmd.PersistentFlags().Int("pubsub-history-cap", app.DefaultLogCap, "maximum number of messages the subscription manager will keep")
+	rootCmd.PersistentFlags().Int("subscription-channel-size", app.DefaultSubscriptionChannelSize, "how many messages a subscription channel can hold")
 	rootCmd.PersistentFlags().Duration("periodic-jobs-interval", app.DefaultPeriodicJobsInterval, "how long to wait between rounds of periodic jobs")
 	rootCmd.PersistentFlags().Duration("graceful-shutdown-timeout", app.DefaultGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown the app")
 	rootCmd.PersistentFlags().Bool("open-browser", app.DefaultOpenBrowser, "open the user interface in a browser")
@@ -96,10 +100,12 @@ func init() {
 		"sources-file",
 		"keys-file",
 		"listen-address",
-		"job-concurrency",
+		"jobs-concurrency",
+		"jobs-channel-size",
 		"log-level",
 		"log-cap",
 		"pubsub-history-cap",
+		"subscription-channel-size",
 		"periodic-jobs-interval",
 		"graceful-shutdown-timeout",
 		"open-browser",
