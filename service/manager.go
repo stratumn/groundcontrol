@@ -217,7 +217,7 @@ func (m *Manager) runTasks(ctx context.Context, taskIDs []string, env []string) 
 	return nil
 }
 
-// waitTillDone blocks until the Service exists.
+// waitTillDone blocks until the Service exits.
 func (m *Manager) waitTillDone(ctx context.Context, serviceID string, lastMsgID uint64) {
 	subsCtx, cancel := context.WithCancel(ctx)
 	defer cancel()

@@ -23,17 +23,21 @@ import (
 
 	"groundcontrol/appcontext"
 	"groundcontrol/model"
-	"groundcontrol/queue"
 	"groundcontrol/relay"
 )
 
 // Worker is a function that is executed once a job is running.
 type Worker = func(ctx context.Context) error
 
+// ChannelSize is the size off the queue channels.
+const ChannelSize = 1024
+
 // Queue queues Jobs and executes them.
 type Queue struct {
-	queue   *queue.Queue
-	cancels sync.Map
+	concurrency int
+	hiCh        chan message
+	ch          chan message
+	cancels     sync.Map
 
 	lastID uint64
 
@@ -47,88 +51,206 @@ type Queue struct {
 	failedCounter   int64
 }
 
+type message struct {
+	Job *model.Job
+	Fn  Worker
+}
+
 // NewQueue creates a Queue with given concurrency.
 func NewQueue(concurrency int) *Queue {
-	return &Queue{queue: queue.New(concurrency)}
+	return &Queue{
+		concurrency: concurrency,
+		ch:          make(chan message, ChannelSize),
+		hiCh:        make(chan message, ChannelSize),
+	}
 }
 
 // Work starts running jobs and blocks until the context is done.
 func (q *Queue) Work(ctx context.Context) error {
-	err := q.queue.Work(ctx)
-	// Queue is done.
-	q.mu.Lock()
-	q.done = true
-	q.mu.Unlock()
-	q.failQueued(ctx)
-	return err
+	wg := sync.WaitGroup{}
+	wg.Add(q.concurrency)
+	for i := 0; i < q.concurrency; i++ {
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case msg := <-q.hiCh:
+					q.run(ctx, msg)
+					continue
+				default:
+				}
+				select {
+				case <-ctx.Done():
+					return
+				case msg := <-q.hiCh:
+					q.run(ctx, msg)
+				case msg := <-q.ch:
+					q.run(ctx, msg)
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	q.clean(ctx)
+	return ctx.Err()
 }
 
 // Add adds a job to the queue and returns the job's ID.
-func (q *Queue) Add(ctx context.Context, name string, ownerID string, highPriority bool, fn Worker) string {
+func (q *Queue) Add(ctx context.Context, name, ownerID string, highPriority bool, fn Worker) string {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	job := q.buildJob(ctx, name, ownerID, highPriority)
-	log := appcontext.Get(ctx).Log
+	// Don't save job til we know if it's queued or starts running immediately.
+	job := q.initJob(ctx, name, ownerID, highPriority)
 	if q.done {
-		log.ErrorWithOwner(ctx, job.ID, "job failed because queue is done")
 		q.setStatus(ctx, job, model.JobStatusFailed)
 		job.MustStore(ctx)
+		q.addJobToSystem(ctx, job.ID)
+		log := appcontext.Get(ctx).Log
+		log.DebugWithOwner(ctx, job.ID, "job failed because queue is done")
 		return job.ID
 	}
-	q.prepend(ctx, job.ID)
-	log.DebugWithOwner(ctx, job.ID, "job queued")
-	q.setStatus(ctx, job, model.JobStatusQueued)
-	job.MustStore(ctx)
-	f := func() {
-		q.startJob(ctx, job.ID, fn)
-	}
-	if highPriority {
-		go q.queue.DoHi(f)
-	} else {
-		go q.queue.Do(f)
-	}
+	msg := message{Job: job, Fn: fn}
+	q.send(ctx, msg, highPriority)
 	return job.ID
 }
 
-// Stop cancels a running job.
+// Stop cancels a queued or running job.
 func (q *Queue) Stop(ctx context.Context, id string) error {
+	log := appcontext.Get(ctx).Log
 	return model.LockJobE(ctx, id, func(job *model.Job) error {
-		if job.Status != model.JobStatusRunning {
+		switch job.Status {
+		case model.JobStatusQueued:
+			q.setStatus(ctx, job, model.JobStatusFailed)
+			log.ErrorWithOwner(ctx, job.ID, "job failed because it was stopped")
+		case model.JobStatusRunning:
+			q.setStatus(ctx, job, model.JobStatusStopping)
+			log.DebugWithOwner(ctx, job.ID, "job stopping")
+			actual, _ := q.cancels.Load(id)
+			actual.(context.CancelFunc)()
+		default:
 			return model.ErrNotRunning
 		}
-		actual, _ := q.cancels.Load(id)
-		q.setStatus(ctx, job, model.JobStatusStopping)
 		job.UpdatedAt = model.DateTime(time.Now())
 		job.MustStore(ctx)
-		actual.(context.CancelFunc)()
 		return nil
 	})
 }
 
-func (q *Queue) failQueued(ctx context.Context) {
-	systemID := appcontext.Get(ctx).SystemID
-	system := model.MustLoadSystem(ctx, systemID)
-	for _, jobID := range system.JobsIDs {
-		model.MustLockJob(ctx, jobID, func(job *model.Job) {
-			if job.Status != model.JobStatusQueued {
+func (q *Queue) send(ctx context.Context, msg message, highPriority bool) {
+	log := appcontext.Get(ctx).Log
+	ch := q.ch
+	if highPriority {
+		ch = q.hiCh
+	}
+	select {
+	case ch <- msg:
+		model.LockOrNewJob(ctx, msg.Job.ID, func(_ *model.Job, isNew bool) {
+			if !isNew {
+				// Already stored and at least running.
 				return
 			}
+			// Contains the job initialized in Add() but not stored yet.
+			job := msg.Job
+			q.setStatus(ctx, job, model.JobStatusQueued)
+			job.MustStore(ctx)
+			q.addJobToSystem(ctx, job.ID)
+			log.DebugWithOwner(ctx, job.ID, "job queued")
+		})
+	default:
+		model.MustLockJob(ctx, msg.Job.ID, func(job *model.Job) {
 			q.setStatus(ctx, job, model.JobStatusFailed)
 			job.MustStore(ctx)
+			q.addJobToSystem(ctx, job.ID)
+			log.DebugWithOwner(ctx, job.ID, "job failed because queue is full")
 		})
 	}
 }
 
-func (q *Queue) buildJob(ctx context.Context, name, ownerID string, highPriority bool) *model.Job {
+func (q *Queue) run(ctx context.Context, msg message) {
+	var jobCtx context.Context
+	var cancel context.CancelFunc
+	stopped := false
+	jobID := msg.Job.ID
+	model.LockOrNewJob(ctx, jobID, func(job *model.Job, isNew bool) {
+		if isNew {
+			// Job isn't store yet and started running before even being queued.
+			*job = *msg.Job
+			q.addJobToSystem(ctx, job.ID)
+		} else if job.Status == model.JobStatusFailed {
+			// Job was canceled by calling Stop().
+			stopped = true
+			return
+		}
+		job.UpdatedAt = model.DateTime(time.Now())
+		q.setStatus(ctx, job, model.JobStatusRunning)
+		job.MustStore(ctx)
+		jobCtx, cancel = q.createCtx(ctx)
+		q.cancels.Store(job.ID, cancel)
+	})
+	if stopped {
+		return
+	}
+	log := appcontext.Get(ctx).Log
+	log.DebugWithOwner(ctx, jobID, "job running")
+	q.handleJobErr(ctx, jobID, msg.Fn(jobCtx))
+	cancel()
+}
+
+func (q *Queue) handleJobErr(ctx context.Context, jobID string, err error) {
+	log := appcontext.Get(ctx).Log
+	model.MustLockJob(ctx, jobID, func(job *model.Job) {
+		if err != nil {
+			q.setStatus(ctx, job, model.JobStatusFailed)
+			log.ErrorWithOwner(ctx, jobID, "job failed because %s", err.Error())
+		} else {
+			q.setStatus(ctx, job, model.JobStatusDone)
+			log.DebugWithOwner(ctx, jobID, "job done")
+		}
+		q.cancels.Delete(job.ID)
+		job.UpdatedAt = model.DateTime(time.Now())
+		job.MustStore(ctx)
+	})
+}
+
+func (q *Queue) clean(ctx context.Context) {
+	q.mu.Lock()
+	q.done = true
+	q.mu.Unlock()
+	q.drain(ctx, q.ch)
+	q.drain(ctx, q.hiCh)
+}
+
+func (q *Queue) drain(ctx context.Context, ch chan message) {
+	for {
+		select {
+		case msg := <-ch:
+			model.LockOrNewJob(ctx, msg.Job.ID, func(job *model.Job, isNew bool) {
+				if isNew {
+					*job = *msg.Job
+				}
+				job.UpdatedAt = model.DateTime(time.Now())
+				q.setStatus(ctx, job, model.JobStatusFailed)
+				job.MustStore(ctx)
+			})
+		default:
+			close(ch)
+			return
+		}
+	}
+}
+
+func (q *Queue) initJob(ctx context.Context, name, ownerID string, highPriority bool) *model.Job {
 	priority := model.JobPriorityNormal
 	if highPriority {
 		priority = model.JobPriorityHigh
 	}
 	id := atomic.AddUint64(&q.lastID, 1)
-	relayID := relay.EncodeID(model.NodeTypeJob, fmt.Sprint(id))
+	jobID := relay.EncodeID(model.NodeTypeJob, fmt.Sprint(id))
 	now := model.DateTime(time.Now())
 	return &model.Job{
-		ID:        relayID,
+		ID:        jobID,
 		Priority:  priority,
 		Name:      name,
 		CreatedAt: now,
@@ -137,7 +259,7 @@ func (q *Queue) buildJob(ctx context.Context, name, ownerID string, highPriority
 	}
 }
 
-func (q *Queue) prepend(ctx context.Context, jobID string) {
+func (q *Queue) addJobToSystem(ctx context.Context, jobID string) {
 	systemID := appcontext.Get(ctx).SystemID
 	model.MustLockSystem(ctx, systemID, func(system *model.System) {
 		system.JobsIDs = append([]string{jobID}, system.JobsIDs...)
@@ -145,37 +267,10 @@ func (q *Queue) prepend(ctx context.Context, jobID string) {
 	})
 }
 
-func (q *Queue) startJob(ctx context.Context, jobID string, fn Worker) {
-	model.MustLockJob(ctx, jobID, func(job *model.Job) {
-		if job.Status != model.JobStatusQueued {
-			return
-		}
-		// We must create a new context because the other one closes after a request.
-		appCtx := appcontext.Get(ctx)
-		ctx := appcontext.With(context.Background(), appCtx)
-		ctx, cancel := context.WithCancel(ctx)
-		q.cancels.Store(job.ID, cancel)
-		q.setStatus(ctx, job, model.JobStatusRunning)
-		job.UpdatedAt = model.DateTime(time.Now())
-		job.MustStore(ctx)
-		q.runJob(ctx, job, fn)
-		q.cancels.Delete(job.ID)
-		cancel()
-	})
-}
-
-func (q *Queue) runJob(ctx context.Context, job *model.Job, fn Worker) {
-	log := appcontext.Get(ctx).Log
-	log.DebugWithOwner(ctx, job.ID, "job running")
-	if err := fn(ctx); err != nil {
-		log.ErrorWithOwner(ctx, job.ID, "job failed because %s", err.Error())
-		q.setStatus(ctx, job, model.JobStatusFailed)
-	} else {
-		log.DebugWithOwner(ctx, job.ID, "job done")
-		q.setStatus(ctx, job, model.JobStatusDone)
-	}
-	job.UpdatedAt = model.DateTime(time.Now())
-	job.MustStore(ctx)
+func (q *Queue) createCtx(ctx context.Context) (context.Context, context.CancelFunc) {
+	appCtx := appcontext.Get(ctx)
+	ctx = appcontext.With(ctx, appCtx)
+	return context.WithCancel(ctx)
 }
 
 func (q *Queue) setStatus(ctx context.Context, job *model.Job, status model.JobStatus) {
