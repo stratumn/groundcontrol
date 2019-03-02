@@ -419,18 +419,6 @@ type Workspace implements Node {
   description: String
   """Notes contains optional notes."""
   notes: String
-  """IsCloning indicates whether any of the Projects is currently cloning."""
-  isCloning: Boolean! @dynamic
-  """IsCloned indicates whether all Projects are cloned."""
-  isCloned: Boolean! @dynamic
-  """IsPulling indicates whether any of the Projects is currently pulling."""
-  isPulling: Boolean! @dynamic
-  """IsBehind indicates whether any of the Projects is behind. See Project."""
-  isBehind: Boolean! @dynamic
-  """IsAhead indicates whether any of the Projects is ahead. See Project."""
-  isAhead: Boolean! @dynamic
-  """IsClean indicates whether all Projects are clean. See Project."""
-  isClean: Boolean! @dynamic
 }
 
 """Project tracks a Git repository and reference."""

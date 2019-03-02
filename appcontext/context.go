@@ -52,7 +52,6 @@ func Get(ctx context.Context) *Context {
 	if val, ok := ctx.Value(contextKey).(*Context); ok {
 		return val
 	}
-
 	return nil
 }
 

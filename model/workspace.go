@@ -20,77 +20,16 @@ import (
 	"strings"
 )
 
-// BeforeStore sorts the Workspaces by Slug before storing the Workspace.
+// BeforeStore sorts collections before storing the Workspace.
 func (n *Workspace) BeforeStore(ctx context.Context) {
+	n.SortProjects(ctx)
+}
+
+// SortProjects sorts the Projects by Slug.
+func (n *Workspace) SortProjects(ctx context.Context) {
 	sort.Slice(n.ProjectsIDs, func(i, j int) bool {
 		a := MustLoadProject(ctx, n.ProjectsIDs[i])
 		b := MustLoadProject(ctx, n.ProjectsIDs[j])
 		return strings.ToLower(a.Slug) < strings.ToLower(b.Slug)
 	})
-}
-
-// IsCloning indicates whether any of the Projects is currently cloning.
-func (n *Workspace) IsCloning(ctx context.Context) bool {
-	for _, id := range n.ProjectsIDs {
-		node := MustLoadProject(ctx, id)
-		if node.IsCloning {
-			return true
-		}
-	}
-	return false
-}
-
-// IsCloned indicates whether all Projects are cloned.
-func (n *Workspace) IsCloned(ctx context.Context) bool {
-	for _, id := range n.ProjectsIDs {
-		node := MustLoadProject(ctx, id)
-		if !node.IsCloned(ctx) {
-			return false
-		}
-	}
-	return true
-}
-
-// IsPulling indicates whether any of the Projects is currently pulling.
-func (n *Workspace) IsPulling(ctx context.Context) bool {
-	for _, id := range n.ProjectsIDs {
-		node := MustLoadProject(ctx, id)
-		if node.IsPulling {
-			return true
-		}
-	}
-	return false
-}
-
-// IsBehind indicates whether any of the Projects is behind. See Project.
-func (n *Workspace) IsBehind(ctx context.Context) bool {
-	for _, id := range n.ProjectsIDs {
-		node := MustLoadProject(ctx, id)
-		if node.IsBehind {
-			return true
-		}
-	}
-	return false
-}
-
-// IsAhead indicates whether any of the Projects is ahead. See Project.
-func (n *Workspace) IsAhead(ctx context.Context) bool {
-	for _, id := range n.ProjectsIDs {
-		node := MustLoadProject(ctx, id)
-		if node.IsAhead {
-			return true
-		}
-	}
-	return false
-}
-
-// IsClean indicates whether all Projects are clean. See Project.
-func (n *Workspace) IsClean(ctx context.Context) bool {
-	for _, id := range n.ProjectsIDs {
-		node := MustLoadProject(ctx, id)
-		if !node.IsClean {
-			return false
-		}
-	}
-	return true
 }
