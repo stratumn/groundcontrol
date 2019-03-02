@@ -20,7 +20,7 @@ import (
 	"groundcontrol/model"
 )
 
-func (r *subscriptionResolver) SourceDeleted(ctx context.Context, id *string, lastMessageID *string) (<-chan *model.DeletedNode, error) {
+func (r *subscriptionResolver) SourceDeleted(ctx context.Context, id *string, lastMessageID *string) (<-chan model.Source, error) {
 	dirCh, err := r.DirectorySourceDeleted(ctx, id, lastMessageID)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (r *subscriptionResolver) SourceDeleted(ctx context.Context, id *string, la
 	if err != nil {
 		return nil, err
 	}
-	ch := make(chan *model.DeletedNode, r.AppCtx.SubChannelSize)
+	ch := make(chan model.Source, r.AppCtx.SubChannelSize)
 	go func() {
 		for {
 			select {

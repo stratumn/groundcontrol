@@ -36,19 +36,28 @@ type Source interface {
 	Workspaces(ctx context.Context, after, before *string, first, last *int) (*WorkspaceConnection, error)
 }
 
-// MustLoadSource loads a Source or panics on failure.
-func MustLoadSource(ctx context.Context, id string) Source {
+// LoadSource loads a Source.
+func LoadSource(ctx context.Context, id string) (Source, error) {
 	identifiers, err := relay.DecodeID(id)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	switch identifiers[0] {
 	case NodeTypeDirectorySource:
-		return MustLoadDirectorySource(ctx, id)
+		return LoadDirectorySource(ctx, id)
 	case NodeTypeGitSource:
-		return MustLoadGitSource(ctx, id)
+		return LoadGitSource(ctx, id)
 	}
-	panic(ErrType)
+	return nil, ErrType
+}
+
+// MustLoadSource loads a Source or panics on failure.
+func MustLoadSource(ctx context.Context, id string) Source {
+	node, err := LoadSource(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return node
 }
 
 // LoadWorkspacesInSource loads and stores nodes for the workspaces in a directory recursively.

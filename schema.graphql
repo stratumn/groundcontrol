@@ -677,12 +677,6 @@ type Ok {
   ok: Boolean!
 }
 
-"""DeletedNode is deleted node."""
-type DeletedNode {
-  """ID is the global ID of the deleted Node."""
-  id: ID!
-}
-
 """Query is the root query resolver."""
 type Query {
   """Node finds a node from a global ID."""
@@ -700,7 +694,7 @@ type Mutation {
   """AddGitSource adds a GitSource."""
   addGitSource(input: GitSourceInput!): GitSource!
   """DeleteSource deletes a Source."""
-  deleteSource(id: ID!): DeletedNode!
+  deleteSource(id: ID!): Source!
   """LoadProjectCommits queues a Job to load the Commits of a Project."""
   loadProjectCommits(id: String!): Job! @job
   """loadWorkspaceCommits queues a Job to load the commits of all the Projects of a Workspace."""
@@ -722,7 +716,7 @@ type Mutation {
   """SetKey sets a Key."""
   setKey(input: KeyInput!): Key!
   """DeleteKey deletes a Key."""
-  deleteKey(id: ID!): DeletedNode!
+  deleteKey(id: ID!): Key!
   """StopJob stops a RUNNING Job."""
   stopJob(id: String!): Job!
   """OpenEditor opens the text editor."""
@@ -738,35 +732,35 @@ type Subscription {
   """DirectorySourceStored sends a DirectorySource when added or updated."""
   directorySourceStored(id: ID, lastMessageId: ID): DirectorySource! @stored
   """DirectorySourceDeleted sends a message when a DirectorySource is deleted."""
-  directorySourceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  directorySourceDeleted(id: ID, lastMessageId: ID): DirectorySource! @deleted
   """GitSourceStored sends a GitSource when added or updated."""
   gitSourceStored(id: ID, lastMessageId: ID): GitSource! @stored
   """GitSourceDeleted sends a message when a GitSource is deleted."""
-  gitSourceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  gitSourceDeleted(id: ID, lastMessageId: ID): GitSource! @deleted
   """SourceStored sends a Source when added or updated."""
   sourceStored(id: ID, lastMessageId: ID): Source!
   """SourceDeleted sends a message when a Source is deleted."""
-  sourceDeleted(id: ID, lastMessageId: ID): DeletedNode!
+  sourceDeleted(id: ID, lastMessageId: ID): Source!
   """WorkspaceStored sends a Workspace when added updated."""
   workspaceStored(id: ID, lastMessageId: ID): Workspace! @stored
   """WorkspaceDeleted sends a message when a Workspace is deleted."""
-  workspaceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  workspaceDeleted(id: ID, lastMessageId: ID): Workspace! @deleted
   """ProjectStored sends a Project when added or updated."""
   projectStored(id: ID, lastMessageId: ID): Project! @stored
   """ProjectDeleted sends a message when a Project is deleted."""
-  projectDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  projectDeleted(id: ID, lastMessageId: ID): Project! @deleted
   """TaskStored sends a Task when added or updated."""
   taskStored(id: ID, lastMessageId: ID): Task! @stored
   """TaskDeleted sends a Message when a Task is deleted."""
-  taskDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  taskDeleted(id: ID, lastMessageId: ID): Task! @deleted
   """ServiceStored sends a Service when added or updated."""
   serviceStored(id: ID, lastMessageId: ID): Service! @stored
   """ServiceDeleted sends a Message when a Service is deleted."""
-  serviceDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  serviceDeleted(id: ID, lastMessageId: ID): Service! @deleted
   """KeyStored sends a Key when added or updated."""
   keyStored(id: ID, lastMessageId: ID): Key! @stored
   """KeyDeleted sends a message when a Key is deleted."""
-  keyDeleted(id: ID, lastMessageId: ID): DeletedNode! @deleted
+  keyDeleted(id: ID, lastMessageId: ID): Key! @deleted
   """JobStored sends a Job when added or updated."""
   jobStored(id: ID, lastMessageId: ID): Job! @stored
   """LogEntryStored sends a LogEntry when added or updated."""

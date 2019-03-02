@@ -3,9 +3,6 @@
 {{ reserveImport "strconv" }}
 
 {{ reserveImport "groundcontrol/appcontext" }}
-{{ reserveImport "groundcontrol/model" }}
-
-{{ $root := . }}
 
 {{- range $subscription := .Stored }}
 func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ .Type | ref }}, error) {
@@ -34,9 +31,9 @@ func (r *subscriptionResolver) {{ .TypeName }}Stored(ctx context.Context, id *st
 {{- end }}
 
 {{- range $subscription := .Stored }}
-func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ $root.DeletedType | ref }}, error) {
+func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *string, lastMessageID *string) (<-chan {{ .Type | ref }}, error) {
 	ctx = appcontext.With(ctx, r.AppCtx)
-	ch := make(chan {{ $root.DeletedType | ref }}, r.AppCtx.SubChannelSize)
+	ch := make(chan {{ .Type | ref }}, r.AppCtx.SubChannelSize)
 	last := uint64(0)
 	if lastMessageID != nil {
 		var err error
@@ -51,7 +48,7 @@ func (r *subscriptionResolver) {{ .TypeName }}Deleted(ctx context.Context, id *s
 			return
 		}
 		select {
-		case ch <- &{{ $root.DeletedName }}{ID: node.ID}:
+		case ch <- node:
 		default:
 		}
 	})

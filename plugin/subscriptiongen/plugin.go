@@ -32,10 +32,8 @@ type Plugin struct {
 
 // SubscriptionBuild contains data about the subscriptions to build.
 type SubscriptionBuild struct {
-	DeletedType types.Type
-	DeletedName string
-	Stored      []*Stored
-	Deleted     []*Deleted
+	Stored  []*Stored
+	Deleted []*Deleted
 }
 
 // Stored contains data about a stored subscription to build.
@@ -78,15 +76,7 @@ func (p *Plugin) MutateConfig(cfg *config.Config) error {
 		return err
 	}
 
-	deletedType, err := util.GoType(cfg, schema, binder, "DeletedNode")
-	if err != nil {
-		return err
-	}
-
-	build := &SubscriptionBuild{
-		DeletedType: types.NewPointer(deletedType),
-		DeletedName: "model.DeletedNode",
-	}
+	build := &SubscriptionBuild{}
 
 	subscriptions := schema.Types["Subscription"]
 	if subscriptions == nil {
