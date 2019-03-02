@@ -12,11 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package service
-
-import "errors"
-
-// Errors.
-var (
-	ErrStatus = errors.New("it has the wrong status")
-)
+// Package mock contains auto generated mocks and helpers for unit tests.
+package mock

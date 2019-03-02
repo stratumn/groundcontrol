@@ -57,11 +57,11 @@ func (m *Manager) Start(ctx context.Context, serviceID string, env []string) err
 	return nil
 }
 
-// Stop stops a running Service.
+// Stop stops a running Service. If the service isn't running it returns ErrStatus.
 func (m *Manager) Stop(ctx context.Context, serviceID string) error {
 	return model.LockServiceE(ctx, serviceID, func(service *model.Service) error {
 		if service.Status != model.ServiceStatusRunning {
-			return model.ErrNotRunning
+			return ErrStatus
 		}
 		m.setStatus(ctx, service, model.ServiceStatusStopping)
 		service.MustStore(ctx)
@@ -105,7 +105,7 @@ func (m *Manager) startService(ctx context.Context, serviceID string, env []stri
 	return model.LockServiceE(ctx, serviceID, func(service *model.Service) error {
 		switch service.Status {
 		case model.ServiceStatusStarting, model.ServiceStatusStopping:
-			return ErrNotStopped
+			return ErrStatus
 		case model.ServiceStatusRunning:
 			return nil
 		}

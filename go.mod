@@ -5,6 +5,7 @@ require (
 	github.com/99designs/gqlgen-contrib v0.0.0-20181214005309-52113d2e3f08
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/go-chi/chi v4.0.1+incompatible
+	github.com/golang/mock v1.2.0
 	github.com/google/pprof v0.0.0-20190208070709-b421f19a5c07 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect

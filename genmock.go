@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package service
+//go:generate go run github.com/golang/mock/mockgen -source appcontext/context.go -destination mock/auto_appcontext.go -package mock
 
-import "errors"
-
-// Errors.
-var (
-	ErrStatus = errors.New("it has the wrong status")
-)
+package main

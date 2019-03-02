@@ -29,7 +29,8 @@ import (
 // Worker is a function that is executed once a job is running.
 type Worker = func(ctx context.Context) error
 
-// ChannelSize is the size off the queue channels.
+// ChannelSize is the size for each channel of the queue.
+// A job will fail if the channel of the corresponding priority is full.
 const ChannelSize = 1024
 
 // Queue queues Jobs and executes them.
@@ -116,7 +117,7 @@ func (q *Queue) Add(ctx context.Context, name, ownerID string, highPriority bool
 	return job.ID
 }
 
-// Stop cancels a queued or running job.
+// Stop cancels a queued or running job. If it has another status state it returns ErrStatus.
 func (q *Queue) Stop(ctx context.Context, id string) error {
 	log := appcontext.Get(ctx).Log
 	return model.LockJobE(ctx, id, func(job *model.Job) error {
@@ -130,7 +131,7 @@ func (q *Queue) Stop(ctx context.Context, id string) error {
 			actual, _ := q.cancels.Load(id)
 			actual.(context.CancelFunc)()
 		default:
-			return model.ErrNotRunning
+			return ErrStatus
 		}
 		job.UpdatedAt = model.DateTime(time.Now())
 		job.MustStore(ctx)

@@ -16,9 +16,10 @@
 
 package main
 
-// Import all the tools to include them in dependencies.
+// Import all the tools to include them in gomod.
 import (
 	_ "github.com/99designs/gqlgen/api"
 	_ "github.com/99designs/gqlgen/codegen/config"
+	_ "github.com/golang/mock/mockgen"
 	_ "github.com/shurcooL/vfsgen"
 )
