@@ -27,7 +27,7 @@ import (
 
 const (
 	// DefaultListenAddress is the default listen address.
-	DefaultListenAddress = ":3333"
+	DefaultListenAddress = "localhost:4444"
 	// DefaultJobsConcurrency is the default jobs concurrency.
 	DefaultJobsConcurrency = 2
 	// DefaultJobsChannelSize is the default jobs channel size.
