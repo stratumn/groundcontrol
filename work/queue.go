@@ -32,7 +32,6 @@ type Worker = func(ctx context.Context) error
 // Queue queues Jobs and executes them.
 type Queue struct {
 	concurrency int
-	chSize      int
 
 	hiCh    chan message
 	ch      chan message
@@ -61,6 +60,7 @@ type message struct {
 func NewQueue(concurrency, channelSize int) *Queue {
 	return &Queue{
 		concurrency: concurrency,
+		lastID:      uint64(time.Now().Unix()),
 		ch:          make(chan message, channelSize),
 		hiCh:        make(chan message, channelSize),
 	}
@@ -147,7 +147,7 @@ func (q *Queue) send(ctx context.Context, msg message, highPriority bool) {
 	}
 	select {
 	case ch <- msg:
-		model.LockOrNewJob(ctx, msg.Job.ID, func(_ *model.Job, isNew bool) {
+		model.MustLockOrNewJob(ctx, msg.Job.ID, func(_ *model.Job, isNew bool) {
 			if !isNew {
 				// Already stored and at least running.
 				return
@@ -174,7 +174,7 @@ func (q *Queue) run(ctx context.Context, msg message) {
 	var cancel context.CancelFunc
 	stopped := false
 	jobID := msg.Job.ID
-	model.LockOrNewJob(ctx, jobID, func(job *model.Job, isNew bool) {
+	model.MustLockOrNewJob(ctx, jobID, func(job *model.Job, isNew bool) {
 		if isNew {
 			// Job isn't store yet and started running before even being queued.
 			*job = *msg.Job
@@ -227,7 +227,7 @@ func (q *Queue) drain(ctx context.Context, ch chan message) {
 	for {
 		select {
 		case msg := <-ch:
-			model.LockOrNewJob(ctx, msg.Job.ID, func(job *model.Job, isNew bool) {
+			model.MustLockOrNewJob(ctx, msg.Job.ID, func(job *model.Job, isNew bool) {
 				if isNew {
 					*job = *msg.Job
 				}

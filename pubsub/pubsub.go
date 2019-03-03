@@ -18,6 +18,7 @@ import (
 	"context"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // PubSub deals with subscribing and publishing messages.
@@ -36,7 +37,7 @@ type PubSub struct {
 func New(historyCap int) *PubSub {
 	return &PubSub{
 		historyCap:    historyCap,
-		lastMessageID: 1,
+		lastMessageID: uint64(time.Now().Unix()),
 	}
 }
 

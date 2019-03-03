@@ -57,6 +57,7 @@ func NewLogger(cap int, level model.LogLevel) *Logger {
 	return &Logger{
 		cap:           cap,
 		level:         level,
+		lastID:        uint64(time.Now().Unix()),
 		logEntriesIDs: make([]string, cap*2),
 		stdoutLog:     log.New(os.Stdout, "", log.LstdFlags),
 		stderrLog:     log.New(os.Stderr, "", log.LstdFlags),
