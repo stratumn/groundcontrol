@@ -130,6 +130,9 @@ func initSettings() {
 		viper.SetConfigName(filepath.Base(app.DefaultSettingsFile))
 		viper.SetConfigType(filepath.Ext(app.DefaultSettingsFile))
 	}
+	viper.SetEnvPrefix("groundcontrol")
+	replacer := strings.NewReplacer("-", "_")
+	viper.SetEnvKeyReplacer(replacer)
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err == nil {
 		log.Println("INFO\tusing settings file", viper.ConfigFileUsed())

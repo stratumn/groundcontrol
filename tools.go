@@ -20,6 +20,7 @@ package main
 import (
 	_ "github.com/99designs/gqlgen/api"
 	_ "github.com/99designs/gqlgen/codegen/config"
+	_ "github.com/cortesi/modd/cmd/modd"
 	_ "github.com/golang/mock/mockgen"
 	_ "github.com/shurcooL/vfsgen"
 )

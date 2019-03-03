@@ -49,6 +49,9 @@ test-ui:
 test-go:
 	go test ./...
 
+watch-go:
+	go run github.com/cortesi/modd/cmd/modd
+
 test: test-ui test-go
 
 .PHONY: deps deps-ui deps-go gen-ui gen-go gen-go-release gen-go-fmt test-ui test-go test build-ui build install snapshot clean-generated clean
