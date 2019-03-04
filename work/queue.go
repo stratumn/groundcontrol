@@ -311,7 +311,6 @@ func (q *Queue) addToCounter(status model.JobStatus, delta int64) {
 func (q *Queue) storeMetrics(ctx context.Context) {
 	appCtx := appcontext.Get(ctx)
 	system := model.MustLoadSystem(ctx, appCtx.SystemID)
-
 	model.MustLockJobMetrics(ctx, system.JobMetricsID, func(metrics *model.JobMetrics) {
 		metrics.Queued = int(atomic.LoadInt64(&q.queuedCounter))
 		metrics.Running = int(atomic.LoadInt64(&q.runningCounter))
