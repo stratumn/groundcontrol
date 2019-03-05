@@ -39,8 +39,6 @@ func newHistory(cap int) *history {
 
 func (h *history) Add(id uint64, message interface{}) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
-
 	if h.records == nil {
 		h.records = make([]record, h.cap*2)
 	}
@@ -53,12 +51,11 @@ func (h *history) Add(id uint64, message interface{}) {
 		message: message,
 	}
 	h.head++
+	h.mu.Unlock()
 }
 
 func (h *history) Since(id uint64) (messages []interface{}) {
 	h.mu.RLock()
-	defer h.mu.RUnlock()
-
 	start := h.head - 1
 	for ; start >= 0; start-- {
 		record := h.records[start]
@@ -71,5 +68,6 @@ func (h *history) Since(id uint64) (messages []interface{}) {
 		record := h.records[start]
 		messages = append(messages, record.message)
 	}
+	h.mu.RUnlock()
 	return
 }

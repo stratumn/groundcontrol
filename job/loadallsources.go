@@ -34,7 +34,7 @@ func LoadAllSources(ctx context.Context, highPriority bool) []string {
 		if err != nil {
 			appCtx.Log.ErrorWithOwner(
 				ctx,
-				sourceID,
+				appCtx.SystemID,
 				"LoadSource failed because %s",
 				err.Error(),
 			)

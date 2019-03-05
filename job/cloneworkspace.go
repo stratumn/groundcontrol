@@ -42,7 +42,7 @@ func CloneWorkspace(ctx context.Context, workspaceID string, highPriority bool) 
 		if err != nil {
 			appCtx.Log.ErrorWithOwner(
 				ctx,
-				project.ID,
+				appCtx.SystemID,
 				"CloneWorkspace failed because %s",
 				err.Error(),
 			)

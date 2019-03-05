@@ -86,9 +86,9 @@ func (m *Manager) Clean(ctx context.Context) {
 			return true
 		}
 		log := appCtx.Log
-		log.DebugWithOwner(ctx, serviceID, "stopping service")
+		log.DebugWithOwner(ctx, appCtx.SystemID, "stopping service")
 		if err := m.Stop(ctx, serviceID); err != nil {
-			log.ErrorWithOwner(ctx, serviceID, "failed to stop service because %s", err.Error())
+			log.ErrorWithOwner(ctx, appCtx.SystemID, "failed to stop service because %s", err.Error())
 			return true
 		}
 		waitGroup.Add(1)
@@ -133,9 +133,8 @@ func (m *Manager) startService(ctx context.Context, serviceID string, env []stri
 
 func (m *Manager) buildWriters(ctx context.Context, service *model.Service) (io.WriteCloser, io.WriteCloser, func()) {
 	log := appcontext.Get(ctx).Log
-	ownerID := service.OwnerID()
-	stdout := util.LineSplitter(ctx, log.InfoWithOwner, ownerID)
-	stderr := util.LineSplitter(ctx, log.WarningWithOwner, ownerID)
+	stdout := util.LineSplitter(ctx, log.InfoWithOwner, service.ID)
+	stderr := util.LineSplitter(ctx, log.WarningWithOwner, service.ID)
 	clean := func() {
 		stdout.Close()
 		stderr.Close()
@@ -163,7 +162,7 @@ func (m *Manager) startCmd(ctx context.Context, cmd *exec.Cmd, service *model.Se
 		return err
 	}
 	log := appcontext.Get(ctx).Log
-	log.InfoWithOwner(ctx, service.OwnerID(), service.Command)
+	log.InfoWithOwner(ctx, service.ID, service.Command)
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -184,14 +183,14 @@ func (m *Manager) runCmd(ctx context.Context, cmd *exec.Cmd, serviceID string, c
 		if err != nil && taskErr != nil {
 			err = taskErr
 		}
-		log := appcontext.Get(ctx).Log
-		ownerID := service.OwnerID()
+		appCtx := appcontext.Get(ctx)
+		log := appCtx.Log
 		if err == nil {
 			m.setStatus(ctx, service, model.ServiceStatusStopped)
-			log.DebugWithOwner(ctx, ownerID, "service done")
+			log.DebugWithOwner(ctx, appCtx.SystemID, "service done")
 		} else {
 			m.setStatus(ctx, service, model.ServiceStatusFailed)
-			log.ErrorWithOwner(ctx, ownerID, "service failed because %s", err.Error())
+			log.ErrorWithOwner(ctx, appCtx.SystemID, "service failed because %s", err.Error())
 		}
 		service.MustStore(ctx)
 	})

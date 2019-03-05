@@ -43,7 +43,7 @@ func LoadAllCommits(ctx context.Context, highPriority bool) []string {
 			if err != nil {
 				appCtx.Log.ErrorWithOwner(
 					ctx,
-					project.ID,
+					appCtx.SystemID,
 					"LoadProjectCommits failed because %s",
 					err.Error(),
 				)

@@ -42,7 +42,7 @@ func LoadWorkspaceCommits(ctx context.Context, workspaceID string, highPriority 
 		if err != nil {
 			appCtx.Log.ErrorWithOwner(
 				ctx,
-				project.ID,
+				appCtx.SystemID,
 				"LoadProjectCommits failed because %s",
 				err.Error(),
 			)

@@ -78,7 +78,7 @@ func (n *Task) runStepWithoutProject(ctx context.Context, step *Step, env []stri
 }
 
 func (n *Task) runCommandWithoutProject(ctx context.Context, command *Command, env []string) error {
-	return n.exec(ctx, command.Command, n.WorkspaceID, "", env)
+	return n.exec(ctx, command.Command, "", env)
 }
 
 func (n *Task) runStepWithProject(ctx context.Context, step *Step, project *Project, env []string) error {
@@ -94,19 +94,19 @@ func (n *Task) runStepWithProject(ctx context.Context, step *Step, project *Proj
 }
 
 func (n *Task) runCommandWithProject(ctx context.Context, project *Project, command *Command, env []string) error {
-	return n.exec(ctx, command.Command, project.ID, project.Path(ctx), env)
+	return n.exec(ctx, command.Command, project.Path(ctx), env)
 }
 
-func (n *Task) exec(ctx context.Context, command, ownerID, dir string, env []string) error {
+func (n *Task) exec(ctx context.Context, command, dir string, env []string) error {
 	log := appcontext.Get(ctx).Log
-	stdout := util.LineSplitter(ctx, log.InfoWithOwner, ownerID)
-	stderr := util.LineSplitter(ctx, log.WarningWithOwner, ownerID)
+	stdout := util.LineSplitter(ctx, log.InfoWithOwner, n.ID)
+	stderr := util.LineSplitter(ctx, log.WarningWithOwner, n.ID)
 	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Dir = dir
 	cmd.Env = env
-	log.InfoWithOwner(ctx, ownerID, command)
+	log.InfoWithOwner(ctx, n.ID, command)
 	err := cmd.Run()
 	stdout.Close()
 	stderr.Close()

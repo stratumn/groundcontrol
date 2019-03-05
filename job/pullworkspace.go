@@ -42,7 +42,7 @@ func PullWorkspace(ctx context.Context, workspaceID string, highPriority bool) (
 		if err != nil {
 			appCtx.Log.ErrorWithOwner(
 				ctx,
-				project.ID,
+				appCtx.SystemID,
 				"PullWorkspace failed because %s",
 				err.Error(),
 			)

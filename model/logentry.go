@@ -25,9 +25,10 @@ import (
 
 // BeforeStore parses a source file in the message before storing the node.
 func (n *LogEntry) BeforeStore(ctx context.Context) {
+	appCtx := appcontext.Get(ctx)
 	if err := n.ParseSourceFile(ctx); err != nil {
 		log := appcontext.Get(ctx).Log
-		log.WarningWithOwner(ctx, n.ID, "failed to parse source file because %s", err.Error())
+		log.WarningWithOwner(ctx, appCtx.SystemID, "failed to parse source file because %s", err.Error())
 	}
 }
 
