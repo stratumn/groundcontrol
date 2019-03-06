@@ -2,7 +2,7 @@
 
 # Ground Control (WIP)
 
-*Ground Control* is an application to help deal with multi-repository development using a user friendly web interface.
+_Ground Control_ is an application to help deal with multi-repository development using a user friendly web interface.
 
 Workspaces are defined using YAML files which can easily be shared.
 Each workspace contains multiple projects.
@@ -10,7 +10,7 @@ A project corresponds to a Git reference of a repository (such as a branch or ta
 
 The user interface allows you to perform operations on multiple projects at once, including:
 
-- Automatically sync and share workspaces using *sources*
+- Automatically sync and share workspaces using _sources_
 - Clone all the repositories in a workspace (defaults to `$HOME/groundcontrol/workspaces/$WORKSPACE/$PROJECT`)
 - See if you are up-to-date or ahead of the remote repositories
 - Run tasks on multiple repositories

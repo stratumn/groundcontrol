@@ -9,12 +9,12 @@ before:
 release:
   prerelease: auto
 builds:
-- goarch:
-  - amd64
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -tags=release
+  - goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -tags=release
 archive:
   replacements:
     darwin: macOS
@@ -22,17 +22,17 @@ archive:
     386: i386
     amd64: x86_64
   files:
-  - LICENSE
+    - LICENSE
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
-    - '^docs:'
-    - '^test:'
+      - "^docs:"
+      - "^test:"
 brew:
   github:
     owner: stratumn

@@ -1,8 +1,8 @@
 language: go
 
 go:
-- 1.11.x
+  - 1.11.x
 
 script:
-- env GO111MODULE=on make gen-go
-- env GO111MODULE=on make test-go
+  - env GO111MODULE=on make gen-go
+  - env GO111MODULE=on make test-go

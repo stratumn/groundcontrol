@@ -157,7 +157,6 @@ func (a *App) createBaseNodes(ctx context.Context) {
 		serviceMetricsID = relay.EncodeID(model.NodeTypeServiceMetrics)
 		logMetricsID     = relay.EncodeID(model.NodeTypeLogMetrics)
 	)
-
 	(&model.User{ID: viewerID}).MustStore(ctx)
 	(&model.LogMetrics{ID: logMetricsID}).MustStore(ctx)
 	(&model.JobMetrics{ID: jobMetricsID}).MustStore(ctx)
@@ -282,7 +281,6 @@ func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel fun
 	signalCh := make(chan os.Signal, 2)
 	signal.Notify(signalCh, syscall.SIGTERM)
 	signal.Notify(signalCh, syscall.SIGINT)
-
 	go func() {
 		appCtx := appcontext.Get(ctx)
 		sig := <-signalCh
@@ -296,7 +294,6 @@ func (a *App) startJobs(ctx context.Context, cancel func()) {
 	log := appCtx.Log
 	systemID := appCtx.SystemID
 	log.DebugWithOwner(ctx, systemID, "starting jobs")
-
 	a.waitGroup.Add(1)
 	go func() {
 		defer a.waitGroup.Done()
@@ -313,7 +310,6 @@ func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
 	log := appCtx.Log
 	systemID := appCtx.SystemID
 	log.DebugWithOwner(ctx, systemID, "starting periodic jobs")
-
 	a.waitGroup.Add(1)
 	go func() {
 		defer a.waitGroup.Done()
@@ -333,7 +329,6 @@ func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
 		}
 		log.DebugWithOwner(ctx, systemID, "periodic jobs terminated")
 	}()
-
 }
 
 func (a *App) shutdown(ctx context.Context, server *http.Server) {
@@ -341,7 +336,6 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 	log := appCtx.Log
 	systemID := appCtx.SystemID
 	log.InfoWithOwner(ctx, systemID, "starting shutdown")
-
 	cleanCtx, cancel := context.WithTimeout(
 		appcontext.With(context.Background(), appCtx),
 		a.gracefulShutdownTimeout,
