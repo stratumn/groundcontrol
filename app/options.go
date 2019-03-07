@@ -37,7 +37,7 @@ const (
 	// DefaultLogCap is the default capacity of the logger.
 	DefaultLogCap = 10000
 	// DefaultPubSubHistoryCap is the default capacity of the PubSub history.
-	DefaultPubSubHistoryCap = 1000
+	DefaultPubSubHistoryCap = 20
 	// DefaultSubscriptionChannelSize is the default subscription channel size.
 	DefaultSubscriptionChannelSize = 1024
 	// DefaultPeriodicJobsInterval is the default periodic jobs interval.
