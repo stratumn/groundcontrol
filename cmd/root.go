@@ -61,6 +61,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptCacheDirectory(viper.GetString("cache-directory")),
 			app.OptOpenEditorCommand(viper.GetString("open-editor-command")),
 			app.OptEnableApolloTracing(viper.GetBool("enable-apollo-tracing")),
+			app.OptPprofListenAddress(viper.GetString("pprof-listen-address")),
 			app.OptUI(userInterface),
 		)
 		return app.Start(context.Background())
@@ -96,6 +97,7 @@ func init() {
 	rootCmd.PersistentFlags().String("cache-directory", app.DefaultCacheDirectory, "directory for the cache")
 	rootCmd.PersistentFlags().String("open-editor-command", app.DefaultOpenEditorCommand, "command issued to open a text editor")
 	rootCmd.PersistentFlags().Bool("enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
+	rootCmd.PersistentFlags().String("pprof-listen-address", app.DefaultPprofListenAddress, "address the profiler should listen on")
 	for _, flagName := range []string{
 		"sources-file",
 		"keys-file",
@@ -114,6 +116,7 @@ func init() {
 		"cache-directory",
 		"open-editor-command",
 		"enable-apollo-tracing",
+		"pprof-listen-address",
 	} {
 		if err := viper.BindPFlag(flagName, rootCmd.PersistentFlags().Lookup(flagName)); err != nil {
 			panic(err)

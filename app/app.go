@@ -27,6 +27,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/99designs/gqlgen-contrib/gqlapollotracing"
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
@@ -68,6 +70,7 @@ type App struct {
 	openEditorCommand       string
 	enableApolloTracing     bool
 	enableSignalHandling    bool
+	pprofListenAddress      string
 
 	waitGroup sync.WaitGroup
 }
@@ -93,6 +96,7 @@ func New(opts ...Opt) *App {
 		openEditorCommand:       DefaultOpenEditorCommand,
 		enableApolloTracing:     DefaultEnableApolloTracing,
 		enableSignalHandling:    DefaultEnableSignalHandling,
+		pprofListenAddress:      DefaultPprofListenAddress,
 	}
 	for _, opt := range opts {
 		opt(app)
@@ -126,6 +130,9 @@ func (a *App) Start(ctx context.Context) error {
 	a.startPeriodicJobs(ctx, cancel)
 	if a.openBrowser && a.ui != nil {
 		a.openAddressInBrowser(ctx)
+	}
+	if a.pprofListenAddress != "" {
+		a.startPprof(ctx)
 	}
 	appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "app ready")
 
@@ -391,6 +398,20 @@ func (a *App) openAddressInBrowser(ctx context.Context) {
 	if err := browser.OpenURL(url); err != nil {
 		log.WarningWithOwner(ctx, systemID, "could not resolve address because %s", err.Error())
 	}
+}
+
+func (a *App) startPprof(ctx context.Context) {
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	systemID := appCtx.SystemID
+	log.DebugWithOwner(ctx, systemID, "starting pprof")
+
+	go func() {
+		if err := http.ListenAndServe(a.pprofListenAddress, nil); err != nil && err != http.ErrServerClosed {
+			log.ErrorWithOwner(ctx, systemID, "pprof crashed because %s", err.Error())
+		}
+		log.DebugWithOwner(ctx, systemID, "pprof terminated")
+	}()
 }
 
 func (a *App) getGitSourcePath(repo, reference string) string {

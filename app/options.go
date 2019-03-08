@@ -52,6 +52,8 @@ const (
 	DefaultEnableSignalHandling = true
 	// DefaultOpenEditorCommand is the default open editor command.
 	DefaultOpenEditorCommand = "code --goto %s"
+	// DefaultPprofListenAddress is the default pprof listen address.
+	DefaultPprofListenAddress = ""
 )
 
 var (
@@ -216,5 +218,12 @@ func OptEnableApolloTracing(enable bool) Opt {
 func OptEnableSignalHandling(enable bool) Opt {
 	return func(app *App) {
 		app.enableSignalHandling = enable
+	}
+}
+
+// OptPprofListenAddress sets the pprof listen address.
+func OptPprofListenAddress(address string) Opt {
+	return func(app *App) {
+		app.pprofListenAddress = address
 	}
 }
