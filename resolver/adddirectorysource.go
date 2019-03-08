@@ -28,7 +28,7 @@ func (r *mutationResolver) AddDirectorySource(ctx context.Context, input model.D
 	if err := appCtx.Sources.Save(); err != nil {
 		return nil, err
 	}
-	_, err := job.LoadDirectorySource(ctx, id, true)
+	_, err := job.SyncDirectorySource(ctx, id, true)
 	if err != nil {
 		return nil, err
 	}

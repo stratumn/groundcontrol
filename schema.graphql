@@ -2,12 +2,12 @@
 directive @dynamic on FIELD_DEFINITION
 """Relate indicates a field references another Node."""
 directive @relate(
-  """GoIDFieldName is the name of the field for the ID of the referenced Node that will be used in the Go Struct."""
+  """goIdFieldName is the name of the field for the ID of the referenced Node that will be used in the Go Struct."""
   goIdFieldName: String
 ) on FIELD_DEFINITION
 """Paginate indicates a field that references a collection of Nodes using Relay pagination."""
 directive @paginate(
-  """GoIDSFieldName is the name of the field for the IDs of the referenced Nodes that will be used in the Go Struct."""
+  """goIdsFieldName is the name of the field for the IDs of the referenced Nodes that will be used in the Go Struct."""
   goIdsFieldName: String
 ) on FIELD_DEFINITION
 """Job indicates a mutation that queues one or multiple jobs."""
@@ -97,8 +97,8 @@ interface Source {
   user: User!
   """Workspaces lists the workspaces defined by the Source using Relay pagination."""
   workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection!
-  """IsLoading indicates whether the Source is currently loading workspaces."""
-  isLoading: Boolean!
+  """IsSyncing indicates whether the Source is currently syncing."""
+  isSyncing: Boolean!
 }
 
 """DirectorySourceInput contains fields to create a DirectorySource. See DirectorySource."""
@@ -373,8 +373,8 @@ type DirectorySource implements Node & Source {
   user: User! @relate
   """Workspaces lists the workspaces defined by the Source using Relay pagination."""
   workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection! @paginate
-  """IsLoading indicates whether the Source is currently loading workspaces."""
-  isLoading: Boolean!
+  """IsSyncing indicates whether the Source is currently syncing."""
+  isSyncing: Boolean!
   """Directory is the path to the directory containing the workspaces."""
   directory: String!
 }
@@ -387,8 +387,8 @@ type GitSource implements Node & Source {
   user: User! @relate
   """Workspaces lists the workspaces defined by the Source using Relay pagination."""
   workspaces(after: String, before: String, first: Int, last: Int): WorkspaceConnection! @paginate
-  """IsLoading indicates whether the Source is currently loading workspaces."""
-  isLoading: Boolean!
+  """IsSyncing indicates whether the Source is currently syncing."""
+  isSyncing: Boolean!
   """Repository is a Git repository to track."""
   repository: String!
   """Reference is the Git reference to track."""
@@ -453,8 +453,8 @@ type Project implements Node {
   localCommits(after: String, before: String, first: Int, last: Int): CommitConnection! @paginate
   """Workspace is the Workspace this Project is part of."""
   workspace: Workspace! @relate
-  """IsLoadingCommits indicates whether Commits are currently being loaded."""
-  isLoadingCommits: Boolean!
+  """IsSyncing indicates whether Project is currently syncing with Git."""
+  isSyncing: Boolean!
   """IsCloning indicates whether the repository is being cloned."""
   isCloning: Boolean!
   """IsCloned indicates whether the repository is cloned."""
@@ -469,7 +469,7 @@ type Project implements Node {
   isClean: Boolean!
 }
 
-"""A Git commit."""
+"""Commit is a Git commit."""
 type Commit implements Node {
   """ID is the global ID of the Node."""
   id: ID!
@@ -683,17 +683,17 @@ type Mutation {
   addGitSource(input: GitSourceInput!): GitSource!
   """DeleteSource deletes a Source."""
   deleteSource(id: ID!): Source!
-  """LoadProjectCommits queues a Job to load the Commits of a Project."""
-  loadProjectCommits(id: String!): Job! @job
-  """loadWorkspaceCommits queues a Job to load the commits of all the Projects of a Workspace."""
-  loadWorkspaceCommits(id: String!): [Job!]! @job
+  """SyncProject queues a Job to sync a Project with Git."""
+  syncProject(id: String!): Job! @job
+  """SyncWorkspace queues Jobs to sync all the Projects of a Workspace with Git."""
+  syncWorkspace(id: String!): [Job!]! @job
   """CloneProject queues a Job to clone a Project."""
   cloneProject(id: String!): Job! @job
-  """CloneWorkspace queues a Job to clone all the Projects of a Workspace."""
+  """CloneWorkspace queues Jobs to clone all the Projects of a Workspace."""
   cloneWorkspace(id: String!): [Job!]! @job
   """PullProject queues a Job to pull a Project."""
   pullProject(id: String!): Job! @job
-  """PullWorkspace queues a Job to pull all the Projects of a Workspace."""
+  """PullWorkspace queues Jobs to pull all the Projects of a Workspace."""
   pullWorkspace(id: String!): [Job!]! @job
   """RunTask queues a Job to run a Task."""
   runTask(id: String!, variables: [VariableInput!]): Job!
@@ -705,7 +705,7 @@ type Mutation {
   setKey(input: KeyInput!): Key!
   """DeleteKey deletes a Key."""
   deleteKey(id: ID!): Key!
-  """StopJob stops a RUNNING Job."""
+  """StopJob stops a QUEUED or RUNNING Job."""
   stopJob(id: String!): Job!
   """OpenEditor opens the text editor."""
   openEditor(filename: String!): Ok!

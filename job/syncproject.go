@@ -21,40 +21,30 @@ import (
 	"groundcontrol/model"
 )
 
-// LoadProjectCommits loads the commits of a project from a remote repo and updates the project.
-func LoadProjectCommits(ctx context.Context, projectID string, highPriority bool) (string, error) {
-	if err := startLoadingProjectCommits(ctx, projectID); err != nil {
+// SyncProject queues a Job to sync a Project with Git.
+func SyncProject(ctx context.Context, projectID string, highPriority bool) (string, error) {
+	if err := startSyncingProject(ctx, projectID); err != nil {
 		return "", err
 	}
-
 	appCtx := appcontext.Get(ctx)
-
-	return appCtx.Jobs.Add(
-		ctx,
-		JobNameLoadProjectCommits,
-		projectID,
-		highPriority,
-		func(ctx context.Context) error {
-			return doLoadProjectCommits(ctx, projectID)
-		},
-	), nil
+	return appCtx.Jobs.Add(ctx, JobNameSyncProject, projectID, highPriority, func(ctx context.Context) error {
+		return doSyncProject(ctx, projectID)
+	}), nil
 }
 
-func startLoadingProjectCommits(ctx context.Context, projectID string) error {
+func startSyncingProject(ctx context.Context, projectID string) error {
 	return model.LockProjectE(ctx, projectID, func(project *model.Project) error {
-		if project.IsLoadingCommits {
+		if project.IsSyncing {
 			return ErrDuplicate
 		}
-
-		project.IsLoadingCommits = true
+		project.IsSyncing = true
 		project.MustStore(ctx)
-
 		return nil
 	})
 }
 
-func doLoadProjectCommits(ctx context.Context, projectID string) error {
+func doSyncProject(ctx context.Context, projectID string) error {
 	return model.MustLockProjectE(ctx, projectID, func(project *model.Project) error {
-		return project.Update(ctx)
+		return project.Sync(ctx)
 	})
 }

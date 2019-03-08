@@ -16,12 +16,12 @@ package job
 
 // Job names.
 const (
-	JobNameLoadDirectorySource = "Load Directory Source"
-	JobNameLoadGitSource       = "Load Git Source"
-	JobNameLoadProjectCommits  = "Load Project Commits"
 	JobNameCloneProject        = "Clone Project"
 	JobNamePullProject         = "Pull Project"
 	JobNameRunTask             = "Run Task"
 	JobNameStartService        = "Start Service"
 	JobNameStopService         = "Stop Service"
+	JobNameSyncDirectorySource = "Sync Directory Source"
+	JobNameSyncGitSource       = "Sync Git Source"
+	JobNameSyncProject         = "Sync Project"
 )

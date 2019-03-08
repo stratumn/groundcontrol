@@ -21,23 +21,16 @@ import (
 	"groundcontrol/model"
 )
 
-// RunTask runs a task.
+// RunTask queues a Job to run a Task.
 func RunTask(ctx context.Context, taskID string, env []string, highPriority bool) (string, error) {
 	if err := startRunningTask(ctx, taskID); err != nil {
 		return "", err
 	}
-
 	appCtx := appcontext.Get(ctx)
-
-	return appCtx.Jobs.Add(
-		ctx,
-		JobNameRunTask,
-		model.MustLoadTask(ctx, taskID).WorkspaceID,
-		highPriority,
-		func(ctx context.Context) error {
-			return doRunTask(ctx, taskID, env)
-		},
-	), nil
+	task := model.MustLoadTask(ctx, taskID)
+	return appCtx.Jobs.Add(ctx, JobNameRunTask, task.WorkspaceID, highPriority, func(ctx context.Context) error {
+		return doRunTask(ctx, taskID, env)
+	}), nil
 }
 
 func startRunningTask(ctx context.Context, taskID string) error {
@@ -45,10 +38,8 @@ func startRunningTask(ctx context.Context, taskID string) error {
 		if task.Status != model.TaskStatusStopped && task.Status != model.TaskStatusFailed {
 			return ErrDuplicate
 		}
-
 		task.Status = model.TaskStatusQueued
 		task.MustStore(ctx)
-
 		return nil
 	})
 }

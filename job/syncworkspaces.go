@@ -21,38 +21,25 @@ import (
 	"groundcontrol/model"
 )
 
-// LoadAllCommits creates jobs to load the commits of every project.
-// It doesn't return errors but will output a log message when errors happen.
-func LoadAllCommits(ctx context.Context, highPriority bool) []string {
+// SyncWorkspaces queues Jobs to sync all the Projects of all the Workspaces with Git.
+func SyncWorkspaces(ctx context.Context, highPriority bool) []string {
 	appCtx := appcontext.Get(ctx)
 	viewer := model.MustLoadUser(ctx, appCtx.ViewerID)
-
 	var jobIDs []string
-
 	for _, workspaceID := range viewer.WorkspacesIDs(ctx) {
 		workspace := model.MustLoadWorkspace(ctx, workspaceID)
-
 		for _, projectID := range workspace.ProjectsIDs {
 			project := model.MustLoadProject(ctx, projectID)
-
-			if project.IsLoadingCommits {
+			if project.IsSyncing {
 				continue
 			}
-
-			jobID, err := LoadProjectCommits(ctx, project.ID, highPriority)
+			jobID, err := SyncProject(ctx, project.ID, highPriority)
 			if err != nil {
-				appCtx.Log.ErrorWithOwner(
-					ctx,
-					appCtx.SystemID,
-					"LoadProjectCommits failed because %s",
-					err.Error(),
-				)
+				appCtx.Log.ErrorWithOwner(ctx, appCtx.SystemID, "SyncWorkspaces failed because %s", err.Error())
 				continue
 			}
-
 			jobIDs = append(jobIDs, jobID)
 		}
 	}
-
 	return jobIDs
 }

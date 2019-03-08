@@ -28,7 +28,7 @@ func (r *mutationResolver) AddGitSource(ctx context.Context, input model.GitSour
 	if err := appCtx.Sources.Save(); err != nil {
 		return nil, err
 	}
-	_, err := job.LoadGitSource(ctx, id, true)
+	_, err := job.SyncGitSource(ctx, id, true)
 	if err != nil {
 		return nil, err
 	}

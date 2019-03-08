@@ -31,28 +31,28 @@ import (
 	"groundcontrol/util"
 )
 
-// ReferenceShort is he short name of the Reference.
+// ReferenceShort is the short name of the Reference.
 func (n *Project) ReferenceShort() string {
 	return plumbing.ReferenceName(n.Reference).Short()
 }
 
-// RemoteReferenceShort is he short name of the RemoteReference.
+// RemoteReferenceShort is the short name of the RemoteReference.
 func (n *Project) RemoteReferenceShort() string {
 	return plumbing.ReferenceName(n.RemoteReference).Short()
 }
 
-// LocalReferenceShort is he short name of the LocalReference.
+// LocalReferenceShort is the short name of the LocalReference.
 func (n *Project) LocalReferenceShort() string {
 	return plumbing.ReferenceName(n.LocalReference).Short()
 }
 
-// Path is the path to the project.
+// Path is the path to the Project.
 func (n *Project) Path(ctx context.Context) string {
 	appCtx := appcontext.Get(ctx)
 	return appCtx.GetProjectPath(n.Workspace(ctx).Slug, n.Slug)
 }
 
-// ShortPath is the path to the project relative to the home directory.
+// ShortPath is the path to the Project relative to the home directory.
 func (n *Project) ShortPath(ctx context.Context) (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
@@ -66,18 +66,18 @@ func (n *Project) IsCloned(ctx context.Context) bool {
 	return util.FileExists(n.Path(ctx))
 }
 
-// IsCached checks if the project is cached.
+// IsCached checks if the Project is cached.
 func (n *Project) IsCached(ctx context.Context) bool {
 	return util.FileExists(n.CachePath(ctx))
 }
 
-// CachePath returns the path to the project's cache.
+// CachePath returns the path to the Project's cache.
 func (n *Project) CachePath(ctx context.Context) string {
 	appCtx := appcontext.Get(ctx)
 	return appCtx.GetProjectCachePath(n.Workspace(ctx).Slug, n.Slug)
 }
 
-// Clone clones and upserts the project.
+// Clone clones and store the Project.
 func (n *Project) Clone(ctx context.Context) error {
 	defer func() {
 		n.IsCloning = false
@@ -92,10 +92,10 @@ func (n *Project) Clone(ctx context.Context) error {
 	if _, err := git.PlainCloneContext(ctx, path, false, &opts); err != nil {
 		return err
 	}
-	return n.Update(ctx)
+	return n.Sync(ctx)
 }
 
-// Pull pulls and upserts the project.
+// Pull pulls and stores the Project.
 func (n *Project) Pull(ctx context.Context) error {
 	defer func() {
 		n.IsPulling = false
@@ -121,19 +121,19 @@ func (n *Project) Pull(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return n.Update(ctx)
+	return n.Sync(ctx)
 }
 
-// Update loads the latest commits and upserts the project.
-func (n *Project) Update(ctx context.Context) error {
+// Sync syncs the Project with Git.
+func (n *Project) Sync(ctx context.Context) error {
 	defer func() {
-		n.IsLoadingCommits = false
+		n.IsSyncing = false
 		n.MustStore(ctx)
 	}()
-	n.IsLoadingCommits = true
+	n.IsSyncing = true
 	n.MustStore(ctx)
 
-	if err := n.updateReferences(ctx); err != nil {
+	if err := n.syncReferences(ctx); err != nil {
 		return err
 	}
 	if err := n.fetchOrClone(ctx); err != nil {
@@ -149,7 +149,7 @@ func (n *Project) Update(ctx context.Context) error {
 		return err
 	}
 	n.LocalCommitsIDs = localCommitsIDs
-	return n.updateState(ctx)
+	return n.syncStatus(ctx)
 }
 
 // EnsureCloned guarantees the Project to be cloned by the time it returns.
@@ -256,8 +256,8 @@ func (n *Project) loadCommits(ctx context.Context, refName plumbing.ReferenceNam
 	})
 }
 
-// updateReferences sets the local and remote references according to the current branch.
-func (n *Project) updateReferences(ctx context.Context) error {
+// syncReferences sets the local and remote references according to the current branch.
+func (n *Project) syncReferences(ctx context.Context) error {
 	branch, err := n.currentBranch(ctx)
 	if err != nil {
 		return err
@@ -272,8 +272,8 @@ func (n *Project) updateReferences(ctx context.Context) error {
 	return nil
 }
 
-// updateState updates the state of project according to the local branch.
-func (n *Project) updateState(ctx context.Context) error {
+// syncStatus syncs the status of project according to the local branch.
+func (n *Project) syncStatus(ctx context.Context) error {
 	if !n.IsCloned(ctx) {
 		n.IsBehind = false
 		n.IsAhead = false

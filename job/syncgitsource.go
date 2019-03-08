@@ -21,40 +21,30 @@ import (
 	"groundcontrol/model"
 )
 
-// LoadGitSource loads the workspaces of the source and updates it.
-func LoadGitSource(ctx context.Context, sourceID string, highPriority bool) (string, error) {
-	if err := startLoadingGitSource(ctx, sourceID); err != nil {
+// SyncGitSource queues a job to sync the Workspaces of the GitSource.
+func SyncGitSource(ctx context.Context, sourceID string, highPriority bool) (string, error) {
+	if err := startSyncingGitSource(ctx, sourceID); err != nil {
 		return "", err
 	}
-
 	appCtx := appcontext.Get(ctx)
-
-	return appCtx.Jobs.Add(
-		ctx,
-		JobNameLoadGitSource,
-		sourceID,
-		highPriority,
-		func(ctx context.Context) error {
-			return doLoadGitSource(ctx, sourceID)
-		},
-	), nil
+	return appCtx.Jobs.Add(ctx, JobNameSyncGitSource, sourceID, highPriority, func(ctx context.Context) error {
+		return doSyncGitSource(ctx, sourceID)
+	}), nil
 }
 
-func startLoadingGitSource(ctx context.Context, sourceID string) error {
+func startSyncingGitSource(ctx context.Context, sourceID string) error {
 	return model.LockGitSourceE(ctx, sourceID, func(source *model.GitSource) error {
-		if source.IsLoading {
+		if source.IsSyncing {
 			return ErrDuplicate
 		}
-
-		source.IsLoading = true
+		source.IsSyncing = true
 		source.MustStore(ctx)
-
 		return nil
 	})
 }
 
-func doLoadGitSource(ctx context.Context, sourceID string) error {
+func doSyncGitSource(ctx context.Context, sourceID string) error {
 	return model.MustLockGitSourceE(ctx, sourceID, func(source *model.GitSource) error {
-		return source.Update(ctx)
+		return source.Sync(ctx)
 	})
 }

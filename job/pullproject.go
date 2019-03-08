@@ -21,23 +21,15 @@ import (
 	"groundcontrol/model"
 )
 
-// PullProject pulls a repository from origin.
+// PullProject queues a Job to pull a Project.
 func PullProject(ctx context.Context, projectID string, highPriority bool) (string, error) {
 	if err := startPullingProject(ctx, projectID); err != nil {
 		return "", err
 	}
-
 	appCtx := appcontext.Get(ctx)
-
-	return appCtx.Jobs.Add(
-		ctx,
-		JobNamePullProject,
-		projectID,
-		highPriority,
-		func(ctx context.Context) error {
-			return doPullProject(ctx, projectID)
-		},
-	), nil
+	return appCtx.Jobs.Add(ctx, JobNamePullProject, projectID, highPriority, func(ctx context.Context) error {
+		return doPullProject(ctx, projectID)
+	}), nil
 }
 
 func startPullingProject(ctx context.Context, projectID string) error {
@@ -45,10 +37,8 @@ func startPullingProject(ctx context.Context, projectID string) error {
 		if project.IsPulling {
 			return ErrDuplicate
 		}
-
 		project.IsPulling = true
 		project.MustStore(ctx)
-
 		return nil
 	})
 }

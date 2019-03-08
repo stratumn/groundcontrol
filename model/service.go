@@ -68,7 +68,7 @@ func (n *Service) TopologicalSort(ctx context.Context) ([]*Service, error) {
 	return n.depSort(ctx, &map[string]bool{})
 }
 
-// A mark is undefined is the Service hasn't been visited, false if being visited, and true if visited.
+// A mark is undefined if the Service hasn't been visited, false if being visited, and true if visited.
 func (n *Service) depSort(ctx context.Context, marks *map[string]bool) ([]*Service, error) {
 	var deps []*Service
 	// Check if we've already been here.

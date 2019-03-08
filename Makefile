@@ -1,6 +1,6 @@
 GO_AUTO = $(shell find . -name 'auto_*.go')
 UI_AUTO = $(shell find ../groundcontrol-ui/src -name '__generated__')
-GARBAGE := groundcontrol dist electron/assets/vendor ../groundcontrol-ui/node_modules ../groundcontrol-ui/build 
+GARBAGE := groundcontrol dist ../groundcontrol-ui/node_modules ../groundcontrol-ui/build 
 
 all: deps build
 

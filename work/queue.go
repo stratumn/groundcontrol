@@ -117,7 +117,7 @@ func (q *Queue) Add(ctx context.Context, name, ownerID string, highPriority bool
 	return job.ID
 }
 
-// Stop cancels a queued or running job. If it has another status state it returns ErrStatus.
+// Stop cancels a RUNNING or QUEUED job. If it has another status state it returns ErrStatus.
 func (q *Queue) Stop(ctx context.Context, id string) error {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log

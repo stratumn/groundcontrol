@@ -21,36 +21,25 @@ import (
 	"groundcontrol/model"
 )
 
-// PullWorkspace creates jobs to pull all the projects in a workspace.
+// PullWorkspace queues Jobs to pull all the Projects of a Workspace.
 func PullWorkspace(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
 	appCtx := appcontext.Get(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
 		return nil, err
 	}
-
 	var jobIDs []string
-
 	for _, projectID := range workspace.ProjectsIDs {
 		project := model.MustLoadProject(ctx, projectID)
-
 		if project.IsPulling || !project.IsCloned(ctx) || !project.IsBehind {
 			continue
 		}
-
 		jobID, err := PullProject(ctx, project.ID, highPriority)
 		if err != nil {
-			appCtx.Log.ErrorWithOwner(
-				ctx,
-				appCtx.SystemID,
-				"PullWorkspace failed because %s",
-				err.Error(),
-			)
+			appCtx.Log.ErrorWithOwner(ctx, appCtx.SystemID, "PullWorkspace failed because %s", err.Error())
 			continue
 		}
-
 		jobIDs = append(jobIDs, jobID)
 	}
-
 	return jobIDs, nil
 }

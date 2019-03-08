@@ -42,19 +42,19 @@ func (n *GitSource) Path(ctx context.Context) string {
 	return appCtx.GetGitSourcePath(n.Repository, n.Reference)
 }
 
-// Update loads the latest commits and upserts the source.
-func (n *GitSource) Update(ctx context.Context) error {
+// Sync syncs the Source.
+func (n *GitSource) Sync(ctx context.Context) error {
 	defer func() {
-		n.IsLoading = false
+		n.IsSyncing = false
 		n.MustStore(ctx)
 	}()
-	n.IsLoading = true
+	n.IsSyncing = true
 	n.MustStore(ctx)
 
 	if err := n.pullOrClone(ctx); err != nil {
 		return err
 	}
-	workspaceIDs, err := LoadWorkspacesInSource(ctx, n.Path(ctx), n.ID)
+	workspaceIDs, err := SyncWorkspacesInDirectory(ctx, n.Path(ctx), n.ID)
 	if err != nil {
 		return err
 	}

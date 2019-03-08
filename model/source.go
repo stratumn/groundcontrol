@@ -60,8 +60,8 @@ func MustLoadSource(ctx context.Context, id string) Source {
 	return node
 }
 
-// LoadWorkspacesInSource loads and stores nodes for the workspaces in a directory recursively.
-func LoadWorkspacesInSource(ctx context.Context, directory, sourceID string) ([]string, error) {
+// SyncWorkspacesInDirectory syncs the Workspaces in a directory recursively.
+func SyncWorkspacesInDirectory(ctx context.Context, directory, sourceID string) ([]string, error) {
 	var workspaceIDs []string
 	return workspaceIDs, filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -82,7 +82,7 @@ func LoadWorkspacesInSource(ctx context.Context, directory, sourceID string) ([]
 		if err != nil {
 			return err
 		}
-		ids, err := config.UpsertNodes(ctx, sourceID)
+		ids, err := config.storeNodes(ctx, sourceID)
 		if err != nil {
 			return err
 		}

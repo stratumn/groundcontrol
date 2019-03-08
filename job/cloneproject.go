@@ -21,23 +21,15 @@ import (
 	"groundcontrol/model"
 )
 
-// CloneProject clones a remote repository locally.
+// CloneProject queues a Job to clone a Project.
 func CloneProject(ctx context.Context, projectID string, highPriority bool) (string, error) {
 	if err := startCloningProject(ctx, projectID); err != nil {
 		return "", err
 	}
-
 	appCtx := appcontext.Get(ctx)
-
-	return appCtx.Jobs.Add(
-		ctx,
-		JobNameCloneProject,
-		projectID,
-		highPriority,
-		func(ctx context.Context) error {
-			return doCloneProject(ctx, projectID)
-		},
-	), nil
+	return appCtx.Jobs.Add(ctx, JobNameCloneProject, projectID, highPriority, func(ctx context.Context) error {
+		return doCloneProject(ctx, projectID)
+	}), nil
 }
 
 func startCloningProject(ctx context.Context, projectID string) error {
@@ -45,10 +37,8 @@ func startCloningProject(ctx context.Context, projectID string) error {
 		if project.IsCloning {
 			return ErrDuplicate
 		}
-
 		project.IsCloning = true
 		project.MustStore(ctx)
-
 		return nil
 	})
 }

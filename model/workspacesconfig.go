@@ -79,13 +79,13 @@ type ServiceConfig struct {
 	After     []string         `json:"after"`
 }
 
-// UpsertNodes upserts nodes for the content of the config.
-// It returns the IDs of the workspaces upserted.
-func (c WorkspacesConfig) UpsertNodes(ctx context.Context, sourceID string) ([]string, error) {
+// storeNodes stores nodes for the content of the config.
+// It returns the IDs of the workspaces storeed.
+func (c WorkspacesConfig) storeNodes(ctx context.Context, sourceID string) ([]string, error) {
 	var workspaceIDs []string
 
 	for _, workspaceConfig := range c.Workspaces {
-		id, err := workspaceConfig.UpsertNodes(ctx, sourceID)
+		id, err := workspaceConfig.storeNodes(ctx, sourceID)
 		if err != nil {
 			return nil, err
 		}
@@ -96,9 +96,9 @@ func (c WorkspacesConfig) UpsertNodes(ctx context.Context, sourceID string) ([]s
 	return workspaceIDs, nil
 }
 
-// UpsertNodes upserts nodes for the content of the config.
-// It returns the ID of the workspace upserted.
-func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (string, error) {
+// storeNodes stores nodes for the content of the config.
+// It returns the ID of the workspace storeed.
+func (c WorkspaceConfig) storeNodes(ctx context.Context, sourceID string) (string, error) {
 	id := relay.EncodeID(NodeTypeWorkspace, c.Slug)
 
 	err := MustLockOrNewWorkspaceE(ctx, id, func(workspace *Workspace, isNew bool) error {
@@ -120,13 +120,13 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 		}
 
 		for _, projectConfig := range c.Projects {
-			projectID := projectConfig.UpsertNodes(ctx, id, c.Slug)
+			projectID := projectConfig.storeNodes(ctx, id, c.Slug)
 			workspace.ProjectsIDs = append(workspace.ProjectsIDs, projectID)
 			projectSlugToID[projectConfig.Slug] = projectID
 		}
 
 		for _, taskConfig := range c.Tasks {
-			taskID, err := taskConfig.UpsertNodes(ctx, id, workspace.Slug, projectSlugToID)
+			taskID, err := taskConfig.storeNodes(ctx, id, workspace.Slug, projectSlugToID)
 			if err != nil {
 				return err
 			}
@@ -136,7 +136,7 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 		}
 
 		for _, serviceConfig := range c.Services {
-			serviceID, err := serviceConfig.UpsertNodes(
+			serviceID, err := serviceConfig.storeNodes(
 				ctx,
 				id,
 				workspace.Slug,
@@ -176,9 +176,9 @@ func (c WorkspaceConfig) UpsertNodes(ctx context.Context, sourceID string) (stri
 	return id, nil
 }
 
-// UpsertNodes upserts nodes for the content of the config.
-// It returns the ID of the project upserted.
-func (c ProjectConfig) UpsertNodes(
+// storeNodes stores nodes for the content of the config.
+// It returns the ID of the project storeed.
+func (c ProjectConfig) storeNodes(
 	ctx context.Context,
 	workspaceID string,
 	workspaceSlug string,
@@ -208,9 +208,9 @@ func (c ProjectConfig) UpsertNodes(
 	return id
 }
 
-// UpsertNodes upserts nodes for the content of the config.
-// It returns the ID of the task upserted.
-func (c TaskConfig) UpsertNodes(
+// storeNodes stores nodes for the content of the config.
+// It returns the ID of the task storeed.
+func (c TaskConfig) storeNodes(
 	ctx context.Context,
 	workspaceID string,
 	workspaceSlug string,
@@ -236,7 +236,7 @@ func (c TaskConfig) UpsertNodes(
 		}
 
 		for _, variableConfig := range c.Variables {
-			variableID := variableConfig.UpsertNodes(
+			variableID := variableConfig.storeNodes(
 				ctx,
 				workspaceSlug,
 				c.Name,
@@ -246,7 +246,7 @@ func (c TaskConfig) UpsertNodes(
 		}
 
 		for stepIndex, stepConfig := range c.Steps {
-			stepID, err := stepConfig.UpsertNodes(
+			stepID, err := stepConfig.storeNodes(
 				ctx,
 				workspaceSlug,
 				id,
@@ -272,9 +272,9 @@ func (c TaskConfig) UpsertNodes(
 	return id, nil
 }
 
-// UpsertNodes upserts nodes for the content of the config.
-// It returns the ID of the variable upserted.
-func (c VariableConfig) UpsertNodes(
+// storeNodes stores nodes for the content of the config.
+// It returns the ID of the variable storeed.
+func (c VariableConfig) storeNodes(
 	ctx context.Context,
 	workspaceSlug string,
 	namespace string,
@@ -296,9 +296,9 @@ func (c VariableConfig) UpsertNodes(
 	return id
 }
 
-// UpsertNodes upserts nodes for the content of the config.
-// It returns the ID of the step upserted.
-func (c StepConfig) UpsertNodes(
+// storeNodes stores nodes for the content of the config.
+// It returns the ID of the step storeed.
+func (c StepConfig) storeNodes(
 	ctx context.Context,
 	workspaceSlug string,
 	taskID string,
@@ -349,9 +349,9 @@ func (c StepConfig) UpsertNodes(
 	return id, nil
 }
 
-// UpsertNodes upserts nodes for the content of the config.
-// It returns the ID of the service upserted.
-func (c ServiceConfig) UpsertNodes(
+// storeNodes stores nodes for the content of the config.
+// It returns the ID of the service storeed.
+func (c ServiceConfig) storeNodes(
 	ctx context.Context,
 	workspaceID string,
 	workspaceSlug string,
@@ -387,7 +387,7 @@ func (c ServiceConfig) UpsertNodes(
 		}
 
 		for _, variableConfig := range c.Variables {
-			variableID := variableConfig.UpsertNodes(
+			variableID := variableConfig.storeNodes(
 				ctx,
 				workspaceSlug,
 				c.Name,

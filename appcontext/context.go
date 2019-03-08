@@ -97,7 +97,7 @@ type Jobs interface {
 	Work(ctx context.Context) error
 	// Add adds a job to the queue and returns the job's ID.
 	Add(ctx context.Context, name string, ownerID string, highPriority bool, fn func(ctx context.Context) error) string
-	// Stop cancels a running job.
+	// Stop cancels a QUEUED or RUNNING job.
 	Stop(ctx context.Context, id string) error
 }
 

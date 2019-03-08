@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package job contains jobs run by a job manager.
+// Package job contains Jobs run by a work queue.
 package job

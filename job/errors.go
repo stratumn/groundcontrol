@@ -18,7 +18,7 @@ import "errors"
 
 // Errors.
 var (
-	ErrDuplicate = errors.New("a job already exists")
+	ErrDuplicate = errors.New("job already exists")
 	ErrCloned    = errors.New("project is already cloned")
 	ErrNotCloned = errors.New("project isn't cloned")
 )

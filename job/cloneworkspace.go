@@ -21,36 +21,25 @@ import (
 	"groundcontrol/model"
 )
 
-// CloneWorkspace creates jobs to clone all the projects in a workspace.
+// CloneWorkspace queues Jobs to clone all the Projects of a Workspace.
 func CloneWorkspace(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
 	appCtx := appcontext.Get(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
 		return nil, err
 	}
-
 	var jobIDs []string
-
 	for _, projectID := range workspace.ProjectsIDs {
 		project := model.MustLoadProject(ctx, projectID)
-
 		if project.IsCloning || project.IsCloned(ctx) {
 			continue
 		}
-
 		jobID, err := CloneProject(ctx, project.ID, highPriority)
 		if err != nil {
-			appCtx.Log.ErrorWithOwner(
-				ctx,
-				appCtx.SystemID,
-				"CloneWorkspace failed because %s",
-				err.Error(),
-			)
+			appCtx.Log.ErrorWithOwner(ctx, appCtx.SystemID, "CloneWorkspace failed because %s", err.Error())
 			continue
 		}
-
 		jobIDs = append(jobIDs, jobID)
 	}
-
 	return jobIDs, nil
 }

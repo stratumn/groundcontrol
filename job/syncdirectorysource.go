@@ -21,40 +21,30 @@ import (
 	"groundcontrol/model"
 )
 
-// LoadDirectorySource loads the workspaces of the source and updates it.
-func LoadDirectorySource(ctx context.Context, sourceID string, highPriority bool) (string, error) {
-	if err := startLoadingDirectorySource(ctx, sourceID); err != nil {
+// SyncDirectorySource queues a job to sync the Workspaces of the DirectorySource.
+func SyncDirectorySource(ctx context.Context, sourceID string, highPriority bool) (string, error) {
+	if err := startSyncingDirectorySource(ctx, sourceID); err != nil {
 		return "", err
 	}
-
 	appCtx := appcontext.Get(ctx)
-
-	return appCtx.Jobs.Add(
-		ctx,
-		JobNameLoadDirectorySource,
-		sourceID,
-		highPriority,
-		func(ctx context.Context) error {
-			return doLoadDirectorySource(ctx, sourceID)
-		},
-	), nil
+	return appCtx.Jobs.Add(ctx, JobNameSyncDirectorySource, sourceID, highPriority, func(ctx context.Context) error {
+		return doSyncDirectorySource(ctx, sourceID)
+	}), nil
 }
 
-func startLoadingDirectorySource(ctx context.Context, sourceID string) error {
+func startSyncingDirectorySource(ctx context.Context, sourceID string) error {
 	return model.LockDirectorySourceE(ctx, sourceID, func(source *model.DirectorySource) error {
-		if source.IsLoading {
+		if source.IsSyncing {
 			return ErrDuplicate
 		}
-
-		source.IsLoading = true
+		source.IsSyncing = true
 		source.MustStore(ctx)
-
 		return nil
 	})
 }
 
-func doLoadDirectorySource(ctx context.Context, sourceID string) error {
+func doSyncDirectorySource(ctx context.Context, sourceID string) error {
 	return model.MustLockDirectorySourceE(ctx, sourceID, func(source *model.DirectorySource) error {
-		return source.Update(ctx)
+		return source.Sync(ctx)
 	})
 }

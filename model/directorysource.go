@@ -16,16 +16,16 @@ package model
 
 import "context"
 
-// Update loads the workspaces and upserts the source.
-func (n *DirectorySource) Update(ctx context.Context) error {
+// Sync syncs the Source.
+func (n *DirectorySource) Sync(ctx context.Context) error {
 	defer func() {
-		n.IsLoading = false
+		n.IsSyncing = false
 		n.MustStore(ctx)
 	}()
-	n.IsLoading = true
+	n.IsSyncing = true
 	n.MustStore(ctx)
 
-	workspaceIDs, err := LoadWorkspacesInSource(ctx, n.Directory, n.ID)
+	workspaceIDs, err := SyncWorkspacesInDirectory(ctx, n.Directory, n.ID)
 	if err != nil {
 		return err
 	}

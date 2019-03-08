@@ -21,28 +21,18 @@ import (
 	"groundcontrol/model"
 )
 
-// LoadAllSources creates jobs to load the workspaces of every source.
-// It doesn't return errors but will output a log message when errors happen.
-func LoadAllSources(ctx context.Context, highPriority bool) []string {
+// SyncSources queues Jobs to sync all the Sources.
+func SyncSources(ctx context.Context, highPriority bool) []string {
 	appCtx := appcontext.Get(ctx)
 	viewer := model.MustLoadUser(ctx, appCtx.ViewerID)
-
 	var jobIDs []string
-
 	for _, sourceID := range viewer.SourcesIDs {
-		jobID, err := LoadSource(ctx, sourceID, highPriority)
+		jobID, err := SyncSource(ctx, sourceID, highPriority)
 		if err != nil {
-			appCtx.Log.ErrorWithOwner(
-				ctx,
-				appCtx.SystemID,
-				"LoadSource failed because %s",
-				err.Error(),
-			)
+			appCtx.Log.ErrorWithOwner(ctx, appCtx.SystemID, "SyncSources failed because %s", err.Error())
 			continue
 		}
-
 		jobIDs = append(jobIDs, jobID)
 	}
-
 	return jobIDs
 }

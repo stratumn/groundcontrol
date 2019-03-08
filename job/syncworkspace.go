@@ -21,36 +21,27 @@ import (
 	"groundcontrol/model"
 )
 
-// LoadWorkspaceCommits creates jobs to load the commits of every project in a workspace.
-func LoadWorkspaceCommits(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
+// SyncWorkspace queues Jobs to sync all the Projects of a Workspace with Git.
+func SyncWorkspace(ctx context.Context, workspaceID string, highPriority bool) ([]string, error) {
 	appCtx := appcontext.Get(ctx)
 	workspace, err := model.LoadWorkspace(ctx, workspaceID)
 	if err != nil {
 		return nil, err
 	}
-
 	var jobIDs []string
-
 	for _, projectID := range workspace.ProjectsIDs {
 		project := model.MustLoadProject(ctx, projectID)
-
-		if project.IsLoadingCommits || len(project.RemoteCommitsIDs) > 0 {
+		// TODO: It doesn't queue a job if it already has remote commits. This is because the mutation
+		// is called every time a workspace is viewed. It could be handled better.
+		if project.IsSyncing || len(project.RemoteCommitsIDs) > 0 {
 			continue
 		}
-
-		jobID, err := LoadProjectCommits(ctx, project.ID, highPriority)
+		jobID, err := SyncProject(ctx, project.ID, highPriority)
 		if err != nil {
-			appCtx.Log.ErrorWithOwner(
-				ctx,
-				appCtx.SystemID,
-				"LoadProjectCommits failed because %s",
-				err.Error(),
-			)
+			appCtx.Log.ErrorWithOwner(ctx, appCtx.SystemID, "SyncWorkspace failed because %s", err.Error())
 			continue
 		}
-
 		jobIDs = append(jobIDs, jobID)
 	}
-
 	return jobIDs, nil
 }

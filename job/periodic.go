@@ -23,66 +23,52 @@ import (
 	"groundcontrol/model"
 )
 
-// StartPeriodic is used to run jobs periodically.
-// The waitTime argument defines how long to wait after jobs are finished to create new ones.
-// The addJobs argument should be a function that creates jobs and returns their IDs.
-// The first round of jobs will be created immediately upon calling this function.
+// StartPeriodic queues Jobs periodically.
+// The waitTime argument defines how long to wait after Jobs are finished before starting another round.
+// The chain arguments should be a series function that creates Jobs and returns their IDs.
+// The first round of Jobs will be created immediately upon calling this function.
 // This function blocks until the context is canceled.
-func StartPeriodic(
-	ctx context.Context,
-	waitTime time.Duration,
-	chain ...func(context.Context) []string,
-) error {
-	appCtx := appcontext.Get(ctx)
-
-	round := func(fn func(context.Context) []string) {
-		lastMsgID := appCtx.Subs.LastMessageID()
-
-		jobIDs := fn(ctx)
-		if len(jobIDs) < 1 {
-			return
-		}
-
-		waitGroup := sync.WaitGroup{}
-		waitGroup.Add(len(jobIDs))
-
-		jobMap := sync.Map{}
-
-		for _, jobID := range jobIDs {
-			jobMap.Store(jobID, struct{}{})
-		}
-
-		subsCtx, cancel := context.WithCancel(appcontext.With(context.Background(), appCtx))
-		defer cancel()
-
-		appCtx.Subs.Subscribe(subsCtx, model.MessageTypeJobStored, lastMsgID, func(msg interface{}) {
-			job := msg.(*model.Job)
-			_, ok := jobMap.Load(job.ID)
-			if !ok {
-				return
-			}
-
-			switch job.Status {
-			case model.JobStatusDone, model.JobStatusFailed:
-				waitGroup.Done()
-			}
-		})
-
-		waitGroup.Wait()
-	}
-
+func StartPeriodic(ctx context.Context, waitTime time.Duration, chain ...func(context.Context) []string) error {
 	for _, fn := range chain {
-		round(fn)
+		periodicRound(ctx, fn)
 	}
-
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-time.After(waitTime):
 			for _, fn := range chain {
-				round(fn)
+				periodicRound(ctx, fn)
 			}
 		}
 	}
+}
+
+func periodicRound(ctx context.Context, fn func(context.Context) []string) {
+	appCtx := appcontext.Get(ctx)
+	lastMsgID := appCtx.Subs.LastMessageID()
+	jobIDs := fn(ctx)
+	if len(jobIDs) < 1 {
+		return
+	}
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(len(jobIDs))
+	jobMap := sync.Map{}
+	for _, jobID := range jobIDs {
+		jobMap.Store(jobID, struct{}{})
+	}
+	subsCtx, cancel := context.WithCancel(appcontext.With(context.Background(), appCtx))
+	defer cancel()
+	appCtx.Subs.Subscribe(subsCtx, model.MessageTypeJobStored, lastMsgID, func(msg interface{}) {
+		job := msg.(*model.Job)
+		_, ok := jobMap.Load(job.ID)
+		if !ok {
+			return
+		}
+		switch job.Status {
+		case model.JobStatusDone, model.JobStatusFailed:
+			waitGroup.Done()
+		}
+	})
+	waitGroup.Wait()
 }
