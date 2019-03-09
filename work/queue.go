@@ -276,7 +276,7 @@ func (q *Queue) addJobToSystem(ctx context.Context, jobID string) {
 
 func (q *Queue) createCtx(ctx context.Context) (context.Context, context.CancelFunc) {
 	appCtx := appcontext.Get(ctx)
-	ctx = appcontext.With(ctx, appCtx)
+	ctx = appcontext.With(context.Background(), appCtx)
 	return context.WithCancel(ctx)
 }
 

@@ -9,7 +9,11 @@ before:
 release:
   prerelease: auto
 builds:
-  - goarch:
+  - goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
       - amd64
     env:
       - CGO_ENABLED=0
@@ -19,8 +23,12 @@ archive:
   replacements:
     darwin: macOS
     linux: Linux
+    windows: Windows
     386: i386
     amd64: x86_64
+  format_overrides:
+    - goos: windows
+      format: zip
   files:
     - LICENSE
 checksum:

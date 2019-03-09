@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build windows
+// +build !windows
 
-package app
+package shell
 
 import (
-	"context"
-	"groundcontrol/appcontext"
+	"os"
+	"os/exec"
+	"syscall"
 )
 
-func initHooks(ctx context.Context) error {
-	appCtx := appcontext.Get(ctx)
-	log := appCtx.Log
-	systemID := appCtx.SystemID
-	log.WarningWithOwner(ctx, systemID, "Ground Control hasn't been thoroughly tested on Windows")
-	return nil
+func createCmdSysProcAttr() *syscall.SysProcAttr {
+	return &syscall.SysProcAttr{Setpgid: true}
+}
+
+func sendSignalToCmd(cmd *exec.Cmd, sig os.Signal) error {
+	return syscall.Kill(-cmd.Process.Pid, sig.(syscall.Signal))
 }

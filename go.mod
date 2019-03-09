@@ -3,7 +3,6 @@ module groundcontrol
 require (
 	github.com/99designs/gqlgen v0.8.0
 	github.com/99designs/gqlgen-contrib v0.0.0-20190222015228-c654377d611c
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
@@ -38,11 +37,13 @@ require (
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
 	golang.org/x/sys v0.0.0-20190304154630-e844e0132e93 // indirect
 	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2 // indirect
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	golang.org/x/tools v0.0.0-20190228203856-589c23e65e65 // indirect
+	google.golang.org/grpc v1.19.0 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.0 // indirect
 	gopkg.in/src-d/go-git-fixtures.v3 v3.3.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.10.0
 	gopkg.in/yaml.v2 v2.2.2
-	mvdan.cc/sh v2.6.3+incompatible // indirect
+	mvdan.cc/sh v2.6.3+incompatible
 )

@@ -14,17 +14,22 @@
 
 // +build windows
 
-package app
+package shell
 
 import (
-	"context"
-	"groundcontrol/appcontext"
+	"os"
+	"os/exec"
+	"strconv"
+	"syscall"
 )
 
-func initHooks(ctx context.Context) error {
-	appCtx := appcontext.Get(ctx)
-	log := appCtx.Log
-	systemID := appCtx.SystemID
-	log.WarningWithOwner(ctx, systemID, "Ground Control hasn't been thoroughly tested on Windows")
-	return nil
+func createCmdSysProcAttr() *syscall.SysProcAttr {
+	return &syscall.SysProcAttr{
+		HideWindow:    true,
+		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
+	}
+}
+
+func sendSignalToCmd(cmd *exec.Cmd, sig os.Signal) error {
+	return exec.Command("taskkill", "/f", "/t", "/pid", strconv.Itoa(cmd.Process.Pid)).Run()
 }

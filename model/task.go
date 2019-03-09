@@ -16,7 +16,7 @@ package model
 
 import (
 	"context"
-	"os/exec"
+	"os"
 
 	"groundcontrol/appcontext"
 	"groundcontrol/util"
@@ -36,7 +36,6 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 	}()
 	n.Status = TaskStatusRunning
 	n.MustStore(ctx)
-
 	for _, stepID := range n.StepsIDs {
 		step := MustLoadStep(ctx, stepID)
 		n.CurrentStepID = stepID
@@ -49,7 +48,8 @@ func (n *Task) Run(ctx context.Context, env []string) error {
 
 func (n *Task) runStep(ctx context.Context, step *Step, env []string) error {
 	if len(step.ProjectsIDs) < 1 {
-		return n.runStepWithoutProject(ctx, step, env)
+		n.CurrentProjectID = ""
+		return n.runStepCmds(ctx, step, "", env)
 	}
 	for _, projectID := range step.ProjectsIDs {
 		project := MustLoadProject(ctx, projectID)
@@ -57,58 +57,46 @@ func (n *Task) runStep(ctx context.Context, step *Step, env []string) error {
 			return err
 		}
 		n.CurrentProjectID = projectID
-		if err := n.runStepWithProject(ctx, step, project, env); err != nil {
+		if err := n.runStepCmds(ctx, step, project.Path(ctx), env); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (n *Task) runStepWithoutProject(ctx context.Context, step *Step, env []string) error {
-	for _, commandID := range step.CommandsIDs {
-		command := MustLoadCommand(ctx, commandID)
-		n.CurrentProjectID = ""
-		n.CurrentCommandID = commandID
-		n.MustStore(ctx)
-		if err := n.runCommandWithoutProject(ctx, command, env); err != nil {
-			return err
-		}
+func (n *Task) runStepCmds(ctx context.Context, step *Step, dir string, env []string) error {
+	runner, close, err := n.createRunner(ctx, dir, env)
+	if err != nil {
+		return err
 	}
-	return nil
-}
-
-func (n *Task) runCommandWithoutProject(ctx context.Context, command *Command, env []string) error {
-	return n.exec(ctx, command.Command, "", env)
-}
-
-func (n *Task) runStepWithProject(ctx context.Context, step *Step, project *Project, env []string) error {
-	for _, commandID := range step.CommandsIDs {
-		command := MustLoadCommand(ctx, commandID)
-		n.CurrentCommandID = commandID
-		n.MustStore(ctx)
-		if err := n.runCommandWithProject(ctx, project, command, env); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (n *Task) runCommandWithProject(ctx context.Context, project *Project, command *Command, env []string) error {
-	return n.exec(ctx, command.Command, project.Path(ctx), env)
-}
-
-func (n *Task) exec(ctx context.Context, command, dir string, env []string) error {
+	defer close()
 	log := appcontext.Get(ctx).Log
+	for _, commandID := range step.CommandsIDs {
+		command := MustLoadCommand(ctx, commandID)
+		n.CurrentCommandID = commandID
+		n.MustStore(ctx)
+		log.InfoWithOwner(ctx, n.ID, command.Command)
+		if err := runner.Run(ctx, command.Command); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *Task) createRunner(ctx context.Context, dir string, env []string) (appcontext.Runner, func(), error) {
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
 	stdout := util.LineSplitter(ctx, log.InfoWithOwner, n.ID)
 	stderr := util.LineSplitter(ctx, log.WarningWithOwner, n.ID)
-	cmd := exec.CommandContext(ctx, "bash", "-l", "-c", command)
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	cmd.Dir = dir
-	cmd.Env = env
-	log.InfoWithOwner(ctx, n.ID, command)
-	err := cmd.Run()
-	stdout.Close()
-	stderr.Close()
-	return err
+	close := func() {
+		stdout.Close()
+		stderr.Close()
+	}
+	env = append(os.Environ(), env...)
+	runner, err := appCtx.NewRunner(stdout, stderr, dir, env)
+	if err != nil {
+		close()
+		return nil, nil, err
+	}
+	return runner, close, nil
 }

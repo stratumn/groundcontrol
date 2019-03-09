@@ -71,6 +71,7 @@ type App struct {
 	enableApolloTracing     bool
 	enableSignalHandling    bool
 	pprofListenAddress      string
+	newRunner               appcontext.NewRunner
 
 	waitGroup sync.WaitGroup
 }
@@ -93,6 +94,7 @@ func New(opts ...Opt) *App {
 		gitSourcesDirectory:     DefaultGitSourcesDirectory,
 		workspacesDirectory:     DefaultWorkspacesDirectory,
 		cacheDirectory:          DefaultCacheDirectory,
+		newRunner:               DefaultNewRunner,
 		openEditorCommand:       DefaultOpenEditorCommand,
 		enableApolloTracing:     DefaultEnableApolloTracing,
 		enableSignalHandling:    DefaultEnableSignalHandling,
@@ -152,6 +154,7 @@ func (a *App) createAppContext() *appcontext.Context {
 		GetGitSourcePath:    a.getGitSourcePath,
 		GetProjectPath:      a.getProjectPath,
 		GetProjectCachePath: a.getProjectCachePath,
+		NewRunner:           a.newRunner,
 		OpenEditorCommand:   a.openEditorCommand,
 	}
 }

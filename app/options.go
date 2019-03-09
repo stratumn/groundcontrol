@@ -22,7 +22,9 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 
+	"groundcontrol/appcontext"
 	"groundcontrol/model"
+	"groundcontrol/shell"
 )
 
 const (
@@ -69,6 +71,8 @@ var (
 	DefaultWorkspacesDirectory = "workspaces"
 	// DefaultCacheDirectory is the default cache directory.
 	DefaultCacheDirectory = "cache"
+	// DefaultNewRunner is the default NewRunner.
+	DefaultNewRunner = shell.NewEmbedded
 )
 
 func init() {
@@ -197,6 +201,13 @@ func OptWorkspacesDirectory(dir string) Opt {
 func OptCacheDirectory(dir string) Opt {
 	return func(app *App) {
 		app.cacheDirectory = dir
+	}
+}
+
+// OptNewRunner sets the NewRunner to create shell command runners.
+func OptNewRunner(newRunner appcontext.NewRunner) Opt {
+	return func(app *App) {
+		app.newRunner = newRunner
 	}
 }
 

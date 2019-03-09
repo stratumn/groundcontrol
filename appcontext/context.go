@@ -16,6 +16,7 @@ package appcontext
 
 import (
 	"context"
+	"io"
 
 	"groundcontrol/store"
 )
@@ -36,6 +37,7 @@ type Context struct {
 	GetGitSourcePath    ProjectGitSourcePathGetter
 	GetProjectPath      ProjectPathGetter
 	GetProjectCachePath ProjectCachePathGetter
+	NewRunner           NewRunner
 	OpenEditorCommand   string
 	ViewerID            string
 	SystemID            string
@@ -151,6 +153,12 @@ type Keys interface {
 	Save() error
 }
 
+// Runner executes shell commands.
+type Runner interface {
+	// Run can be called multiple times to execute shell commands.
+	Run(ctx context.Context, command string) error
+}
+
 // ProjectGitSourcePathGetter is a function that returns the path to a Git source.
 type ProjectGitSourcePathGetter func(repo, reference string) string
 
@@ -159,3 +167,6 @@ type ProjectPathGetter func(workspaceSlug, projectSlug string) string
 
 // ProjectCachePathGetter is a function that returns the path to a project's cache.
 type ProjectCachePathGetter func(workspaceSlug, projectSlug string) string
+
+// NewRunner is a function that returns a runner.
+type NewRunner func(stdout, stderr io.Writer, dir string, env []string) (Runner, error)

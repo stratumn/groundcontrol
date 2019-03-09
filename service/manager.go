@@ -17,10 +17,9 @@ package service
 import (
 	"context"
 	"io"
-	"os/exec"
+	"os"
 	"sync"
 	"sync/atomic"
-	"syscall"
 
 	"groundcontrol/appcontext"
 	"groundcontrol/model"
@@ -29,7 +28,7 @@ import (
 
 // Manager manages running and stopping services.
 type Manager struct {
-	commands sync.Map
+	cancels sync.Map
 
 	stoppedCounter  int64
 	startingCounter int64
@@ -65,13 +64,9 @@ func (m *Manager) Stop(ctx context.Context, serviceID string) error {
 		}
 		m.setStatus(ctx, service, model.ServiceStatusStopping)
 		service.MustStore(ctx)
-		actual, _ := m.commands.Load(serviceID)
-		cmd := actual.(*exec.Cmd)
-		pgid, err := syscall.Getpgid(cmd.Process.Pid)
-		if err != nil {
-			return err
-		}
-		return syscall.Kill(-pgid, syscall.SIGINT)
+		actual, _ := m.cancels.Load(serviceID)
+		actual.(context.CancelFunc)()
+		return nil
 	})
 }
 
@@ -80,7 +75,7 @@ func (m *Manager) Clean(ctx context.Context) {
 	appCtx := appcontext.Get(ctx)
 	lastMsgID := appCtx.Subs.LastMessageID()
 	waitGroup := sync.WaitGroup{}
-	m.commands.Range(func(k, _ interface{}) bool {
+	m.cancels.Range(func(k, _ interface{}) bool {
 		serviceID, ok := k.(string)
 		if !ok {
 			return true
@@ -111,80 +106,80 @@ func (m *Manager) startService(ctx context.Context, serviceID string, env []stri
 		}
 		m.setStatus(ctx, service, model.ServiceStatusStarting)
 		service.MustStore(ctx)
-		stdout, stderr, clean := m.buildWriters(ctx, service)
 		fail := func() {
-			clean()
 			m.setStatus(ctx, service, model.ServiceStatusFailed)
 			service.MustStore(ctx)
 		}
-		cmd, err := m.buildCmd(ctx, service, env)
+		runner, close, err := m.createRunner(ctx, service, env)
 		if err != nil {
 			fail()
 			return err
 		}
-		cmd.Stdout = stdout
-		cmd.Stderr = stderr
-		if err := m.startCmd(ctx, cmd, service, clean); err != nil {
+		if err := m.launchService(ctx, runner, service, env, close); err != nil {
 			fail()
+			close()
 		}
 		return err
 	})
 }
 
-func (m *Manager) buildWriters(ctx context.Context, service *model.Service) (io.WriteCloser, io.WriteCloser, func()) {
+func (m *Manager) createWriters(ctx context.Context, service *model.Service) (io.WriteCloser, io.WriteCloser, func()) {
 	log := appcontext.Get(ctx).Log
 	stdout := util.LineSplitter(ctx, log.InfoWithOwner, service.ID)
 	stderr := util.LineSplitter(ctx, log.WarningWithOwner, service.ID)
-	clean := func() {
+	close := func() {
 		stdout.Close()
 		stderr.Close()
 	}
-	return stdout, stderr, clean
+	return stdout, stderr, close
 }
 
-func (m *Manager) buildCmd(ctx context.Context, service *model.Service, env []string) (*exec.Cmd, error) {
-	cmd := exec.Command("bash", "-l", "-c", service.Command)
-	cmd.Env = env
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+func (m *Manager) createRunner(ctx context.Context, service *model.Service, env []string) (appcontext.Runner, func(), error) {
+	appCtx := appcontext.Get(ctx)
+	stdout, stderr, close := m.createWriters(ctx, service)
+	dir := ""
 	if project := service.Project(ctx); project != nil {
 		if err := project.EnsureCloned(ctx); err != nil {
-			return nil, err
+			close()
+			return nil, nil, err
 		}
-		appCtx := appcontext.Get(ctx)
 		workspace := project.Workspace(ctx)
-		cmd.Dir = appCtx.GetProjectPath(workspace.Slug, project.Slug)
+		dir = appCtx.GetProjectPath(workspace.Slug, project.Slug)
 	}
-	return cmd, nil
+	env = append(os.Environ(), env...)
+	runner, err := appCtx.NewRunner(stdout, stderr, dir, env)
+	if err != nil {
+		close()
+		return nil, nil, err
+	}
+	return runner, close, nil
 }
 
-func (m *Manager) startCmd(ctx context.Context, cmd *exec.Cmd, service *model.Service, clean func()) error {
-	if err := m.runBeforeTasks(ctx, service, cmd.Env); err != nil {
-		return err
-	}
-	log := appcontext.Get(ctx).Log
-	log.InfoWithOwner(ctx, service.ID, service.Command)
-	if err := cmd.Start(); err != nil {
+func (m *Manager) launchService(ctx context.Context, runner appcontext.Runner, service *model.Service, env []string, close func()) error {
+	if err := m.runBeforeTasks(ctx, service, env); err != nil {
 		return err
 	}
 	m.setStatus(ctx, service, model.ServiceStatusRunning)
 	service.MustStore(ctx)
-	m.commands.Store(service.ID, cmd)
-	go m.runCmd(ctx, cmd, service.ID, clean)
+	runCtx, cancel := m.createCtx(ctx)
+	m.cancels.Store(service.ID, cancel)
+	go m.runService(runCtx, runner, service, env, close)
 	return nil
 }
 
-func (m *Manager) runCmd(ctx context.Context, cmd *exec.Cmd, serviceID string, clean func()) {
-	err := cmd.Wait()
-	clean()
-	model.MustLockService(ctx, serviceID, func(service *model.Service) {
-		m.commands.Delete(serviceID)
-		taskErr := m.runAfterTasks(ctx, service, cmd.Env)
+func (m *Manager) runService(ctx context.Context, runner appcontext.Runner, service *model.Service, env []string, close func()) {
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	log.InfoWithOwner(ctx, service.ID, service.Command)
+	err := runner.Run(ctx, service.Command)
+	close()
+	model.MustLockService(ctx, service.ID, func(service *model.Service) {
+		m.cancels.Delete(service.ID)
+		taskErr := m.runAfterTasks(ctx, service, env)
 		// Prioritize the command error over the task error.
 		if err != nil && taskErr != nil {
 			err = taskErr
 		}
-		appCtx := appcontext.Get(ctx)
-		log := appCtx.Log
 		if err == nil {
 			m.setStatus(ctx, service, model.ServiceStatusStopped)
 			log.DebugWithOwner(ctx, appCtx.SystemID, "service done")
@@ -232,6 +227,12 @@ func (m *Manager) waitTillDone(ctx context.Context, serviceID string, lastMsgID 
 		}
 	})
 	<-subsCtx.Done()
+}
+
+func (m *Manager) createCtx(ctx context.Context) (context.Context, context.CancelFunc) {
+	appCtx := appcontext.Get(ctx)
+	ctx = appcontext.With(context.Background(), appCtx)
+	return context.WithCancel(ctx)
 }
 
 func (m *Manager) setStatus(ctx context.Context, service *model.Service, status model.ServiceStatus) {

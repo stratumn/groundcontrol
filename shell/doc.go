@@ -12,19 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build windows
-
-package app
-
-import (
-	"context"
-	"groundcontrol/appcontext"
-)
-
-func initHooks(ctx context.Context) error {
-	appCtx := appcontext.Get(ctx)
-	log := appCtx.Log
-	systemID := appCtx.SystemID
-	log.WarningWithOwner(ctx, systemID, "Ground Control hasn't been thoroughly tested on Windows")
-	return nil
-}
+// Package shell contains types to execute shell commands.
+package shell
