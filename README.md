@@ -1,8 +1,8 @@
-![Ground Control](https://raw.githubusercontent.com/stratumn/groundcontrol/master/hero.png)
-
 # Ground Control (WIP)
 
 _Ground Control_ is an application to help deal with multi-repository development using a user friendly web interface.
+
+![Ground Control](https://raw.githubusercontent.com/stratumn/groundcontrol/master/screenshot.png)
 
 Workspaces are defined using YAML files which can easily be shared.
 Each workspace contains multiple projects.
@@ -15,8 +15,6 @@ The user interface allows you to perform operations on multiple projects at once
 - See if you are up-to-date or ahead of the remote repositories
 - Run tasks on multiple repositories
 - Launch services and their dependencies with ease
-
-![Ground Control](https://raw.githubusercontent.com/stratumn/groundcontrol/master/screenshot.png)
 
 ## Installation
 
