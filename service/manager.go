@@ -147,7 +147,7 @@ func (m *Manager) createRunner(ctx context.Context, service *model.Service, env 
 		dir = appCtx.GetProjectPath(workspace.Slug, project.Slug)
 	}
 	env = append(os.Environ(), env...)
-	runner, err := appCtx.NewRunner(stdout, stderr, dir, env)
+	runner, err := appCtx.NewRunner(stdout, stderr, dir, env, appCtx.RunnerGracefulShutdownTimeout)
 	if err != nil {
 		close()
 		return nil, nil, err

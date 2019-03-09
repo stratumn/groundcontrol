@@ -52,6 +52,8 @@ const (
 	DefaultEnableApolloTracing = false
 	// DefaultEnableSignalHandling is whether to enable signal handling by default.
 	DefaultEnableSignalHandling = true
+	// DefaultRunnerGracefulShutdownTimeout is the default graceful shutdown timeout for a runner.
+	DefaultRunnerGracefulShutdownTimeout = 20 * time.Second
 	// DefaultOpenEditorCommand is the default open editor command.
 	DefaultOpenEditorCommand = "code --goto %s"
 	// DefaultPprofListenAddress is the default pprof listen address.
@@ -208,6 +210,13 @@ func OptCacheDirectory(dir string) Opt {
 func OptNewRunner(newRunner appcontext.NewRunner) Opt {
 	return func(app *App) {
 		app.newRunner = newRunner
+	}
+}
+
+// OptRunnerGracefulShutdownTimeout sets the maximum duration for a graceful shutdown of a runner.
+func OptRunnerGracefulShutdownTimeout(timeout time.Duration) Opt {
+	return func(app *App) {
+		app.runnerGracefulShutdownTimeout = timeout
 	}
 }
 

@@ -51,27 +51,28 @@ import (
 
 // App starts Ground Control.
 type App struct {
-	sourcesFile             string
-	keysFile                string
-	listenAddress           string
-	jobsConcurrency         int
-	jobsChannelSize         int
-	logLevel                model.LogLevel
-	logCap                  int
-	pubSubHistoryCap        int
-	subscriptionChannelSize int
-	periodicJobsInterval    time.Duration
-	gracefulShutdownTimeout time.Duration
-	ui                      http.FileSystem
-	openBrowser             bool
-	gitSourcesDirectory     string
-	workspacesDirectory     string
-	cacheDirectory          string
-	openEditorCommand       string
-	enableApolloTracing     bool
-	enableSignalHandling    bool
-	pprofListenAddress      string
-	newRunner               appcontext.NewRunner
+	sourcesFile                   string
+	keysFile                      string
+	listenAddress                 string
+	jobsConcurrency               int
+	jobsChannelSize               int
+	logLevel                      model.LogLevel
+	logCap                        int
+	pubSubHistoryCap              int
+	subscriptionChannelSize       int
+	periodicJobsInterval          time.Duration
+	gracefulShutdownTimeout       time.Duration
+	runnerGracefulShutdownTimeout time.Duration
+	ui                            http.FileSystem
+	openBrowser                   bool
+	gitSourcesDirectory           string
+	workspacesDirectory           string
+	cacheDirectory                string
+	openEditorCommand             string
+	enableApolloTracing           bool
+	enableSignalHandling          bool
+	pprofListenAddress            string
+	newRunner                     appcontext.NewRunner
 
 	waitGroup sync.WaitGroup
 }
@@ -79,26 +80,27 @@ type App struct {
 // New creates a new App with given options.
 func New(opts ...Opt) *App {
 	app := &App{
-		sourcesFile:             DefaultSourcesFile,
-		keysFile:                DefaultKeysFile,
-		listenAddress:           DefaultListenAddress,
-		jobsConcurrency:         DefaultJobsConcurrency,
-		jobsChannelSize:         DefaultJobsChannelSize,
-		logLevel:                DefaultLogLevel,
-		logCap:                  DefaultLogCap,
-		pubSubHistoryCap:        DefaultPubSubHistoryCap,
-		subscriptionChannelSize: DefaultSubscriptionChannelSize,
-		periodicJobsInterval:    DefaultPeriodicJobsInterval,
-		gracefulShutdownTimeout: DefaultGracefulShutdownTimeout,
-		openBrowser:             DefaultOpenBrowser,
-		gitSourcesDirectory:     DefaultGitSourcesDirectory,
-		workspacesDirectory:     DefaultWorkspacesDirectory,
-		cacheDirectory:          DefaultCacheDirectory,
-		newRunner:               DefaultNewRunner,
-		openEditorCommand:       DefaultOpenEditorCommand,
-		enableApolloTracing:     DefaultEnableApolloTracing,
-		enableSignalHandling:    DefaultEnableSignalHandling,
-		pprofListenAddress:      DefaultPprofListenAddress,
+		sourcesFile:                   DefaultSourcesFile,
+		keysFile:                      DefaultKeysFile,
+		listenAddress:                 DefaultListenAddress,
+		jobsConcurrency:               DefaultJobsConcurrency,
+		jobsChannelSize:               DefaultJobsChannelSize,
+		logLevel:                      DefaultLogLevel,
+		logCap:                        DefaultLogCap,
+		pubSubHistoryCap:              DefaultPubSubHistoryCap,
+		subscriptionChannelSize:       DefaultSubscriptionChannelSize,
+		periodicJobsInterval:          DefaultPeriodicJobsInterval,
+		gracefulShutdownTimeout:       DefaultGracefulShutdownTimeout,
+		openBrowser:                   DefaultOpenBrowser,
+		gitSourcesDirectory:           DefaultGitSourcesDirectory,
+		workspacesDirectory:           DefaultWorkspacesDirectory,
+		cacheDirectory:                DefaultCacheDirectory,
+		newRunner:                     DefaultNewRunner,
+		runnerGracefulShutdownTimeout: DefaultRunnerGracefulShutdownTimeout,
+		openEditorCommand:             DefaultOpenEditorCommand,
+		enableApolloTracing:           DefaultEnableApolloTracing,
+		enableSignalHandling:          DefaultEnableSignalHandling,
+		pprofListenAddress:            DefaultPprofListenAddress,
 	}
 	for _, opt := range opts {
 		opt(app)
@@ -145,17 +147,18 @@ func (a *App) Start(ctx context.Context) error {
 
 func (a *App) createAppContext() *appcontext.Context {
 	return &appcontext.Context{
-		Nodes:               store.NewMemory(),
-		Log:                 log.NewLogger(a.logCap, a.logLevel),
-		Jobs:                work.NewQueue(a.jobsConcurrency, a.jobsChannelSize),
-		Services:            service.NewManager(),
-		Subs:                pubsub.New(a.pubSubHistoryCap),
-		SubChannelSize:      a.subscriptionChannelSize,
-		GetGitSourcePath:    a.getGitSourcePath,
-		GetProjectPath:      a.getProjectPath,
-		GetProjectCachePath: a.getProjectCachePath,
-		NewRunner:           a.newRunner,
-		OpenEditorCommand:   a.openEditorCommand,
+		Nodes:                         store.NewMemory(),
+		Log:                           log.NewLogger(a.logCap, a.logLevel),
+		Jobs:                          work.NewQueue(a.jobsConcurrency, a.jobsChannelSize),
+		Services:                      service.NewManager(),
+		Subs:                          pubsub.New(a.pubSubHistoryCap),
+		SubChannelSize:                a.subscriptionChannelSize,
+		GetGitSourcePath:              a.getGitSourcePath,
+		GetProjectPath:                a.getProjectPath,
+		GetProjectCachePath:           a.getProjectCachePath,
+		NewRunner:                     a.newRunner,
+		RunnerGracefulShutdownTimeout: a.runnerGracefulShutdownTimeout,
+		OpenEditorCommand:             a.openEditorCommand,
 	}
 }
 

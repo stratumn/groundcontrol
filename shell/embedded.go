@@ -18,6 +18,7 @@ import (
 	"context"
 	"io"
 	"strings"
+	"time"
 
 	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
@@ -33,7 +34,7 @@ type Embedded struct {
 }
 
 // NewEmbedded create a new Embedded shell.
-func NewEmbedded(stdout, stderr io.Writer, dir string, env []string) (appcontext.Runner, error) {
+func NewEmbedded(stdout, stderr io.Writer, dir string, env []string, gracefulShutdownTimeout time.Duration) (appcontext.Runner, error) {
 	parser := syntax.NewParser()
 	runner, err := interp.New(
 		interp.StdIO(nil, stdout, stderr),
@@ -41,6 +42,7 @@ func NewEmbedded(stdout, stderr io.Writer, dir string, env []string) (appcontext
 		interp.Env(expand.ListEnviron(env...)),
 		interp.Module(interp.ModuleExec(execCmd)),
 	)
+	runner.KillTimeout = gracefulShutdownTimeout
 	if err != nil {
 		return nil, err
 	}

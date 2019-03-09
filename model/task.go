@@ -93,7 +93,7 @@ func (n *Task) createRunner(ctx context.Context, dir string, env []string) (appc
 		stderr.Close()
 	}
 	env = append(os.Environ(), env...)
-	runner, err := appCtx.NewRunner(stdout, stderr, dir, env)
+	runner, err := appCtx.NewRunner(stdout, stderr, dir, env, appCtx.RunnerGracefulShutdownTimeout)
 	if err != nil {
 		close()
 		return nil, nil, err

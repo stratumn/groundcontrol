@@ -59,6 +59,7 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 			app.OptGitSourcesDirectory(viper.GetString("git-sources-directory")),
 			app.OptWorkspacesDirectory(viper.GetString("workspaces-directory")),
 			app.OptCacheDirectory(viper.GetString("cache-directory")),
+			app.OptRunnerGracefulShutdownTimeout(viper.GetDuration("runner-graceful-shutown-timeout")),
 			app.OptOpenEditorCommand(viper.GetString("open-editor-command")),
 			app.OptEnableApolloTracing(viper.GetBool("enable-apollo-tracing")),
 			app.OptPprofListenAddress(viper.GetString("pprof-listen-address")),
@@ -95,6 +96,7 @@ func init() {
 	rootCmd.PersistentFlags().String("git-sources-directory", app.DefaultGitSourcesDirectory, "directory for Git sources")
 	rootCmd.PersistentFlags().String("workspaces-directory", app.DefaultWorkspacesDirectory, "directory for workspaces")
 	rootCmd.PersistentFlags().String("cache-directory", app.DefaultCacheDirectory, "directory for the cache")
+	rootCmd.PersistentFlags().Duration("runner-graceful-shutdown-timeout", app.DefaultRunnerGracefulShutdownTimeout, "maximum amount of time allowed to gracefully shutdown a service or task")
 	rootCmd.PersistentFlags().String("open-editor-command", app.DefaultOpenEditorCommand, "command issued to open a text editor")
 	rootCmd.PersistentFlags().Bool("enable-apollo-tracing", app.DefaultEnableApolloTracing, "enable the Apollo tracing middleware")
 	rootCmd.PersistentFlags().String("pprof-listen-address", app.DefaultPprofListenAddress, "address the profiler should listen on")
@@ -114,6 +116,7 @@ func init() {
 		"git-sources-directory",
 		"workspaces-directory",
 		"cache-directory",
+		"runner-graceful-shutdown-timeout",
 		"open-editor-command",
 		"enable-apollo-tracing",
 		"pprof-listen-address",

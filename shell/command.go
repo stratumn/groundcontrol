@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
@@ -34,11 +35,21 @@ func execCmd(ctx context.Context, path string, args []string) error {
 	cmd := createCmd(ctx, path, args)
 	err := cmd.Start()
 	if err == nil {
+		exitCh := make(chan struct{}, 1)
 		go func() {
 			<-ctx.Done()
+			go func() {
+				select {
+				case <-exitCh:
+					return
+				case <-time.After(moduleCtx.KillTimeout):
+					_ = sendSignalToCmd(cmd, os.Kill)
+				}
+			}()
 			_ = sendSignalToCmd(cmd, os.Interrupt)
 		}()
 		err = cmd.Wait()
+		close(exitCh)
 	}
 	return handleCmdErr(ctx, err)
 }

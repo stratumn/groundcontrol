@@ -17,6 +17,7 @@ package appcontext
 import (
 	"context"
 	"io"
+	"time"
 
 	"groundcontrol/store"
 )
@@ -27,21 +28,22 @@ const contextKey key = "groundcontrol_app_context"
 
 // Context contains variables that are passed to most app functions.
 type Context struct {
-	Nodes               Nodes
-	Log                 Log
-	Jobs                Jobs
-	Services            Services
-	Subs                Subs
-	Sources             Sources
-	Keys                Keys
-	GetGitSourcePath    ProjectGitSourcePathGetter
-	GetProjectPath      ProjectPathGetter
-	GetProjectCachePath ProjectCachePathGetter
-	NewRunner           NewRunner
-	OpenEditorCommand   string
-	ViewerID            string
-	SystemID            string
-	SubChannelSize      int
+	Nodes                         Nodes
+	Log                           Log
+	Jobs                          Jobs
+	Services                      Services
+	Subs                          Subs
+	Sources                       Sources
+	Keys                          Keys
+	GetGitSourcePath              ProjectGitSourcePathGetter
+	GetProjectPath                ProjectPathGetter
+	GetProjectCachePath           ProjectCachePathGetter
+	NewRunner                     NewRunner
+	RunnerGracefulShutdownTimeout time.Duration
+	OpenEditorCommand             string
+	ViewerID                      string
+	SystemID                      string
+	SubChannelSize                int
 }
 
 // With adds an app context to a Go context.
@@ -169,4 +171,4 @@ type ProjectPathGetter func(workspaceSlug, projectSlug string) string
 type ProjectCachePathGetter func(workspaceSlug, projectSlug string) string
 
 // NewRunner is a function that returns a runner.
-type NewRunner func(stdout, stderr io.Writer, dir string, env []string) (Runner, error)
+type NewRunner func(stdout, stderr io.Writer, dir string, env []string, gracefulShutdownTimeout time.Duration) (Runner, error)
