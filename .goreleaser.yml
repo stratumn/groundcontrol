@@ -45,3 +45,10 @@ brew:
   github:
     owner: stratumn
     name: homebrew-groundcontrol
+scoop:
+  bucket:
+    owner: stratumn
+    name: groundcontrol-scoop-bucket
+  homepage: "https://github.com/stratumn/groundcontrol"
+  description: "Application to aid with multi-repository development using a user friendly web interface."
+  license: Apache-2.0

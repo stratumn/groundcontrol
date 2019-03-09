@@ -34,6 +34,23 @@ Once installed, you can update to latest version by running:
 brew upgrade stratumn/groundcontrol/groundcontrol
 ```
 
+### Windows (scoop)
+
+Windows support is **experimental**.
+
+You need Git and possibly Putty with Pageant configured to use your Git ssh keys.
+
+```
+scoop bucket add groundcontrol https://github.com/stratumn/groundcontrol-scoop-bucket.git
+scoop install groundcontrol
+```
+
+Once installed, you can update to latest version by running:
+
+```
+scoop update groundcontrol
+```
+
 ### Prebuilt binaries
 
 Head over to the [latest release](https://github.com/stratumn/groundcontrol/releases/latest) and download the binary for your platform.
@@ -43,7 +60,7 @@ Head over to the [latest release](https://github.com/stratumn/groundcontrol/rele
 After installing, run:
 
 ```
-ssh-add # <---- to use your SSH key for accessing private repos
+ssh-add # <---- may be needed in order to use your SSH key for accessing repos
 groundcontrol
 ```
 
