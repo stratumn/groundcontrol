@@ -62,6 +62,8 @@ ssh-add # <---- may be needed in order to use your SSH key for accessing repos
 groundcontrol
 ```
 
+See [sources](docs/sources.md) to learn how to create workspaces.
+
 ## Development
 
 Use this source:
