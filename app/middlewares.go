@@ -22,6 +22,10 @@ import (
 	"groundcontrol/appcontext"
 )
 
+// modelContextMiddleware adds an appcontext.Context to the context that is
+// passed to GraphQL resolvers. Currently gqlgen doesn't pass this context to
+// subscriptions, so as a workaround the app context is also stored in the
+// root resolver.
 func modelContextMiddleware(appCtx *appcontext.Context) graphql.FieldMiddleware {
 	return func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
 		return next(appcontext.With(ctx, appCtx))

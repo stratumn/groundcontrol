@@ -12,11 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package app contains types to start Ground Control. It combines all the
-// needed packages into an easy-to-use API.
-//
-// Example
-//
-//    a := app.New(app.OptListenAddress(":3000"))
-//    a.Start(context.Background())
-package app
+package util
+
+import (
+	"fmt"
+	"net"
+)
+
+// AddressURL returns the URL of an HTTP address.
+func AddressURL(address string) (string, error) {
+	addr, err := net.ResolveTCPAddr("tcp", address)
+	if err != nil {
+		return "", err
+	}
+	url := "http://"
+	if addr.IP == nil {
+		url += "localhost"
+	} else {
+		url += addr.IP.String()
+	}
+	if addr.Port != 0 {
+		url += fmt.Sprintf(":%d", addr.Port)
+	}
+	return url, nil
+}

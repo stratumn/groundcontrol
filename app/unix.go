@@ -24,11 +24,13 @@ import (
 )
 
 func initHooks(ctx context.Context) error {
-	incNoFile(ctx)
+	incNofile(ctx)
 	return nil
 }
 
-func incNoFile(ctx context.Context) {
+// incNofile attempts to increase the maximum allowed number of open files,
+// which is especially helpful when file watchers are used by services.
+func incNofile(ctx context.Context) {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
 	systemID := appCtx.SystemID

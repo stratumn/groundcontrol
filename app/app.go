@@ -16,8 +16,6 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -27,30 +25,25 @@ import (
 	"syscall"
 	"time"
 
-	_ "net/http/pprof"
-
-	"github.com/99designs/gqlgen-contrib/gqlapollotracing"
-	"github.com/99designs/gqlgen/handler"
-	"github.com/go-chi/chi"
-	"github.com/gorilla/websocket"
 	"github.com/pkg/browser"
-	"github.com/rs/cors"
 
 	"groundcontrol/appcontext"
-	"groundcontrol/gql"
 	"groundcontrol/job"
 	"groundcontrol/log"
 	"groundcontrol/model"
 	"groundcontrol/pubsub"
 	"groundcontrol/relay"
-	"groundcontrol/resolver"
 	"groundcontrol/service"
 	"groundcontrol/store"
+	"groundcontrol/util"
 	"groundcontrol/work"
+
+	_ "net/http/pprof"
 )
 
-// App starts Ground Control.
+// App contains everything that's needed to start Ground Control.
 type App struct {
+	// All of these can be set by passing options to New().
 	sourcesFile                   string
 	keysFile                      string
 	listenAddress                 string
@@ -73,11 +66,13 @@ type App struct {
 	enableSignalHandling          bool
 	pprofListenAddress            string
 	newRunner                     appcontext.NewRunner
-
+	// The app needs to launch a few Goroutines, and a wait group is used to
+	// make sure they finish before exiting.
+	// TODO: see if golang.org/x/sync/errgroup is a better option
 	waitGroup sync.WaitGroup
 }
 
-// New creates a new App with given options.
+// New creates a new App with given options. All options have default values.
 func New(opts ...Opt) *App {
 	app := &App{
 		sourcesFile:                   DefaultSourcesFile,
@@ -108,12 +103,17 @@ func New(opts ...Opt) *App {
 	return app
 }
 
-// Start starts the app. It blocks until an error occurs or the app exits.
+// Start starts the app. It blocks until an error occurs, the context is
+// canceled, or an exit signal is received. It will do some cleanup before
+// returning, which can take some time.
 func (a *App) Start(ctx context.Context) error {
+	// Augment the context with an appcontext.Context to propagate variables
+	// to app functions.
 	appCtx := a.createAppContext()
+	// When an exit signal is received, or one of the Goroutines returns,
+	// cancel() is called to initiate a shutdown.
 	ctx, cancel := context.WithCancel(appcontext.With(ctx, appCtx))
 	defer cancel()
-
 	a.createBaseNodes(ctx) // sets appCtx.systemID
 	appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "starting app")
 	if err := a.createSources(ctx); err != nil {
@@ -125,26 +125,32 @@ func (a *App) Start(ctx context.Context) error {
 	if err := initHooks(ctx); err != nil {
 		return err
 	}
+	// Start the HTTP server as soon as possible to reduce the risk of the
+	// browser opening before the UI is ready to be served.
 	server := a.createServer(ctx)
 	a.serve(ctx, server, cancel)
+	a.startJobs(ctx, cancel)
+	a.startPeriodicJobs(ctx, cancel)
 	if a.enableSignalHandling {
 		a.handleSignals(ctx, server, cancel)
 	}
-	a.startJobs(ctx, cancel)
-	a.startPeriodicJobs(ctx, cancel)
 	if a.openBrowser && a.ui != nil {
-		a.openAddressInBrowser(ctx)
+		a.openUI(ctx)
 	}
 	if a.pprofListenAddress != "" {
 		a.startPprof(ctx)
 	}
 	appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "app ready")
-
+	// Block until the context is canceled by either the app or the parent
+	// context, then shutdown everything.
 	<-ctx.Done()
 	a.shutdown(ctx, server)
 	return ctx.Err()
 }
 
+// createAppContext creates the app context that will be attached to a Go
+// context. Functions in the program can retrieve it by calling
+// appcontext.Get().
 func (a *App) createAppContext() *appcontext.Context {
 	return &appcontext.Context{
 		Nodes:                         store.NewMemory(),
@@ -162,8 +168,12 @@ func (a *App) createAppContext() *appcontext.Context {
 	}
 }
 
+// createBaseNodes creates the Relay nodes that are needed before other nodes
+// can be created.
 func (a *App) createBaseNodes(ctx context.Context) {
 	var (
+		// Since the nodes are unique, their type is enough to create a unique
+		// ID, for as long as there is only one user and system.
 		viewerID         = relay.EncodeID(model.NodeTypeUser)
 		systemID         = relay.EncodeID(model.NodeTypeSystem)
 		jobMetricsID     = relay.EncodeID(model.NodeTypeJobMetrics)
@@ -180,12 +190,15 @@ func (a *App) createBaseNodes(ctx context.Context) {
 		LogMetricsID:     logMetricsID,
 		ServiceMetricsID: serviceMetricsID,
 	}).MustStore(ctx)
-
+	// The viewer and system IDs are stored in the app context and are the only
+	// IDs that are globally needed since all other nodes are children.
 	appCtx := appcontext.Get(ctx)
 	appCtx.ViewerID = viewerID
 	appCtx.SystemID = systemID
 }
 
+// createSources loads the sources config file and creates the Relay nodes for
+// them.
 func (a *App) createSources(ctx context.Context) error {
 	config, err := model.LoadSourcesConfigYAML(a.sourcesFile)
 	if err != nil {
@@ -198,6 +211,7 @@ func (a *App) createSources(ctx context.Context) error {
 	return nil
 }
 
+// createKeys loads the keys config file and creates the Relay nodes for them.
 func (a *App) createKeys(ctx context.Context) error {
 	config, err := model.LoadKeysConfigYAML(a.keysFile)
 	if err != nil {
@@ -210,86 +224,57 @@ func (a *App) createKeys(ctx context.Context) error {
 	return nil
 }
 
+// createServer create the HTTP server.
 func (a *App) createServer(ctx context.Context) *http.Server {
-	router := chi.NewRouter()
-	a.addCORS(router)
-	a.addGQL(ctx, router)
-	a.addPlayground(router)
+	r := newRouter()
+	// Middlewares need to be added before routes.
+	r.EnableCORS()
+	r.EnableGQL(appcontext.Get(ctx), a.enableApolloTracing)
+	r.EnablePlayground()
 	if a.ui != nil {
-		a.addUI(router)
+		r.EnableUI(a.ui)
 	}
-	return &http.Server{
-		Addr:    a.listenAddress,
-		Handler: router,
-	}
+	return &http.Server{Addr: a.listenAddress, Handler: r}
 }
 
-func (a *App) addCORS(router *chi.Mux) {
-	opts := cors.Options{AllowCredentials: true, Debug: false}
-	handler := cors.New(opts).Handler
-	router.Use(handler)
-}
-
-func (a *App) addGQL(ctx context.Context, router *chi.Mux) {
-	appCtx := appcontext.Get(ctx)
-	root := resolver.Resolver{AppCtx: appCtx}
-	config := gql.Config{Resolvers: &root}
-	opts := []handler.Option{
-		handler.WebsocketUpgrader(websocket.Upgrader{
-			CheckOrigin: func(_ *http.Request) bool { return true },
-		}),
-		handler.ResolverMiddleware(modelContextMiddleware(appCtx)),
-	}
-	if a.enableApolloTracing {
-		opts = append(
-			opts,
-			// Currently crashes with subscriptions.
-			handler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
-			handler.Tracer(gqlapollotracing.NewTracer()),
-		)
-	}
-	schema := gql.NewExecutableSchema(config)
-	graphql := handler.GraphQL(schema, opts...)
-	router.Handle("/query", graphql)
-}
-
-func (a *App) addPlayground(router *chi.Mux) {
-	router.Handle("/graphql", handler.Playground("GraphQL playground", "/query"))
-}
-
-func (a *App) addUI(router *chi.Mux) {
-	fileServer := http.FileServer(a.ui)
-	router.NotFound(func(w http.ResponseWriter, req *http.Request) {
-		if _, err := a.ui.Open(req.URL.Path); err != nil {
-			// Rewrite other URLs to index for pushstate.
-			req.URL.Path = ""
-		}
-		fileServer.ServeHTTP(w, req)
-	})
-}
-
+// serve starts the HTTP server in a Goroutine.
 func (a *App) serve(ctx context.Context, server *http.Server, cancel func()) {
+	a.proc(ctx, "http server", cancel, func(ctx context.Context) error {
+		return server.ListenAndServe()
+	})
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
 	systemID := appCtx.SystemID
-	log.DebugWithOwner(ctx, systemID, "starting server")
-
-	a.waitGroup.Add(1)
-	go func() {
-		defer a.waitGroup.Done()
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.ErrorWithOwner(ctx, systemID, "server crashed because %s", err.Error())
-			cancel()
-		}
-		log.DebugWithOwner(ctx, systemID, "server terminated")
-	}()
-
 	if a.ui != nil {
 		log.InfoWithOwner(ctx, systemID, "user interface on %s", a.listenAddress)
 	}
 	log.InfoWithOwner(ctx, systemID, "GraphQL playground on %s/graphql", a.listenAddress)
 }
 
+// startJobs starts the work queue in a Goroutine.
+func (a *App) startJobs(ctx context.Context, cancel func()) {
+	a.proc(ctx, "work queue", cancel, appcontext.Get(ctx).Jobs.Work)
+}
+
+// startPeriodicJobs starts peridically creating jobs to synchronize sources
+// and workspaces in a Goroutine.
+func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
+	a.proc(ctx, "periodic jobs", cancel, func(ctx context.Context) error {
+		return job.StartPeriodic(
+			ctx,
+			a.periodicJobsInterval,
+			func(ctx context.Context) []string {
+				return job.SyncSources(ctx, false)
+			},
+			func(ctx context.Context) []string {
+				return job.SyncWorkspaces(ctx, false)
+			},
+		)
+	})
+}
+
+// handleSignals starts a Goroutine that will cancel the app context once
+// a SIGTERM or SIGINT signal is received.
 func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel func()) {
 	signalCh := make(chan os.Signal, 2)
 	signal.Notify(signalCh, syscall.SIGTERM)
@@ -302,53 +287,16 @@ func (a *App) handleSignals(ctx context.Context, server *http.Server, cancel fun
 	}()
 }
 
-func (a *App) startJobs(ctx context.Context, cancel func()) {
-	appCtx := appcontext.Get(ctx)
-	log := appCtx.Log
-	systemID := appCtx.SystemID
-	log.DebugWithOwner(ctx, systemID, "starting jobs")
-	a.waitGroup.Add(1)
-	go func() {
-		defer a.waitGroup.Done()
-		if err := appCtx.Jobs.Work(ctx); err != nil && err != context.Canceled {
-			log.ErrorWithOwner(ctx, systemID, "job manager crashed because %s", err.Error())
-			cancel()
-		}
-		log.DebugWithOwner(ctx, systemID, "jobs terminated")
-	}()
-}
-
-func (a *App) startPeriodicJobs(ctx context.Context, cancel func()) {
-	appCtx := appcontext.Get(ctx)
-	log := appCtx.Log
-	systemID := appCtx.SystemID
-	log.DebugWithOwner(ctx, systemID, "starting periodic jobs")
-	a.waitGroup.Add(1)
-	go func() {
-		defer a.waitGroup.Done()
-		err := job.StartPeriodic(
-			ctx,
-			a.periodicJobsInterval,
-			func(ctx context.Context) []string {
-				return job.SyncSources(ctx, false)
-			},
-			func(ctx context.Context) []string {
-				return job.SyncWorkspaces(ctx, false)
-			},
-		)
-		if err != nil && err != context.Canceled {
-			log.ErrorWithOwner(ctx, systemID, "periodic jobs crashed because %s", err.Error())
-			cancel()
-		}
-		log.DebugWithOwner(ctx, systemID, "periodic jobs terminated")
-	}()
-}
-
+// shutdown terminates all the running Goroutines, and cleans up the app before
+// exiting the process.
+// TODO: for testing there needs to be a way not to exit the process.
 func (a *App) shutdown(ctx context.Context, server *http.Server) {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
 	systemID := appCtx.SystemID
 	log.InfoWithOwner(ctx, systemID, "starting shutdown")
+	// At this point the main context is already done, so a new one is created
+	// with a timeout to allow the remaining Goroutines to clean up.
 	cleanCtx, cancel := context.WithTimeout(
 		appcontext.With(context.Background(), appCtx),
 		a.gracefulShutdownTimeout,
@@ -357,12 +305,16 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 
 	a.waitGroup.Add(2)
 	go func() {
+		// The service manager doesn't have its own Goroutine, but it needs to
+		// stop all running services.
 		appCtx.Services.Clean(cleanCtx)
 		a.waitGroup.Done()
 	}()
 	go func() {
+		// Even though it's not important, try to cleanly shutdown the HTTP
+		// server.
 		if err := server.Shutdown(cleanCtx); err != nil && err != context.Canceled {
-			log.ErrorWithOwner(ctx, systemID, "server shutdown failed because %s", err.Error())
+			log.ErrorWithOwner(ctx, systemID, "http server shutdown failed because %s", err.Error())
 		}
 		a.waitGroup.Done()
 	}()
@@ -375,37 +327,35 @@ func (a *App) shutdown(ctx context.Context, server *http.Server) {
 
 	select {
 	case <-cleanCtx.Done():
-		log.ErrorWithOwner(ctx, systemID, "clean shutdown failed because %s", ctx.Err().Error())
+		// Not all Goroutine exited in time, so exit the process with an error.
+		log.ErrorWithOwner(ctx, systemID, "graceful shutdown failed because %s", ctx.Err().Error())
 		os.Exit(1)
 	case <-doneCh:
-		log.InfoWithOwner(ctx, systemID, "clean shutdown complete, goodbye!")
+		// All Goroutines stopped in time.
+		// TODO: if a Goroutine exited with an unexpected error, it should exit
+		// with status 1.
+		log.InfoWithOwner(ctx, systemID, "graceful shutdown complete, goodbye!")
 		os.Exit(0)
 	}
 }
 
-func (a *App) openAddressInBrowser(ctx context.Context) {
+// openUI opens the URL of the user interface in the default browser.
+func (a *App) openUI(ctx context.Context) {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
 	systemID := appCtx.SystemID
-	addr, err := net.ResolveTCPAddr("tcp", a.listenAddress)
+	url, err := util.AddressURL(a.listenAddress)
 	if err != nil {
-		log.WarningWithOwner(ctx, systemID, "could not resolve address because %s", err.Error())
+		log.WarningWithOwner(ctx, systemID, "could not resolve UI address because %s", err.Error())
 		return
 	}
-	url := "http://"
-	if addr.IP == nil {
-		url += "localhost"
-	} else {
-		url += addr.IP.String()
-	}
-	if addr.Port != 0 {
-		url += fmt.Sprintf(":%d", addr.Port)
-	}
 	if err := browser.OpenURL(url); err != nil {
-		log.WarningWithOwner(ctx, systemID, "could not resolve address because %s", err.Error())
+		log.WarningWithOwner(ctx, systemID, "could not open UI in browser because %s", err.Error())
 	}
 }
 
+// startPprof start another HTTP server for the Go profiler, which can be used
+// to debug CPU and memory usage, amongst other things.
 func (a *App) startPprof(ctx context.Context) {
 	appCtx := appcontext.Get(ctx)
 	log := appCtx.Log
@@ -420,6 +370,8 @@ func (a *App) startPprof(ctx context.Context) {
 	}()
 }
 
+// getGitSourcePath returns the path to the directory where the files of a Git
+// source are stored.
 func (a *App) getGitSourcePath(repo, reference string) string {
 	name := path.Base(repo)
 	ext := path.Ext(name)
@@ -427,10 +379,34 @@ func (a *App) getGitSourcePath(repo, reference string) string {
 	return filepath.Join(a.gitSourcesDirectory, name, reference)
 }
 
+// getProjectPath returns the path to the directory where the files of a
+// project are stored.
 func (a *App) getProjectPath(workspaceSlug, projectSlug string) string {
 	return filepath.Join(a.workspacesDirectory, workspaceSlug, projectSlug)
 }
 
+// getProjectCachePath returns the path to the directory where the files of a
+// project cache are stored. The cache of a project is just a bare clone of the
+// repository.
 func (a *App) getProjectCachePath(workspaceSlug, projectSlug string) string {
 	return filepath.Join(a.cacheDirectory, workspaceSlug, projectSlug+".git")
+}
+
+// proc is used to launch a long-running Goroutine, and takes care of updating
+// the wait group.
+func (a *App) proc(ctx context.Context, name string, cancel context.CancelFunc, fn func(ctx context.Context) error) {
+	appCtx := appcontext.Get(ctx)
+	log := appCtx.Log
+	systemID := appCtx.SystemID
+	log.InfoWithOwner(ctx, systemID, "starting %s", name)
+	a.waitGroup.Add(1)
+	go func() {
+		defer a.waitGroup.Done()
+		err := fn(ctx)
+		if err != nil && err != context.Canceled && err != http.ErrServerClosed {
+			log.ErrorWithOwner(ctx, systemID, "%s crashed because %s", name, err.Error())
+			cancel()
+		}
+		log.InfoWithOwner(ctx, systemID, "%s stopped", name)
+	}()
 }
