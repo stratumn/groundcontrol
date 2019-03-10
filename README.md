@@ -69,3 +69,5 @@ Use this source:
 ```
 git@github.com:stratumn/groundcontrol-source.git
 ```
+
+See [architecture](docs/architecture.md) for an overview of the code.
