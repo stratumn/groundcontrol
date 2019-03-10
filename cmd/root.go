@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,14 +31,17 @@ import (
 
 var (
 	settingsFile  string
+	versionString string
+	releaseDate   string
+	gitCommit     string
 	userInterface http.FileSystem
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "groundcontrol",
 	Short: "Ground Control is an app to manage multiple Git repositories",
-	Long: `Ground Control is an application to help deal with multi-repository development using a user friendly web interface.
+	Long: `Ground Control is an application to aid with multi-repository development using a user friendly web interface.
 
 Complete documentation is available at https://github.com/stratumn/groundcontrol.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -71,7 +73,10 @@ Complete documentation is available at https://github.com/stratumn/groundcontrol
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute(ui http.FileSystem) {
+func Execute(version, date, commit string, ui http.FileSystem) {
+	versionString = version
+	releaseDate = date
+	gitCommit = commit
 	userInterface = ui
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -140,7 +145,5 @@ func initSettings() {
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
 	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err == nil {
-		log.Println("INFO\tusing settings file", viper.ConfigFileUsed())
-	}
+	_ = viper.ReadInConfig()
 }

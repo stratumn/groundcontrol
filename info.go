@@ -14,17 +14,9 @@
 
 package main
 
-import (
-	"log"
-	"net/http"
-	"os"
-
-	"groundcontrol/cmd"
+var (
+	// These variables are set during compilation by goreleaser.
+	version = ""
+	date    = ""
+	commit  = ""
 )
-
-var ui http.FileSystem
-
-func main() {
-	log.SetOutput(os.Stdout)
-	cmd.Execute(version, date, commit, ui)
-}

@@ -12,19 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
-	"log"
-	"net/http"
-	"os"
+	"fmt"
+	"runtime"
 
-	"groundcontrol/cmd"
+	"github.com/spf13/cobra"
 )
 
-var ui http.FileSystem
+// versionCmd represents the version command.
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print version info",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("groundcontrol@" + versionString)
+		fmt.Println(runtime.GOOS + "/" + runtime.GOARCH)
+		fmt.Println(releaseDate)
+		fmt.Println(gitCommit)
+	},
+}
 
-func main() {
-	log.SetOutput(os.Stdout)
-	cmd.Execute(version, date, commit, ui)
+func init() {
+	rootCmd.AddCommand(versionCmd)
 }
