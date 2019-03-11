@@ -80,10 +80,7 @@ func (m *Manager) Clean(ctx context.Context) {
 		if !ok {
 			return true
 		}
-		log := appCtx.Log
-		log.DebugWithOwner(ctx, appCtx.SystemID, "stopping service")
 		if err := m.Stop(ctx, serviceID); err != nil {
-			log.ErrorWithOwner(ctx, appCtx.SystemID, "failed to stop service because %s", err.Error())
 			return true
 		}
 		waitGroup.Add(1)
@@ -160,6 +157,8 @@ func (m *Manager) launchService(ctx context.Context, runner appcontext.Runner, s
 		return err
 	}
 	m.setStatus(ctx, service, model.ServiceStatusRunning)
+	appCtx := appcontext.Get(ctx)
+	appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "service running (%s)", service.LongString(ctx))
 	service.MustStore(ctx)
 	runCtx, cancel := m.createCtx(ctx)
 	m.cancels.Store(service.ID, cancel)
@@ -168,9 +167,7 @@ func (m *Manager) launchService(ctx context.Context, runner appcontext.Runner, s
 }
 
 func (m *Manager) runService(ctx context.Context, runner appcontext.Runner, service *model.Service, env []string, close func()) {
-	appCtx := appcontext.Get(ctx)
-	log := appCtx.Log
-	log.InfoWithOwner(ctx, service.ID, service.Command)
+	appcontext.Get(ctx).Log.InfoWithOwner(ctx, service.ID, service.Command)
 	err := runner.Run(ctx, service.Command)
 	close()
 	model.MustLockService(ctx, service.ID, func(service *model.Service) {
@@ -182,10 +179,8 @@ func (m *Manager) runService(ctx context.Context, runner appcontext.Runner, serv
 		}
 		if err == nil {
 			m.setStatus(ctx, service, model.ServiceStatusStopped)
-			log.DebugWithOwner(ctx, appCtx.SystemID, "service done")
 		} else {
 			m.setStatus(ctx, service, model.ServiceStatusFailed)
-			log.ErrorWithOwner(ctx, appCtx.SystemID, "service failed because %s", err.Error())
 		}
 		service.MustStore(ctx)
 	})
@@ -244,6 +239,12 @@ func (m *Manager) setStatus(ctx context.Context, service *model.Service, status 
 	m.decCounter(was)
 	m.incCounter(status)
 	m.storeMetrics(ctx)
+	appCtx := appcontext.Get(ctx)
+	if service.Status == model.ServiceStatusFailed {
+		appCtx.Log.ErrorWithOwner(ctx, appCtx.SystemID, "service %s (%s)", service.Status, service.LongString(ctx))
+		return
+	}
+	appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "service %s (%s)", service.Status, service.LongString(ctx))
 }
 
 func (m *Manager) incCounter(status model.ServiceStatus) {
