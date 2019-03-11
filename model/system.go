@@ -22,6 +22,11 @@ import (
 	"groundcontrol/appcontext"
 )
 
+// String is a string representation for the type instance.
+func (n *System) String() string {
+	return "system"
+}
+
 func (n *System) filterJobsNode(ctx context.Context, node *Job, status []JobStatus) bool {
 	match := len(status) == 0
 	for _, v := range status {

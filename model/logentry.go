@@ -16,12 +16,33 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"groundcontrol/appcontext"
 	"groundcontrol/util"
 )
+
+// String is a string representation for the type instance.
+func (n *LogEntry) String() string {
+	return n.Message
+}
+
+// LongString is a long string representation for the type instance.
+func (n *LogEntry) LongString(ctx context.Context) string {
+	nodes := appcontext.Get(ctx).Nodes
+	if n.OwnerID != "" {
+		if owner, ok := nodes.Load(n.OwnerID); ok {
+			if owner, ok := owner.(LongStringer); ok {
+				return fmt.Sprintf("%-7s  %s  %s", n.Level, owner.LongString(ctx), n)
+			}
+			return fmt.Sprintf("%-7s  %s  %s", n.Level, owner, n)
+		}
+		return fmt.Sprintf("%-7s  %s  %s", n.Level, n.OwnerID, n)
+	}
+	return fmt.Sprintf("%-7s  %s", n.Level, n)
+}
 
 // BeforeStore parses a source file in the message before storing the node.
 func (n *LogEntry) BeforeStore(ctx context.Context) {

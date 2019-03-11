@@ -89,6 +89,18 @@ interface Node {
   id: ID!
 }
 
+"""Stringer has a string representation."""
+interface Stringer {
+  """String is a string representation for the type instance."""
+  string: String!
+}
+
+"""LongStringer has a long string representation."""
+interface LongStringer {
+  """LongString is a long string representation for the type instance."""
+  longString: String!
+}
+
 """Source is is a collection of workspaces and tasks."""
 interface Source {
   """ID is the global ID of the Node."""
@@ -330,9 +342,11 @@ type LogEntryEdge {
 }
 
 """User is a person using Ground Control."""
-type User implements Node {
+type User implements Node & Stringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
   """Sources lists the Sources belonging to the User using Relay pagination."""
   sources(after: String, before: String, first: Int, last: Int): SourceConnection! @paginate
   """Workspaces lists the Workspaces belonging to the User using Relay pagination."""
@@ -348,9 +362,11 @@ type User implements Node {
 }
 
 """System contains information about Ground Control."""
-type System implements Node {
+type System implements Node & Stringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
   """Jobs lists the Jobs using Relay pagination optionally filtered by JobStatus."""
   jobs(after: String, before: String, first: Int, last: Int, status: [JobStatus!]): JobConnection! @paginate
   """LogEntries lists the LogEntries using Relay pagination optionally filtered by Level and by the Node who owns the LogEntry."""
@@ -366,9 +382,11 @@ type System implements Node {
 }
 
 """DirectorySource is a collection of Workspaces in a directory."""
-type DirectorySource implements Node & Source {
+type DirectorySource implements Node & Stringer & Source {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
   """User is the user who owns the Source."""
   user: User! @relate
   """Workspaces lists the workspaces defined by the Source using Relay pagination."""
@@ -380,9 +398,11 @@ type DirectorySource implements Node & Source {
 }
 
 """GitSource is a collection of Workspaces in a Git repository."""
-type GitSource implements Node & Source {
+type GitSource implements Node & Stringer & Source {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
   """User is the user who owns the Source."""
   user: User! @relate
   """Workspaces lists the workspaces defined by the Source using Relay pagination."""
@@ -400,9 +420,11 @@ type GitSource implements Node & Source {
 }
 
 """Workspace is a collection of Projects and Tasks."""
-type Workspace implements Node {
+type Workspace implements Node & Stringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
   """Slug is the unique URL friendly identifier."""
   slug: String!
   """Name is the human friendly name."""
@@ -422,9 +444,13 @@ type Workspace implements Node {
 }
 
 """Project tracks a Git repository and reference."""
-type Project implements Node {
+type Project implements Node & Stringer & LongStringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
+  """LongString is a long string representation for the type instance."""
+  longString: String! @dynamic
   """Slug is the unique URL friendly identifier within the Workspace."""
   slug: String!
   """Repository is the Git repository to track."""
@@ -470,9 +496,11 @@ type Project implements Node {
 }
 
 """Commit is a Git commit."""
-type Commit implements Node {
+type Commit implements Node & Stringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
   """Hash is the Git hash."""
   hash: Hash!
   """Headline is the first line of the message."""
@@ -486,9 +514,13 @@ type Commit implements Node {
 }
 
 """Task is a sequence of Steps to execute on a Workspace."""
-type Task implements Node {
+type Task implements Node & Stringer & LongStringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
+  """LongString is a long string representation for the type instance."""
+  longString: String! @dynamic
   """Name is the human friendly name."""
   name: String!
   """Variables lists the Variables using Relay pagination."""
@@ -538,9 +570,13 @@ type Command implements Node {
 }
 
 """Service is a long running process that runs in the background."""
-type Service implements Node {
+type Service implements Node & Stringer & LongStringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
+  """LongString is a long string representation for the type instance."""
+  longString: String! @dynamic
   """Name is the human friendly name."""
   name: String!
   """Variables lists the Variables using Relay pagination."""
@@ -576,9 +612,13 @@ type Key implements Node {
 }
 
 """Job are put in the queue to do work that takes too long to process immediately."""
-type Job implements Node {
+type Job implements Node & Stringer & LongStringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
+  """LongString is a long string representation for the type instance."""
+  longString: String! @dynamic
   """Name is the human frienly name."""
   name: String!
   """CreatedAt is the date it was created."""
@@ -594,9 +634,13 @@ type Job implements Node {
 }
 
 """LogEntry is an entry in the logs."""
-type LogEntry implements Node {
+type LogEntry implements Node & Stringer & LongStringer {
   """ID is the global ID of the Node."""
   id: ID!
+  """String is a string representation for the type instance."""
+  string: String! @dynamic
+  """LongString is a long string representation for the type instance."""
+  longString: String! @dynamic
   """Level is the LogLevel."""
   level: LogLevel!
   """When it was created."""

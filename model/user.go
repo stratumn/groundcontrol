@@ -26,6 +26,11 @@ func (n *User) BeforeStore(ctx context.Context) {
 	n.SortKeys(ctx)
 }
 
+// String is a string representation for the type instance.
+func (n *User) String() string {
+	return "viewer"
+}
+
 // Workspaces lists the Workspaces belonging to the User sorted by Name
 // using Relay pagination.
 func (n *User) Workspaces(ctx context.Context, after, before *string, first, last *int) (*WorkspaceConnection, error) {

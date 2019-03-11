@@ -17,5 +17,9 @@ models:
     model: groundcontrol/model.Hash
   Node:
     model: groundcontrol/store.Node
+  Stringer:
+    model: fmt.Stringer
+  LongStringer:
+    model: groundcontrol/model.LongStringer
   Source:
     model: groundcontrol/model.Source

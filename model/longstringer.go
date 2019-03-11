@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package store
+package model
 
-// Node represents a Relay node.
-type Node interface {
-	GetID() string
-	Copy() Node
+import "context"
+
+// LongStringer has a long string representation.
+type LongStringer interface {
+	// LongString is a long string representation for the type instance.
+	LongString(context.Context) string
 }

@@ -16,28 +16,26 @@ package model
 
 import (
 	"context"
-	"path/filepath"
+	"fmt"
+	"groundcontrol/appcontext"
 )
 
 // String is a string representation for the type instance.
-func (n *DirectorySource) String() string {
-	return filepath.Base(n.Directory)
+func (n *Job) String() string {
+	return n.Name
 }
 
-// Sync syncs the Source.
-func (n *DirectorySource) Sync(ctx context.Context) error {
-	defer func() {
-		n.IsSyncing = false
-		n.MustStore(ctx)
-	}()
-	n.IsSyncing = true
-	n.MustStore(ctx)
-
-	workspaceIDs, err := SyncWorkspacesInDirectory(ctx, n.Directory, n.ID)
-	if err != nil {
-		return err
+// LongString is a long string representation for the type instance.
+func (n *Job) LongString(ctx context.Context) string {
+	nodes := appcontext.Get(ctx).Nodes
+	if n.OwnerID != "" {
+		if owner, ok := nodes.Load(n.OwnerID); ok {
+			if owner, ok := owner.(LongStringer); ok {
+				return fmt.Sprintf("%s (%s)", n, owner.LongString(ctx))
+			}
+			return fmt.Sprintf("%s (%s)", n, owner)
+		}
+		return fmt.Sprintf("%s (%s)", n, n.OwnerID)
 	}
-	n.WorkspacesIDs = workspaceIDs
-	n.MustStore(ctx)
-	return nil
+	return fmt.Sprint(n)
 }

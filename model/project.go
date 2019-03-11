@@ -16,6 +16,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -30,6 +31,16 @@ import (
 	"groundcontrol/gitutil"
 	"groundcontrol/util"
 )
+
+// String is a string representation for the type instance.
+func (n *Project) String() string {
+	return filepath.Base(n.Repository)
+}
+
+// LongString is a long string representation for the type instance.
+func (n *Project) LongString(ctx context.Context) string {
+	return fmt.Sprintf("%s » %s", n.Workspace(ctx), n)
+}
 
 // ReferenceShort is the short name of the Reference.
 func (n *Project) ReferenceShort() string {

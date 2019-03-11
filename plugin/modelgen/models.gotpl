@@ -30,11 +30,6 @@
 		{{- end }}
 	}
 
-	{{- range $iface := .Implements }}
-		// Is{{ $iface }} declares that {{ $model.Name }} implements {{ $iface }}.
-		func ({{ $model.Name }}) Is{{ $iface }}() {}
-	{{- end }}
-
 	{{- range $field := $model.Fields }}
 		// Get{{ $field.Name }} returns the {{ $field.Name }}.
 		func (n *{{ $model.Name }})Get{{ $field.Name }}() {{ $field.Type | ref }} {

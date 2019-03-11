@@ -20,6 +20,11 @@ import (
 	"strings"
 )
 
+// String is a string representation for the type instance.
+func (n *Workspace) String() string {
+	return n.Name
+}
+
 // BeforeStore sorts collections before storing the Workspace.
 func (n *Workspace) BeforeStore(ctx context.Context) {
 	n.SortProjects(ctx)

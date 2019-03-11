@@ -140,17 +140,18 @@ func (l *Logger) add(ctx context.Context, level model.LogLevel, ownerID string, 
 	if logLevelPriorities[level] < logLevelPriorities[l.level] {
 		return "", nil
 	}
-	l.printToStdLog(level, ownerID, message)
 	id := atomic.AddUint64(&l.lastID, 1)
 	relayID := relay.EncodeID(model.NodeTypeLogEntry, fmt.Sprint(id))
 	now := model.DateTime(time.Now())
-	l.append(ctx, &model.LogEntry{
+	entry := &model.LogEntry{
 		ID:        relayID,
 		Level:     level,
 		CreatedAt: now,
 		Message:   message,
 		OwnerID:   ownerID,
-	})
+	}
+	l.printToStdLog(ctx, entry)
+	l.append(ctx, entry)
 	return relayID, nil
 }
 
@@ -180,16 +181,12 @@ func (l *Logger) deleteOldEntries(ctx context.Context) {
 	}
 }
 
-func (l *Logger) printToStdLog(level model.LogLevel, ownerID, message string) {
+func (l *Logger) printToStdLog(ctx context.Context, entry *model.LogEntry) {
 	log := l.stdoutLog
-	if logLevelPriorities[level] >= logLevelPriorities[model.LogLevelWarning] {
+	if logLevelPriorities[entry.Level] >= logLevelPriorities[model.LogLevelWarning] {
 		log = l.stderrLog
 	}
-	if ownerID != "" {
-		log.Printf("%s\t<%s> %s", level, ownerID, message)
-		return
-	}
-	log.Printf("%s\t%s", level, message)
+	log.Println(entry.LongString(ctx))
 }
 
 func (l *Logger) incCounter(level model.LogLevel) {

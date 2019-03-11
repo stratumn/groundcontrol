@@ -16,11 +16,22 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"groundcontrol/appcontext"
 	"groundcontrol/util"
 )
+
+// String is a string representation for the type instance.
+func (n *Task) String() string {
+	return n.Name
+}
+
+// LongString is a long string representation for the type instance.
+func (n *Task) LongString(ctx context.Context) string {
+	return fmt.Sprintf("%s » %s", n.Workspace(ctx), n)
+}
 
 // Run executes the commands in the task.
 // Env is the environment of the Task. Each entry is of the form 'key=value'.

@@ -16,6 +16,7 @@ package model
 
 import (
 	"context"
+	"path/filepath"
 
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -23,6 +24,11 @@ import (
 	"groundcontrol/appcontext"
 	"groundcontrol/util"
 )
+
+// String is a string representation for the type instance.
+func (n *GitSource) String() string {
+	return filepath.Base(n.Repository)
+}
 
 // ReferenceShort is the short name of the Reference.
 func (n *GitSource) ReferenceShort() string {

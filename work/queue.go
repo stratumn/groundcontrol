@@ -109,7 +109,7 @@ func (q *Queue) Add(ctx context.Context, name, ownerID string, highPriority bool
 		job.MustStore(ctx)
 		q.addJobToSystem(ctx, job.ID)
 		appCtx := appcontext.Get(ctx)
-		appCtx.Log.DebugWithOwner(ctx, appCtx.SystemID, "job failed because queue is done")
+		appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "%s  job failed because queue is done", job.LongString(ctx))
 		return job.ID
 	}
 	msg := message{Job: job, Fn: fn}
@@ -126,10 +126,10 @@ func (q *Queue) Stop(ctx context.Context, id string) error {
 		switch job.Status {
 		case model.JobStatusQueued:
 			q.setStatus(ctx, job, model.JobStatusFailed)
-			log.ErrorWithOwner(ctx, systemID, "job failed because it was stopped")
+			log.ErrorWithOwner(ctx, systemID, "%s  job failed because it was stopped", job.LongString(ctx))
 		case model.JobStatusRunning:
 			q.setStatus(ctx, job, model.JobStatusStopping)
-			log.DebugWithOwner(ctx, systemID, "job stopping")
+			log.InfoWithOwner(ctx, systemID, "%s  job stopping", job.LongString(ctx))
 			actual, _ := q.cancels.Load(id)
 			actual.(context.CancelFunc)()
 		default:
@@ -161,14 +161,14 @@ func (q *Queue) send(ctx context.Context, msg message, highPriority bool) {
 			q.setStatus(ctx, job, model.JobStatusQueued)
 			job.MustStore(ctx)
 			q.addJobToSystem(ctx, job.ID)
-			log.DebugWithOwner(ctx, systemID, "job queued")
+			log.InfoWithOwner(ctx, systemID, "%s  job queued", job.LongString(ctx))
 		})
 	default:
 		model.MustLockJob(ctx, msg.Job.ID, func(job *model.Job) {
 			q.setStatus(ctx, job, model.JobStatusFailed)
 			job.MustStore(ctx)
 			q.addJobToSystem(ctx, job.ID)
-			log.DebugWithOwner(ctx, systemID, "job failed because queue is full")
+			log.InfoWithOwner(ctx, systemID, "%s  job failed because queue is full", job.LongString(ctx))
 		})
 	}
 }
@@ -198,7 +198,7 @@ func (q *Queue) run(ctx context.Context, msg message) {
 		return
 	}
 	appCtx := appcontext.Get(ctx)
-	appCtx.Log.DebugWithOwner(ctx, appCtx.SystemID, "job running")
+	appCtx.Log.InfoWithOwner(ctx, appCtx.SystemID, "%s  job running", msg.Job.LongString(ctx))
 	q.handleJobErr(ctx, jobID, msg.Fn(jobCtx))
 	cancel()
 }
@@ -210,10 +210,10 @@ func (q *Queue) handleJobErr(ctx context.Context, jobID string, err error) {
 	model.MustLockJob(ctx, jobID, func(job *model.Job) {
 		if err != nil {
 			q.setStatus(ctx, job, model.JobStatusFailed)
-			log.ErrorWithOwner(ctx, systemID, "job failed because %s", err.Error())
+			log.ErrorWithOwner(ctx, systemID, "%s  job failed because %s", job.LongString(ctx), err.Error())
 		} else {
 			q.setStatus(ctx, job, model.JobStatusDone)
-			log.DebugWithOwner(ctx, systemID, "job done")
+			log.InfoWithOwner(ctx, systemID, "%s  job done", job.LongString(ctx))
 		}
 		q.cancels.Delete(job.ID)
 		job.UpdatedAt = model.DateTime(time.Now())

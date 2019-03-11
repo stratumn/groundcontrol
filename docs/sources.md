@@ -61,7 +61,7 @@ workspaces:
             default: 4000
           - name: BACKEND_PORT
         project: frontend
-        command: PORT=$FRONTEND_PORT BACKEND_PORT=$BACKEND_PORT npm start
+        command: PORT=$FRONTEND_PORT API_PORT=$BACKEND_PORT npm start
         before:
           - Install Frontend Dependencies
         # needs list names of services that must be started before this one

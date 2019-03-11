@@ -33,3 +33,8 @@ func NewCommitFromGit(commit *object.Commit) *Commit {
 		Date:     DateTime(commit.Author.When),
 	}
 }
+
+// String is a string representation for the type instance.
+func (n *Commit) String() string {
+	return n.Headline
+}

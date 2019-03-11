@@ -14,7 +14,20 @@
 
 package model
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
+
+// String is a string representation for the type instance.
+func (n *Service) String() string {
+	return n.Name
+}
+
+// LongString is a long string representation for the type instance.
+func (n *Service) LongString(ctx context.Context) string {
+	return fmt.Sprintf("%s » %s", n.Workspace(ctx), n)
+}
 
 // ComputeDependencies computes the dependencies of the Service based on the Services it needs.
 func (n *Service) ComputeDependencies(ctx context.Context) error {
