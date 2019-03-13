@@ -34,7 +34,10 @@ func (r *mutationResolver) RunTask(ctx context.Context, id string, variables []m
 			continue
 		}
 		save = true
-		keys.Set(ctx, variable.Name, variable.Value)
+		node := model.NewKey(variable.Name, variable.Value)
+		if err := node.Store(ctx); err != nil {
+			return nil, err
+		}
 	}
 	if save {
 		if err := keys.Save(); err != nil {

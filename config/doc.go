@@ -12,19 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resolver
-
-import (
-	"context"
-
-	"groundcontrol/appcontext"
-	"groundcontrol/model"
-)
-
-func (r *mutationResolver) SetKey(ctx context.Context, input model.KeyInput) (*model.Key, error) {
-	node := model.NewKey(input.Name, input.Value)
-	if err := node.Store(ctx); err != nil {
-		return nil, err
-	}
-	return node, appcontext.Get(ctx).Keys.Save()
-}
+// Package config contains types for configuration files.
+package config

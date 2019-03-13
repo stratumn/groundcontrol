@@ -82,9 +82,8 @@ func handleCmdErr(ctx context.Context, err error) error {
 	case *exec.Error:
 		fmt.Fprintf(moduleCtx.Stderr, "%v\n", err)
 		return interp.ExitStatus(127)
-	default:
-		return err
 	}
+	return err
 }
 
 func execEnv(env expand.Environ) []string {

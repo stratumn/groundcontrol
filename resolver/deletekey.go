@@ -22,16 +22,12 @@ import (
 )
 
 func (r *mutationResolver) DeleteKey(ctx context.Context, id string) (*model.Key, error) {
-	keys := appcontext.Get(ctx).Keys
 	node, err := model.LoadKey(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if err := keys.Delete(ctx, id); err != nil {
-		return nil, nil
-	}
-	if err := keys.Save(); err != nil {
+	if err := model.DeleteKey(ctx, id); err != nil {
 		return nil, err
 	}
-	return node, nil
+	return node, appcontext.Get(ctx).Keys.Save()
 }

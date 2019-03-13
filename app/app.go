@@ -28,6 +28,7 @@ import (
 	"github.com/pkg/browser"
 
 	"groundcontrol/appcontext"
+	"groundcontrol/config"
 	"groundcontrol/job"
 	"groundcontrol/log"
 	"groundcontrol/model"
@@ -213,14 +214,12 @@ func (a *App) createSources(ctx context.Context) error {
 
 // createKeys loads the keys config file and creates the Relay nodes for them.
 func (a *App) createKeys(ctx context.Context) error {
-	config, err := model.LoadKeysConfigYAML(a.keysFile)
+	cfg, err := config.LoadKeysYAML(a.keysFile)
 	if err != nil {
 		return err
 	}
-	if err := config.Store(ctx); err != nil {
-		return err
-	}
-	appcontext.Get(ctx).Keys = config
+	appcontext.Get(ctx).Keys = cfg
+	model.InjectKeysConfig(ctx)
 	return nil
 }
 

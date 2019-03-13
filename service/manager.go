@@ -167,7 +167,8 @@ func (m *Manager) launchService(ctx context.Context, runner appcontext.Runner, s
 }
 
 func (m *Manager) runService(ctx context.Context, runner appcontext.Runner, service *model.Service, env []string, close func()) {
-	appcontext.Get(ctx).Log.InfoWithOwner(ctx, service.ID, service.Command)
+	appCtx := appcontext.Get(ctx)
+	appCtx.Log.InfoWithOwner(ctx, service.ID, service.Command)
 	err := runner.Run(ctx, service.Command)
 	close()
 	model.MustLockService(ctx, service.ID, func(service *model.Service) {
@@ -180,6 +181,7 @@ func (m *Manager) runService(ctx context.Context, runner appcontext.Runner, serv
 		if err == nil {
 			m.setStatus(ctx, service, model.ServiceStatusStopped)
 		} else {
+			appCtx.Log.ErrorWithOwner(ctx, appCtx.SystemID, "%s (%s)", err.Error(), service.LongString(ctx))
 			m.setStatus(ctx, service, model.ServiceStatusFailed)
 		}
 		service.MustStore(ctx)

@@ -144,14 +144,13 @@ type Sources interface {
 
 // Keys exposes functions to load and store keys to disk.
 type Keys interface {
-	// Store stores nodes for the content of the keys config.
-	Store(ctx context.Context) error
-	// Set sets a key and stores the corresponding node.
-	// It returns the ID of the key.
-	Set(ctx context.Context, name, value string) string
-	// Delete deletes a key and the corresponding node.
-	Delete(ctx context.Context, id string) error
-	// Save saves the config to disk, overwriting the file if it exists.
+	// Set sets the value of a key.
+	Set(name, value string)
+	// Delete deletes a key.
+	Delete(name string)
+	// All returns all the keys.
+	All() map[string]string
+	// Save saves the keys.
 	Save() error
 }
 
